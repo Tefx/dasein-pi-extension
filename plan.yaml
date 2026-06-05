@@ -3109,6 +3109,13 @@ phases:
       === "exact"`, and `sensors.geo.exactAddress === true`. Broad "exact privacy
       gates" wording is insufficient.
 
+
+      REVIEW-FIX ITERATION 5 PI RUNTIME DEPENDENCY REPAIR:
+
+      This step depends on `pi-runtime-extension-wiring` because SettingsList/bare
+      `/dasein` observable behavior consumes the Pi command/custom-UI registration
+      path and shares `tests/integration/pi-extension.test.ts`.
+
       '
     verification: '- [ ] `npm run test:file -- tests/unit/settings-list.test.ts tests/integration/pi-extension.test.ts`
       passes with raw output.
@@ -3140,6 +3147,9 @@ phases:
 
       - [ ] SettingsList evidence shows `sensors.geo.exactCoordinates` and `sensors.geo.exactAddress`
       boolean controls where geo simple fields are rendered.
+
+      - [ ] Evidence is collected after `pi-runtime-extension-wiring` completes so
+      SettingsList/bare `/dasein` proof uses the real Pi wiring path.
 
       '
     evidence_template: "## refs Read Confirmation (MANDATORY)\nFor each ref in this\
