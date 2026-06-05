@@ -5503,6 +5503,14 @@ phases:
       is insufficient; evidence must name these fields and show values in success
       and relevant failure/reload cases.
 
+
+      REVIEW-FIX ITERATION 3 SETTINGSLIST NEGATIVE EXTERNAL-KEY PROOF:
+
+      SettingsList must NOT create controls for invalid external keys, dotted keys,
+      expired external state, or malformed external events. This negative proof is
+      blocking and distinct from positive common-control coverage and complex-field
+      exclusion.
+
       '
     verification: '- [ ] All finalization steps are complete with refs confirmations
       and checklist receipts.
@@ -5528,6 +5536,10 @@ phases:
       - [ ] Final gate confirms exact status/reload payload fields `effectiveConfigVersion`,
       `launchArgsApplied`, `diskConfigLoaded`, `launchReappliedPaths`, and `runtimeOverriddenPaths`
       have positive proof or owned blockers.
+
+      - [ ] Final gate confirms SettingsList negative external-key proof has positive
+      evidence or exact owned blockers for invalid keys, dotted keys, expired external
+      state, and malformed external events.
 
       '
     evidence_template: "## refs Read Confirmation (MANDATORY)\nFor each ref in this\
@@ -5579,12 +5591,21 @@ phases:
       \ `/dasein reload` result/test output>\n- failure_or_reload_case: <proof fields\
       \ remain present/meaningful when disk config/sensor reload fails and old state\
       \ is kept>\n- broad_payload_shape_claim_rejected: Evidence that does not name\
-      \ all five fields is INCOMPLETE.\n"
+      \ all five fields is INCOMPLETE.\n\n## SettingsList Negative External-Key Evidence\
+      \ (MANDATORY)\n- invalid_external_key_case: <payload/key used; proof no SettingsList\
+      \ control rendered>\n- dotted_external_key_case: <payload/key used; proof no\
+      \ SettingsList control rendered>\n- expired_external_state_case: <ttl/time scenario;\
+      \ proof no SettingsList control rendered>\n- malformed_external_event_case:\
+      \ <unknown field/multiline/overlong/control payload; proof rejected and no SettingsList\
+      \ control rendered>\n- valid_external_key_control_baseline: <valid key still\
+      \ renders `external.<key>.ui`/`external.<key>.agent` controls>\n- broad_external_controls_claim_rejected:\
+      \ Evidence that only proves valid controls or complex-field exclusion is INCOMPLETE.\n"
     refs:
     - CONSTITUTION.md
     - docs/PRD.md
     - docs/TECHNICAL_DESIGN.md
     - docs/TECHNICAL_DESIGN.md#command-result-and-output-contract
+    - docs/TECHNICAL_DESIGN.md#human-ui-rendering
     depends_on:
     - finalization-full-spec-conformance
     - finalization-architecture-concurrency-review
