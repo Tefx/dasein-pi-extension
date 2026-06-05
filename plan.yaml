@@ -5814,6 +5814,13 @@ phases:
       `display:false`, `customType:"dasein"`, deterministic timestamp shape, and conversion
       to an LLM user message. Broad context-hook or hidden-message wording is insufficient.
 
+
+      REVIEW-FIX ITERATION 6 LIFECYCLE EXACT PROOF:
+
+      Lifecycle proof must explicitly verify `session_start`, `session_shutdown`,
+      and `1000ms` per-sensor cleanup timeout. Shutdown must abort active refresh/helper
+      work and aggregate cleanup errors without blocking request construction.
+
       '
     verification: '- [ ] Ledger includes every mechanism from TECHNICAL_DESIGN > Verified
       Pi Mechanisms plus native helper and dynamic reload gates.
@@ -5839,6 +5846,9 @@ phases:
       - [ ] Support-claim ledger includes hidden CustomMessage field/conversion proof
       rows for `display:false`, `customType:"dasein"`, timestamp shape, and LLM user-message
       conversion.
+
+      - [ ] Support-claim ledger includes `session_start`, `session_shutdown`, and
+      `1000ms` cleanup timeout rows with live/fake/source status.
 
       '
     evidence_template: '## refs Read Confirmation (MANDATORY)
@@ -5974,6 +5984,25 @@ phases:
 
       - broad_context_claim_rejected: Evidence without all CustomMessage fields and
       conversion proof is INCOMPLETE.
+
+
+      ## Lifecycle Exact Proof Evidence (MANDATORY)
+
+      - session_start: <startup registration/config/sensor initial refresh evidence>
+
+      - session_shutdown: <cleanup event evidence>
+
+      - per_sensor_cleanup_timeout_ms: 1000
+
+      - active_refresh_abort: <proof active refresh is aborted before cleanup>
+
+      - cleanup_error_aggregation: <proof errors are reported/aggregated deterministically>
+
+      - request_path_non_blocking: <proof lifecycle cleanup does not run during request
+      construction>
+
+      - broad_lifecycle_claim_rejected: Evidence without session_start, session_shutdown,
+      and 1000ms timeout is INCOMPLETE.
 
       '
     refs:
