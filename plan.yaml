@@ -960,6 +960,9 @@ phases:
       NEEDS_TEST, UNPROVEN, BLOCKED, or explicitly non-intersecting with downstream
       gates.
 
+      - [ ] `npm run test:file -- tests/behavior/ambient-context.test.ts` is included
+      in core proof raw output or explicitly reported with blocker/remediation ownership.
+
       '
     refs:
     - docs/TECHNICAL_DESIGN.md#testing-gate-matrix
