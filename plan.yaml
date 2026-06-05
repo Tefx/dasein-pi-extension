@@ -854,6 +854,7 @@ phases:
     - docs/TECHNICAL_DESIGN.md#core-contracts
     depends_on:
     - core-tests
+    - core-behavior-guardrails
     agent: frontend-engineer
   - id: core-command-layer
     name: Complete command parser and core command execution layer
