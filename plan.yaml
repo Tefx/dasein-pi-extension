@@ -4908,11 +4908,16 @@ phases:
 
       - role: read-only verifier/gate/auditor
 
-      - files_changed: MUST be none
+      - repo_product_files_changed: MUST be none; disposable runtime/config/test fixture
+      files may change only when this step explicitly requires them and cleanup evidence
+      is provided
 
-      - mutation_performed: MUST be false
+      - repo_product_mutation_performed: MUST be false; documented disposable runtime/config/test
+      mutations are allowed only within the step side_effect_budget and must include
+      cleanup evidence
 
-      - if mutation was necessary: STOP and report blocker for orchestrator/planner
+      - if repo/product mutation was necessary: STOP and report blocker for orchestrator/planner;
+      if disposable runtime/test mutation was required, record scope and cleanup evidence
 
 
       ## raw_command_output
