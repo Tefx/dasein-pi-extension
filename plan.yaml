@@ -970,6 +970,7 @@ phases:
     - core-sensor-runtime-loader
     - core-renderer-injector-external
     - core-command-layer
+    - core-behavior-guardrails
     agent: integration-verifier
   - id: core-gate
     name: Gate core broker phase
