@@ -4773,6 +4773,9 @@ phases:
       - [ ] Final verdict is OPEN or BLOCKED with explicit blockers, live-support
       status, and required actions.
 
+      - [ ] Final decision basis confirms bare `/dasein` has positive proof or owned
+      blockers for TUI SettingsList opening and non-TUI fallback.
+
       '
     evidence_template: '## refs Read Confirmation (MANDATORY)
 
