@@ -4253,6 +4253,14 @@ phases:
       2. Config fields are consumed by non-test modules. 3. Slash/sensor commands
       are registered and route to real command handlers.</risk_probes>
 
+
+      REVIEW-FIX ITERATION 2 SETTINGSLIST COMMON SENSOR CONTROLS:
+
+      SettingsList coverage must enumerate and prove every common sensor control required
+      by the Technical Design: `enabled`, `ui`, `agent`, `intervalMs`, `timeoutMs`,
+      `staleAfterMs`, and `initialRefresh`. Visible recurring interval controls and
+      their ConfigManager mutation path are blocking evidence, not optional UI polish.
+
       '
     verification: '- [ ] Orphan exports report includes grep/import-trace output or
       `none found`.
