@@ -1451,6 +1451,9 @@ phases:
       - [ ] Gate decision basis reviews `tests/behavior/ambient-context.test.ts` behavioral
       guardrails and confirms no orphan behavior row remains.
 
+      - [ ] Gate decision basis reviews status payload `minimumPiVersion: "0.78.1"`,
+      version capture/null, mechanism evidence statuses, and no false support claims.
+
       '
     evidence_template: '## refs Read Confirmation (MANDATORY)
 
