@@ -2461,8 +2461,11 @@ phases:
       - [ ] Evidence proves SettingsList change path enters the FIFO config mutation
       queue and persists only the canonical changed path.
 
-      - [ ] Evidence proves literal bare `/dasein` in TUI mode opens SettingsList/configuration
-      UI, not a generic status/help command.
+      - [ ] Observable SettingsList evidence shows `enabled`, `ui`, `agent`, `intervalMs`,
+      `timeoutMs`, `staleAfterMs`, and `initialRefresh` controls for loaded sensors.
+
+      - [ ] Evidence proves visible recurring interval controls mutate via ConfigManager
+      and persist only validated canonical paths.
 
       '
     evidence_template: "## refs Read Confirmation (MANDATORY)\nFor each ref in this\
