@@ -2254,6 +2254,23 @@ phases:
       not prove feature availability, and feature availability does not override a
       below-minimum version.
 
+
+      REVIEW-FIX ITERATION 2 BARE `/dasein` OWNERSHIP:
+
+      Bare `/dasein` is a required public command behavior, not an interchangeable
+      alias. In TUI mode it MUST open the configuration UI/SettingsList. Outside TUI
+      mode it MUST fall back to concise deterministic help/status output. It MUST
+      NOT mutate config, disk, sensor state, or external state. Evidence must use
+      the literal bare `/dasein`; wording such as "or equivalent" is insufficient.
+
+
+      REVIEW-FIX ITERATION 2 SETTINGSLIST COMMON SENSOR CONTROLS:
+
+      SettingsList coverage must enumerate and prove every common sensor control required
+      by the Technical Design: `enabled`, `ui`, `agent`, `intervalMs`, `timeoutMs`,
+      `staleAfterMs`, and `initialRefresh`. Visible recurring interval controls and
+      their ConfigManager mutation path are blocking evidence, not optional UI polish.
+
       '
     verification: '- [ ] Test files are limited to tests/integration, tests/unit/settings-list,
       and fake-host fixtures.
@@ -2273,6 +2290,19 @@ phases:
       - [ ] Expected-red runtime tests cover minimum Pi version `0.78.1`, current
       version capture, below-minimum classification, unavailable-version classification,
       and separation from API feature probes.
+
+      - [ ] Expected-red fake-host tests invoke the literal bare `/dasein` in TUI
+      mode and assert it opens SettingsList/configuration UI.
+
+      - [ ] Expected-red fake-host tests invoke the literal bare `/dasein` outside
+      TUI mode and assert concise deterministic help/status fallback with no config
+      mutation.
+
+      - [ ] Expected-red SettingsList tests enumerate common sensor controls `enabled`,
+      `ui`, `agent`, `intervalMs`, `timeoutMs`, `staleAfterMs`, and `initialRefresh`.
+
+      - [ ] Expected-red SettingsList tests assert visible recurring interval controls
+      and SettingsList mutation through the ConfigManager path.
 
       '
     evidence_template: "## refs Read Confirmation (MANDATORY)\nFor each ref in this\
@@ -2300,7 +2330,20 @@ phases:
       \ <path or unavailable>\n- below_minimum_case: <classification + no false support\
       \ claim>\n- unavailable_version_case: <classification + no false support claim>\n\
       - feature_probe_separation: <proof version check is distinct from API feature\
-      \ probes>\n- status_payload_sample: <includes piVersion, minimumPiVersion, piMechanisms[].evidenceStatuses>\n"
+      \ probes>\n- status_payload_sample: <includes piVersion, minimumPiVersion, piMechanisms[].evidenceStatuses>\n\
+      \n## Bare `/dasein` Command Evidence (MANDATORY)\n- literal_command: `/dasein`\n\
+      - tui_mode_result: <SettingsList/configuration UI opened; artifact/capture required>\n\
+      - non_tui_result: <concise deterministic help/status fallback; raw output required>\n\
+      - config_mutation_check: <proof no config/disk/sensor/external mutation occurred>\n\
+      - rejected_substitute: Evidence using only `/dasein status`, `/dasein help`,\
+      \ or \"equivalent command\" is INCOMPLETE.\n\n## SettingsList Common Sensor\
+      \ Controls Evidence (MANDATORY)\n- required_fields: [`enabled`, `ui`, `agent`,\
+      \ `intervalMs`, `timeoutMs`, `staleAfterMs`, `initialRefresh`]\n- rendered_controls_by_sensor:\
+      \ <clock/geo/lapse/user-added examples or exact blocker>\n- visible_recurring_interval_controls:\
+      \ <proof `intervalMs` visibility/configurability/disableability>\n- mutation_path:\
+      \ <SettingsList change -> FIFO ConfigManager queue -> canonical path validation/persistence\
+      \ -> runtime update>\n- excluded_complex_fields_check: <geo.tags/lapse.agentFields\
+      \ remain outside flat SettingsList controls unless separately justified>\n"
     refs:
     - docs/TECHNICAL_DESIGN.md#verified-pi-mechanisms
     - docs/TECHNICAL_DESIGN.md#data-flow
