@@ -6398,6 +6398,14 @@ phases:
       the `GeoTagListPayload` shape, and coordinate redaction controlled by `sensors.geo.exactCoordinates`.
       Broad geo tag behavior wording is insufficient.
 
+
+      REVIEW-FIX ITERATION 5 CTX.UI.CUSTOM FEATURE PROBE:
+
+      Pi feature-probe and live/support evidence must explicitly include `ctx.ui.custom`
+      as the custom UI mechanism used with SettingsList. `SettingsList` alone is insufficient;
+      status must report `ctx.ui.custom` availability/unavailability separately enough
+      to avoid false support claims.
+
       '
     verification: '- [ ] All finalization steps are complete with refs confirmations
       and checklist receipts.
@@ -6436,6 +6444,9 @@ phases:
 
       - [ ] Final gate confirms geo tag `radius_m`, `GeoTagListPayload`, and `exactCoordinates`
       redaction proof or owned blockers.
+
+      - [ ] Final gate confirms `ctx.ui.custom` has positive feature-probe/live evidence
+      or exact owned blockers, distinct from SettingsList.
 
       '
     evidence_template: "## refs Read Confirmation (MANDATORY)\nFor each ref in this\
@@ -6530,7 +6541,14 @@ phases:
       \ claim remains>\n- BLOCKED_required_when: <any blocker, orphan requirement,\
       \ unowned live-support claim, missing required evidence, or unresolved behavioral\
       \ obligation remains>\n- no_debt_open_state: Final gate has no OPEN_WITH_DEBT\
-      \ state; non-blocking debt must be documented but cannot replace required proof.\n"
+      \ state; non-blocking debt must be documented but cannot replace required proof.\n\
+      \n## ctx.ui.custom Feature-Probe Evidence (MANDATORY)\n- mechanism: ctx.ui.custom\n\
+      - relationship_to_settingslist: <SettingsList is rendered through ctx.ui.custom/custom\
+      \ UI path>\n- fake_host_probe: <available/unavailable classification and status\
+      \ payload>\n- live_probe_or_blocker: <LIVE_SMOKE_VERIFIED/LIVE_SMOKE_PENDING/BLOCKED\
+      \ with evidence ref>\n- fail_closed_behavior: <how UI setup/status reports when\
+      \ ctx.ui.custom is unavailable>\n- false_support_claim_check: <proof SettingsList\
+      \ support is not claimed when ctx.ui.custom is unavailable/unproven>\n"
     refs:
     - CONSTITUTION.md
     - docs/PRD.md
