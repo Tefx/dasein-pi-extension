@@ -203,7 +203,15 @@ phases:
       before completion.
 
       - [ ] Tests assert root shim delegation, required npm scripts, dependency policy,
-      and fake-host recording shape.'
+      and fake-host recording shape.
+
+      - [ ] Expected-red static tests assert symlinked `~/.pi/agent/extensions/dasein`
+      load and root `index.ts` shim delegation exactly.
+
+      - [ ] Expected-red static tests assert SettingsList/getSettingsListTheme imports
+      resolve only through approved Pi peer dependency paths.
+
+      '
     evidence_template: '## refs Read Confirmation (MANDATORY)
 
       For each ref in this step:
