@@ -2274,6 +2274,15 @@ phases:
       for risky sensors. 2. Launch overlays never satisfy acknowledgement by themselves.
       3. Inspectability metadata is visible while effectiveEnabled remains false.</risk_probes>
 
+
+      REVIEW-FIX ITERATION 6 USER-ADDED RISKY SENSOR INSPECTABILITY FIELDS:
+
+      User-added/risky sensor inspectability must explicitly own and verify exact
+      fields `acknowledgedManifestDigest`, `acknowledgementRequired`, `acknowledgementSatisfied`,
+      `defaultEnabled`, and `effectiveEnabled`. Broad "acknowledgement" wording is
+      insufficient; status, sensors, and SettingsList evidence must name all five
+      fields where those surfaces expose sensor metadata.
+
       '
     verification: '- [ ] `npm run test:file -- tests/unit/sensor-loader.test.ts tests/unit/commands-status.test.ts
       tests/unit/commands-sensors.test.ts` passes with raw output.
@@ -2287,6 +2296,10 @@ phases:
       - [ ] Evidence proves `/dasein sensors` and `/dasein status` expose provenance,
       permissions, remote/background behavior, effectiveIntervalMs, acknowledgement,
       and forcedDisabledReason before enablement.
+
+      - [ ] Evidence proves manifest/risk loading computes and exposes `acknowledgedManifestDigest`,
+      `acknowledgementRequired`, `acknowledgementSatisfied`, `defaultEnabled`, and
+      `effectiveEnabled` exactly.
 
       '
     evidence_template: "## refs Read Confirmation (MANDATORY)\nFor each ref in this\
@@ -2311,13 +2324,23 @@ phases:
       - artifacts: <contracts/tests/outputs created>\n- main_path_evidence: <proof>\n\
       - failure_path_evidence: <proof or N/A>\n\n## checklist_receipt\n- <checklist\
       \ item 1>: satisfied | failed | blocked | unobserved — <evidence ref>\n- <checklist\
-      \ item 2>: satisfied | failed | blocked | unobserved — <evidence ref>\n"
+      \ item 2>: satisfied | failed | blocked | unobserved — <evidence ref>\n\n##\
+      \ User-Added Risky Sensor Inspectability Fields Evidence (MANDATORY)\n- acknowledgedManifestDigest:\
+      \ <observed value/null and digest match/mismatch scenario>\n- acknowledgementRequired:\
+      \ <true/false cases for safe vs risky user-added sensors>\n- acknowledgementSatisfied:\
+      \ <true/false cases before/after matching digest acknowledgement>\n- defaultEnabled:\
+      \ <module default vs forced-disable behavior>\n- effectiveEnabled: <effective\
+      \ runtime enabled state after risk rules>\n- surfaces_checked: </dasein status,\
+      \ /dasein sensors, SettingsList where applicable>\n- forced_disabled_matrix:\
+      \ <remote/network, recurring/background, both, safe sensor>\n- broad_acknowledgement_claim_rejected:\
+      \ Evidence that does not name all five fields is INCOMPLETE.\n"
     refs:
     - CONSTITUTION.md#extension-and-sensor-laws
     - docs/TECHNICAL_DESIGN.md#sensor-loading-and-reload
     - docs/PRD.md#7-2-sensor-model
     - docs/PRD.md#9-7-sensor-loading-and-reload
     - docs/TECHNICAL_DESIGN.md#core-contracts
+    - docs/TECHNICAL_DESIGN.md#command-result-and-output-contract
     depends_on:
     - sensors-tests
     agent: frontend-engineer
