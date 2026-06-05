@@ -728,6 +728,15 @@ phases:
       Gate Matrix. These tests protect `/dasein status` payload shape and `/dasein
       sensors` inspectability/load-error/risk metadata output before command implementation.
 
+
+      REVIEW-FIX ITERATION 3 STATUS/RELOAD PAYLOAD FIELDS:
+
+      The plan explicitly owns the `/dasein status` payload fields `effectiveConfigVersion`,
+      `launchArgsApplied`, and `diskConfigLoaded`, and the reload payload/result fields
+      `launchReappliedPaths` and `runtimeOverriddenPaths`. Broad “payload shape” wording
+      is insufficient; evidence must name these fields and show values in success
+      and relevant failure/reload cases.
+
       '
     verification: '- [ ] Test files are limited to tests/ and fixtures/helpers and
       cite the exact Technical Design gate matrix rows they implement.
@@ -760,6 +769,13 @@ phases:
       records, provenance, manifest permissions/input/output metadata, remote/background
       behavior, effectiveIntervalMs, manifestDigest, acknowledgement, forcedDisabledReason,
       and trusted-local-code warning.
+
+      - [ ] Expected-red command tests explicitly assert `/dasein status` fields `effectiveConfigVersion`,
+      `launchArgsApplied`, and `diskConfigLoaded`.
+
+      - [ ] Expected-red command/reload tests explicitly assert reload payload/result
+      fields `launchReappliedPaths` and `runtimeOverriddenPaths` for success and keep-old
+      failure scenarios.
 
       '
     evidence_template: "## refs Read Confirmation (MANDATORY)\nFor each ref in this\
@@ -797,7 +813,16 @@ phases:
       \ <builtin/user-added/load-failed records, provenance, manifest, permissions,\
       \ remote/background behavior, effectiveIntervalMs, manifestDigest, acknowledgement,\
       \ forcedDisabledReason, load errors, trusted-local-code warning>\n- expected_red_output:\
-      \ <raw command output exposing gaps>\n"
+      \ <raw command output exposing gaps>\n\n## Status / Reload Explicit Payload\
+      \ Fields Evidence (MANDATORY)\n- status_required_fields:\n  - effectiveConfigVersion:\
+      \ <observed value; must be 1>\n  - launchArgsApplied: <observed boolean and\
+      \ scenario>\n  - diskConfigLoaded: <observed boolean and scenario>\n- reload_required_fields:\n\
+      \  - launchReappliedPaths: <observed sorted path list and scenario>\n  - runtimeOverriddenPaths:\
+      \ <observed sorted path list and scenario>\n- raw_command_output: <paste `/dasein\
+      \ status` and `/dasein reload` result/test output>\n- failure_or_reload_case:\
+      \ <proof fields remain present/meaningful when disk config/sensor reload fails\
+      \ and old state is kept>\n- broad_payload_shape_claim_rejected: Evidence that\
+      \ does not name all five fields is INCOMPLETE.\n"
     refs:
     - docs/TECHNICAL_DESIGN.md#testing-gate-matrix
     - docs/TECHNICAL_DESIGN.md#core-contracts
@@ -805,6 +830,7 @@ phases:
     - docs/TECHNICAL_DESIGN.md#command-design
     - CONSTITUTION.md#testing-and-gates
     - docs/PRD.md#9-acceptance-criteria
+    - docs/TECHNICAL_DESIGN.md#command-result-and-output-contract
     depends_on:
     - core-contracts
     agent: frontend-engineer
