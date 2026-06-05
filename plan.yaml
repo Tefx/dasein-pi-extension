@@ -1079,6 +1079,16 @@ phases:
       over any sensor key/action. Help output must include documented core commands
       and sensor-action guidance without mutating config or disk.
 
+
+      REVIEW-FIX ITERATION 2 MINIMUM PI VERSION STATUS:
+
+      Dasein status/runtime evidence must include exact `minimumPiVersion: "0.78.1"`,
+      current Pi version capture when available, unavailable-version classification,
+      and below-minimum classification without false support claims. Version support
+      classification is separate from API feature probes: a sufficient version does
+      not prove feature availability, and feature availability does not override a
+      below-minimum version.
+
       '
     verification: '- [ ] `npm run test:file -- tests/unit/command-parser.test.ts tests/unit/command-result.test.ts
       tests/unit/commands-status.test.ts tests/unit/commands-sensors.test.ts` passes
