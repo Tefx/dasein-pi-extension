@@ -1895,6 +1895,242 @@ phases:
     Pi/TUI/native surfaces.
   depends_on:
   - system_wiring
+  steps:
+  - id: release-smoke-live-pi-tui
+    name: Run live Pi TUI slash, context, status/widget, and SettingsList smoke
+    status: pending
+    description: 'step_type: verification
+
+      verification_scope: full-plan-check
+
+      PROOF ARTIFACT: Live Pi runtime smoke for user-visible Pi/TUI surfaces, separate
+      from fake-host ordinary CI. This step may report exact environment blockers,
+      but it must not convert fake-host proof into live support.
+
+      Surface class: live Pi binary/process, slash command output, hidden context
+      injection, status footer, widget, and SettingsList.
+
+      Required environment evidence: Pi version, binary path, extension load path/symlink,
+      command/test artifact, screenshots/snapshots/terminal captures when feasible,
+      and exact blocker if unavailable.
+
+      <side_effect_budget>Allowed: read-only/live smoke execution against a disposable
+      Pi session and evidence capture. Forbidden: code edits, config permanence outside
+      disposable test paths, support claims without observed live behavior, or DESIGN.md
+      visual conformance work.</side_effect_budget>
+
+      <risk_probes>1. SettingsList rendering and one safe interaction are observed
+      in a live TUI, not just fake host. 2. Non-TUI mode does not crash on guarded
+      UI calls. 3. Evidence statuses update only mechanisms actually observed live.</risk_probes>
+
+      '
+    verification: '- [ ] `npm run test:smoke -- tests/smoke/pi-settings-list.test.ts`
+      or the documented live Pi equivalent is run with raw stdout/stderr, Pi version,
+      and binary path.
+
+      - [ ] Evidence shows `/dasein`/status/sensors or equivalent slash output, context
+      hook injection behavior, status/widget rendering/clearing, SettingsList visible
+      content, and one safe setting interaction.
+
+      - [ ] If blocked, evidence states the exact missing Pi binary, version, TUI
+      target, permissions, extension load path, or command needed; fake-host evidence
+      is not counted as live proof.
+
+      - [ ] Mechanism evidenceStatuses are updated/assessed only for observed live
+      behaviors and remain LIVE_SMOKE_PENDING for unobserved mechanisms.
+
+      '
+    refs:
+    - docs/TECHNICAL_DESIGN.md#verified-pi-mechanisms
+    - docs/TECHNICAL_DESIGN.md#testing-gate-matrix
+    - docs/PRD.md#9-4-tui
+    - CONSTITUTION.md#ux-and-pi-interaction-red-lines
+    agent: client-runtime-verifier
+  - id: release-smoke-dynamic-reload
+    name: Run live Pi dynamic sensor reload smoke
+    status: pending
+    description: 'step_type: verification
+
+      verification_scope: full-plan-check
+
+      PROOF ARTIFACT: Live Pi process proof that directory/package install dynamic
+      sensor loading and `/dasein reload` cache-busting work with real Pi runtime
+      boundaries, or an exact environment blocker is reported.
+
+      Required path: real Pi process in directory/package install mode -> add/change
+      local `.ts` sensor under `<extension_root>/src/sensors` -> `/dasein reload`
+      -> old registry kept on failure and changed module loaded on success.
+
+      <side_effect_budget>Allowed: disposable local sensor fixture under test extension
+      root and live smoke evidence. Forbidden: production config pollution, automatic
+      watchers, single-file package support claims for user-added sensors, or fake-host
+      substitution.</side_effect_budget>
+
+      <risk_probes>1. Cache-busting import observes changed module content. 2. Invalid
+      changed sensor keeps old registry/rendered context. 3. Single-file packaged
+      mode remains explicitly unsupported for user-added sensor discovery.</risk_probes>
+
+      '
+    verification: '- [ ] `npm run test:smoke -- tests/smoke/pi-dynamic-reload.test.ts`
+      or documented live Pi equivalent is run with raw stdout/stderr and Pi process
+      details.
+
+      - [ ] Evidence shows user-added sensor discovery from `<extension_root>/src/sensors/*.ts`
+      in directory/package mode and `/dasein reload` cache-busting of changed module.
+
+      - [ ] Evidence shows load failure keeps old registry/rendered context and reports
+      load errors.
+
+      - [ ] If blocked, exact missing environment/permission/path/command is reported
+      without treating fake-host reload proof as live support.
+
+      '
+    refs:
+    - docs/TECHNICAL_DESIGN.md#sensor-loading-and-reload
+    - docs/TECHNICAL_DESIGN.md#testing-gate-matrix
+    - docs/PRD.md#7-11-sensor-reload
+    - docs/PRD.md#9-7-sensor-loading-and-reload
+    - CONSTITUTION.md#testing-and-gates
+    agent: client-runtime-verifier
+  - id: release-smoke-native-helper
+    name: Run native helper live smoke or explicit skip/blocker report
+    status: pending
+    description: 'step_type: verification
+
+      verification_scope: full-plan-check
+
+      PROOF ARTIFACT: Native helper live smoke/classification for macOS CoreLocation
+      helper behavior. On macOS, attempt live helper execution under safe conditions;
+      off macOS, report explicit skip and confirm no release support claim for live
+      helper operation.
+
+      This step is distinct from `npm run test:native` typecheck/skip evidence and
+      from live Pi TUI smoke.
+
+      <side_effect_budget>Allowed: read-only/helper one-shot execution and process
+      cleanup verification. Forbidden: code edits, background tracking, persistent
+      location storage, exact location disclosure in final answer beyond required
+      evidence controls, or treating skip as live success.</side_effect_budget>
+
+      <risk_probes>1. Permission denied/restricted/not_determined maps to typed error
+      without failing core. 2. Timeout cleanup leaves no orphan helper. 3. Single-file
+      packaged missing helper path fails closed with helper-unavailable.</risk_probes>
+
+      '
+    verification: '- [ ] On macOS, live helper command or smoke test is run with raw
+      stdout/stderr and process cleanup evidence; on non-macOS, explicit skip reason
+      is recorded.
+
+      - [ ] Evidence classifies result as LIVE_SMOKE_VERIFIED, BLOCKED, or SKIPPED
+      with exact environment/permission details.
+
+      - [ ] Evidence proves timeout/stdout/stderr caps and no orphan helper where
+      executable smoke was possible.
+
+      - [ ] Evidence does not claim geo live location support from typecheck-only
+      or non-macOS skip output.
+
+      '
+    refs:
+    - docs/TECHNICAL_DESIGN.md#builtin-sensors/geo
+    - docs/TECHNICAL_DESIGN.md#testing-gate-matrix
+    - docs/TECHNICAL_DESIGN.md#error-model/native-helper-errors
+    - docs/PRD.md#8-2-privacy
+    agent: integration-verifier
+  - id: release-smoke-support-claim-ledger
+    name: Verify support-claim ledger and live/fake evidence separation
+    status: pending
+    description: 'step_type: verification
+
+      verification_scope: full-plan-check
+
+      PROOF ARTIFACT: Independent conformance ledger that reconciles fake-host, ordinary
+      CI, native, and live Pi smoke evidence before release support claims are allowed.
+
+      The ledger must map every Pi mechanism and native/live-only requirement to SOURCE_VERIFIED,
+      API_VERIFIED, LIVE_SMOKE_PENDING, LIVE_SMOKE_VERIFIED, BLOCKED, or SKIPPED with
+      evidence refs.
+
+      <side_effect_budget>Allowed: read-only evidence/doc/status review. Forbidden:
+      editing docs/code, upgrading support claims without evidence, or blocking ordinary
+      fake-host functionality due solely to unavailable live environment when release
+      claims can remain pending.</side_effect_budget>
+
+      <risk_probes>1. Live unavailable is represented as BLOCKED/PENDING support claim,
+      not fake proof. 2. Ordinary CI remains valid even if live smoke is blocked.
+      3. Every unobserved mechanism has a closure path before release claims.</risk_probes>
+
+      '
+    verification: '- [ ] Ledger includes every mechanism from TECHNICAL_DESIGN > Verified
+      Pi Mechanisms plus native helper and dynamic reload gates.
+
+      - [ ] Each row cites exact evidence artifact refs and status; no row upgrades
+      to LIVE_SMOKE_VERIFIED without observed live behavior.
+
+      - [ ] Fake-host/API/source evidence remains distinguished from live support
+      evidence.
+
+      - [ ] Remaining blockers have explicit closure paths and do not invalidate ordinary
+      CI proof unless they intersect release support claims.
+
+      '
+    refs:
+    - docs/TECHNICAL_DESIGN.md#verified-pi-mechanisms
+    - docs/TECHNICAL_DESIGN.md#testing-gate-matrix
+    - CONSTITUTION.md#ux-and-pi-interaction-red-lines
+    - CONSTITUTION.md#testing-and-gates
+    depends_on:
+    - release-smoke-live-pi-tui
+    - release-smoke-dynamic-reload
+    - release-smoke-native-helper
+    agent: spec-verifier
+  - id: release-smoke-gate
+    name: Gate live Pi and native release smoke
+    status: pending
+    description: 'step_type: gate
+
+      verification_scope: full-plan-check
+
+      DECISION ARTIFACT: Independent gate for release-smoke evidence. The gate may
+      open for implementation completion with explicit live-support blockers/pending
+      statuses only if ordinary CI/fake-host proof is intact and no false live support
+      claim remains.
+
+      review_depth: THOROUGH
+
+      cross_cutting_focus: live vs fake evidence separation, SettingsList live observability,
+      dynamic reload live proof, native helper smoke/skip classification, support-claim
+      ledger closure paths.
+
+      <side_effect_budget>Allowed: read-only gate review. Forbidden: implementation
+      fixes, upgrading evidence statuses, or hiding environment blockers.</side_effect_budget>
+
+      <risk_probes>1. Release support claims are blocked until live evidence exists.
+      2. Environment blockers are precise enough for a future rerun. 3. Fake-host
+      proof remains usable for ordinary CI without being overstated.</risk_probes>
+
+      '
+    verification: '- [ ] All release_smoke steps are complete with refs confirmations
+      and checklist receipts.
+
+      - [ ] Gate decision basis reviews live Pi TUI, dynamic reload, native helper,
+      and support-claim ledger evidence rows.
+
+      - [ ] Any BLOCKED/SKIPPED live item has exact environment/permission/command
+      closure path and is not represented as live support.
+
+      - [ ] Final gate verdict is OPEN, OPEN_WITH_LIVE_SUPPORT_PENDING, or BLOCKED
+      with explicit blockers and required actions.
+
+      '
+    refs:
+    - CONSTITUTION.md#testing-and-gates
+    - CONSTITUTION.md#ux-and-pi-interaction-red-lines
+    - docs/TECHNICAL_DESIGN.md#verified-pi-mechanisms
+    - docs/TECHNICAL_DESIGN.md#testing-gate-matrix
+    depends_on:
+    - release-smoke-support-claim-ledger
+    agent: gate-reviewer
 - id: finalization
   name: Documentation Sync and Final Deep Review
   status: locked
