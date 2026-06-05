@@ -98,7 +98,18 @@ phases:
 
       <risk_probes>1. Root shim does no work except delegation. 2. Runtime dependencies
       remain empty except Pi peer dependencies. 3. Fake host does not imply live support
-      claims.</risk_probes>'
+      claims.</risk_probes>
+
+
+      REVIEW-FIX ITERATION 1 PACKAGE/SHIM OWNERSHIP:
+
+      The scaffold contract must explicitly pin all of these obligations: symlinked
+      load from `~/.pi/agent/extensions/dasein`, root `index.ts` as the Pi auto-discovery
+      shim, delegation from root `index.ts` to `./src/index.ts`, package script contract,
+      and SettingsList/getSettingsListTheme import resolution through approved Pi
+      peer dependency paths.
+
+      '
     verification: '- [ ] Contract artifacts pin package scripts, dependency policy,
       root shim delegation, and fake Pi host API shape.
 
