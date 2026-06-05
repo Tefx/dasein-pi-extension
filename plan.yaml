@@ -841,10 +841,10 @@ phases:
       '
     refs:
     - docs/TECHNICAL_DESIGN.md#command-design
-    - docs/TECHNICAL_DESIGN.md#core-contracts/launch-flag-grammar
     - docs/PRD.md#7-8-slash-commands
     - docs/PRD.md#9-2-slash-commands
     - CONSTITUTION.md#ux-and-pi-interaction-red-lines
+    - docs/TECHNICAL_DESIGN.md#core-contracts
     depends_on:
     - core-tests
     agent: frontend-engineer
