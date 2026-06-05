@@ -372,7 +372,13 @@ phases:
       - [ ] Raw output from targeted scaffold/static/fake-host tests is captured.
 
       - [ ] Report classifies any failures with closure path and confirms no live
-      support claim is inferred.'
+      support claim is inferred.
+
+      - [ ] Independent proof includes exact symlinked `~/.pi/agent/extensions/dasein`
+      load, root shim delegation, and SettingsList/getSettingsListTheme import resolution
+      evidence.
+
+      '
     evidence_template: '## refs Read Confirmation (MANDATORY)
 
       For each ref in this step:
