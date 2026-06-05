@@ -3731,8 +3731,8 @@ phases:
       and checklist receipts.
 
       - [ ] Gate decision basis maps Pi mechanism, slash/flag, context/events, lifecycle,
-      status/widget, and SettingsList requirements to positive fake-host proof or
-      release_smoke ownership.
+      status/widget, ctx.ui.custom, and SettingsList requirements to positive fake-host
+      proof or release_smoke ownership.
 
       - [ ] Client runtime proof is present; build/type/source evidence alone is rejected
       for user-visible surfaces.
