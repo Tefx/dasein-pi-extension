@@ -1114,6 +1114,10 @@ phases:
       - [ ] Evidence proves `help` is treated as a reserved core command and cannot
       be shadowed by a sensor action.
 
+      - [ ] Evidence proves `/dasein status` payload includes `minimumPiVersion: "0.78.1"`,
+      current `piVersion` or null, and mechanism evidenceStatuses without false support
+      claims.
+
       '
     evidence_template: "## refs Read Confirmation (MANDATORY)\nFor each ref in this\
       \ step:\n- docs/TECHNICAL_DESIGN.md#command-design — <key passage or \"NOT READ:\
