@@ -185,7 +185,17 @@ phases:
 
       <risk_probes>1. Expected red exposes missing scaffold without overfitting to
       fake host. 2. Fake host records APIs but cannot certify live TUI. 3. Dependency
-      assertion fails on any non-Pi runtime dependency.</risk_probes>'
+      assertion fails on any non-Pi runtime dependency.</risk_probes>
+
+
+      REVIEW-FIX ITERATION 1 STATIC TEST OWNERSHIP:
+
+      Expected-red scaffold tests must include exact assertions for symlinked `~/.pi/agent/extensions/dasein`
+      loading, root `index.ts` shim delegation, `package.json.pi.extensions` entrypoint
+      when present, and SettingsList/getSettingsListTheme import resolution. Broad
+      package/static checks are insufficient.
+
+      '
     verification: '- [ ] Test scope is limited to tests/ and fake fixtures plus contract
       stubs.
 
