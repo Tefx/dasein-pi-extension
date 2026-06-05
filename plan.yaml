@@ -5150,6 +5150,14 @@ phases:
       kill grace `250ms`, and backoff sequence `1m -> 5m -> 15m`. Broad timeout/backoff/cleanup
       wording is insufficient.
 
+
+      REVIEW-FIX ITERATION 8 RELEASE SMOKE SERIALIZATION:
+
+      Live-smoke steps are intentionally serialized because they may use disposable
+      Pi sessions, HOME/config roots, extension roots, sensor fixtures, native helper
+      permissions, and runtime state. This prevents parallel smoke steps from sharing
+      or corrupting disposable runtime resources.
+
       '
     verification: '- [ ] On macOS, live helper command or smoke test is run with raw
       stdout/stderr and process cleanup evidence; on non-macOS, explicit skip reason
@@ -5167,6 +5175,10 @@ phases:
       - [ ] Native smoke evidence classifies live/skip/blocker status and, when executable,
       records timeout `3000ms`, kill grace `250ms`, backoff `1m -> 5m -> 15m`, and
       no-orphan cleanup proof.
+
+      - [ ] Evidence records serialized execution assumptions and confirms disposable
+      runtime/config/extension/native resources are cleaned up before the next release-smoke
+      step consumes them.
 
       '
     evidence_template: "## refs Read Confirmation (MANDATORY)\nFor each exact refs\
@@ -5206,7 +5218,12 @@ phases:
       \ failure delays and manual refresh bypass behavior>\n- orphan_process_check:\
       \ <proof no helper remains after timeout/shutdown>\n- platform_classification:\
       \ <darwin live/typecheck or non-darwin explicit skip>\n- broad_native_claim_rejected:\
-      \ Evidence that omits any constant is INCOMPLETE.\n"
+      \ Evidence that omits any constant is INCOMPLETE.\n\n## Release Smoke Serialization\
+      \ Evidence (MANDATORY)\n- serialized_order: release-smoke-live-pi-tui -> release-smoke-dynamic-reload\
+      \ -> release-smoke-native-helper -> release-smoke-support-claim-ledger -> release-smoke-gate\n\
+      - isolated_runtime_roots: <HOME/config/extension/native resources used by this\
+      \ step>\n- cleanup_before_next_step: <proof or blocker>\n- no_parallel_resource_conflict:\
+      \ <proof serialized dependency was respected>\n"
     refs:
     - docs/TECHNICAL_DESIGN.md#testing-gate-matrix
     - docs/PRD.md#8-2-privacy
