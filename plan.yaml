@@ -2953,6 +2953,14 @@ phases:
       NOT mutate config, disk, sensor state, or external state. Evidence must use
       the literal bare `/dasein`; substitute wording is insufficient.
 
+
+      REVIEW-FIX ITERATION 5 CTX.UI.CUSTOM FEATURE PROBE:
+
+      Pi feature-probe and live/support evidence must explicitly include `ctx.ui.custom`
+      as the custom UI mechanism used with SettingsList. `SettingsList` alone is insufficient;
+      status must report `ctx.ui.custom` availability/unavailability separately enough
+      to avoid false support claims.
+
       '
     verification: '- [ ] `npm run test:file -- tests/integration/pi-extension.test.ts`
       passes through the fake Pi host with raw output.
@@ -2976,6 +2984,9 @@ phases:
 
       - [ ] Evidence proves literal bare `/dasein` is registered/routed and does not
       mutate config/state in either TUI or non-TUI mode.
+
+      - [ ] Evidence explicitly probes `ctx.ui.custom`, wires SettingsList through
+      it only when available, and reports fail-closed status when unavailable.
 
       '
     evidence_template: "## refs Read Confirmation (MANDATORY)\nFor each ref in this\
@@ -3011,7 +3022,13 @@ phases:
       - non_tui_result: <concise deterministic help/status fallback; raw output required>\n\
       - config_mutation_check: <proof no config/disk/sensor/external mutation occurred>\n\
       - rejected_substitute: Evidence using only `/dasein status`, `/dasein help`,\
-      \ or any substitute command is INCOMPLETE.\n"
+      \ or any substitute command is INCOMPLETE.\n\n## ctx.ui.custom Feature-Probe\
+      \ Evidence (MANDATORY)\n- mechanism: ctx.ui.custom\n- relationship_to_settingslist:\
+      \ <SettingsList is rendered through ctx.ui.custom/custom UI path>\n- fake_host_probe:\
+      \ <available/unavailable classification and status payload>\n- live_probe_or_blocker:\
+      \ <LIVE_SMOKE_VERIFIED/LIVE_SMOKE_PENDING/BLOCKED with evidence ref>\n- fail_closed_behavior:\
+      \ <how UI setup/status reports when ctx.ui.custom is unavailable>\n- false_support_claim_check:\
+      \ <proof SettingsList support is not claimed when ctx.ui.custom is unavailable/unproven>\n"
     refs:
     - docs/TECHNICAL_DESIGN.md#verified-pi-mechanisms
     - docs/PRD.md#7-7-launch-argument
