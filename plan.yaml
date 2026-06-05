@@ -1855,6 +1855,16 @@ phases:
       finalized helper output/error contract instead of racing a parallel helper contract
       change.
 
+
+      REVIEW-FIX ITERATION 4 GEO EXACT PRIVACY FIELDS:
+
+      Geo exact-location behavior must explicitly name and verify both `sensors.geo.exactCoordinates`
+      and `sensors.geo.exactAddress`. Exact coordinate output requires `sensors.geo.agent
+      === true`, `sensors.geo.precision === "exact"`, and `sensors.geo.exactCoordinates
+      === true`. Exact address output requires `sensors.geo.agent === true`, `sensors.geo.precision
+      === "exact"`, and `sensors.geo.exactAddress === true`. Broad "exact privacy
+      gates" wording is insufficient.
+
       '
     verification: '- [ ] `npm run test:file -- tests/unit/sensors/geo.test.ts` passes
       with raw output.
@@ -1868,6 +1878,12 @@ phases:
 
       - [ ] Evidence proves nearest-tag tie handling and stale/unavailable render
       degradation.
+
+      - [ ] Evidence explicitly proves `sensors.geo.exactCoordinates` gates exact
+      coordinate output and tag-list coordinate visibility.
+
+      - [ ] Evidence explicitly proves `sensors.geo.exactAddress` gates exact address
+      output and missing helper address data is not fabricated.
 
       '
     evidence_template: "## refs Read Confirmation (MANDATORY)\nFor each ref in this\
@@ -1892,7 +1908,18 @@ phases:
       - artifacts: <contracts/tests/outputs created>\n- main_path_evidence: <proof>\n\
       - failure_path_evidence: <proof or N/A>\n\n## checklist_receipt\n- <checklist\
       \ item 1>: satisfied | failed | blocked | unobserved — <evidence ref>\n- <checklist\
-      \ item 2>: satisfied | failed | blocked | unobserved — <evidence ref>\n"
+      \ item 2>: satisfied | failed | blocked | unobserved — <evidence ref>\n\n##\
+      \ Geo Exact Privacy Fields Evidence (MANDATORY)\n- exactCoordinates_field: <schema/default/control/proof\
+      \ for `sensors.geo.exactCoordinates`>\n- exactAddress_field: <schema/default/control/proof\
+      \ for `sensors.geo.exactAddress`>\n- exact_coordinate_positive_case: <agent=true\
+      \ + precision=exact + exactCoordinates=true + fresh coordinates>\n- exact_coordinate_negative_cases:\
+      \ <agent false / non-exact precision / exactCoordinates false / stale or missing\
+      \ coordinates>\n- exact_address_positive_case: <agent=true + precision=exact\
+      \ + exactAddress=true + helper placemark/address>\n- exact_address_negative_cases:\
+      \ <agent false / non-exact precision / exactAddress false / missing placemark/address>\n\
+      - settingslist_simple_field_controls: <proof simple boolean fields are exposed\
+      \ where SettingsList is available>\n- broad_gate_claim_rejected: Evidence that\
+      \ says only \"exact privacy gates\" without both field names is INCOMPLETE.\n"
     refs:
     - docs/PRD.md#8-2-privacy
     - CONSTITUTION.md#privacy-and-safety-laws
