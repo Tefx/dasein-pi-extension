@@ -1024,6 +1024,64 @@ phases:
     - core-renderer-injector-external
     - core-command-layer
     agent: gate-reviewer
+  - id: core-behavior-guardrails
+    name: Define behavioral ambient-context guardrails
+    status: pending
+    description: 'step_type: test
+
+      step_intent: test_define_red
+
+      expected_result: red
+
+      PROOF ARTIFACT: Test-only behavioral guardrail suite for `tests/behavior/ambient-context.test.ts`
+      required by the Technical Design gate matrix.
+
+      TRACEABILITY MATRIX:
+
+      | requirement_id | source_ref + key passage | obligation | owning_step_id |
+      checklist_item | evidence_field | status | non_intersection_or_escalation |
+
+      | behavior.ambient_guardrails | TECHNICAL_DESIGN > Testing Gate Matrix | ordinary
+      coding prompt does not force ambient mention; relevant prompt can use enabled
+      fields; disabled fields never appear in agent string; UI shows sensitive visibility;
+      malformed publishers cannot inject multiline/overlong strings | core-behavior-guardrails
+      | behavioral guardrail tests defined | expected_red_output | OWNED | n/a |
+
+      BOUNDING BOX: tests/behavior/ambient-context.test.ts plus minimal fixtures only.
+
+      CONSTRAINTS: Tests/fixtures only; product runtime code edits are forbidden.
+      These tests define behavior before implementation and are expected to expose
+      gaps until downstream core/runtime implementations satisfy them.
+
+      <side_effect_budget>Allowed: tests/behavior/ambient-context.test.ts and minimal
+      fixtures. Forbidden: product implementation, prompt-policy layer creation, live
+      Pi support claims, or changing docs/code/config outside tests.</side_effect_budget>
+
+      <risk_probes>1. The ordinary prompt case proves Dasein does not force model-visible
+      mention of ambient context. 2. Disabled/sensitive fields remain absent from
+      agent string while UI/status remains inspectable. 3. Malformed external publishers
+      cannot inject multiline or overlong strings through renderer/injector paths.</risk_probes>'
+    verification: '- [ ] `tests/behavior/ambient-context.test.ts` is defined as test-only
+      coverage and cites the Technical Design Testing Gate Matrix behavioral row.
+
+      - [ ] Expected-red evidence includes ordinary coding prompt does not force an
+      ambient-context mention.
+
+      - [ ] Expected-red evidence includes relevant prompt can use enabled fields
+      while disabled fields never appear in the agent string.
+
+      - [ ] Expected-red evidence includes UI/status shows sensitive visibility state
+      and malformed publishers cannot inject multiline or overlong strings.
+
+      - [ ] Product implementation files are not modified by this behavior test-definition
+      step.'
+    refs:
+    - docs/TECHNICAL_DESIGN.md#testing-gate-matrix
+    - docs/PRD.md#9-3-agent-injection
+    - docs/PRD.md#9-6-external-state
+    - CONSTITUTION.md#testing-and-gates
+    depends_on:
+    - core-tests
 - id: sensors
   name: Builtin Sensors and Native Helper
   status: locked
