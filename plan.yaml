@@ -5303,6 +5303,13 @@ phases:
       permissions, and runtime state. This prevents parallel smoke steps from sharing
       or corrupting disposable runtime resources.
 
+
+      REVIEW-FIX CATCHUP NATIVE HELPER OUTPUT CAPS:
+
+      Native helper stdout and stderr collection must each stop at `16KiB`. Later
+      proof/gates must explicitly review this cap instead of relying on broad helper
+      cleanup evidence.
+
       '
     verification: '- [ ] On macOS, live helper command or smoke test is run with raw
       stdout/stderr and process cleanup evidence; on non-macOS, explicit skip reason
@@ -5324,6 +5331,9 @@ phases:
       - [ ] Evidence records serialized execution assumptions and confirms disposable
       runtime/config/extension/native resources are cleaned up before the next release-smoke
       step consumes them.
+
+      - [ ] Native smoke includes stdout/stderr `16KiB` cap proof where executable
+      or exact blocker if not live-testable.
 
       '
     evidence_template: "## refs Read Confirmation (MANDATORY)\nFor each exact refs\
@@ -5368,7 +5378,11 @@ phases:
       \ -> release-smoke-native-helper -> release-smoke-support-claim-ledger -> release-smoke-gate\n\
       - isolated_runtime_roots: <HOME/config/extension/native resources used by this\
       \ step>\n- cleanup_before_next_step: <proof or blocker>\n- no_parallel_resource_conflict:\
-      \ <proof serialized dependency was respected>\n"
+      \ <proof serialized dependency was respected>\n\n## Native Helper stdout/stderr\
+      \ 16KiB Cap Evidence (MANDATORY)\n- stdout_cap: 16KiB\n- stderr_cap: 16KiB\n\
+      - stdout_over_cap_case: <proof collection stops/rejects safely>\n- stderr_over_cap_case:\
+      \ <proof collection stops/rejects safely>\n- no_unbounded_memory_case: <proof\
+      \ bounded collection>\n"
     refs:
     - docs/TECHNICAL_DESIGN.md#testing-gate-matrix
     - docs/PRD.md#8-2-privacy
