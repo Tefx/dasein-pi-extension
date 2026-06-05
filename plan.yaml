@@ -5082,6 +5082,8 @@ phases:
     - docs/PRD.md#7-11-sensor-reload
     - docs/PRD.md#9-7-sensor-loading-and-reload
     - CONSTITUTION.md#testing-and-gates
+    depends_on:
+    - release-smoke-live-pi-tui
     agent: client-runtime-verifier
   - id: release-smoke-native-helper
     name: Run native helper live smoke or explicit skip/blocker report
