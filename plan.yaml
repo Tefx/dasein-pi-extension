@@ -2178,6 +2178,15 @@ phases:
       in a live TUI, not just fake host. 2. Non-TUI mode does not crash on guarded
       UI calls. 3. Evidence statuses update only mechanisms actually observed live.</risk_probes>
 
+
+      REVIEW-FIX ITERATION 1 LIVE MECHANISM COVERAGE EXPANSION:
+
+      Live Pi smoke must explicitly exercise or precisely block all live-only mechanisms:
+      launch flag parsing (`--dasein`), event publishing via `pi.events`, lifecycle
+      observation (`input` or fallback `before_agent_start`, plus `agent_end`), and
+      hidden custom-message context conversion, in addition to slash commands, context
+      hook, status/widget, and SettingsList.
+
       '
     verification: '- [ ] `npm run test:smoke -- tests/smoke/pi-settings-list.test.ts`
       or the documented live Pi equivalent is run with raw stdout/stderr, Pi version,
