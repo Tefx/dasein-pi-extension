@@ -2462,6 +2462,9 @@ phases:
       - [ ] Evidence proves SettingsList change path enters the FIFO config mutation
       queue and persists only the canonical changed path.
 
+      - [ ] Evidence proves literal bare `/dasein` in TUI mode opens SettingsList/configuration
+      UI, not a generic status/help command.
+
       '
     evidence_template: "## refs Read Confirmation (MANDATORY)\nFor each ref in this\
       \ step:\n- docs/TECHNICAL_DESIGN.md#testing-gate-matrix — <key passage or \"\
