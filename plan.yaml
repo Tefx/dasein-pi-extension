@@ -662,6 +662,9 @@ phases:
       - [ ] Product implementation files are not modified beyond importing contract
       stubs needed for compilation.
 
+      - [ ] Expected-red command tests explicitly cover `/dasein help` parsing, routing,
+      result typing, and deterministic output.
+
       '
     refs:
     - docs/TECHNICAL_DESIGN.md#testing-gate-matrix
