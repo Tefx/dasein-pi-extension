@@ -187,3 +187,12 @@ phases:
     Pi/TUI/native surfaces.
   depends_on:
   - system_wiring
+- id: finalization
+  name: Documentation Sync and Final Deep Review
+  status: locked
+  gate: Final gate opens only with doc sync, full conformance, wiring, architecture,
+    black-box, and evidence-ledger closure.
+  context: Synchronize docs with implementation evidence and run independent final
+    conformance, wiring, architecture, and black-box audits.
+  depends_on:
+  - release_smoke
