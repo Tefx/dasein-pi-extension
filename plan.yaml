@@ -642,6 +642,13 @@ phases:
       just direct calls. 3. Expected red exposes missing behavior without accepting
       fake-host proof as live proof.</risk_probes>
 
+
+      REVIEW-FIX ITERATION 1 HELP COMMAND OWNERSHIP:
+
+      The core command expected-red suite must explicitly cover `/dasein help` parsing,
+      routing precedence, deterministic result object, and user-facing help output.
+      Help is a core command and must not be routed as a sensor action.
+
       '
     verification: '- [ ] Test files are limited to tests/ and fixtures/helpers and
       cite the exact Technical Design gate matrix rows they implement.
