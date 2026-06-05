@@ -2808,6 +2808,14 @@ phases:
       `staleAfterMs`, and `initialRefresh`. Visible recurring interval controls and
       their ConfigManager mutation path are blocking evidence, not optional UI polish.
 
+
+      REVIEW-FIX ITERATION 3 SETTINGSLIST NEGATIVE EXTERNAL-KEY PROOF:
+
+      SettingsList must NOT create controls for invalid external keys, dotted keys,
+      expired external state, or malformed external events. This negative proof is
+      blocking and distinct from positive common-control coverage and complex-field
+      exclusion.
+
       '
     verification: '- [ ] Fake-host launch command/test is recorded exactly with raw
       output and surface captures.
@@ -2833,6 +2841,10 @@ phases:
       - [ ] Client runtime proof captures SettingsList common controls `enabled`,
       `ui`, `agent`, `intervalMs`, `timeoutMs`, `staleAfterMs`, and `initialRefresh`,
       including one recurring interval interaction.
+
+      - [ ] Client runtime proof captures negative SettingsList cases for invalid
+      external keys, dotted keys, expired external state, and malformed external events,
+      plus a valid external key baseline.
 
       '
     evidence_template: '## refs Read Confirmation (MANDATORY)
@@ -2960,6 +2972,27 @@ phases:
       - excluded_complex_fields_check: <geo.tags/lapse.agentFields remain outside
       flat SettingsList controls unless separately justified>
 
+
+      ## SettingsList Negative External-Key Evidence (MANDATORY)
+
+      - invalid_external_key_case: <payload/key used; proof no SettingsList control
+      rendered>
+
+      - dotted_external_key_case: <payload/key used; proof no SettingsList control
+      rendered>
+
+      - expired_external_state_case: <ttl/time scenario; proof no SettingsList control
+      rendered>
+
+      - malformed_external_event_case: <unknown field/multiline/overlong/control payload;
+      proof rejected and no SettingsList control rendered>
+
+      - valid_external_key_control_baseline: <valid key still renders `external.<key>.ui`/`external.<key>.agent`
+      controls>
+
+      - broad_external_controls_claim_rejected: Evidence that only proves valid controls
+      or complex-field exclusion is INCOMPLETE.
+
       '
     refs:
     - docs/TECHNICAL_DESIGN.md#verified-pi-mechanisms
@@ -2967,6 +3000,7 @@ phases:
     - docs/PRD.md#9-2-slash-commands
     - docs/PRD.md#9-4-tui
     - CONSTITUTION.md#quality-baselines
+    - docs/TECHNICAL_DESIGN.md#human-ui-rendering
     depends_on:
     - pi-runtime-extension-wiring
     - pi-runtime-tui-surfaces
