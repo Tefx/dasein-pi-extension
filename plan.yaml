@@ -1286,6 +1286,15 @@ phases:
       not prove feature availability, and feature availability does not override a
       below-minimum version.
 
+
+      REVIEW-FIX ITERATION 3 STATUS/RELOAD PAYLOAD FIELDS:
+
+      The plan explicitly owns the `/dasein status` payload fields `effectiveConfigVersion`,
+      `launchArgsApplied`, and `diskConfigLoaded`, and the reload payload/result fields
+      `launchReappliedPaths` and `runtimeOverriddenPaths`. Broad “payload shape” wording
+      is insufficient; evidence must name these fields and show values in success
+      and relevant failure/reload cases.
+
       '
     verification: '- [ ] `npm run typecheck` passes with raw stdout/stderr.
 
@@ -1307,6 +1316,10 @@ phases:
 
       - [ ] Core proof includes raw output for `tests/unit/commands-status.test.ts`
       and `tests/unit/commands-sensors.test.ts` with status/sensors payload coverage.
+
+      - [ ] Core proof raw output explicitly covers status fields `effectiveConfigVersion`,
+      `launchArgsApplied`, `diskConfigLoaded` and reload fields `launchReappliedPaths`,
+      `runtimeOverriddenPaths`.
 
       '
     evidence_template: "## refs Read Confirmation (MANDATORY)\nFor each ref in this\
@@ -1339,11 +1352,22 @@ phases:
       ## Protected Status/Sensors Command Tests (MANDATORY)\n- protected_test_files:\n\
       \  - tests/unit/commands-status.test.ts\n  - tests/unit/commands-sensors.test.ts\n\
       - status_payload_proof: <raw test/output evidence>\n- sensors_inspectability_proof:\
-      \ <raw test/output evidence>\n- deviation_record_if_changed: <none or justified>\n"
+      \ <raw test/output evidence>\n- deviation_record_if_changed: <none or justified>\n\
+      \n## Status / Reload Explicit Payload Fields Evidence (MANDATORY)\n- status_required_fields:\n\
+      \  - effectiveConfigVersion: <observed value; must be 1>\n  - launchArgsApplied:\
+      \ <observed boolean and scenario>\n  - diskConfigLoaded: <observed boolean and\
+      \ scenario>\n- reload_required_fields:\n  - launchReappliedPaths: <observed\
+      \ sorted path list and scenario>\n  - runtimeOverriddenPaths: <observed sorted\
+      \ path list and scenario>\n- raw_command_output: <paste `/dasein status` and\
+      \ `/dasein reload` result/test output>\n- failure_or_reload_case: <proof fields\
+      \ remain present/meaningful when disk config/sensor reload fails and old state\
+      \ is kept>\n- broad_payload_shape_claim_rejected: Evidence that does not name\
+      \ all five fields is INCOMPLETE.\n"
     refs:
     - docs/TECHNICAL_DESIGN.md#testing-gate-matrix
     - CONSTITUTION.md#testing-and-gates
     - docs/PRD.md#8-non-functional-requirements
+    - docs/TECHNICAL_DESIGN.md#command-result-and-output-contract
     depends_on:
     - core-config-state
     - core-sensor-runtime-loader
