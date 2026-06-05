@@ -2364,14 +2364,12 @@ phases:
       - failure_path_evidence: <proof or N/A>\n\n## checklist_receipt\n- <checklist\
       \ item 1>: satisfied | failed | blocked | unobserved — <evidence ref>\n- <checklist\
       \ item 2>: satisfied | failed | blocked | unobserved — <evidence ref>\n\n##\
-      \ SettingsList Common Sensor Controls Evidence (MANDATORY)\n- required_fields:\
-      \ [`enabled`, `ui`, `agent`, `intervalMs`, `timeoutMs`, `staleAfterMs`, `initialRefresh`]\n\
-      - rendered_controls_by_sensor: <clock/geo/lapse/user-added examples or exact\
-      \ blocker>\n- visible_recurring_interval_controls: <proof `intervalMs` visibility/configurability/disableability>\n\
-      - mutation_path: <SettingsList change -> FIFO ConfigManager queue -> canonical\
-      \ path validation/persistence -> runtime update>\n- excluded_complex_fields_check:\
-      \ <geo.tags/lapse.agentFields remain outside flat SettingsList controls unless\
-      \ separately justified>\n"
+      \ Minimum Pi Version / Status Evidence (MANDATORY)\n- minimumPiVersion: \"0.78.1\"\
+      \n- current_pi_version: <captured version or null/unavailable>\n- pi_binary_path:\
+      \ <path or unavailable>\n- below_minimum_case: <classification + no false support\
+      \ claim>\n- unavailable_version_case: <classification + no false support claim>\n\
+      - feature_probe_separation: <proof version check is distinct from API feature\
+      \ probes>\n- status_payload_sample: <includes piVersion, minimumPiVersion, piMechanisms[].evidenceStatuses>\n"
     refs:
     - docs/TECHNICAL_DESIGN.md#verified-pi-mechanisms
     - docs/TECHNICAL_DESIGN.md#data-flow
