@@ -5001,8 +5001,8 @@ phases:
       - [ ] Final verdict is OPEN or BLOCKED with explicit blockers, live-support
       status, and required actions.
 
-      - [ ] Final gate confirms SettingsList common timing/control obligations have
-      positive proof or exact owned blockers.
+      - [ ] Final gate confirms minimum Pi version/status classification has positive
+      proof or exact owned blockers and no false support claims.
 
       '
     evidence_template: '## refs Read Confirmation (MANDATORY)
