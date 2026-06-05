@@ -2864,6 +2864,13 @@ phases:
       from `<extension_root>/src/sensors/*.ts` in directory/package mode. No scanner,
       fallback, or reload path may treat `~/.pi/dasein/sensors` as a sensor directory.
 
+
+      REVIEW-FIX CATCHUP NATIVE HELPER OUTPUT CAPS:
+
+      Native helper stdout and stderr collection must each stop at `16KiB`. Later
+      proof/gates must explicitly review this cap instead of relying on broad helper
+      cleanup evidence.
+
       '
     verification: '- [ ] `npm run test:file -- tests/unit/sensors/clock.test.ts tests/unit/sensors/geo.test.ts
       tests/unit/sensors/lapse.test.ts tests/unit/sensor-loader.test.ts tests/unit/commands-status.test.ts
@@ -2897,6 +2904,9 @@ phases:
 
       - [ ] Sensor proof includes negative path evidence for `~/.pi/dasein/sensors`
       ignored/rejected during startup and `/dasein reload`.
+
+      - [ ] Sensor/native proof explicitly includes stdout and stderr `16KiB` cap
+      cases.
 
       '
     evidence_template: "## refs Read Confirmation (MANDATORY)\nFor each exact refs\
@@ -2975,7 +2985,11 @@ phases:
       \ <extension_root>/src/sensors/*.ts\n- startup_scan_case: <proof forbidden path\
       \ ignored/rejected>\n- manual_reload_case: <proof forbidden path ignored/rejected>\n\
       - no_fallback_case: <proof no fallback scanner reads ~/.pi/dasein/sensors>\n\
-      - status_or_load_error_behavior: <how rejected/ignored path is reported if applicable>\n"
+      - status_or_load_error_behavior: <how rejected/ignored path is reported if applicable>\n\
+      \n## Native Helper stdout/stderr 16KiB Cap Evidence (MANDATORY)\n- stdout_cap:\
+      \ 16KiB\n- stderr_cap: 16KiB\n- stdout_over_cap_case: <proof collection stops/rejects\
+      \ safely>\n- stderr_over_cap_case: <proof collection stops/rejects safely>\n\
+      - no_unbounded_memory_case: <proof bounded collection>\n"
     refs:
     - docs/TECHNICAL_DESIGN.md#testing-gate-matrix
     - CONSTITUTION.md#testing-and-gates
