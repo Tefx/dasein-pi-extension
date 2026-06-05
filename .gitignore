@@ -1,0 +1,29 @@
+# Dependencies / package managers
+node_modules/
+.pnpm-store/
+.yarn/
+
+# Build outputs
+dist/
+build/
+coverage/
+*.tsbuildinfo
+
+# Runtime caches
+.cache/
+.cache-*/
+*.log
+
+# Dasein local runtime state (if running from repo during development)
+.dasein/
+
+# macOS / editors
+.DS_Store
+.idea/
+.vscode/
+
+# Environment / secrets
+.env
+.env.*
+!.env.example
+plan.yaml.lock
