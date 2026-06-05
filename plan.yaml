@@ -82,11 +82,11 @@ phases:
       checklist_item | evidence_field | status | non_intersection_or_escalation |
 
       | scaffold.entrypoint | TECHNICAL_DESIGN > Implementation Scaffold | root index.ts
-      delegates to ./src/index.ts and package scripts exist | scaffold.contracts |
+      delegates to ./src/index.ts and package scripts exist | scaffold-contracts |
       package and entrypoint contract defined | contract_artifacts | OWNED | n/a |
 
       | scaffold.no_deps | CONSTITUTION > Architectural Dogmas | zero non-Pi runtime
-      npm dependencies | scaffold.contracts | dependency contract defined | package_contract
+      npm dependencies | scaffold-contracts | dependency contract defined | package_contract
       | OWNED | n/a |
 
       CONSTRAINTS: Contract-only; stubs/types/docstrings/interfaces allowed; no business
