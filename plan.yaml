@@ -2329,6 +2329,15 @@ phases:
       `/dasein status` must report structured `PiMechanismError`/evidence status instead
       of crashing or silently claiming support.
 
+
+      REVIEW-FIX ITERATION 2 BARE `/dasein` OWNERSHIP:
+
+      Bare `/dasein` is a required public command behavior, not an interchangeable
+      alias. In TUI mode it MUST open the configuration UI/SettingsList. Outside TUI
+      mode it MUST fall back to concise deterministic help/status output. It MUST
+      NOT mutate config, disk, sensor state, or external state. Evidence must use
+      the literal bare `/dasein`; wording such as "or equivalent" is insufficient.
+
       '
     verification: '- [ ] `npm run test:file -- tests/integration/pi-extension.test.ts`
       passes through the fake Pi host with raw output.
