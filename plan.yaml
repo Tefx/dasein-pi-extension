@@ -6193,6 +6193,13 @@ phases:
       insufficient; status, sensors, and SettingsList evidence must name all five
       fields where those surfaces expose sensor metadata.
 
+
+      REVIEW-FIX ITERATION 6 NATIVE HELPER DETERMINISTIC CONSTANTS:
+
+      Native helper supervision must explicitly verify timeout `3000ms`, graceful
+      kill grace `250ms`, and backoff sequence `1m -> 5m -> 15m`. Broad timeout/backoff/cleanup
+      wording is insufficient.
+
       '
     verification: '- [ ] Requirements register covers every material requirement family
       from Constitution, PRD, and Technical Design touched by the implementation.
@@ -6238,6 +6245,9 @@ phases:
       - [ ] Full conformance audit includes separate rows for `acknowledgedManifestDigest`,
       `acknowledgementRequired`, `acknowledgementSatisfied`, `defaultEnabled`, and
       `effectiveEnabled`.
+
+      - [ ] Full conformance audit includes native helper timeout `3000ms`, kill grace
+      `250ms`, and backoff `1m -> 5m -> 15m` as separate requirement rows.
 
       '
     evidence_template: "## refs Read Confirmation (MANDATORY)\nFor each ref in this\
@@ -6334,7 +6344,14 @@ phases:
       \ runtime enabled state after risk rules>\n- surfaces_checked: </dasein status,\
       \ /dasein sensors, SettingsList where applicable>\n- forced_disabled_matrix:\
       \ <remote/network, recurring/background, both, safe sensor>\n- broad_acknowledgement_claim_rejected:\
-      \ Evidence that does not name all five fields is INCOMPLETE.\n"
+      \ Evidence that does not name all five fields is INCOMPLETE.\n\n## Native Helper\
+      \ Deterministic Constants Evidence (MANDATORY)\n- timeout_ms: 3000\n- kill_grace_ms:\
+      \ 250\n- backoff_sequence: 1m -> 5m -> 15m\n- timeout_case: <helper exceeds\
+      \ 3000ms; terminate then force-kill after 250ms>\n- backoff_cases: <first/second/third\
+      \ failure delays and manual refresh bypass behavior>\n- orphan_process_check:\
+      \ <proof no helper remains after timeout/shutdown>\n- platform_classification:\
+      \ <darwin live/typecheck or non-darwin explicit skip>\n- broad_native_claim_rejected:\
+      \ Evidence that omits any constant is INCOMPLETE.\n"
     refs:
     - CONSTITUTION.md
     - docs/PRD.md
@@ -6343,6 +6360,7 @@ phases:
     - docs/TECHNICAL_DESIGN.md#human-ui-rendering
     - docs/TECHNICAL_DESIGN.md#builtin-sensors
     - docs/TECHNICAL_DESIGN.md#core-contracts
+    - docs/TECHNICAL_DESIGN.md#testing-gate-matrix
     depends_on:
     - finalization-doc-sync
     - finalization-full-wiring-audit
