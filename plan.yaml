@@ -1962,6 +1962,14 @@ phases:
       exposes it, and rename over the target atomically. Failed writes must leave
       previous files and active runtime unchanged.
 
+
+      REVIEW-FIX ITERATION 8 EXTERNAL EVENT UNICODE SEPARATOR REJECTION:
+
+      External event validation must explicitly reject Unicode line separator U+2028
+      and paragraph separator U+2029 in `agent`, `ui`, and `source` strings, in addition
+      to ASCII control characters, CR, LF, and multiline payloads. Dasein must reject
+      without normalizing or mutating state.
+
       '
     verification: '- [ ] All core phase steps are complete with refs confirmations
       and checklist receipts.
@@ -2002,6 +2010,9 @@ phases:
 
       - [ ] Gate decision basis reviews atomic write fsync evidence and rejects broad
       atomic-write proof that omits fsync availability handling.
+
+      - [ ] Gate decision basis reviews U+2028 and U+2029 external event rejection
+      evidence and rejects broad multiline/control-only proof.
 
       '
     evidence_template: "## refs Read Confirmation (MANDATORY)\nFor each exact refs\
@@ -2100,7 +2111,15 @@ phases:
       \ file remains unchanged>\n- failed_write_preserves_active_runtime: <proof active\
       \ config/runtime changes only after persistence succeeds>\n- applies_to: <config.json\
       \ and state.json/lapse reset where applicable>\n- broad_atomic_claim_rejected:\
-      \ Evidence that omits fsync availability handling is INCOMPLETE.\n"
+      \ Evidence that omits fsync availability handling is INCOMPLETE.\n\n## External\
+      \ Event Unicode Separator Evidence (MANDATORY)\n- U+2028_agent_case: <rejected\
+      \ without state mutation>\n- U+2028_ui_case: <rejected without state mutation>\n\
+      - U+2028_source_case: <rejected without state mutation>\n- U+2029_agent_case:\
+      \ <rejected without state mutation>\n- U+2029_ui_case: <rejected without state\
+      \ mutation>\n- U+2029_source_case: <rejected without state mutation>\n- ascii_control_baseline:\
+      \ <CR/LF/tab/control rejection>\n- no_normalization_or_truncation: <proof payload\
+      \ is rejected, not repaired>\n- broad_multiline_claim_rejected: Evidence that\
+      \ says only multiline/control without U+2028 and U+2029 is INCOMPLETE.\n"
     refs:
     - CONSTITUTION.md#testing-and-gates
     - docs/TECHNICAL_DESIGN.md#testing-gate-matrix
@@ -2110,6 +2129,7 @@ phases:
     - docs/TECHNICAL_DESIGN.md#verified-pi-mechanisms
     - docs/TECHNICAL_DESIGN.md#data-flow
     - docs/TECHNICAL_DESIGN.md#rendering-contract
+    - docs/PRD.md#9-6-external-state
     depends_on:
     - core-static-proof
     - core-contracts
