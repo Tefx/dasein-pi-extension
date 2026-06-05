@@ -7455,6 +7455,13 @@ phases:
       `display:false`, `customType:"dasein"`, deterministic timestamp shape, and conversion
       to an LLM user message. Broad context-hook or hidden-message wording is insufficient.
 
+
+      REVIEW-FIX ITERATION 6 LIFECYCLE EXACT PROOF:
+
+      Lifecycle proof must explicitly verify `session_start`, `session_shutdown`,
+      and `1000ms` per-sensor cleanup timeout. Shutdown must abort active refresh/helper
+      work and aggregate cleanup errors without blocking request construction.
+
       '
     verification: '- [ ] All finalization steps are complete with refs confirmations
       and checklist receipts.
@@ -7506,6 +7513,9 @@ phases:
 
       - [ ] Final gate confirms context injection CustomMessage fields and conversion-to-LLM
       proof have positive evidence or exact blockers.
+
+      - [ ] Final gate confirms exact lifecycle proof for `session_start`, `session_shutdown`,
+      and `1000ms` per-sensor cleanup timeout or owned blockers.
 
       '
     evidence_template: "## refs Read Confirmation (MANDATORY)\nFor each ref in this\
@@ -7630,7 +7640,14 @@ phases:
       \ <proof hidden message is not rendered as normal chat UI content>\n- bounded_content_check:\
       \ <pre-rendered ambient context string respects maxAgentChars and neutral label>\n\
       - no_request_path_io: <proof injection reads only pre-rendered memory>\n- broad_context_claim_rejected:\
-      \ Evidence without all CustomMessage fields and conversion proof is INCOMPLETE.\n"
+      \ Evidence without all CustomMessage fields and conversion proof is INCOMPLETE.\n\
+      \n## Lifecycle Exact Proof Evidence (MANDATORY)\n- session_start: <startup registration/config/sensor\
+      \ initial refresh evidence>\n- session_shutdown: <cleanup event evidence>\n\
+      - per_sensor_cleanup_timeout_ms: 1000\n- active_refresh_abort: <proof active\
+      \ refresh is aborted before cleanup>\n- cleanup_error_aggregation: <proof errors\
+      \ are reported/aggregated deterministically>\n- request_path_non_blocking: <proof\
+      \ lifecycle cleanup does not run during request construction>\n- broad_lifecycle_claim_rejected:\
+      \ Evidence without session_start, session_shutdown, and 1000ms timeout is INCOMPLETE.\n"
     refs:
     - CONSTITUTION.md
     - docs/PRD.md
