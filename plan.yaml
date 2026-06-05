@@ -5303,6 +5303,15 @@ phases:
       `staleAfterMs`, and `initialRefresh`. Visible recurring interval controls and
       their ConfigManager mutation path are blocking evidence, not optional UI polish.
 
+
+      REVIEW-FIX ITERATION 3 STATUS/RELOAD PAYLOAD FIELDS:
+
+      The plan explicitly owns the `/dasein status` payload fields `effectiveConfigVersion`,
+      `launchArgsApplied`, and `diskConfigLoaded`, and the reload payload/result fields
+      `launchReappliedPaths` and `runtimeOverriddenPaths`. Broad “payload shape” wording
+      is insufficient; evidence must name these fields and show values in success
+      and relevant failure/reload cases.
+
       '
     verification: '- [ ] All finalization steps are complete with refs confirmations
       and checklist receipts.
@@ -5325,137 +5334,66 @@ phases:
       - [ ] Final gate confirms SettingsList common timing/control obligations have
       positive proof or exact owned blockers.
 
-      '
-    evidence_template: '## refs Read Confirmation (MANDATORY)
-
-      For each ref in this step:
-
-      - CONSTITUTION.md — <key passage or "NOT READ: <reason>">
-
-      - docs/PRD.md — <key passage or "NOT READ: <reason>">
-
-      - docs/TECHNICAL_DESIGN.md — <key passage or "NOT READ: <reason>">
-
-
-      ## side_effect_budget
-
-      - allowed: <copy allowed side effects from step description and confirm actual
-      changes stayed inside them>
-
-      - forbidden: <copy forbidden side effects from step description and confirm
-      none occurred>
-
-
-      ## risk_probes
-
-      - probe_1: <result/evidence>
-
-      - probe_2: <result/evidence>
-
-      - probe_3: <result/evidence or N/A>
-
-
-      ## verify-only purity
-
-      - role: read-only verifier/gate/auditor
-
-      - files_changed: MUST be none
-
-      - mutation_performed: MUST be false
-
-      - if mutation was necessary: STOP and report blocker for orchestrator/planner
-
-
-      ## raw_command_output
-
-      - command: <exact command or N/A>
-
-      - raw_stdout: <paste raw output or N/A>
-
-      - raw_stderr: <paste raw error output or N/A>
-
-      - exit_code: <code or N/A>
-
-
-      ## gate_decision_basis
-
-      | requirement_or_step_ref | evidence_ref | proof_status | unresolved_status
-      | blocks_remaining_gates | closure_path |
-
-      | --- | --- | --- | --- | --- | --- |
-
-      | <ref> | <artifact> | PROVEN|UNPROVEN|NEEDS_TEST|BLOCKED | <status> | yes/no
-      | <required action> |
-
-      - final_recommendation: OPEN | OPEN_WITH_DEBT | BLOCKED
-
-      - blockers: <list>
-
-      - required_actions: <list>
-
-
-      ## checklist_receipt
-
-      - <checklist item 1>: satisfied | failed | blocked | unobserved — <evidence
-      ref>
-
-      - <checklist item 2>: satisfied | failed | blocked | unobserved — <evidence
-      ref>
-
-
-      ## Minimum Pi Version / Status Evidence (MANDATORY)
-
-      - minimumPiVersion: "0.78.1"
-
-      - current_pi_version: <captured version or null/unavailable>
-
-      - pi_binary_path: <path or unavailable>
-
-      - below_minimum_case: <classification + no false support claim>
-
-      - unavailable_version_case: <classification + no false support claim>
-
-      - feature_probe_separation: <proof version check is distinct from API feature
-      probes>
-
-      - status_payload_sample: <includes piVersion, minimumPiVersion, piMechanisms[].evidenceStatuses>
-
-
-      ## Bare `/dasein` Command Evidence (MANDATORY)
-
-      - literal_command: `/dasein`
-
-      - tui_mode_result: <SettingsList/configuration UI opened; artifact/capture required>
-
-      - non_tui_result: <concise deterministic help/status fallback; raw output required>
-
-      - config_mutation_check: <proof no config/disk/sensor/external mutation occurred>
-
-      - rejected_substitute: Evidence using only `/dasein status`, `/dasein help`,
-      or "equivalent command" is INCOMPLETE.
-
-
-      ## SettingsList Common Sensor Controls Evidence (MANDATORY)
-
-      - required_fields: [`enabled`, `ui`, `agent`, `intervalMs`, `timeoutMs`, `staleAfterMs`,
-      `initialRefresh`]
-
-      - rendered_controls_by_sensor: <clock/geo/lapse/user-added examples or exact
-      blocker>
-
-      - visible_recurring_interval_controls: <proof `intervalMs` visibility/configurability/disableability>
-
-      - mutation_path: <SettingsList change -> FIFO ConfigManager queue -> canonical
-      path validation/persistence -> runtime update>
-
-      - excluded_complex_fields_check: <geo.tags/lapse.agentFields remain outside
-      flat SettingsList controls unless separately justified>
+      - [ ] Final gate confirms exact status/reload payload fields `effectiveConfigVersion`,
+      `launchArgsApplied`, `diskConfigLoaded`, `launchReappliedPaths`, and `runtimeOverriddenPaths`
+      have positive proof or owned blockers.
 
       '
+    evidence_template: "## refs Read Confirmation (MANDATORY)\nFor each ref in this\
+      \ step:\n- CONSTITUTION.md — <key passage or \"NOT READ: <reason>\">\n- docs/PRD.md\
+      \ — <key passage or \"NOT READ: <reason>\">\n- docs/TECHNICAL_DESIGN.md — <key\
+      \ passage or \"NOT READ: <reason>\">\n\n## side_effect_budget\n- allowed: <copy\
+      \ allowed side effects from step description and confirm actual changes stayed\
+      \ inside them>\n- forbidden: <copy forbidden side effects from step description\
+      \ and confirm none occurred>\n\n## risk_probes\n- probe_1: <result/evidence>\n\
+      - probe_2: <result/evidence>\n- probe_3: <result/evidence or N/A>\n\n## verify-only\
+      \ purity\n- role: read-only verifier/gate/auditor\n- files_changed: MUST be\
+      \ none\n- mutation_performed: MUST be false\n- if mutation was necessary: STOP\
+      \ and report blocker for orchestrator/planner\n\n## raw_command_output\n- command:\
+      \ <exact command or N/A>\n- raw_stdout: <paste raw output or N/A>\n- raw_stderr:\
+      \ <paste raw error output or N/A>\n- exit_code: <code or N/A>\n\n## gate_decision_basis\n\
+      | requirement_or_step_ref | evidence_ref | proof_status | unresolved_status\
+      \ | blocks_remaining_gates | closure_path |\n| --- | --- | --- | --- | --- |\
+      \ --- |\n| <ref> | <artifact> | PROVEN|UNPROVEN|NEEDS_TEST|BLOCKED | <status>\
+      \ | yes/no | <required action> |\n- final_recommendation: OPEN | OPEN_WITH_DEBT\
+      \ | BLOCKED\n- blockers: <list>\n- required_actions: <list>\n\n## checklist_receipt\n\
+      - <checklist item 1>: satisfied | failed | blocked | unobserved — <evidence\
+      \ ref>\n- <checklist item 2>: satisfied | failed | blocked | unobserved — <evidence\
+      \ ref>\n\n## Minimum Pi Version / Status Evidence (MANDATORY)\n- minimumPiVersion:\
+      \ \"0.78.1\"\n- current_pi_version: <captured version or null/unavailable>\n\
+      - pi_binary_path: <path or unavailable>\n- below_minimum_case: <classification\
+      \ + no false support claim>\n- unavailable_version_case: <classification + no\
+      \ false support claim>\n- feature_probe_separation: <proof version check is\
+      \ distinct from API feature probes>\n- status_payload_sample: <includes piVersion,\
+      \ minimumPiVersion, piMechanisms[].evidenceStatuses>\n\n## Bare `/dasein` Command\
+      \ Evidence (MANDATORY)\n- literal_command: `/dasein`\n- tui_mode_result: <SettingsList/configuration\
+      \ UI opened; artifact/capture required>\n- non_tui_result: <concise deterministic\
+      \ help/status fallback; raw output required>\n- config_mutation_check: <proof\
+      \ no config/disk/sensor/external mutation occurred>\n- rejected_substitute:\
+      \ Evidence using only `/dasein status`, `/dasein help`, or \"equivalent command\"\
+      \ is INCOMPLETE.\n\n## SettingsList Common Sensor Controls Evidence (MANDATORY)\n\
+      - required_fields: [`enabled`, `ui`, `agent`, `intervalMs`, `timeoutMs`, `staleAfterMs`,\
+      \ `initialRefresh`]\n- rendered_controls_by_sensor: <clock/geo/lapse/user-added\
+      \ examples or exact blocker>\n- visible_recurring_interval_controls: <proof\
+      \ `intervalMs` visibility/configurability/disableability>\n- mutation_path:\
+      \ <SettingsList change -> FIFO ConfigManager queue -> canonical path validation/persistence\
+      \ -> runtime update>\n- excluded_complex_fields_check: <geo.tags/lapse.agentFields\
+      \ remain outside flat SettingsList controls unless separately justified>\n\n\
+      ## Status / Reload Explicit Payload Fields Evidence (MANDATORY)\n- status_required_fields:\n\
+      \  - effectiveConfigVersion: <observed value; must be 1>\n  - launchArgsApplied:\
+      \ <observed boolean and scenario>\n  - diskConfigLoaded: <observed boolean and\
+      \ scenario>\n- reload_required_fields:\n  - launchReappliedPaths: <observed\
+      \ sorted path list and scenario>\n  - runtimeOverriddenPaths: <observed sorted\
+      \ path list and scenario>\n- raw_command_output: <paste `/dasein status` and\
+      \ `/dasein reload` result/test output>\n- failure_or_reload_case: <proof fields\
+      \ remain present/meaningful when disk config/sensor reload fails and old state\
+      \ is kept>\n- broad_payload_shape_claim_rejected: Evidence that does not name\
+      \ all five fields is INCOMPLETE.\n"
     refs:
     - CONSTITUTION.md
     - docs/PRD.md
     - docs/TECHNICAL_DESIGN.md
+    - docs/TECHNICAL_DESIGN.md#command-result-and-output-contract
     depends_on:
     - finalization-full-spec-conformance
     - finalization-architecture-concurrency-review
