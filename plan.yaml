@@ -293,6 +293,86 @@ phases:
     depends_on:
     - scaffold-tests
     agent: frontend-engineer
+  - id: scaffold-static-proof
+    name: Verify scaffold static and fake-host foundation
+    status: pending
+    description: 'step_type: verification
+
+      PROOF ARTIFACT: Independent local-check proof that scaffold/tooling and fake-host
+      contracts are usable without live Pi. Protects scaffold-gate and all downstream
+      implementation gates.
+
+      As an independent verifier, run package/static/fake-host checks and report blockers
+      as findings rather than patching.
+
+      <side_effect_budget>Allowed: read-only test execution and report. Forbidden:
+      modifying code, docs, config, or plan.</side_effect_budget>
+
+      <risk_probes>1. npm test does not require live Pi. 2. test:smoke is present
+      but not part of ordinary npm test. 3. package/static assertions distinguish
+      peerDependencies from runtime dependencies.</risk_probes>'
+    verification: '- [ ] Raw output from npm run typecheck or exact scaffold blocker
+      is captured.
+
+      - [ ] Raw output from targeted scaffold/static/fake-host tests is captured.
+
+      - [ ] Report classifies any failures with closure path and confirms no live
+      support claim is inferred.'
+    evidence_template: '## refs Read Confirmation (MANDATORY)
+
+      For each ref in this step:
+
+      - CONSTITUTION.md — <key passage or NOT READ: reason>
+
+      - docs/PRD.md — <key passage or NOT READ: reason>
+
+      - docs/TECHNICAL_DESIGN.md — <key passage or NOT READ: reason>
+
+
+      ## checklist_receipt
+
+      - satisfied: []
+
+      - failed: []
+
+      - blocked: []
+
+      - unobserved: []
+
+
+      ## Behavioral Proof Register (MANDATORY for proof/gate steps)
+
+      | requirement_ref | behavior_claim | runtime_proof_expected | evidence_ref |
+      status | closure_path | gate_decision_basis |
+
+      | --- | --- | --- | --- | --- | --- | --- |
+
+      | <ref> | <claim> | <proof> | <artifact> | PROVEN/NEEDS_TEST/UNPROVEN/BLOCKED
+      | <fix/retest/non-intersection> | <OPEN/BLOCK basis> |
+
+
+      ## Evidence
+
+      - artifact_paths: <files, tests, logs, screenshots, terminal captures, or matrices>
+
+      - commands: <exact commands, if applicable>
+
+      - raw_output: <paste stdout/stderr or explain non-execution blocker>
+
+      - side_effect_budget_observed: <allowed/forbidden side effects checked>
+
+      - risk_probes: <explicit answers to the risk probes>
+
+      - headline: PASS | PASS_WITH_DEBT | BLOCKED
+
+      '
+    refs:
+    - CONSTITUTION.md
+    - docs/PRD.md
+    - docs/TECHNICAL_DESIGN.md
+    depends_on:
+    - scaffold-complete
+    agent: integration-verifier
 - id: core
   name: Core Broker Contracts and Implementation
   status: locked
