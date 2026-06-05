@@ -2145,6 +2145,9 @@ phases:
     - docs/TECHNICAL_DESIGN.md#testing-gate-matrix
     depends_on:
     - release-smoke-support-claim-ledger
+    - release-smoke-live-pi-tui
+    - release-smoke-dynamic-reload
+    - release-smoke-native-helper
     agent: gate-reviewer
 - id: finalization
   name: Documentation Sync and Final Deep Review
