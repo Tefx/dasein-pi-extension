@@ -1093,6 +1093,13 @@ phases:
       active registry. 2. Manifest digest changes invalidate acknowledgement. 3. Disabled
       sensors do not refresh or inject enabled-state values.</risk_probes>
 
+
+      REVIEW-FIX ITERATION 6 LIFECYCLE EXACT PROOF:
+
+      Lifecycle proof must explicitly verify `session_start`, `session_shutdown`,
+      and `1000ms` per-sensor cleanup timeout. Shutdown must abort active refresh/helper
+      work and aggregate cleanup errors without blocking request construction.
+
       '
     verification: '- [ ] `npm run test:file -- tests/unit/sensor-loader.test.ts tests/unit/reload.test.ts
       tests/unit/install-mode.test.ts tests/unit/sensor-runtime.test.ts tests/unit/lifecycle.test.ts`
@@ -1106,6 +1113,9 @@ phases:
 
       - [ ] Evidence proves observe/refresh/cleanup paths do not perform request-path
       I/O and no automatic file watcher exists.
+
+      - [ ] Evidence proves sensor lifecycle cleanup uses `1000ms` per-sensor timeout,
+      aborts active refreshes, and aggregates cleanup errors deterministically.
 
       '
     evidence_template: "## refs Read Confirmation (MANDATORY)\nFor each ref in this\
@@ -1130,13 +1140,22 @@ phases:
       - artifacts: <contracts/tests/outputs created>\n- main_path_evidence: <proof>\n\
       - failure_path_evidence: <proof or N/A>\n\n## checklist_receipt\n- <checklist\
       \ item 1>: satisfied | failed | blocked | unobserved — <evidence ref>\n- <checklist\
-      \ item 2>: satisfied | failed | blocked | unobserved — <evidence ref>\n"
+      \ item 2>: satisfied | failed | blocked | unobserved — <evidence ref>\n\n##\
+      \ Lifecycle Exact Proof Evidence (MANDATORY)\n- session_start: <startup registration/config/sensor\
+      \ initial refresh evidence>\n- session_shutdown: <cleanup event evidence>\n\
+      - per_sensor_cleanup_timeout_ms: 1000\n- active_refresh_abort: <proof active\
+      \ refresh is aborted before cleanup>\n- cleanup_error_aggregation: <proof errors\
+      \ are reported/aggregated deterministically>\n- request_path_non_blocking: <proof\
+      \ lifecycle cleanup does not run during request construction>\n- broad_lifecycle_claim_rejected:\
+      \ Evidence without session_start, session_shutdown, and 1000ms timeout is INCOMPLETE.\n"
     refs:
     - CONSTITUTION.md#extension-and-sensor-laws
     - docs/TECHNICAL_DESIGN.md#sensor-loading-and-reload
     - docs/PRD.md#7-2-sensor-model
     - docs/PRD.md#7-11-sensor-reload
     - docs/TECHNICAL_DESIGN.md#core-contracts
+    - docs/TECHNICAL_DESIGN.md#data-flow
+    - docs/TECHNICAL_DESIGN.md#testing-gate-matrix
     depends_on:
     - core-tests
     - core-behavior-guardrails
