@@ -2944,6 +2944,16 @@ phases:
       blocking and distinct from positive common-control coverage and complex-field
       exclusion.
 
+
+      REVIEW-FIX ITERATION 4 GEO EXACT PRIVACY FIELDS:
+
+      Geo exact-location behavior must explicitly name and verify both `sensors.geo.exactCoordinates`
+      and `sensors.geo.exactAddress`. Exact coordinate output requires `sensors.geo.agent
+      === true`, `sensors.geo.precision === "exact"`, and `sensors.geo.exactCoordinates
+      === true`. Exact address output requires `sensors.geo.agent === true`, `sensors.geo.precision
+      === "exact"`, and `sensors.geo.exactAddress === true`. Broad "exact privacy
+      gates" wording is insufficient.
+
       '
     verification: '- [ ] Fake-host launch command/test is recorded exactly with raw
       output and surface captures.
@@ -2973,6 +2983,9 @@ phases:
       - [ ] Client runtime proof captures negative SettingsList cases for invalid
       external keys, dotted keys, expired external state, and malformed external events,
       plus a valid external key baseline.
+
+      - [ ] Client runtime proof captures `sensors.geo.exactCoordinates` and `sensors.geo.exactAddress`
+      SettingsList controls or exact blockers.
 
       '
     evidence_template: '## refs Read Confirmation (MANDATORY)
@@ -3121,6 +3134,31 @@ phases:
       - broad_external_controls_claim_rejected: Evidence that only proves valid controls
       or complex-field exclusion is INCOMPLETE.
 
+
+      ## Geo Exact Privacy Fields Evidence (MANDATORY)
+
+      - exactCoordinates_field: <schema/default/control/proof for `sensors.geo.exactCoordinates`>
+
+      - exactAddress_field: <schema/default/control/proof for `sensors.geo.exactAddress`>
+
+      - exact_coordinate_positive_case: <agent=true + precision=exact + exactCoordinates=true
+      + fresh coordinates>
+
+      - exact_coordinate_negative_cases: <agent false / non-exact precision / exactCoordinates
+      false / stale or missing coordinates>
+
+      - exact_address_positive_case: <agent=true + precision=exact + exactAddress=true
+      + helper placemark/address>
+
+      - exact_address_negative_cases: <agent false / non-exact precision / exactAddress
+      false / missing placemark/address>
+
+      - settingslist_simple_field_controls: <proof simple boolean fields are exposed
+      where SettingsList is available>
+
+      - broad_gate_claim_rejected: Evidence that says only "exact privacy gates" without
+      both field names is INCOMPLETE.
+
       '
     refs:
     - docs/TECHNICAL_DESIGN.md#verified-pi-mechanisms
@@ -3129,6 +3167,7 @@ phases:
     - docs/PRD.md#9-4-tui
     - CONSTITUTION.md#quality-baselines
     - docs/TECHNICAL_DESIGN.md#human-ui-rendering
+    - docs/TECHNICAL_DESIGN.md#builtin-sensors
     depends_on:
     - pi-runtime-extension-wiring
     - pi-runtime-tui-surfaces
