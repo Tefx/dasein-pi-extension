@@ -1748,6 +1748,13 @@ phases:
       matching regex `[A-Za-z0-9_.:-]{1,32}`. Evidence must include boundary accepts/rejects
       and must not rely on broad config-validation wording.
 
+
+      REVIEW-FIX ITERATION 6 CONTEXT INJECTION CUSTOMMESSAGE FIELDS:
+
+      Context injection proof must explicitly verify hidden Pi `CustomMessage` fields:
+      `display:false`, `customType:"dasein"`, deterministic timestamp shape, and conversion
+      to an LLM user message. Broad context-hook or hidden-message wording is insufficient.
+
       '
     verification: '- [ ] All core phase steps are complete with refs confirmations
       and checklist receipts.
@@ -1776,6 +1783,9 @@ phases:
 
       - [ ] Gate decision basis reviews exact `core.maxAgentChars` and `core.injectedLabel`
       validation evidence; broad config-validation proof is rejected.
+
+      - [ ] Gate decision basis reviews exact CustomMessage fields `display:false`,
+      `customType:"dasein"`, timestamp shape, and conversion proof obligations.
 
       '
     evidence_template: "## refs Read Confirmation (MANDATORY)\nFor each ref in this\
@@ -1825,13 +1835,23 @@ phases:
       \ ambient_ctx>\n- injectedLabel_reject_cases: <empty, length 33, invalid characters,\
       \ whitespace/control>\n- raw_command_output: <tests/commands proving deterministic\
       \ validation>\n- broad_config_claim_rejected: Evidence that says only \"config\
-      \ validation\" without these two exact rules is INCOMPLETE.\n"
+      \ validation\" without these two exact rules is INCOMPLETE.\n\n## Context Injection\
+      \ CustomMessage Evidence (MANDATORY)\n- display: false\n- customType: \"dasein\"\
+      \n- timestamp_shape: <deterministic/valid timestamp shape used in injected CustomMessage>\n\
+      - conversion_to_llm_user_message: <proof hidden custom message becomes LLM user-message\
+      \ input>\n- ui_visibility_check: <proof hidden message is not rendered as normal\
+      \ chat UI content>\n- bounded_content_check: <pre-rendered ambient context string\
+      \ respects maxAgentChars and neutral label>\n- no_request_path_io: <proof injection\
+      \ reads only pre-rendered memory>\n- broad_context_claim_rejected: Evidence\
+      \ without all CustomMessage fields and conversion proof is INCOMPLETE.\n"
     refs:
     - CONSTITUTION.md#testing-and-gates
     - docs/TECHNICAL_DESIGN.md#testing-gate-matrix
     - docs/PRD.md#9-acceptance-criteria
     - docs/TECHNICAL_DESIGN.md#command-result-and-output-contract
     - docs/TECHNICAL_DESIGN.md#core-contracts
+    - docs/TECHNICAL_DESIGN.md#verified-pi-mechanisms
+    - docs/TECHNICAL_DESIGN.md#data-flow
     depends_on:
     - core-static-proof
     - core-contracts
