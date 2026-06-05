@@ -1552,6 +1552,14 @@ phases:
       requirement remains owned by release_smoke, not hidden. 3. User-added sensor
       import-time code is represented as trusted local code, not sandboxed.</risk_probes>
 
+
+      REVIEW-FIX ITERATION 1 BUILTIN TOP-LEVEL SIDE-EFFECT PROOF:
+
+      First-party/builtin sensor modules must have static proof of no top-level filesystem,
+      subprocess, network, timer, native helper, config, refresh, or action side effects.
+      Sensor behavior must run only through declared refresh/observe/action hooks
+      under core runtime control.
+
       '
     verification: '- [ ] All sensors phase steps are complete with refs confirmations
       and checklist receipts.
