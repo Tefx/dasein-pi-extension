@@ -2986,9 +2986,8 @@ phases:
       - [ ] Final gate verdict is OPEN or BLOCKED with explicit blockers and required
       actions.
 
-      - [ ] Gate decision basis reviews exact SettingsList common sensor fields `enabled`,
-      `ui`, `agent`, `intervalMs`, `timeoutMs`, `staleAfterMs`, `initialRefresh` and
-      visible recurring interval mutation evidence.
+      - [ ] Gate decision basis reviews `minimumPiVersion: "0.78.1"`, current version
+      capture, below-minimum/unavailable classification, and feature-probe separation.
 
       '
     evidence_template: '## refs Read Confirmation (MANDATORY)
