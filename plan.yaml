@@ -2517,6 +2517,15 @@ phases:
       the fake SettingsList path. 2. Captures show meaningful non-blank status/widget/settings
       output. 3. Every mechanism remains LIVE_SMOKE_PENDING until release smoke.</risk_probes>
 
+
+      REVIEW-FIX ITERATION 2 BARE `/dasein` OWNERSHIP:
+
+      Bare `/dasein` is a required public command behavior, not an interchangeable
+      alias. In TUI mode it MUST open the configuration UI/SettingsList. Outside TUI
+      mode it MUST fall back to concise deterministic help/status output. It MUST
+      NOT mutate config, disk, sensor state, or external state. Evidence must use
+      the literal bare `/dasein`; wording such as "or equivalent" is insufficient.
+
       '
     verification: '- [ ] Fake-host launch command/test is recorded exactly with raw
       output and surface captures.
