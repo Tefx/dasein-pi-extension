@@ -6658,6 +6658,13 @@ phases:
       to ASCII control characters, CR, LF, and multiline payloads. Dasein must reject
       without normalizing or mutating state.
 
+
+      REVIEW-FIX CATCHUP NATIVE HELPER OUTPUT CAPS:
+
+      Native helper stdout and stderr collection must each stop at `16KiB`. Later
+      proof/gates must explicitly review this cap instead of relying on broad helper
+      cleanup evidence.
+
       '
     verification: '- [ ] Black-box tests/commands use documented package scripts,
       slash commands, launch flag, config files, and event payloads only.
@@ -6714,6 +6721,9 @@ phases:
 
       - [ ] Black-box verification attempts U+2028 and U+2029 external event payload
       strings and observes rejection without state mutation or exact blockers.
+
+      - [ ] Black-box verification observes native helper stdout/stderr `16KiB` cap
+      behavior or exact blocker.
 
       '
     evidence_template: "## refs Read Confirmation (MANDATORY)\nFor each exact refs\
@@ -6855,7 +6865,11 @@ phases:
       \ mutation>\n- U+2029_source_case: <rejected without state mutation>\n- ascii_control_baseline:\
       \ <CR/LF/tab/control rejection>\n- no_normalization_or_truncation: <proof payload\
       \ is rejected, not repaired>\n- broad_multiline_claim_rejected: Evidence that\
-      \ says only multiline/control without U+2028 and U+2029 is INCOMPLETE.\n"
+      \ says only multiline/control without U+2028 and U+2029 is INCOMPLETE.\n\n##\
+      \ Native Helper stdout/stderr 16KiB Cap Evidence (MANDATORY)\n- stdout_cap:\
+      \ 16KiB\n- stderr_cap: 16KiB\n- stdout_over_cap_case: <proof collection stops/rejects\
+      \ safely>\n- stderr_over_cap_case: <proof collection stops/rejects safely>\n\
+      - no_unbounded_memory_case: <proof bounded collection>\n"
     refs:
     - docs/PRD.md#9-acceptance-criteria
     - docs/TECHNICAL_DESIGN.md#command-design
