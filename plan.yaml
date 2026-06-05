@@ -1650,6 +1650,14 @@ phases:
       to ASCII control characters, CR, LF, and multiline payloads. Dasein must reject
       without normalizing or mutating state.
 
+
+      REVIEW-FIX CATCHUP RENDER HOOK PURITY:
+
+      Adversarial render hook proof must show `renderAgent`/`renderUI` hooks cannot
+      perform I/O, refresh/action, config mutation, durable-state access, discovery,
+      helper/native imports, or own final prompt/UI strings. Enforceability must be
+      explicit as static/contract/runtime fake proof, not broad injector no-I/O.
+
       '
     verification: '- [ ] `npm run typecheck` passes with raw stdout/stderr.
 
@@ -1699,6 +1707,9 @@ phases:
 
       - [ ] Core proof raw output explicitly covers U+2028 and U+2029 rejection cases
       for external event strings.
+
+      - [ ] Core proof includes static/contract/runtime fake evidence for `renderAgent`/`renderUI`
+      hook purity, separate from injector no-I/O.
 
       '
     evidence_template: "## refs Read Confirmation (MANDATORY)\nFor each exact refs\
@@ -1814,7 +1825,14 @@ phases:
       \ mutation>\n- U+2029_source_case: <rejected without state mutation>\n- ascii_control_baseline:\
       \ <CR/LF/tab/control rejection>\n- no_normalization_or_truncation: <proof payload\
       \ is rejected, not repaired>\n- broad_multiline_claim_rejected: Evidence that\
-      \ says only multiline/control without U+2028 and U+2029 is INCOMPLETE.\n"
+      \ says only multiline/control without U+2028 and U+2029 is INCOMPLETE.\n\n##\
+      \ Renderer Hook Purity Evidence (MANDATORY)\n- hooks: renderAgent, renderUI\n\
+      - forbidden_io: fs/network/subprocess/dynamic import/native/helper/durable-state\
+      \ access\n- forbidden_runtime_actions: refresh/action/config mutation/discovery\n\
+      - forbidden_output_ownership: final prompt/UI strings, final ordering, global\
+      \ truncation\n- static_contract_proof: <type/contract/static scan evidence>\n\
+      - runtime_fake_hook_proof: <adversarial hook fixture result>\n- enforcement_disposition:\
+      \ static | contract | runtime fake proof | blocker with closure path\n"
     refs:
     - docs/TECHNICAL_DESIGN.md#testing-gate-matrix
     - CONSTITUTION.md#testing-and-gates
