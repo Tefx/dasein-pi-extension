@@ -945,6 +945,14 @@ phases:
       Lapse persistence reads/writes only when persist rules allow, except explicit
       reset.</risk_probes>
 
+
+      REVIEW-FIX ITERATION 4 CORE CONFIG VALIDATION DETAILS:
+
+      Core config validation must deterministically enforce `core.maxAgentChars` as
+      an integer in the inclusive range `40..2000` and `core.injectedLabel` as a string
+      matching regex `[A-Za-z0-9_.:-]{1,32}`. Evidence must include boundary accepts/rejects
+      and must not rely on broad config-validation wording.
+
       '
     verification: '- [ ] `npm run test:file -- tests/unit/config.test.ts tests/unit/config-atomicity.test.ts
       tests/unit/config-queue.test.ts tests/unit/state-file.test.ts` passes with raw
@@ -958,6 +966,10 @@ phases:
 
       - [ ] Grep/import evidence shows no project-local config reads, cwd walkups,
       or request-path config mutation routes.
+
+      - [ ] Evidence proves deterministic validation for `core.maxAgentChars` integer
+      range `40..2000` and `core.injectedLabel` regex `[A-Za-z0-9_.:-]{1,32}` with
+      accept/reject cases.
 
       '
     evidence_template: "## refs Read Confirmation (MANDATORY)\nFor each ref in this\
@@ -982,7 +994,16 @@ phases:
       - artifacts: <contracts/tests/outputs created>\n- main_path_evidence: <proof>\n\
       - failure_path_evidence: <proof or N/A>\n\n## checklist_receipt\n- <checklist\
       \ item 1>: satisfied | failed | blocked | unobserved — <evidence ref>\n- <checklist\
-      \ item 2>: satisfied | failed | blocked | unobserved — <evidence ref>\n"
+      \ item 2>: satisfied | failed | blocked | unobserved — <evidence ref>\n\n##\
+      \ Core Config Validation Evidence (MANDATORY)\n- maxAgentChars_range: \"integer\
+      \ 40..2000 inclusive\"\n- maxAgentChars_accept_cases: <40, 240 default, 2000>\n\
+      - maxAgentChars_reject_cases: <39, 2001, non-integer, NaN/Infinity or invalid\
+      \ numeric token>\n- injectedLabel_regex: \"[A-Za-z0-9_.:-]{1,32}\"\n- injectedLabel_accept_cases:\
+      \ <valid examples including ambient_ctx>\n- injectedLabel_reject_cases: <empty,\
+      \ length 33, invalid characters, whitespace/control>\n- raw_command_output:\
+      \ <tests/commands proving deterministic validation>\n- broad_config_claim_rejected:\
+      \ Evidence that says only \"config validation\" without these two exact rules\
+      \ is INCOMPLETE.\n"
     refs:
     - CONSTITUTION.md#architectural-dogmas
     - CONSTITUTION.md#testing-and-gates
