@@ -6555,6 +6555,14 @@ phases:
       2. Sensor runtime enforces one active refresh and cleanup timeout semantics.
       3. Request-path injection cannot race with disk/native/dynamic import work.</risk_probes>
 
+
+      REVIEW-FIX CATCHUP RENDER HOOK PURITY:
+
+      Adversarial render hook proof must show `renderAgent`/`renderUI` hooks cannot
+      perform I/O, refresh/action, config mutation, durable-state access, discovery,
+      helper/native imports, or own final prompt/UI strings. Enforceability must be
+      explicit as static/contract/runtime fake proof, not broad injector no-I/O.
+
       '
     verification: '- [ ] Review confirms core/sensor/Pi UI boundary direction matches
       Constitution and architecture basis or lists exact conflicts.
@@ -6567,6 +6575,9 @@ phases:
 
       - [ ] Any architecture/concurrency blocker has remediation owner or explicit
       non-intersection evidence for final gate.
+
+      - [ ] Architecture review checks renderer hook purity boundaries and enforceability
+      disposition.
 
       '
     evidence_template: "## refs Read Confirmation (MANDATORY)\nFor each exact refs\
@@ -6600,7 +6611,14 @@ phases:
       \ PROVEN|NEEDS_TEST|UNPROVEN|BLOCKED | <remediation/non-intersection> | <gate\
       \ impact> |\n\n## checklist_receipt\n- <checklist item 1>: satisfied | failed\
       \ | blocked | unobserved — <evidence ref>\n- <checklist item 2>: satisfied |\
-      \ failed | blocked | unobserved — <evidence ref>\n"
+      \ failed | blocked | unobserved — <evidence ref>\n\n## Renderer Hook Purity\
+      \ Evidence (MANDATORY)\n- hooks: renderAgent, renderUI\n- forbidden_io: fs/network/subprocess/dynamic\
+      \ import/native/helper/durable-state access\n- forbidden_runtime_actions: refresh/action/config\
+      \ mutation/discovery\n- forbidden_output_ownership: final prompt/UI strings,\
+      \ final ordering, global truncation\n- static_contract_proof: <type/contract/static\
+      \ scan evidence>\n- runtime_fake_hook_proof: <adversarial hook fixture result>\n\
+      - enforcement_disposition: static | contract | runtime fake proof | blocker\
+      \ with closure path\n"
     refs:
     - CONSTITUTION.md#architectural-dogmas
     - CONSTITUTION.md#performance-laws
