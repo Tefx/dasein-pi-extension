@@ -1476,11 +1476,9 @@ phases:
       '
     refs:
     - docs/TECHNICAL_DESIGN.md#verified-pi-mechanisms
-    - docs/TECHNICAL_DESIGN.md#data-flow/startup
-    - docs/TECHNICAL_DESIGN.md#data-flow/llm-injection
-    - docs/TECHNICAL_DESIGN.md#data-flow/shutdown
     - docs/PRD.md#7-7-launch-argument
     - docs/PRD.md#7-8-slash-commands
+    - docs/TECHNICAL_DESIGN.md#data-flow
     depends_on:
     - pi-runtime-tests
     agent: frontend-engineer
