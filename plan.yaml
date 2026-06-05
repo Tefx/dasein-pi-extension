@@ -5035,6 +5035,14 @@ phases:
       to prove dynamic reload. Evidence must include fixture path, before/after content
       summary, cleanup, and confirmation that no persistent product mutation remains.
 
+
+      REVIEW-FIX ITERATION 8 RELEASE SMOKE SERIALIZATION:
+
+      Live-smoke steps are intentionally serialized because they may use disposable
+      Pi sessions, HOME/config roots, extension roots, sensor fixtures, native helper
+      permissions, and runtime state. This prevents parallel smoke steps from sharing
+      or corrupting disposable runtime resources.
+
       '
     verification: '- [ ] `npm run test:smoke -- tests/smoke/pi-dynamic-reload.test.ts`
       or documented live Pi equivalent is run with raw stdout/stderr and Pi process
@@ -5051,6 +5059,10 @@ phases:
 
       - [ ] Evidence explicitly distinguishes allowed disposable sensor fixture mutation
       from forbidden repo/product code/docs/config mutation and includes cleanup proof.
+
+      - [ ] Evidence records serialized execution assumptions and confirms disposable
+      runtime/config/extension/native resources are cleaned up before the next release-smoke
+      step consumes them.
 
       '
     evidence_template: "## refs Read Confirmation (MANDATORY)\nFor each exact refs\
@@ -5092,7 +5104,12 @@ phases:
       - cleanup_evidence: <fixture removed/restored and test config cleaned>\n- old_registry_keep_old_case:\
       \ <invalid fixture keeps previous registry/rendered context>\n- changed_module_cache_bust_case:\
       \ <changed fixture imported after /dasein reload>\n- forbidden_persistent_changes:\
-      \ <product code/docs/config outside disposable fixture remain unchanged>\n"
+      \ <product code/docs/config outside disposable fixture remain unchanged>\n\n\
+      ## Release Smoke Serialization Evidence (MANDATORY)\n- serialized_order: release-smoke-live-pi-tui\
+      \ -> release-smoke-dynamic-reload -> release-smoke-native-helper -> release-smoke-support-claim-ledger\
+      \ -> release-smoke-gate\n- isolated_runtime_roots: <HOME/config/extension/native\
+      \ resources used by this step>\n- cleanup_before_next_step: <proof or blocker>\n\
+      - no_parallel_resource_conflict: <proof serialized dependency was respected>\n"
     refs:
     - docs/TECHNICAL_DESIGN.md#sensor-loading-and-reload
     - docs/TECHNICAL_DESIGN.md#testing-gate-matrix
