@@ -2140,3 +2140,274 @@ phases:
     conformance, wiring, architecture, and black-box audits.
   depends_on:
   - release_smoke
+  steps:
+  - id: finalization-doc-sync
+    name: Sync documentation with implemented behavior and evidence ledger
+    status: pending
+    description: 'step_type: implementation
+
+      TARGET STATE: Project docs match implemented behavior, support-claim status,
+      command/config formats, install modes, live/fake evidence distinctions, and
+      any accepted blockers or deferred live support statuses.
+
+      BOUNDING BOX: README/package docs if present, CONSTITUTION references only if
+      an amendment is explicitly required, docs/PRD.md, docs/TECHNICAL_DESIGN.md,
+      and any generated evidence ledger/doc sections created by implementers.
+
+      CONSTRAINTS: Do not weaken the Constitution or rewrite requirements to fit implementation
+      bugs; document implemented behavior only after gates prove it or record blockers/pending
+      support claims explicitly.
+
+      <side_effect_budget>Allowed: documentation/evidence-ledger updates by the execution
+      agent. Forbidden: product code changes, false support claims, deleting unmet
+      requirements, or DESIGN.md/design-system work.</side_effect_budget>
+
+      <risk_probes>1. Fake-host/API evidence is never worded as live support. 2. README/examples,
+      if present, match actual package scripts and slash/flag syntax. 3. Docs preserve
+      global config path and no project-local config rules.</risk_probes>
+
+      '
+    verification: '- [ ] Documentation updates cite the evidence or gate that proves
+      each changed behavior/support claim.
+
+      - [ ] Command, config, event, sensor, Pi mechanism, native helper, and smoke-test
+      documentation matches actual implemented interfaces and package scripts.
+
+      - [ ] Any live Pi/native blockers remain visible as pending/blocking support
+      claims rather than being removed or reclassified as complete.
+
+      - [ ] No product code/config files are changed by the doc-sync step.
+
+      '
+    refs:
+    - CONSTITUTION.md#documentation-requirements
+    - CONSTITUTION.md#ux-and-pi-interaction-red-lines
+    - docs/TECHNICAL_DESIGN.md#verified-pi-mechanisms
+    - docs/TECHNICAL_DESIGN.md#testing-gate-matrix
+    - docs/PRD.md#9-acceptance-criteria
+    agent: doc-reviewer
+  - id: finalization-full-wiring-audit
+    name: Full wiring and reachability audit
+    status: pending
+    description: 'step_type: audit
+
+      verification_scope: full-plan-check
+
+      CONFORMANCE ARTIFACT: Read-only full-system wiring audit proving every public
+      symbol, CLI/slash command path, config field, Pi mechanism, sensor action, and
+      user-visible surface is reachable through production entrypoints or explicitly
+      excluded.
+
+      <side_effect_budget>Allowed: read-only grep/import/runtime trace report. Forbidden:
+      code/docs edits, relying on assertions without trace output, or treating test-only
+      reachability as production reachability.</side_effect_budget>
+
+      <risk_probes>1. Public exports have runtime callers outside their own package.
+      2. Config fields are consumed by non-test modules. 3. Slash/sensor commands
+      are registered and route to real command handlers.</risk_probes>
+
+      '
+    verification: '- [ ] Orphan exports report includes grep/import-trace output or
+      `none found`.
+
+      - [ ] Unregistered commands/actions report includes trace from Pi registration
+      to core/sensor handler or `none found`.
+
+      - [ ] Unconsumed config fields report includes grep/import-trace output or `none
+      found`.
+
+      - [ ] No production NotImplementedError/stub/placeholder and no write-only fields
+      remain without explicit accepted exclusion.
+
+      '
+    refs:
+    - docs/TECHNICAL_DESIGN.md#module-structure
+    - docs/TECHNICAL_DESIGN.md#command-design
+    - docs/TECHNICAL_DESIGN.md#configuration-files
+    - CONSTITUTION.md#testing-and-gates
+    depends_on:
+    - finalization-doc-sync
+    agent: wiring-auditor
+  - id: finalization-full-spec-conformance
+    name: Full spec conformance audit
+    status: pending
+    description: 'step_type: audit
+
+      verification_scope: full-plan-check
+
+      CONFORMANCE ARTIFACT: Independent full-system adversarial conformance audit
+      against CONSTITUTION.md, docs/PRD.md, and docs/TECHNICAL_DESIGN.md. Focus on
+      emergent/cross-phase drift not already closed by per-phase gates.
+
+      SCOPE: config precedence, request-path safety, typed-state envelope, builtin/user-added
+      sensors, commands, external events, renderer/injector, Pi runtime, support claim
+      statuses, docs sync, and release smoke dispositions.
+
+      <side_effect_budget>Allowed: read-only spec/code/evidence review. Forbidden:
+      product edits, updating docs, or approving behavior from absence of known defects
+      instead of positive proof.</side_effect_budget>
+
+      <risk_probes>1. Requirement-to-checklist matrix has no orphan requirements.
+      2. Behavioral precedence claims have runtime/test evidence or NEEDS_TEST closure.
+      3. Final docs do not contradict implemented behavior or evidence status.</risk_probes>
+
+      '
+    verification: '- [ ] Requirements register covers every material requirement family
+      from Constitution, PRD, and Technical Design touched by the implementation.
+
+      - [ ] Evidence table uses verdicts CONFORMS, DIVERGES, PARTIAL, NEEDS_TEST,
+      NOT_FOUND, AMBIGUOUS_SPEC, or SPEC_POSSIBLY_STALE with source refs and implementation/evidence
+      refs.
+
+      - [ ] All DIVERGES/PARTIAL/NOT_FOUND/NEEDS_TEST rows include severity and closure
+      path; blocker-class rows cannot be bypassed by final gate.
+
+      - [ ] Support-claim and doc-sync conformance rows distinguish fake-host/API/source/live
+      evidence correctly.
+
+      '
+    refs:
+    - CONSTITUTION.md
+    - docs/PRD.md
+    - docs/TECHNICAL_DESIGN.md
+    depends_on:
+    - finalization-doc-sync
+    - finalization-full-wiring-audit
+    agent: spec-verifier
+  - id: finalization-architecture-concurrency-review
+    name: Architecture, lifecycle, and concurrency review
+    status: pending
+    description: 'step_type: audit
+
+      verification_scope: full-plan-check
+
+      CONFORMANCE ARTIFACT: Independent architecture/concurrency review of module
+      boundaries, state ownership, lifecycle cleanup, config mutation serialization,
+      render invalidation timers, sensor refresh concurrency, helper supervision,
+      and Pi/runtime event ordering.
+
+      <side_effect_budget>Allowed: read-only architecture/code/evidence review. Forbidden:
+      code/docs edits, re-deriving a new architecture that contradicts the approved
+      basis without flagging conflict, or approving hidden shared mutable state risks
+      without disposition.</side_effect_budget>
+
+      <risk_probes>1. Single FIFO config queue prevents concurrent mutation races.
+      2. Sensor runtime enforces one active refresh and cleanup timeout semantics.
+      3. Request-path injection cannot race with disk/native/dynamic import work.</risk_probes>
+
+      '
+    verification: '- [ ] Review confirms core/sensor/Pi UI boundary direction matches
+      Constitution and architecture basis or lists exact conflicts.
+
+      - [ ] Review inventories module-level mutable state, timers, queues, subprocesses,
+      and caches with concurrency/cleanup/reset/bounded-growth semantics.
+
+      - [ ] Review confirms lifecycle shutdown aborts sensors/helpers and no request-path
+      I/O/race path remains.
+
+      - [ ] Any architecture/concurrency blocker has remediation owner or explicit
+      non-intersection evidence for final gate.
+
+      '
+    refs:
+    - CONSTITUTION.md#architectural-dogmas
+    - CONSTITUTION.md#performance-laws
+    - docs/TECHNICAL_DESIGN.md#data-flow
+    - docs/TECHNICAL_DESIGN.md#sensor-loading-and-reload
+    - docs/TECHNICAL_DESIGN.md#rendering-contract
+    depends_on:
+    - finalization-doc-sync
+    - finalization-full-wiring-audit
+    agent: software-architect
+  - id: finalization-black-box-verification
+    name: Black-box public interface verification
+    status: pending
+    description: 'step_type: verification
+
+      verification_scope: full-plan-check
+
+      PROOF ARTIFACT: Independent black-box verification using only public docs/specs
+      and package/extension entrypoints, not implementation internals. Validate public
+      slash commands, launch flag, config/event formats, fake-host runtime path, and
+      live-smoke status claims where environment permits.
+
+      <side_effect_budget>Allowed: read-only public-interface execution and report.
+      Forbidden: code/docs edits, source-guided white-box assumptions, or treating
+      private module tests as public behavior proof.</side_effect_budget>
+
+      <risk_probes>1. Spec-exact minimal config fixtures work without convenience
+      fields. 2. Public command/event errors are structured and non-mutating. 3. User-visible
+      surfaces emit meaningful output, not just successful imports.</risk_probes>
+
+      '
+    verification: '- [ ] Black-box tests/commands use documented package scripts,
+      slash commands, launch flag, config files, and event payloads only.
+
+      - [ ] Evidence includes spec-exact minimal fixtures for config, external events,
+      and slash/launch command formats.
+
+      - [ ] Evidence shows successful public paths and at least one invalid input
+      per surface fails clearly without mutation.
+
+      - [ ] Any live-environment blockers are reported separately from fake-host/public
+      CI proof.
+
+      '
+    refs:
+    - docs/PRD.md#9-acceptance-criteria
+    - docs/TECHNICAL_DESIGN.md#command-design
+    - docs/TECHNICAL_DESIGN.md#configuration-files
+    - docs/TECHNICAL_DESIGN.md#verified-pi-mechanisms
+    - CONSTITUTION.md#testing-and-gates
+    depends_on:
+    - finalization-doc-sync
+    agent: blind-tester
+  - id: finalization-gate
+    name: Final deep review gate
+    status: pending
+    description: 'step_type: gate
+
+      verification_scope: full-plan-check
+
+      DECISION ARTIFACT: Final independent gate for plan completion. Review doc sync,
+      wiring audit, full spec conformance, architecture/concurrency review, black-box
+      verification, ordinary CI, fake-host proof, and live support-claim ledger.
+
+      review_depth: THOROUGH
+
+      cross_cutting_focus: orphan requirements, blocker dispositions, live/fake evidence
+      separation, request-path safety, public interface liveness, docs-code drift,
+      and architecture boundary integrity.
+
+      <side_effect_budget>Allowed: read-only final decision. Forbidden: implementing
+      fixes, silently accepting unresolved behavioral obligations, or approving docs/support
+      claims without positive evidence.</side_effect_budget>
+
+      <risk_probes>1. Every blocker-class finding has remediation ownership or non-intersection
+      evidence. 2. Final gate rejects sampled evidence when requirement matrix rows
+      are unproven. 3. Final status distinguishes implementation-complete from live-support-verified
+      where live smoke is blocked.</risk_probes>
+
+      '
+    verification: '- [ ] All finalization steps are complete with refs confirmations
+      and checklist receipts.
+
+      - [ ] Final gate decision basis reviews requirement matrix rows, evidence refs,
+      unresolved statuses, and closure paths for all phases.
+
+      - [ ] No orphan authoritative requirement, production wiring gap, request-path
+      I/O blocker, false live-support claim, or unowned broad verifier failure remains.
+
+      - [ ] Final verdict is OPEN or BLOCKED with explicit blockers, live-support
+      status, and required actions.
+
+      '
+    refs:
+    - CONSTITUTION.md
+    - docs/PRD.md
+    - docs/TECHNICAL_DESIGN.md
+    depends_on:
+    - finalization-full-spec-conformance
+    - finalization-architecture-concurrency-review
+    - finalization-black-box-verification
+    agent: gate-reviewer
