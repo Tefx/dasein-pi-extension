@@ -2463,8 +2463,9 @@ phases:
       and structured fail-closed `/dasein status` reporting when a fake-host mechanism
       is unavailable.
 
-      - [ ] Evidence proves literal bare `/dasein` is registered/routed and does not
-      mutate config/state in either TUI or non-TUI mode.
+      - [ ] Evidence proves runtime captures current Pi version when available, reports
+      `minimumPiVersion: "0.78.1"`, classifies below-minimum/unavailable versions,
+      and still runs separate feature probes.
 
       '
     evidence_template: "## refs Read Confirmation (MANDATORY)\nFor each ref in this\
