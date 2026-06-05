@@ -5727,6 +5727,15 @@ phases:
       if present, match actual package scripts and slash/flag syntax. 3. Docs preserve
       global config path and no project-local config rules.</risk_probes>
 
+
+      REVIEW-FIX CATCHUP CONSTITUTION AMENDMENT CONTROL:
+
+      `finalization-doc-sync` must not amend `CONSTITUTION.md` unless explicit human
+      approval is provided. If CONSTITUTION.md is changed, evidence must include human
+      approval, amendment reason, affected invariants, verification impact, and migration
+      notes. Normal doc sync should update non-constitution docs/evidence ledgers
+      without weakening constitutional rules.
+
       '
     verification: '- [ ] Documentation updates cite the evidence or gate that proves
       each changed behavior/support claim.
@@ -5738,6 +5747,10 @@ phases:
       claims rather than being removed or reclassified as complete.
 
       - [ ] No product code/config files are changed by the doc-sync step.
+
+      - [ ] CONSTITUTION.md is not changed unless explicit human approval is provided;
+      if changed, evidence includes approval, amendment reason, affected invariants,
+      verification impact, and migration notes.
 
       '
     evidence_template: "## refs Read Confirmation (MANDATORY)\nFor each exact refs\
@@ -5766,13 +5779,21 @@ phases:
       - artifacts: <contracts/tests/outputs created>\n- main_path_evidence: <proof>\n\
       - failure_path_evidence: <proof or N/A>\n\n## checklist_receipt\n- <checklist\
       \ item 1>: satisfied | failed | blocked | unobserved — <evidence ref>\n- <checklist\
-      \ item 2>: satisfied | failed | blocked | unobserved — <evidence ref>\n"
+      \ item 2>: satisfied | failed | blocked | unobserved — <evidence ref>\n\n##\
+      \ Constitution Amendment Control Evidence (MANDATORY)\n- constitution_changed:\
+      \ yes | no\n- if_no: <proof CONSTITUTION.md unchanged>\n- if_yes_human_approval:\
+      \ <approver + timestamp + exact approval text>\n- amendment_reason: <why amendment\
+      \ was required>\n- affected_invariants: <dogmas/laws/quality baselines affected>\n\
+      - verification_impact: <tests/gates/docs affected>\n- migration_notes: <required\
+      \ migration or none with reason>\n- forbidden_without_approval: CONSTITUTION.md\
+      \ amendment without explicit human approval is BLOCKING.\n"
     refs:
     - CONSTITUTION.md#documentation-requirements
     - CONSTITUTION.md#ux-and-pi-interaction-red-lines
     - docs/TECHNICAL_DESIGN.md#verified-pi-mechanisms
     - docs/TECHNICAL_DESIGN.md#testing-gate-matrix
     - docs/PRD.md#9-acceptance-criteria
+    - CONSTITUTION.md#constitution-version-and-amendment-lifecycle
     agent: doc-reviewer
   - id: finalization-full-wiring-audit
     name: Full wiring and reachability audit
