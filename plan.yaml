@@ -3637,12 +3637,9 @@ phases:
       - [ ] Live smoke evidence explicitly covers hidden custom-message context conversion
       to LLM input or records an exact blocker.
 
-      - [ ] Live TUI smoke captures SettingsList common sensor controls `enabled`,
-      `ui`, `agent`, `intervalMs`, `timeoutMs`, `staleAfterMs`, and `initialRefresh`,
-      or exact blockers per field family.
-
-      - [ ] Live TUI smoke toggles or changes one visible recurring interval/common
-      control safely and verifies ConfigManager mutation behavior or exact blocker.
+      - [ ] Live smoke captures current Pi version and binary path, compares against
+      `minimumPiVersion: "0.78.1"`, and records below-minimum/unavailable classification
+      without false support claims.
 
       '
     evidence_template: '## refs Read Confirmation (MANDATORY)
