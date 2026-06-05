@@ -1386,6 +1386,14 @@ phases:
       is insufficient; evidence must name these fields and show values in success
       and relevant failure/reload cases.
 
+
+      REVIEW-FIX ITERATION 4 CORE CONFIG VALIDATION DETAILS:
+
+      Core config validation must deterministically enforce `core.maxAgentChars` as
+      an integer in the inclusive range `40..2000` and `core.injectedLabel` as a string
+      matching regex `[A-Za-z0-9_.:-]{1,32}`. Evidence must include boundary accepts/rejects
+      and must not rely on broad config-validation wording.
+
       '
     verification: '- [ ] `npm run typecheck` passes with raw stdout/stderr.
 
@@ -1411,6 +1419,9 @@ phases:
       - [ ] Core proof raw output explicitly covers status fields `effectiveConfigVersion`,
       `launchArgsApplied`, `diskConfigLoaded` and reload fields `launchReappliedPaths`,
       `runtimeOverriddenPaths`.
+
+      - [ ] Core proof raw output explicitly covers `core.maxAgentChars` range and
+      `core.injectedLabel` regex validation cases.
 
       '
     evidence_template: "## refs Read Confirmation (MANDATORY)\nFor each ref in this\
@@ -1453,12 +1464,21 @@ phases:
       \ `/dasein reload` result/test output>\n- failure_or_reload_case: <proof fields\
       \ remain present/meaningful when disk config/sensor reload fails and old state\
       \ is kept>\n- broad_payload_shape_claim_rejected: Evidence that does not name\
-      \ all five fields is INCOMPLETE.\n"
+      \ all five fields is INCOMPLETE.\n\n## Core Config Validation Evidence (MANDATORY)\n\
+      - maxAgentChars_range: \"integer 40..2000 inclusive\"\n- maxAgentChars_accept_cases:\
+      \ <40, 240 default, 2000>\n- maxAgentChars_reject_cases: <39, 2001, non-integer,\
+      \ NaN/Infinity or invalid numeric token>\n- injectedLabel_regex: \"[A-Za-z0-9_.:-]{1,32}\"\
+      \n- injectedLabel_accept_cases: <valid examples including ambient_ctx>\n- injectedLabel_reject_cases:\
+      \ <empty, length 33, invalid characters, whitespace/control>\n- raw_command_output:\
+      \ <tests/commands proving deterministic validation>\n- broad_config_claim_rejected:\
+      \ Evidence that says only \"config validation\" without these two exact rules\
+      \ is INCOMPLETE.\n"
     refs:
     - docs/TECHNICAL_DESIGN.md#testing-gate-matrix
     - CONSTITUTION.md#testing-and-gates
     - docs/PRD.md#8-non-functional-requirements
     - docs/TECHNICAL_DESIGN.md#command-result-and-output-contract
+    - docs/TECHNICAL_DESIGN.md#core-contracts
     depends_on:
     - core-config-state
     - core-sensor-runtime-loader
