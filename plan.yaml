@@ -1694,6 +1694,9 @@ phases:
     depends_on:
     - pi-runtime-client-proof
     - pi-runtime-spec-conformance
+    - pi-runtime-tests
+    - pi-runtime-extension-wiring
+    - pi-runtime-tui-surfaces
     agent: gate-reviewer
 - id: system_wiring
   name: System Wiring and Ordinary CI Closure
