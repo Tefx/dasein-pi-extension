@@ -736,6 +736,10 @@ phases:
       - [ ] Expected-red command tests explicitly cover `/dasein help` parsing, routing,
       result typing, and deterministic output.
 
+      - [ ] Expected-red status command tests assert `minimumPiVersion: "0.78.1"`,
+      `piVersion` capture/null behavior, mechanism evidence status lists, and below-minimum/unavailable
+      classifications.
+
       '
     evidence_template: "## refs Read Confirmation (MANDATORY)\nFor each ref in this\
       \ step:\n- docs/TECHNICAL_DESIGN.md#testing-gate-matrix — <key passage or \"\
