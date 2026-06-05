@@ -2248,6 +2248,13 @@ phases:
       - [ ] Expected-red fake-host tests cover startup API feature probes and fail-closed
       `/dasein status` reporting for unavailable Pi mechanisms.
 
+      - [ ] Expected-red fake-host tests invoke the literal bare `/dasein` in TUI
+      mode and assert it opens SettingsList/configuration UI.
+
+      - [ ] Expected-red fake-host tests invoke the literal bare `/dasein` outside
+      TUI mode and assert concise deterministic help/status fallback with no config
+      mutation.
+
       '
     evidence_template: "## refs Read Confirmation (MANDATORY)\nFor each ref in this\
       \ step:\n- docs/TECHNICAL_DESIGN.md#verified-pi-mechanisms — <key passage or\
