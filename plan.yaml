@@ -1794,69 +1794,78 @@ phases:
       and active-refresh abort proof.
 
       '
-    evidence_template: "## refs Read Confirmation (MANDATORY)\nFor each ref in this\
-      \ step:\n- CONSTITUTION.md#testing-and-gates — <key passage or \"NOT READ: <reason>\"\
-      >\n- docs/TECHNICAL_DESIGN.md#testing-gate-matrix — <key passage or \"NOT READ:\
-      \ <reason>\">\n- docs/PRD.md#9-acceptance-criteria — <key passage or \"NOT READ:\
-      \ <reason>\">\n\n## side_effect_budget\n- allowed: <copy allowed side effects\
-      \ from step description and confirm actual changes stayed inside them>\n- forbidden:\
-      \ <copy forbidden side effects from step description and confirm none occurred>\n\
-      \n## risk_probes\n- probe_1: <result/evidence>\n- probe_2: <result/evidence>\n\
-      - probe_3: <result/evidence or N/A>\n\n## verify-only purity\n- role: read-only\
-      \ verifier/gate/auditor\n- repo_product_files_changed: no repository/product\
-      \ files may be changed; disposable runtime/config/test fixture files may change\
-      \ only when this step explicitly requires them and cleanup evidence is provided\n\
-      - repo_product_mutation_performed: no repository/product mutation may be performed;\
-      \ documented disposable runtime/config/test mutations are allowed only within\
-      \ the step side_effect_budget and must include cleanup evidence\n- if repo/product\
-      \ mutation was necessary: STOP and report blocker for orchestrator/planner;\
-      \ if disposable runtime/test mutation was required, record scope and cleanup\
-      \ evidence\n\n## raw_command_output\n- command: <exact command or N/A>\n- raw_stdout:\
-      \ <paste raw output or N/A>\n- raw_stderr: <paste raw error output or N/A>\n\
-      - exit_code: <code or N/A>\n\n## gate_decision_basis\n| requirement_or_step_ref\
-      \ | evidence_ref | proof_status | unresolved_status | blocks_remaining_gates\
-      \ | closure_path |\n| --- | --- | --- | --- | --- | --- |\n| <ref> | <artifact>\
-      \ | PROVEN|UNPROVEN|NEEDS_TEST|BLOCKED | <status> | yes/no | <required action>\
-      \ |\n- final_recommendation: OPEN | OPEN_WITH_DEBT | BLOCKED\n- blockers: <list>\n\
-      - required_actions: <list>\n\n## checklist_receipt\n- <checklist item 1>: satisfied\
-      \ | failed | blocked | unobserved — <evidence ref>\n- <checklist item 2>: satisfied\
-      \ | failed | blocked | unobserved — <evidence ref>\n\n## Minimum Pi Version\
-      \ / Status Evidence (MANDATORY)\n- minimumPiVersion: \"0.78.1\"\n- current_pi_version:\
-      \ <captured version or null/unavailable>\n- pi_binary_path: <path or unavailable>\n\
-      - below_minimum_case: <classification + no false support claim>\n- unavailable_version_case:\
-      \ <classification + no false support claim>\n- feature_probe_separation: <proof\
-      \ version check is distinct from API feature probes>\n- status_payload_sample:\
-      \ <includes piVersion, minimumPiVersion, piMechanisms[].evidenceStatuses>\n\n\
-      ## Protected Status/Sensors Command Tests (MANDATORY)\n- protected_test_files:\n\
-      \  - tests/unit/commands-status.test.ts\n  - tests/unit/commands-sensors.test.ts\n\
-      - status_payload_proof: <raw test/output evidence>\n- sensors_inspectability_proof:\
-      \ <raw test/output evidence>\n- deviation_record_if_changed: <none or justified>\n\
-      \n## Status / Reload Explicit Payload Fields Evidence (MANDATORY)\n- status_required_fields:\n\
-      \  - effectiveConfigVersion: <observed value; must be 1>\n  - launchArgsApplied:\
-      \ <observed boolean and scenario>\n  - diskConfigLoaded: <observed boolean and\
-      \ scenario>\n- reload_required_fields:\n  - launchReappliedPaths: <observed\
-      \ sorted path list and scenario>\n  - runtimeOverriddenPaths: <observed sorted\
-      \ path list and scenario>\n- raw_command_output: <paste `/dasein status` and\
-      \ `/dasein reload` result/test output>\n- failure_or_reload_case: <proof fields\
-      \ remain present/meaningful when disk config/sensor reload fails and old state\
-      \ is kept>\n- broad_payload_shape_claim_rejected: Evidence that does not name\
-      \ all five fields is INCOMPLETE.\n\n## Core Config Validation Evidence (MANDATORY)\n\
-      - maxAgentChars_range: \"integer 40..2000 inclusive\"\n- maxAgentChars_accept_cases:\
-      \ <40, 240 default, 2000>\n- maxAgentChars_reject_cases: <39, 2001, non-integer,\
-      \ NaN/Infinity or invalid numeric token>\n- injectedLabel_regex: \"[A-Za-z0-9_.:-]{1,32}\"\
-      \n- injectedLabel_accept_cases: <valid examples including ambient_ctx>\n- injectedLabel_reject_cases:\
-      \ <empty, length 33, invalid characters, whitespace/control>\n- raw_command_output:\
-      \ <tests/commands proving deterministic validation>\n- broad_config_claim_rejected:\
-      \ Evidence that says only \"config validation\" without these two exact rules\
-      \ is INCOMPLETE.\n\n## Context Injection CustomMessage Evidence (MANDATORY)\n\
-      - display: false\n- customType: \"dasein\"\n- timestamp_shape: <deterministic/valid\
-      \ timestamp shape used in injected CustomMessage>\n- conversion_to_llm_user_message:\
-      \ <proof hidden custom message becomes LLM user-message input>\n- ui_visibility_check:\
-      \ <proof hidden message is not rendered as normal chat UI content>\n- bounded_content_check:\
-      \ <pre-rendered ambient context string respects maxAgentChars and neutral label>\n\
-      - no_request_path_io: <proof injection reads only pre-rendered memory>\n- broad_context_claim_rejected:\
-      \ Evidence without all CustomMessage fields and conversion proof is INCOMPLETE.\n\
-      \n## Lifecycle Exact Proof Evidence (MANDATORY)\n- session_start: <startup registration/config/sensor\
+    evidence_template: "## refs Read Confirmation (MANDATORY)\nFor each exact refs\
+      \ entry listed on this step, provide a key passage or `NOT READ: <reason>`.\n\
+      Machine-checkable refs inventory generated from this step refs:\n- `CONSTITUTION.md#testing-and-gates`\
+      \ — <key passage or \"NOT READ: <reason>\">\n- `docs/TECHNICAL_DESIGN.md#testing-gate-matrix`\
+      \ — <key passage or \"NOT READ: <reason>\">\n- `docs/PRD.md#9-acceptance-criteria`\
+      \ — <key passage or \"NOT READ: <reason>\">\n- `docs/TECHNICAL_DESIGN.md#command-result-and-output-contract`\
+      \ — <key passage or \"NOT READ: <reason>\">\n- `docs/TECHNICAL_DESIGN.md#core-contracts`\
+      \ — <key passage or \"NOT READ: <reason>\">\n- `docs/TECHNICAL_DESIGN.md#verified-pi-mechanisms`\
+      \ — <key passage or \"NOT READ: <reason>\">\n- `docs/TECHNICAL_DESIGN.md#data-flow`\
+      \ — <key passage or \"NOT READ: <reason>\">\n\nrefs_inventory:\n  - CONSTITUTION.md#testing-and-gates\n\
+      \  - docs/TECHNICAL_DESIGN.md#testing-gate-matrix\n  - docs/PRD.md#9-acceptance-criteria\n\
+      \  - docs/TECHNICAL_DESIGN.md#command-result-and-output-contract\n  - docs/TECHNICAL_DESIGN.md#core-contracts\n\
+      \  - docs/TECHNICAL_DESIGN.md#verified-pi-mechanisms\n  - docs/TECHNICAL_DESIGN.md#data-flow\n\
+      \n## side_effect_budget\n- allowed: <copy allowed side effects from step description\
+      \ and confirm actual changes stayed inside them>\n- forbidden: <copy forbidden\
+      \ side effects from step description and confirm none occurred>\n\n## risk_probes\n\
+      - probe_1: <result/evidence>\n- probe_2: <result/evidence>\n- probe_3: <result/evidence\
+      \ or N/A>\n\n## verify-only purity\n- role: read-only verifier/gate/auditor\n\
+      - repo_product_files_changed: no repository/product files may be changed; disposable\
+      \ runtime/config/test fixture files may change only when this step explicitly\
+      \ requires them and cleanup evidence is provided\n- repo_product_mutation_performed:\
+      \ no repository/product mutation may be performed; documented disposable runtime/config/test\
+      \ mutations are allowed only within the step side_effect_budget and must include\
+      \ cleanup evidence\n- if repo/product mutation was necessary: STOP and report\
+      \ blocker for orchestrator/planner; if disposable runtime/test mutation was\
+      \ required, record scope and cleanup evidence\n\n## raw_command_output\n- command:\
+      \ <exact command or N/A>\n- raw_stdout: <paste raw output or N/A>\n- raw_stderr:\
+      \ <paste raw error output or N/A>\n- exit_code: <code or N/A>\n\n## gate_decision_basis\n\
+      | requirement_or_step_ref | evidence_ref | proof_status | unresolved_status\
+      \ | blocks_remaining_gates | closure_path |\n| --- | --- | --- | --- | --- |\
+      \ --- |\n| <ref> | <artifact> | PROVEN|UNPROVEN|NEEDS_TEST|BLOCKED | <status>\
+      \ | yes/no | <required action> |\n- final_recommendation: OPEN | OPEN_WITH_DEBT\
+      \ | BLOCKED\n- blockers: <list>\n- required_actions: <list>\n\n## checklist_receipt\n\
+      - <checklist item 1>: satisfied | failed | blocked | unobserved — <evidence\
+      \ ref>\n- <checklist item 2>: satisfied | failed | blocked | unobserved — <evidence\
+      \ ref>\n\n## Minimum Pi Version / Status Evidence (MANDATORY)\n- minimumPiVersion:\
+      \ \"0.78.1\"\n- current_pi_version: <captured version or null/unavailable>\n\
+      - pi_binary_path: <path or unavailable>\n- below_minimum_case: <classification\
+      \ + no false support claim>\n- unavailable_version_case: <classification + no\
+      \ false support claim>\n- feature_probe_separation: <proof version check is\
+      \ distinct from API feature probes>\n- status_payload_sample: <includes piVersion,\
+      \ minimumPiVersion, piMechanisms[].evidenceStatuses>\n\n## Protected Status/Sensors\
+      \ Command Tests (MANDATORY)\n- protected_test_files:\n  - tests/unit/commands-status.test.ts\n\
+      \  - tests/unit/commands-sensors.test.ts\n- status_payload_proof: <raw test/output\
+      \ evidence>\n- sensors_inspectability_proof: <raw test/output evidence>\n- deviation_record_if_changed:\
+      \ <none or justified>\n\n## Status / Reload Explicit Payload Fields Evidence\
+      \ (MANDATORY)\n- status_required_fields:\n  - effectiveConfigVersion: <observed\
+      \ value; must be 1>\n  - launchArgsApplied: <observed boolean and scenario>\n\
+      \  - diskConfigLoaded: <observed boolean and scenario>\n- reload_required_fields:\n\
+      \  - launchReappliedPaths: <observed sorted path list and scenario>\n  - runtimeOverriddenPaths:\
+      \ <observed sorted path list and scenario>\n- raw_command_output: <paste `/dasein\
+      \ status` and `/dasein reload` result/test output>\n- failure_or_reload_case:\
+      \ <proof fields remain present/meaningful when disk config/sensor reload fails\
+      \ and old state is kept>\n- broad_payload_shape_claim_rejected: Evidence that\
+      \ does not name all five fields is INCOMPLETE.\n\n## Core Config Validation\
+      \ Evidence (MANDATORY)\n- maxAgentChars_range: \"integer 40..2000 inclusive\"\
+      \n- maxAgentChars_accept_cases: <40, 240 default, 2000>\n- maxAgentChars_reject_cases:\
+      \ <39, 2001, non-integer, NaN/Infinity or invalid numeric token>\n- injectedLabel_regex:\
+      \ \"[A-Za-z0-9_.:-]{1,32}\"\n- injectedLabel_accept_cases: <valid examples including\
+      \ ambient_ctx>\n- injectedLabel_reject_cases: <empty, length 33, invalid characters,\
+      \ whitespace/control>\n- raw_command_output: <tests/commands proving deterministic\
+      \ validation>\n- broad_config_claim_rejected: Evidence that says only \"config\
+      \ validation\" without these two exact rules is INCOMPLETE.\n\n## Context Injection\
+      \ CustomMessage Evidence (MANDATORY)\n- display: false\n- customType: \"dasein\"\
+      \n- timestamp_shape: <deterministic/valid timestamp shape used in injected CustomMessage>\n\
+      - conversion_to_llm_user_message: <proof hidden custom message becomes LLM user-message\
+      \ input>\n- ui_visibility_check: <proof hidden message is not rendered as normal\
+      \ chat UI content>\n- bounded_content_check: <pre-rendered ambient context string\
+      \ respects maxAgentChars and neutral label>\n- no_request_path_io: <proof injection\
+      \ reads only pre-rendered memory>\n- broad_context_claim_rejected: Evidence\
+      \ without all CustomMessage fields and conversion proof is INCOMPLETE.\n\n##\
+      \ Lifecycle Exact Proof Evidence (MANDATORY)\n- session_start: <startup registration/config/sensor\
       \ initial refresh evidence>\n- session_shutdown: <cleanup event evidence>\n\
       - per_sensor_cleanup_timeout_ms: 1000\n- active_refresh_abort: <proof active\
       \ refresh is aborted before cleanup>\n- cleanup_error_aggregation: <proof errors\
