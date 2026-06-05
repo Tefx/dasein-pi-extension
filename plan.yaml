@@ -5237,6 +5237,13 @@ phases:
       without failing core. 2. Timeout cleanup leaves no orphan helper. 3. Single-file
       packaged missing helper path fails closed with helper-unavailable.</risk_probes>
 
+
+      REVIEW-FIX ITERATION 6 NATIVE HELPER DETERMINISTIC CONSTANTS:
+
+      Native helper supervision must explicitly verify timeout `3000ms`, graceful
+      kill grace `250ms`, and backoff sequence `1m -> 5m -> 15m`. Broad timeout/backoff/cleanup
+      wording is insufficient.
+
       '
     verification: '- [ ] On macOS, live helper command or smoke test is run with raw
       stdout/stderr and process cleanup evidence; on non-macOS, explicit skip reason
@@ -5250,6 +5257,10 @@ phases:
 
       - [ ] Evidence does not claim geo live location support from typecheck-only
       or non-macOS skip output.
+
+      - [ ] Native smoke evidence classifies live/skip/blocker status and, when executable,
+      records timeout `3000ms`, kill grace `250ms`, backoff `1m -> 5m -> 15m`, and
+      no-orphan cleanup proof.
 
       '
     evidence_template: '## refs Read Confirmation (MANDATORY)
@@ -5324,6 +5335,26 @@ phases:
 
       - <checklist item 2>: satisfied | failed | blocked | unobserved — <evidence
       ref>
+
+
+      ## Native Helper Deterministic Constants Evidence (MANDATORY)
+
+      - timeout_ms: 3000
+
+      - kill_grace_ms: 250
+
+      - backoff_sequence: 1m -> 5m -> 15m
+
+      - timeout_case: <helper exceeds 3000ms; terminate then force-kill after 250ms>
+
+      - backoff_cases: <first/second/third failure delays and manual refresh bypass
+      behavior>
+
+      - orphan_process_check: <proof no helper remains after timeout/shutdown>
+
+      - platform_classification: <darwin live/typecheck or non-darwin explicit skip>
+
+      - broad_native_claim_rejected: Evidence that omits any constant is INCOMPLETE.
 
       '
     refs:
