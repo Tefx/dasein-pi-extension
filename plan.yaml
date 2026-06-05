@@ -2874,8 +2874,9 @@ phases:
       - [ ] Final gate verdict is OPEN or BLOCKED with explicit blockers and required
       actions.
 
-      - [ ] Gate decision basis explicitly reviews literal bare `/dasein` TUI and
-      non-TUI evidence; "or equivalent" evidence is rejected.
+      - [ ] Gate decision basis reviews exact SettingsList common sensor fields `enabled`,
+      `ui`, `agent`, `intervalMs`, `timeoutMs`, `staleAfterMs`, `initialRefresh` and
+      visible recurring interval mutation evidence.
 
       '
     evidence_template: '## refs Read Confirmation (MANDATORY)
