@@ -926,6 +926,12 @@ phases:
       - [ ] Evidence proves parse/path errors do not mutate runtime config or disk
       config.
 
+      - [ ] Evidence explicitly covers `/dasein help` parser routing, deterministic
+      message/data shape, and no config/disk mutation.
+
+      - [ ] Evidence proves `help` is treated as a reserved core command and cannot
+      be shadowed by a sensor action.
+
       '
     refs:
     - docs/TECHNICAL_DESIGN.md#command-design
