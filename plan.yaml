@@ -4397,6 +4397,14 @@ phases:
       2. Behavioral precedence claims have runtime/test evidence or NEEDS_TEST closure.
       3. Final docs do not contradict implemented behavior or evidence status.</risk_probes>
 
+
+      REVIEW-FIX ITERATION 2 SETTINGSLIST COMMON SENSOR CONTROLS:
+
+      SettingsList coverage must enumerate and prove every common sensor control required
+      by the Technical Design: `enabled`, `ui`, `agent`, `intervalMs`, `timeoutMs`,
+      `staleAfterMs`, and `initialRefresh`. Visible recurring interval controls and
+      their ConfigManager mutation path are blocking evidence, not optional UI polish.
+
       '
     verification: '- [ ] Requirements register covers every material requirement family
       from Constitution, PRD, and Technical Design touched by the implementation.
