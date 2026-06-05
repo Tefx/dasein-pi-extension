@@ -2773,6 +2773,16 @@ phases:
       blocking and distinct from positive common-control coverage and complex-field
       exclusion.
 
+
+      REVIEW-FIX ITERATION 4 GEO EXACT PRIVACY FIELDS:
+
+      Geo exact-location behavior must explicitly name and verify both `sensors.geo.exactCoordinates`
+      and `sensors.geo.exactAddress`. Exact coordinate output requires `sensors.geo.agent
+      === true`, `sensors.geo.precision === "exact"`, and `sensors.geo.exactCoordinates
+      === true`. Exact address output requires `sensors.geo.agent === true`, `sensors.geo.precision
+      === "exact"`, and `sensors.geo.exactAddress === true`. Broad "exact privacy
+      gates" wording is insufficient.
+
       '
     verification: '- [ ] `npm run test:file -- tests/unit/settings-list.test.ts tests/integration/pi-extension.test.ts`
       passes with raw output.
@@ -2801,6 +2811,9 @@ phases:
 
       - [ ] Observable SettingsList evidence includes a valid external key baseline
       for `external.<key>.ui` and `external.<key>.agent` controls.
+
+      - [ ] SettingsList evidence shows `sensors.geo.exactCoordinates` and `sensors.geo.exactAddress`
+      boolean controls where geo simple fields are rendered.
 
       '
     evidence_template: "## refs Read Confirmation (MANDATORY)\nFor each ref in this\
@@ -2847,7 +2860,18 @@ phases:
       \ field/multiline/overlong/control payload; proof rejected and no SettingsList\
       \ control rendered>\n- valid_external_key_control_baseline: <valid key still\
       \ renders `external.<key>.ui`/`external.<key>.agent` controls>\n- broad_external_controls_claim_rejected:\
-      \ Evidence that only proves valid controls or complex-field exclusion is INCOMPLETE.\n"
+      \ Evidence that only proves valid controls or complex-field exclusion is INCOMPLETE.\n\
+      \n## Geo Exact Privacy Fields Evidence (MANDATORY)\n- exactCoordinates_field:\
+      \ <schema/default/control/proof for `sensors.geo.exactCoordinates`>\n- exactAddress_field:\
+      \ <schema/default/control/proof for `sensors.geo.exactAddress`>\n- exact_coordinate_positive_case:\
+      \ <agent=true + precision=exact + exactCoordinates=true + fresh coordinates>\n\
+      - exact_coordinate_negative_cases: <agent false / non-exact precision / exactCoordinates\
+      \ false / stale or missing coordinates>\n- exact_address_positive_case: <agent=true\
+      \ + precision=exact + exactAddress=true + helper placemark/address>\n- exact_address_negative_cases:\
+      \ <agent false / non-exact precision / exactAddress false / missing placemark/address>\n\
+      - settingslist_simple_field_controls: <proof simple boolean fields are exposed\
+      \ where SettingsList is available>\n- broad_gate_claim_rejected: Evidence that\
+      \ says only \"exact privacy gates\" without both field names is INCOMPLETE.\n"
     refs:
     - docs/TECHNICAL_DESIGN.md#testing-gate-matrix
     - docs/PRD.md#7-10-human-tui-surfaces
@@ -2855,6 +2879,7 @@ phases:
     - CONSTITUTION.md#ux-and-pi-interaction-red-lines
     - docs/TECHNICAL_DESIGN.md#data-flow
     - docs/TECHNICAL_DESIGN.md#human-ui-rendering
+    - docs/TECHNICAL_DESIGN.md#builtin-sensors
     depends_on:
     - pi-runtime-tests
     agent: frontend-engineer
