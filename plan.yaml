@@ -1178,6 +1178,16 @@ phases:
       being labeled pre-existing. 3. Core proof does not claim builtin sensor or Pi
       runtime completion.</risk_probes>
 
+
+      REVIEW-FIX ITERATION 2 MINIMUM PI VERSION STATUS:
+
+      Dasein status/runtime evidence must include exact `minimumPiVersion: "0.78.1"`,
+      current Pi version capture when available, unavailable-version classification,
+      and below-minimum classification without false support claims. Version support
+      classification is separate from API feature probes: a sufficient version does
+      not prove feature availability, and feature availability does not override a
+      below-minimum version.
+
       '
     verification: '- [ ] `npm run typecheck` passes with raw stdout/stderr.
 
