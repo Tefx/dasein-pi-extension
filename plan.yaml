@@ -1028,6 +1028,7 @@ phases:
     - core-sensor-runtime-loader
     - core-renderer-injector-external
     - core-command-layer
+    - core-behavior-guardrails
     agent: gate-reviewer
   - id: core-behavior-guardrails
     name: Define behavioral ambient-context guardrails
