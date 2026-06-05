@@ -4567,6 +4567,15 @@ phases:
       fields. 2. Public command/event errors are structured and non-mutating. 3. User-visible
       surfaces emit meaningful output, not just successful imports.</risk_probes>
 
+
+      REVIEW-FIX ITERATION 2 BARE `/dasein` OWNERSHIP:
+
+      Bare `/dasein` is a required public command behavior, not an interchangeable
+      alias. In TUI mode it MUST open the configuration UI/SettingsList. Outside TUI
+      mode it MUST fall back to concise deterministic help/status output. It MUST
+      NOT mutate config, disk, sensor state, or external state. Evidence must use
+      the literal bare `/dasein`; wording such as "or equivalent" is insufficient.
+
       '
     verification: '- [ ] Black-box tests/commands use documented package scripts,
       slash commands, launch flag, config files, and event payloads only.
