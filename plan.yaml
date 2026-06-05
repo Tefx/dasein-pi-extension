@@ -3208,6 +3208,7 @@ phases:
     - docs/TECHNICAL_DESIGN.md#builtin-sensors
     depends_on:
     - pi-runtime-tests
+    - pi-runtime-extension-wiring
     agent: frontend-engineer
   - id: pi-runtime-client-proof
     name: Verify fake-host client/runtime liveness for Pi surfaces
