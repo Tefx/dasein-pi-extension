@@ -2351,11 +2351,9 @@ phases:
       - [ ] Expected-red fake-host tests cover startup API feature probes and fail-closed
       `/dasein status` reporting for unavailable Pi mechanisms.
 
-      - [ ] Expected-red SettingsList tests enumerate common sensor controls `enabled`,
-      `ui`, `agent`, `intervalMs`, `timeoutMs`, `staleAfterMs`, and `initialRefresh`.
-
-      - [ ] Expected-red SettingsList tests assert visible recurring interval controls
-      and SettingsList mutation through the ConfigManager path.
+      - [ ] Expected-red runtime tests cover minimum Pi version `0.78.1`, current
+      version capture, below-minimum classification, unavailable-version classification,
+      and separation from API feature probes.
 
       '
     evidence_template: "## refs Read Confirmation (MANDATORY)\nFor each ref in this\
