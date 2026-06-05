@@ -4427,6 +4427,10 @@ phases:
       - [ ] Support-claim and doc-sync conformance rows distinguish fake-host/API/source/live
       evidence correctly.
 
+      - [ ] Full conformance audit includes SettingsList common sensor controls `enabled`,
+      `ui`, `agent`, `intervalMs`, `timeoutMs`, `staleAfterMs`, `initialRefresh` and
+      visible recurring interval controls.
+
       '
     evidence_template: '## refs Read Confirmation (MANDATORY)
 
