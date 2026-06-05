@@ -903,6 +903,14 @@ phases:
       reserved words cannot shadow core commands. 3. Sensor actions only return proposals
       mediated by ConfigManager.</risk_probes>
 
+
+      REVIEW-FIX ITERATION 1 HELP COMMAND COVERAGE:
+
+      The command layer must implement `/dasein help` as a first-class core command
+      with deterministic output, structured `DaseinCommandResult`, and routing precedence
+      over any sensor key/action. Help output must include documented core commands
+      and sensor-action guidance without mutating config or disk.
+
       '
     verification: '- [ ] `npm run test:file -- tests/unit/command-parser.test.ts tests/unit/command-result.test.ts
       tests/unit/commands-status.test.ts tests/unit/commands-sensors.test.ts` passes
