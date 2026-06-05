@@ -1177,7 +1177,11 @@ phases:
       \ <path or unavailable>\n- below_minimum_case: <classification + no false support\
       \ claim>\n- unavailable_version_case: <classification + no false support claim>\n\
       - feature_probe_separation: <proof version check is distinct from API feature\
-      \ probes>\n- status_payload_sample: <includes piVersion, minimumPiVersion, piMechanisms[].evidenceStatuses>\n"
+      \ probes>\n- status_payload_sample: <includes piVersion, minimumPiVersion, piMechanisms[].evidenceStatuses>\n\
+      \n## Protected Status/Sensors Command Tests (MANDATORY)\n- protected_test_files:\n\
+      \  - tests/unit/commands-status.test.ts\n  - tests/unit/commands-sensors.test.ts\n\
+      - status_payload_proof: <raw test/output evidence>\n- sensors_inspectability_proof:\
+      \ <raw test/output evidence>\n- deviation_record_if_changed: <none or justified>\n"
     refs:
     - docs/TECHNICAL_DESIGN.md#command-design
     - docs/PRD.md#7-8-slash-commands
