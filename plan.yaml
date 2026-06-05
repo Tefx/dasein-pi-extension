@@ -4566,6 +4566,14 @@ phases:
       `staleAfterMs`, and `initialRefresh`. Visible recurring interval controls and
       their ConfigManager mutation path are blocking evidence, not optional UI polish.
 
+
+      REVIEW-FIX ITERATION 5 CTX.UI.CUSTOM FEATURE PROBE:
+
+      Pi feature-probe and live/support evidence must explicitly include `ctx.ui.custom`
+      as the custom UI mechanism used with SettingsList. `SettingsList` alone is insufficient;
+      status must report `ctx.ui.custom` availability/unavailability separately enough
+      to avoid false support claims.
+
       '
     verification: '- [ ] `npm run test:smoke -- tests/smoke/pi-settings-list.test.ts`
       or the documented live Pi equivalent is run with raw stdout/stderr, Pi version,
@@ -4611,6 +4619,9 @@ phases:
 
       - [ ] Live TUI smoke toggles or changes one visible recurring interval/common
       control safely and verifies ConfigManager mutation behavior or exact blocker.
+
+      - [ ] Live smoke explicitly observes `ctx.ui.custom`/custom UI path for SettingsList
+      or records an exact blocker separate from SettingsList content assertions.
 
       '
     evidence_template: '## refs Read Confirmation (MANDATORY)
@@ -4736,6 +4747,24 @@ phases:
 
       - excluded_complex_fields_check: <geo.tags/lapse.agentFields remain outside
       flat SettingsList controls unless separately justified>
+
+
+      ## ctx.ui.custom Feature-Probe Evidence (MANDATORY)
+
+      - mechanism: ctx.ui.custom
+
+      - relationship_to_settingslist: <SettingsList is rendered through ctx.ui.custom/custom
+      UI path>
+
+      - fake_host_probe: <available/unavailable classification and status payload>
+
+      - live_probe_or_blocker: <LIVE_SMOKE_VERIFIED/LIVE_SMOKE_PENDING/BLOCKED with
+      evidence ref>
+
+      - fail_closed_behavior: <how UI setup/status reports when ctx.ui.custom is unavailable>
+
+      - false_support_claim_check: <proof SettingsList support is not claimed when
+      ctx.ui.custom is unavailable/unproven>
 
       '
     refs:
