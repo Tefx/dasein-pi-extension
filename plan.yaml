@@ -1323,6 +1323,7 @@ phases:
     - CONSTITUTION.md#testing-and-gates
     depends_on:
     - core-tests
+    agent: frontend-engineer
   - id: core-gate
     name: Gate core broker phase
     status: pending
