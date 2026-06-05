@@ -1082,11 +1082,10 @@ phases:
 
       '
     refs:
-    - docs/TECHNICAL_DESIGN.md#builtin-sensors/clock
-    - docs/TECHNICAL_DESIGN.md#builtin-sensors/lapse-continuity
     - docs/PRD.md#7-3-builtin-sensors
     - docs/PRD.md#9-5-builtin-sensors
     - CONSTITUTION.md#extension-and-sensor-laws
+    - docs/TECHNICAL_DESIGN.md#builtin-sensors
     depends_on:
     - sensors-tests
     agent: frontend-engineer
