@@ -4463,7 +4463,7 @@ phases:
       alias. In TUI mode it MUST open the configuration UI/SettingsList. Outside TUI
       mode it MUST fall back to concise deterministic help/status output. It MUST
       NOT mutate config, disk, sensor state, or external state. Evidence must use
-      the literal bare `/dasein`; wording such as "or equivalent" is insufficient.
+      the literal bare `/dasein`; substitute wording is insufficient.
 
 
       REVIEW-FIX ITERATION 2 SETTINGSLIST COMMON SENSOR CONTROLS:
@@ -4478,9 +4478,10 @@ phases:
       or the documented live Pi equivalent is run with raw stdout/stderr, Pi version,
       and binary path.
 
-      - [ ] Evidence shows `/dasein`/status/sensors or equivalent slash output, context
-      hook injection behavior, status/widget rendering/clearing, SettingsList visible
-      content, and one safe setting interaction.
+      - [ ] Evidence shows literal bare `/dasein` output plus separately named `/dasein
+      status` and `/dasein sensors` slash output, context hook injection behavior,
+      status/widget rendering/clearing, SettingsList visible content, and one safe
+      setting interaction.
 
       - [ ] If blocked, evidence states the exact missing Pi binary, version, TUI
       target, permissions, extension load path, or command needed; fake-host evidence
@@ -4624,7 +4625,7 @@ phases:
       - config_mutation_check: <proof no config/disk/sensor/external mutation occurred>
 
       - rejected_substitute: Evidence using only `/dasein status`, `/dasein help`,
-      or "equivalent command" is INCOMPLETE.
+      or any substitute command is INCOMPLETE.
 
 
       ## SettingsList Common Sensor Controls Evidence (MANDATORY)
