@@ -1186,10 +1186,10 @@ phases:
 
       '
     refs:
-    - docs/TECHNICAL_DESIGN.md#builtin-sensors/geo
     - docs/TECHNICAL_DESIGN.md#testing-gate-matrix
-    - docs/TECHNICAL_DESIGN.md#error-model/native-helper-errors
     - docs/PRD.md#9-5-builtin-sensors
+    - docs/TECHNICAL_DESIGN.md#builtin-sensors
+    - docs/TECHNICAL_DESIGN.md#error-model
     depends_on:
     - sensors-tests
     agent: ios-developer
