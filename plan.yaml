@@ -737,6 +737,16 @@ phases:
       is insufficient; evidence must name these fields and show values in success
       and relevant failure/reload cases.
 
+
+      REVIEW-FIX ITERATION 4 GEO EXACT PRIVACY FIELDS:
+
+      Geo exact-location behavior must explicitly name and verify both `sensors.geo.exactCoordinates`
+      and `sensors.geo.exactAddress`. Exact coordinate output requires `sensors.geo.agent
+      === true`, `sensors.geo.precision === "exact"`, and `sensors.geo.exactCoordinates
+      === true`. Exact address output requires `sensors.geo.agent === true`, `sensors.geo.precision
+      === "exact"`, and `sensors.geo.exactAddress === true`. Broad "exact privacy
+      gates" wording is insufficient.
+
       '
     verification: '- [ ] Test files are limited to tests/ and fixtures/helpers and
       cite the exact Technical Design gate matrix rows they implement.
@@ -776,6 +786,10 @@ phases:
       - [ ] Expected-red command/reload tests explicitly assert reload payload/result
       fields `launchReappliedPaths` and `runtimeOverriddenPaths` for success and keep-old
       failure scenarios.
+
+      - [ ] Expected-red config/schema tests explicitly assert `sensors.geo.exactCoordinates`
+      and `sensors.geo.exactAddress` defaults, boolean validation, and exact-output
+      gating requirements.
 
       '
     evidence_template: "## refs Read Confirmation (MANDATORY)\nFor each ref in this\
@@ -822,7 +836,18 @@ phases:
       \ status` and `/dasein reload` result/test output>\n- failure_or_reload_case:\
       \ <proof fields remain present/meaningful when disk config/sensor reload fails\
       \ and old state is kept>\n- broad_payload_shape_claim_rejected: Evidence that\
-      \ does not name all five fields is INCOMPLETE.\n"
+      \ does not name all five fields is INCOMPLETE.\n\n## Geo Exact Privacy Fields\
+      \ Evidence (MANDATORY)\n- exactCoordinates_field: <schema/default/control/proof\
+      \ for `sensors.geo.exactCoordinates`>\n- exactAddress_field: <schema/default/control/proof\
+      \ for `sensors.geo.exactAddress`>\n- exact_coordinate_positive_case: <agent=true\
+      \ + precision=exact + exactCoordinates=true + fresh coordinates>\n- exact_coordinate_negative_cases:\
+      \ <agent false / non-exact precision / exactCoordinates false / stale or missing\
+      \ coordinates>\n- exact_address_positive_case: <agent=true + precision=exact\
+      \ + exactAddress=true + helper placemark/address>\n- exact_address_negative_cases:\
+      \ <agent false / non-exact precision / exactAddress false / missing placemark/address>\n\
+      - settingslist_simple_field_controls: <proof simple boolean fields are exposed\
+      \ where SettingsList is available>\n- broad_gate_claim_rejected: Evidence that\
+      \ says only \"exact privacy gates\" without both field names is INCOMPLETE.\n"
     refs:
     - docs/TECHNICAL_DESIGN.md#testing-gate-matrix
     - docs/TECHNICAL_DESIGN.md#core-contracts
@@ -831,6 +856,7 @@ phases:
     - CONSTITUTION.md#testing-and-gates
     - docs/PRD.md#9-acceptance-criteria
     - docs/TECHNICAL_DESIGN.md#command-result-and-output-contract
+    - docs/TECHNICAL_DESIGN.md#builtin-sensors
     depends_on:
     - core-contracts
     agent: frontend-engineer
