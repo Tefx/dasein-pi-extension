@@ -2247,12 +2247,11 @@ phases:
       - [ ] Expected-red fake-host tests cover startup API feature probes and fail-closed
       `/dasein status` reporting for unavailable Pi mechanisms.
 
-      - [ ] Expected-red fake-host tests invoke the literal bare `/dasein` in TUI
-      mode and assert it opens SettingsList/configuration UI.
+      - [ ] Expected-red SettingsList tests enumerate common sensor controls `enabled`,
+      `ui`, `agent`, `intervalMs`, `timeoutMs`, `staleAfterMs`, and `initialRefresh`.
 
-      - [ ] Expected-red fake-host tests invoke the literal bare `/dasein` outside
-      TUI mode and assert concise deterministic help/status fallback with no config
-      mutation.
+      - [ ] Expected-red SettingsList tests assert visible recurring interval controls
+      and SettingsList mutation through the ConfigManager path.
 
       '
     evidence_template: "## refs Read Confirmation (MANDATORY)\nFor each ref in this\
