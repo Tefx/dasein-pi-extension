@@ -6927,6 +6927,13 @@ phases:
       insufficient; status, sensors, and SettingsList evidence must name all five
       fields where those surfaces expose sensor metadata.
 
+
+      REVIEW-FIX ITERATION 6 CONTEXT INJECTION CUSTOMMESSAGE FIELDS:
+
+      Context injection proof must explicitly verify hidden Pi `CustomMessage` fields:
+      `display:false`, `customType:"dasein"`, deterministic timestamp shape, and conversion
+      to an LLM user message. Broad context-hook or hidden-message wording is insufficient.
+
       '
     verification: '- [ ] Black-box tests/commands use documented package scripts,
       slash commands, launch flag, config files, and event payloads only.
@@ -6974,6 +6981,9 @@ phases:
 
       - [ ] Black-box verification observes public status/sensors/SettingsList metadata
       or exact blockers for all five risky sensor inspectability fields.
+
+      - [ ] Black-box verification observes public/fake/live evidence or exact blockers
+      for hidden CustomMessage fields and LLM user-message conversion.
 
       '
     evidence_template: "## refs Read Confirmation (MANDATORY)\nFor each ref in this\
@@ -7073,7 +7083,15 @@ phases:
       \ enabled state after risk rules>\n- surfaces_checked: </dasein status, /dasein\
       \ sensors, SettingsList where applicable>\n- forced_disabled_matrix: <remote/network,\
       \ recurring/background, both, safe sensor>\n- broad_acknowledgement_claim_rejected:\
-      \ Evidence that does not name all five fields is INCOMPLETE.\n"
+      \ Evidence that does not name all five fields is INCOMPLETE.\n\n## Context Injection\
+      \ CustomMessage Evidence (MANDATORY)\n- display: false\n- customType: \"dasein\"\
+      \n- timestamp_shape: <deterministic/valid timestamp shape used in injected CustomMessage>\n\
+      - conversion_to_llm_user_message: <proof hidden custom message becomes LLM user-message\
+      \ input>\n- ui_visibility_check: <proof hidden message is not rendered as normal\
+      \ chat UI content>\n- bounded_content_check: <pre-rendered ambient context string\
+      \ respects maxAgentChars and neutral label>\n- no_request_path_io: <proof injection\
+      \ reads only pre-rendered memory>\n- broad_context_claim_rejected: Evidence\
+      \ without all CustomMessage fields and conversion proof is INCOMPLETE.\n"
     refs:
     - docs/PRD.md#9-acceptance-criteria
     - docs/TECHNICAL_DESIGN.md#command-design
@@ -7084,6 +7102,7 @@ phases:
     - docs/TECHNICAL_DESIGN.md#human-ui-rendering
     - docs/TECHNICAL_DESIGN.md#builtin-sensors
     - docs/TECHNICAL_DESIGN.md#core-contracts
+    - docs/TECHNICAL_DESIGN.md#data-flow
     depends_on:
     - finalization-doc-sync
     agent: blind-tester
