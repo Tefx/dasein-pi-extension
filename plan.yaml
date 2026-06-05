@@ -2428,4 +2428,6 @@ phases:
     - finalization-full-spec-conformance
     - finalization-architecture-concurrency-review
     - finalization-black-box-verification
+    - finalization-doc-sync
+    - finalization-full-wiring-audit
     agent: gate-reviewer
