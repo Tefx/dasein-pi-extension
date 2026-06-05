@@ -5178,6 +5178,8 @@ phases:
     - docs/PRD.md#8-2-privacy
     - docs/TECHNICAL_DESIGN.md#builtin-sensors
     - docs/TECHNICAL_DESIGN.md#error-model
+    depends_on:
+    - release-smoke-dynamic-reload
     agent: integration-verifier
   - id: release-smoke-support-claim-ledger
     name: Verify support-claim ledger and live/fake evidence separation
