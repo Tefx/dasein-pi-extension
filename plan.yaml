@@ -2268,7 +2268,13 @@ phases:
       - artifacts: <contracts/tests/outputs created>\n- main_path_evidence: <proof>\n\
       - failure_path_evidence: <proof or N/A>\n\n## checklist_receipt\n- <checklist\
       \ item 1>: satisfied | failed | blocked | unobserved — <evidence ref>\n- <checklist\
-      \ item 2>: satisfied | failed | blocked | unobserved — <evidence ref>\n"
+      \ item 2>: satisfied | failed | blocked | unobserved — <evidence ref>\n\n##\
+      \ Bare `/dasein` Command Evidence (MANDATORY)\n- literal_command: `/dasein`\n\
+      - tui_mode_result: <SettingsList/configuration UI opened; artifact/capture required>\n\
+      - non_tui_result: <concise deterministic help/status fallback; raw output required>\n\
+      - config_mutation_check: <proof no config/disk/sensor/external mutation occurred>\n\
+      - rejected_substitute: Evidence using only `/dasein status`, `/dasein help`,\
+      \ or \"equivalent command\" is INCOMPLETE.\n"
     refs:
     - docs/TECHNICAL_DESIGN.md#verified-pi-mechanisms
     - docs/TECHNICAL_DESIGN.md#data-flow
