@@ -2758,6 +2758,14 @@ phases:
       === "exact"`, and `sensors.geo.exactAddress === true`. Broad "exact privacy
       gates" wording is insufficient.
 
+
+      REVIEW-FIX ITERATION 5 CTX.UI.CUSTOM FEATURE PROBE:
+
+      Pi feature-probe and live/support evidence must explicitly include `ctx.ui.custom`
+      as the custom UI mechanism used with SettingsList. `SettingsList` alone is insufficient;
+      status must report `ctx.ui.custom` availability/unavailability separately enough
+      to avoid false support claims.
+
       '
     verification: '- [ ] Test files are limited to tests/integration, tests/unit/settings-list,
       and fake-host fixtures.
@@ -2800,6 +2808,9 @@ phases:
 
       - [ ] Expected-red SettingsList tests include simple boolean fields `sensors.geo.exactCoordinates`
       and `sensors.geo.exactAddress` as configurable controls.
+
+      - [ ] Expected-red fake-host tests explicitly probe/report `ctx.ui.custom` separately
+      from SettingsList and assert fail-closed status behavior when unavailable.
 
       '
     evidence_template: "## refs Read Confirmation (MANDATORY)\nFor each ref in this\
@@ -2859,7 +2870,14 @@ phases:
       \ <agent false / non-exact precision / exactAddress false / missing placemark/address>\n\
       - settingslist_simple_field_controls: <proof simple boolean fields are exposed\
       \ where SettingsList is available>\n- broad_gate_claim_rejected: Evidence that\
-      \ says only \"exact privacy gates\" without both field names is INCOMPLETE.\n"
+      \ says only \"exact privacy gates\" without both field names is INCOMPLETE.\n\
+      \n## ctx.ui.custom Feature-Probe Evidence (MANDATORY)\n- mechanism: ctx.ui.custom\n\
+      - relationship_to_settingslist: <SettingsList is rendered through ctx.ui.custom/custom\
+      \ UI path>\n- fake_host_probe: <available/unavailable classification and status\
+      \ payload>\n- live_probe_or_blocker: <LIVE_SMOKE_VERIFIED/LIVE_SMOKE_PENDING/BLOCKED\
+      \ with evidence ref>\n- fail_closed_behavior: <how UI setup/status reports when\
+      \ ctx.ui.custom is unavailable>\n- false_support_claim_check: <proof SettingsList\
+      \ support is not claimed when ctx.ui.custom is unavailable/unproven>\n"
     refs:
     - docs/TECHNICAL_DESIGN.md#verified-pi-mechanisms
     - docs/TECHNICAL_DESIGN.md#data-flow
