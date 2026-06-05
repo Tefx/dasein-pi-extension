@@ -1581,6 +1581,9 @@ phases:
       - [ ] Final gate verdict is OPEN or BLOCKED with explicit blockers and required
       actions.
 
+      - [ ] Gate decision basis reviews builtin/first-party sensor top-level side-effect
+      proof and blocks if import-time side effects remain.
+
       '
     refs:
     - CONSTITUTION.md#testing-and-gates
