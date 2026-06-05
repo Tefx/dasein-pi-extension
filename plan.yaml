@@ -4843,9 +4843,9 @@ phases:
       - [ ] Any live-environment blockers are reported separately from fake-host/public
       CI proof.
 
-      - [ ] Black-box verification observes documented SettingsList controls for `enabled`,
-      `ui`, `agent`, `intervalMs`, `timeoutMs`, `staleAfterMs`, and `initialRefresh`
-      where the public surface is available.
+      - [ ] Black-box verification observes public status payload/version reporting
+      or exact environment blockers for `minimumPiVersion: "0.78.1"` and current Pi
+      version.
 
       '
     evidence_template: '## refs Read Confirmation (MANDATORY)
