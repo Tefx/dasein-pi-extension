@@ -1791,6 +1791,13 @@ phases:
       === "exact"`, and `sensors.geo.exactAddress === true`. Broad "exact privacy
       gates" wording is insufficient.
 
+
+      REVIEW-FIX ITERATION 4 GEO TAG COMMAND DETAILS:
+
+      Geo tag command coverage must explicitly verify `radius_m` integer bounds `1..100000`,
+      the `GeoTagListPayload` shape, and coordinate redaction controlled by `sensors.geo.exactCoordinates`.
+      Broad geo tag behavior wording is insufficient.
+
       '
     verification: '- [ ] Test files are limited to tests/native and tests/unit/sensors
       plus focused fixtures.
@@ -1812,6 +1819,9 @@ phases:
       - [ ] Expected-red geo sensor tests explicitly name `sensors.geo.exactCoordinates`
       and `sensors.geo.exactAddress` and cover positive/negative exact coordinate/address
       output gates.
+
+      - [ ] Expected-red geo tag tests assert `radius_m` integer bounds `1..100000`,
+      `GeoTagListPayload` shape, and coordinate redaction controlled by `sensors.geo.exactCoordinates`.
 
       '
     evidence_template: "## refs Read Confirmation (MANDATORY)\nFor each ref in this\
@@ -1844,7 +1854,17 @@ phases:
       \ <agent false / non-exact precision / exactAddress false / missing placemark/address>\n\
       - settingslist_simple_field_controls: <proof simple boolean fields are exposed\
       \ where SettingsList is available>\n- broad_gate_claim_rejected: Evidence that\
-      \ says only \"exact privacy gates\" without both field names is INCOMPLETE.\n"
+      \ says only \"exact privacy gates\" without both field names is INCOMPLETE.\n\
+      \n## Geo Tag Command Detail Evidence (MANDATORY)\n- radius_m_bounds: \"integer\
+      \ 1..100000 inclusive\"\n- radius_m_accept_cases: <1, representative valid value,\
+      \ 100000>\n- radius_m_reject_cases: <0, 100001, non-integer, invalid token>\n\
+      - GeoTagListPayload_shape: <exact payload fields: exactCoordinates, tags[].name,\
+      \ radius_m, label, coordinates visible/redacted union>\n- coordinate_redaction_exactCoordinates_false:\
+      \ <proof no lat/lon numbers in command text or payload>\n- coordinate_visibility_exactCoordinates_true:\
+      \ <proof visible only when all exact gates pass>\n- raw_command_output: <geo\
+      \ tag list/add/remove tests or smoke output>\n- broad_geo_tag_claim_rejected:\
+      \ Evidence that does not name radius bounds, GeoTagListPayload, and exactCoordinates\
+      \ redaction is INCOMPLETE.\n"
     refs:
     - docs/TECHNICAL_DESIGN.md#builtin-sensors
     - docs/TECHNICAL_DESIGN.md#testing-gate-matrix
