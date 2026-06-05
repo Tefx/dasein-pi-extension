@@ -2203,6 +2203,18 @@ phases:
       - [ ] Mechanism evidenceStatuses are updated/assessed only for observed live
       behaviors and remain LIVE_SMOKE_PENDING for unobserved mechanisms.
 
+      - [ ] Live smoke evidence explicitly covers `--dasein` launch flag parsing or
+      records an exact blocker.
+
+      - [ ] Live smoke evidence explicitly covers `pi.events` publish/receive for
+      `dasein:state:set` and `dasein:state:clear` or records an exact blocker.
+
+      - [ ] Live smoke evidence explicitly covers lifecycle observation (`input` or
+      `before_agent_start`, plus `agent_end`) or records an exact blocker.
+
+      - [ ] Live smoke evidence explicitly covers hidden custom-message context conversion
+      to LLM input or records an exact blocker.
+
       '
     refs:
     - docs/TECHNICAL_DESIGN.md#verified-pi-mechanisms
