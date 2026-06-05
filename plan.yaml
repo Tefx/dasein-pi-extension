@@ -6524,6 +6524,13 @@ phases:
       kill grace `250ms`, and backoff sequence `1m -> 5m -> 15m`. Broad timeout/backoff/cleanup
       wording is insufficient.
 
+
+      REVIEW-FIX ITERATION 6 CONTEXT INJECTION CUSTOMMESSAGE FIELDS:
+
+      Context injection proof must explicitly verify hidden Pi `CustomMessage` fields:
+      `display:false`, `customType:"dasein"`, deterministic timestamp shape, and conversion
+      to an LLM user message. Broad context-hook or hidden-message wording is insufficient.
+
       '
     verification: '- [ ] Requirements register covers every material requirement family
       from Constitution, PRD, and Technical Design touched by the implementation.
@@ -6572,6 +6579,9 @@ phases:
 
       - [ ] Full conformance audit includes native helper timeout `3000ms`, kill grace
       `250ms`, and backoff `1m -> 5m -> 15m` as separate requirement rows.
+
+      - [ ] Full conformance audit includes context injection `display:false`, `customType:"dasein"`,
+      timestamp shape, and conversion-to-LLM user-message rows.
 
       '
     evidence_template: "## refs Read Confirmation (MANDATORY)\nFor each ref in this\
@@ -6675,7 +6685,14 @@ phases:
       \ failure delays and manual refresh bypass behavior>\n- orphan_process_check:\
       \ <proof no helper remains after timeout/shutdown>\n- platform_classification:\
       \ <darwin live/typecheck or non-darwin explicit skip>\n- broad_native_claim_rejected:\
-      \ Evidence that omits any constant is INCOMPLETE.\n"
+      \ Evidence that omits any constant is INCOMPLETE.\n\n## Context Injection CustomMessage\
+      \ Evidence (MANDATORY)\n- display: false\n- customType: \"dasein\"\n- timestamp_shape:\
+      \ <deterministic/valid timestamp shape used in injected CustomMessage>\n- conversion_to_llm_user_message:\
+      \ <proof hidden custom message becomes LLM user-message input>\n- ui_visibility_check:\
+      \ <proof hidden message is not rendered as normal chat UI content>\n- bounded_content_check:\
+      \ <pre-rendered ambient context string respects maxAgentChars and neutral label>\n\
+      - no_request_path_io: <proof injection reads only pre-rendered memory>\n- broad_context_claim_rejected:\
+      \ Evidence without all CustomMessage fields and conversion proof is INCOMPLETE.\n"
     refs:
     - CONSTITUTION.md
     - docs/PRD.md
@@ -6685,6 +6702,8 @@ phases:
     - docs/TECHNICAL_DESIGN.md#builtin-sensors
     - docs/TECHNICAL_DESIGN.md#core-contracts
     - docs/TECHNICAL_DESIGN.md#testing-gate-matrix
+    - docs/TECHNICAL_DESIGN.md#verified-pi-mechanisms
+    - docs/TECHNICAL_DESIGN.md#data-flow
     depends_on:
     - finalization-doc-sync
     - finalization-full-wiring-audit
