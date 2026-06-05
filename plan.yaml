@@ -597,6 +597,27 @@ phases:
       registration logic is shipped by this contract step.
 
       '
+    evidence_template: "## refs Read Confirmation (MANDATORY)\nFor each ref in this\
+      \ step:\n- CONSTITUTION.md#architectural-dogmas — <key passage or \"NOT READ:\
+      \ <reason>\">\n- CONSTITUTION.md#extension-and-sensor-laws — <key passage or\
+      \ \"NOT READ: <reason>\">\n- docs/TECHNICAL_DESIGN.md#core-contracts — <key\
+      \ passage or \"NOT READ: <reason>\">\n- docs/TECHNICAL_DESIGN.md#rendering-contract\
+      \ — <key passage or \"NOT READ: <reason>\">\n- docs/TECHNICAL_DESIGN.md#command-design\
+      \ — <key passage or \"NOT READ: <reason>\">\n- docs/PRD.md#7-functional-requirements\
+      \ — <key passage or \"NOT READ: <reason>\">\n\n## side_effect_budget\n- allowed:\
+      \ <copy allowed side effects from step description and confirm actual changes\
+      \ stayed inside them>\n- forbidden: <copy forbidden side effects from step description\
+      \ and confirm none occurred>\n\n## risk_probes\n- probe_1: <result/evidence>\n\
+      - probe_2: <result/evidence>\n- probe_3: <result/evidence or N/A>\n\n## raw_command_output\n\
+      - command: <exact command or N/A>\n- raw_stdout: <paste raw output or N/A>\n\
+      - raw_stderr: <paste raw error output or N/A>\n- exit_code: <code or N/A>\n\n\
+      ## structured_evidence\n- files_changed: <paths>\n- commands_executed:\n  -\
+      \ command: <exact command or N/A>\n    raw_stdout: <paste raw output or N/A>\n\
+      \    raw_stderr: <paste raw error output or N/A>\n    exit_code: <code or N/A>\n\
+      - artifacts: <contracts/tests/outputs created>\n- main_path_evidence: <proof>\n\
+      - failure_path_evidence: <proof or N/A>\n\n## checklist_receipt\n- <checklist\
+      \ item 1>: satisfied | failed | blocked | unobserved — <evidence ref>\n- <checklist\
+      \ item 2>: satisfied | failed | blocked | unobserved — <evidence ref>\n"
     refs:
     - CONSTITUTION.md#architectural-dogmas
     - CONSTITUTION.md#extension-and-sensor-laws
