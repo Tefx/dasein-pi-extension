@@ -4192,8 +4192,8 @@ phases:
       - [ ] Gate decision basis reviews live launch flag parsing, event publishing,
       lifecycle observation, and hidden context conversion evidence or exact blockers.
 
-      - [ ] Gate decision basis reviews literal bare `/dasein` live SettingsList opening/fallback
-      evidence or exact blockers.
+      - [ ] Gate decision basis reviews minimum/current Pi version evidence and confirms
+      below-minimum/unavailable versions do not produce false support claims.
 
       '
     evidence_template: '## refs Read Confirmation (MANDATORY)
