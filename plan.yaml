@@ -373,6 +373,89 @@ phases:
     depends_on:
     - scaffold-complete
     agent: integration-verifier
+  - id: scaffold-gate
+    name: Gate scaffold foundation
+    status: pending
+    description: 'step_type: gate
+
+      DECISION ARTIFACT: Independent phase-check gate for scaffold. Review scaffold
+      contracts, tests, implementation evidence, dependency policy, and fake-host/live-claim
+      separation.
+
+      review_depth: STANDARD
+
+      cross_cutting_focus: dependency policy, root shim minimality, fake-host-vs-live
+      evidence distinction.
+
+      <side_effect_budget>Allowed: read-only evidence review. Forbidden: implementing
+      fixes or approving sampled evidence without checklist proof.</side_effect_budget>
+
+      <risk_probes>1. Every scaffold requirement has positive proof or remediation.
+      2. No runtime dependency drift. 3. No live Pi claim is based on fake-host proof.</risk_probes>'
+    verification: '- [ ] All scaffold steps have checklist receipts and refs confirmations.
+
+      - [ ] Gate decision basis maps package, shim, fake-host, and dependency requirements
+      to evidence.
+
+      - [ ] OPEN only if no blocker-class scaffold gaps remain.'
+    evidence_template: '## refs Read Confirmation (MANDATORY)
+
+      For each ref in this step:
+
+      - CONSTITUTION.md — <key passage or NOT READ: reason>
+
+      - docs/PRD.md — <key passage or NOT READ: reason>
+
+      - docs/TECHNICAL_DESIGN.md — <key passage or NOT READ: reason>
+
+
+      ## checklist_receipt
+
+      - satisfied: []
+
+      - failed: []
+
+      - blocked: []
+
+      - unobserved: []
+
+
+      ## Behavioral Proof Register (MANDATORY for proof/gate steps)
+
+      | requirement_ref | behavior_claim | runtime_proof_expected | evidence_ref |
+      status | closure_path | gate_decision_basis |
+
+      | --- | --- | --- | --- | --- | --- | --- |
+
+      | <ref> | <claim> | <proof> | <artifact> | PROVEN/NEEDS_TEST/UNPROVEN/BLOCKED
+      | <fix/retest/non-intersection> | <OPEN/BLOCK basis> |
+
+
+      ## Evidence
+
+      - artifact_paths: <files, tests, logs, screenshots, terminal captures, or matrices>
+
+      - commands: <exact commands, if applicable>
+
+      - raw_output: <paste stdout/stderr or explain non-execution blocker>
+
+      - side_effect_budget_observed: <allowed/forbidden side effects checked>
+
+      - risk_probes: <explicit answers to the risk probes>
+
+      - headline: PASS | PASS_WITH_DEBT | BLOCKED
+
+      '
+    refs:
+    - CONSTITUTION.md
+    - docs/PRD.md
+    - docs/TECHNICAL_DESIGN.md
+    depends_on:
+    - scaffold-contracts
+    - scaffold-tests
+    - scaffold-complete
+    - scaffold-static-proof
+    agent: gate-reviewer
 - id: core
   name: Core Broker Contracts and Implementation
   status: locked
