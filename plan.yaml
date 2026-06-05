@@ -1271,6 +1271,15 @@ phases:
       is insufficient; evidence must name these fields and show values in success
       and relevant failure/reload cases.
 
+
+      REVIEW-FIX ITERATION 6 USER-ADDED RISKY SENSOR INSPECTABILITY FIELDS:
+
+      User-added/risky sensor inspectability must explicitly own and verify exact
+      fields `acknowledgedManifestDigest`, `acknowledgementRequired`, `acknowledgementSatisfied`,
+      `defaultEnabled`, and `effectiveEnabled`. Broad "acknowledgement" wording is
+      insufficient; status, sensors, and SettingsList evidence must name all five
+      fields where those surfaces expose sensor metadata.
+
       '
     verification: '- [ ] `npm run test:file -- tests/unit/command-parser.test.ts tests/unit/command-result.test.ts
       tests/unit/commands-status.test.ts tests/unit/commands-sensors.test.ts` passes
@@ -1305,6 +1314,10 @@ phases:
       - [ ] Evidence proves `/dasein reload` result data includes `launchReappliedPaths`
       and `runtimeOverriddenPaths` with concrete observed values in success and failure/keep-old
       cases.
+
+      - [ ] Evidence proves `/dasein status` and `/dasein sensors` payloads expose
+      `acknowledgedManifestDigest`, `acknowledgementRequired`, `acknowledgementSatisfied`,
+      `defaultEnabled`, and `effectiveEnabled` for user-added/risky sensors.
 
       '
     evidence_template: "## refs Read Confirmation (MANDATORY)\nFor each ref in this\
@@ -1349,7 +1362,16 @@ phases:
       \ `/dasein reload` result/test output>\n- failure_or_reload_case: <proof fields\
       \ remain present/meaningful when disk config/sensor reload fails and old state\
       \ is kept>\n- broad_payload_shape_claim_rejected: Evidence that does not name\
-      \ all five fields is INCOMPLETE.\n"
+      \ all five fields is INCOMPLETE.\n\n## User-Added Risky Sensor Inspectability\
+      \ Fields Evidence (MANDATORY)\n- acknowledgedManifestDigest: <observed value/null\
+      \ and digest match/mismatch scenario>\n- acknowledgementRequired: <true/false\
+      \ cases for safe vs risky user-added sensors>\n- acknowledgementSatisfied: <true/false\
+      \ cases before/after matching digest acknowledgement>\n- defaultEnabled: <module\
+      \ default vs forced-disable behavior>\n- effectiveEnabled: <effective runtime\
+      \ enabled state after risk rules>\n- surfaces_checked: </dasein status, /dasein\
+      \ sensors, SettingsList where applicable>\n- forced_disabled_matrix: <remote/network,\
+      \ recurring/background, both, safe sensor>\n- broad_acknowledgement_claim_rejected:\
+      \ Evidence that does not name all five fields is INCOMPLETE.\n"
     refs:
     - docs/TECHNICAL_DESIGN.md#command-design
     - docs/PRD.md#7-8-slash-commands
