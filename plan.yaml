@@ -5206,225 +5206,89 @@ phases:
       cleanup timeout live/support-ledger evidence.
 
       '
-    evidence_template: '## refs Read Confirmation (MANDATORY)
-
-      For each ref in this step:
-
-      - CONSTITUTION.md#testing-and-gates — <key passage or "NOT READ: <reason>">
-
-      - CONSTITUTION.md#ux-and-pi-interaction-red-lines — <key passage or "NOT READ:
-      <reason>">
-
-      - docs/TECHNICAL_DESIGN.md#verified-pi-mechanisms — <key passage or "NOT READ:
-      <reason>">
-
-      - docs/TECHNICAL_DESIGN.md#testing-gate-matrix — <key passage or "NOT READ:
-      <reason>">
-
-
-      ## side_effect_budget
-
-      - allowed: <copy allowed side effects from step description and confirm actual
-      changes stayed inside them>
-
-      - forbidden: <copy forbidden side effects from step description and confirm
-      none occurred>
-
-
-      ## risk_probes
-
-      - probe_1: <result/evidence>
-
-      - probe_2: <result/evidence>
-
-      - probe_3: <result/evidence or N/A>
-
-
-      ## verify-only purity
-
-      - role: read-only verifier/gate/auditor
-
-      - repo_product_files_changed: no repository/product files may be changed; disposable
-      runtime/config/test fixture files may change only when this step explicitly
-      requires them and cleanup evidence is provided
-
-      - repo_product_mutation_performed: no repository/product mutation may be performed;
-      documented disposable runtime/config/test mutations are allowed only within
-      the step side_effect_budget and must include cleanup evidence
-
-      - if repo/product mutation was necessary: STOP and report blocker for orchestrator/planner;
-      if disposable runtime/test mutation was required, record scope and cleanup evidence
-
-
-      ## raw_command_output
-
-      - command: <exact command or N/A>
-
-      - raw_stdout: <paste raw output or N/A>
-
-      - raw_stderr: <paste raw error output or N/A>
-
-      - exit_code: <code or N/A>
-
-
-      ## gate_decision_basis
-
-      | requirement_or_step_ref | evidence_ref | proof_status | unresolved_status
-      | blocks_remaining_gates | closure_path |
-
-      | --- | --- | --- | --- | --- | --- |
-
-      | <ref> | <artifact> | PROVEN|UNPROVEN|NEEDS_TEST|BLOCKED | <status> | yes/no
-      | <required action> |
-
-      - final_recommendation: OPEN | OPEN_WITH_LIVE_SUPPORT_PENDING | BLOCKED
-
-      - blockers: <list>
-
-      - required_actions: <list>
-
-
-      ## checklist_receipt
-
-      - <checklist item 1>: satisfied | failed | blocked | unobserved — <evidence
-      ref>
-
-      - <checklist item 2>: satisfied | failed | blocked | unobserved — <evidence
-      ref>
-
-
-      ## Minimum Pi Version / Status Evidence (MANDATORY)
-
-      - minimumPiVersion: "0.78.1"
-
-      - current_pi_version: <captured version or null/unavailable>
-
-      - pi_binary_path: <path or unavailable>
-
-      - below_minimum_case: <classification + no false support claim>
-
-      - unavailable_version_case: <classification + no false support claim>
-
-      - feature_probe_separation: <proof version check is distinct from API feature
-      probes>
-
-      - status_payload_sample: <includes piVersion, minimumPiVersion, piMechanisms[].evidenceStatuses>
-
-
-      ## Bare `/dasein` Command Evidence (MANDATORY)
-
-      - literal_command: `/dasein`
-
-      - tui_mode_result: <SettingsList/configuration UI opened; artifact/capture required>
-
-      - non_tui_result: <concise deterministic help/status fallback; raw output required>
-
-      - config_mutation_check: <proof no config/disk/sensor/external mutation occurred>
-
-      - rejected_substitute: Evidence using only `/dasein status`, `/dasein help`,
-      or any substitute command is INCOMPLETE.
-
-
-      ## Release Smoke Gate Verdict Vocabulary (MANDATORY)
-
-      - allowed_values: OPEN | OPEN_WITH_LIVE_SUPPORT_PENDING | BLOCKED
-
-      - OPEN_allowed_when: <all live-required mechanisms verified or no pending support
-      claims remain>
-
-      - OPEN_WITH_LIVE_SUPPORT_PENDING_allowed_when: <ordinary CI/fake-host proof
-      intact; implementation complete; live blockers exact; no false release support
-      claims>
-
-      - BLOCKED_allowed_when: <implementation blocker, false support claim, missing
-      ordinary proof, or imprecise live blocker>
-
-      - forbidden_values: any value other than OPEN, OPEN_WITH_LIVE_SUPPORT_PENDING,
-      or BLOCKED
-
-      - support_claim_safety: <proof pending live support is not represented as LIVE_SMOKE_VERIFIED>
-
-
-      ## ctx.ui.custom Feature-Probe Evidence (MANDATORY)
-
-      - mechanism: ctx.ui.custom
-
-      - relationship_to_settingslist: <SettingsList is rendered through ctx.ui.custom/custom
-      UI path>
-
-      - fake_host_probe: <available/unavailable classification and status payload>
-
-      - live_probe_or_blocker: <LIVE_SMOKE_VERIFIED/LIVE_SMOKE_PENDING/BLOCKED with
-      evidence ref>
-
-      - fail_closed_behavior: <how UI setup/status reports when ctx.ui.custom is unavailable>
-
-      - false_support_claim_check: <proof SettingsList support is not claimed when
-      ctx.ui.custom is unavailable/unproven>
-
-
-      ## Native Helper Deterministic Constants Evidence (MANDATORY)
-
-      - timeout_ms: 3000
-
-      - kill_grace_ms: 250
-
-      - backoff_sequence: 1m -> 5m -> 15m
-
-      - timeout_case: <helper exceeds 3000ms; terminate then force-kill after 250ms>
-
-      - backoff_cases: <first/second/third failure delays and manual refresh bypass
-      behavior>
-
-      - orphan_process_check: <proof no helper remains after timeout/shutdown>
-
-      - platform_classification: <darwin live/typecheck or non-darwin explicit skip>
-
-      - broad_native_claim_rejected: Evidence that omits any constant is INCOMPLETE.
-
-
-      ## Context Injection CustomMessage Evidence (MANDATORY)
-
-      - display: false
-
-      - customType: "dasein"
-
-      - timestamp_shape: <deterministic/valid timestamp shape used in injected CustomMessage>
-
-      - conversion_to_llm_user_message: <proof hidden custom message becomes LLM user-message
-      input>
-
-      - ui_visibility_check: <proof hidden message is not rendered as normal chat
-      UI content>
-
-      - bounded_content_check: <pre-rendered ambient context string respects maxAgentChars
-      and neutral label>
-
-      - no_request_path_io: <proof injection reads only pre-rendered memory>
-
-      - broad_context_claim_rejected: Evidence without all CustomMessage fields and
-      conversion proof is INCOMPLETE.
-
-
-      ## Lifecycle Exact Proof Evidence (MANDATORY)
-
-      - session_start: <startup registration/config/sensor initial refresh evidence>
-
-      - session_shutdown: <cleanup event evidence>
-
-      - per_sensor_cleanup_timeout_ms: 1000
-
-      - active_refresh_abort: <proof active refresh is aborted before cleanup>
-
-      - cleanup_error_aggregation: <proof errors are reported/aggregated deterministically>
-
-      - request_path_non_blocking: <proof lifecycle cleanup does not run during request
-      construction>
-
-      - broad_lifecycle_claim_rejected: Evidence without session_start, session_shutdown,
-      and 1000ms timeout is INCOMPLETE.
-
-      '
+    evidence_template: "## refs Read Confirmation (MANDATORY)\nFor each exact refs\
+      \ entry listed on this step, provide a key passage or `NOT READ: <reason>`.\n\
+      Machine-checkable refs inventory generated from this step refs:\n- `CONSTITUTION.md#testing-and-gates`\
+      \ — <key passage or \"NOT READ: <reason>\">\n- `CONSTITUTION.md#ux-and-pi-interaction-red-lines`\
+      \ — <key passage or \"NOT READ: <reason>\">\n- `docs/TECHNICAL_DESIGN.md#verified-pi-mechanisms`\
+      \ — <key passage or \"NOT READ: <reason>\">\n- `docs/TECHNICAL_DESIGN.md#testing-gate-matrix`\
+      \ — <key passage or \"NOT READ: <reason>\">\n- `docs/TECHNICAL_DESIGN.md#builtin-sensors`\
+      \ — <key passage or \"NOT READ: <reason>\">\n- `docs/TECHNICAL_DESIGN.md#data-flow`\
+      \ — <key passage or \"NOT READ: <reason>\">\n\nrefs_inventory:\n  - CONSTITUTION.md#testing-and-gates\n\
+      \  - CONSTITUTION.md#ux-and-pi-interaction-red-lines\n  - docs/TECHNICAL_DESIGN.md#verified-pi-mechanisms\n\
+      \  - docs/TECHNICAL_DESIGN.md#testing-gate-matrix\n  - docs/TECHNICAL_DESIGN.md#builtin-sensors\n\
+      \  - docs/TECHNICAL_DESIGN.md#data-flow\n\n## side_effect_budget\n- allowed:\
+      \ <copy allowed side effects from step description and confirm actual changes\
+      \ stayed inside them>\n- forbidden: <copy forbidden side effects from step description\
+      \ and confirm none occurred>\n\n## risk_probes\n- probe_1: <result/evidence>\n\
+      - probe_2: <result/evidence>\n- probe_3: <result/evidence or N/A>\n\n## verify-only\
+      \ purity\n- role: read-only verifier/gate/auditor\n- repo_product_files_changed:\
+      \ no repository/product files may be changed; disposable runtime/config/test\
+      \ fixture files may change only when this step explicitly requires them and\
+      \ cleanup evidence is provided\n- repo_product_mutation_performed: no repository/product\
+      \ mutation may be performed; documented disposable runtime/config/test mutations\
+      \ are allowed only within the step side_effect_budget and must include cleanup\
+      \ evidence\n- if repo/product mutation was necessary: STOP and report blocker\
+      \ for orchestrator/planner; if disposable runtime/test mutation was required,\
+      \ record scope and cleanup evidence\n\n## raw_command_output\n- command: <exact\
+      \ command or N/A>\n- raw_stdout: <paste raw output or N/A>\n- raw_stderr: <paste\
+      \ raw error output or N/A>\n- exit_code: <code or N/A>\n\n## gate_decision_basis\n\
+      | requirement_or_step_ref | evidence_ref | proof_status | unresolved_status\
+      \ | blocks_remaining_gates | closure_path |\n| --- | --- | --- | --- | --- |\
+      \ --- |\n| <ref> | <artifact> | PROVEN|UNPROVEN|NEEDS_TEST|BLOCKED | <status>\
+      \ | yes/no | <required action> |\n- final_recommendation: OPEN | OPEN_WITH_LIVE_SUPPORT_PENDING\
+      \ | BLOCKED\n- blockers: <list>\n- required_actions: <list>\n\n## checklist_receipt\n\
+      - <checklist item 1>: satisfied | failed | blocked | unobserved — <evidence\
+      \ ref>\n- <checklist item 2>: satisfied | failed | blocked | unobserved — <evidence\
+      \ ref>\n\n## Minimum Pi Version / Status Evidence (MANDATORY)\n- minimumPiVersion:\
+      \ \"0.78.1\"\n- current_pi_version: <captured version or null/unavailable>\n\
+      - pi_binary_path: <path or unavailable>\n- below_minimum_case: <classification\
+      \ + no false support claim>\n- unavailable_version_case: <classification + no\
+      \ false support claim>\n- feature_probe_separation: <proof version check is\
+      \ distinct from API feature probes>\n- status_payload_sample: <includes piVersion,\
+      \ minimumPiVersion, piMechanisms[].evidenceStatuses>\n\n## Bare `/dasein` Command\
+      \ Evidence (MANDATORY)\n- literal_command: `/dasein`\n- tui_mode_result: <SettingsList/configuration\
+      \ UI opened; artifact/capture required>\n- non_tui_result: <concise deterministic\
+      \ help/status fallback; raw output required>\n- config_mutation_check: <proof\
+      \ no config/disk/sensor/external mutation occurred>\n- rejected_substitute:\
+      \ Evidence using only `/dasein status`, `/dasein help`, or any substitute command\
+      \ is INCOMPLETE.\n\n## Release Smoke Gate Verdict Vocabulary (MANDATORY)\n-\
+      \ allowed_values: OPEN | OPEN_WITH_LIVE_SUPPORT_PENDING | BLOCKED\n- OPEN_allowed_when:\
+      \ <all live-required mechanisms verified or no pending support claims remain>\n\
+      - OPEN_WITH_LIVE_SUPPORT_PENDING_allowed_when: <ordinary CI/fake-host proof\
+      \ intact; implementation complete; live blockers exact; no false release support\
+      \ claims>\n- BLOCKED_allowed_when: <implementation blocker, false support claim,\
+      \ missing ordinary proof, or imprecise live blocker>\n- forbidden_values: any\
+      \ value other than OPEN, OPEN_WITH_LIVE_SUPPORT_PENDING, or BLOCKED\n- support_claim_safety:\
+      \ <proof pending live support is not represented as LIVE_SMOKE_VERIFIED>\n\n\
+      ## ctx.ui.custom Feature-Probe Evidence (MANDATORY)\n- mechanism: ctx.ui.custom\n\
+      - relationship_to_settingslist: <SettingsList is rendered through ctx.ui.custom/custom\
+      \ UI path>\n- fake_host_probe: <available/unavailable classification and status\
+      \ payload>\n- live_probe_or_blocker: <LIVE_SMOKE_VERIFIED/LIVE_SMOKE_PENDING/BLOCKED\
+      \ with evidence ref>\n- fail_closed_behavior: <how UI setup/status reports when\
+      \ ctx.ui.custom is unavailable>\n- false_support_claim_check: <proof SettingsList\
+      \ support is not claimed when ctx.ui.custom is unavailable/unproven>\n\n## Native\
+      \ Helper Deterministic Constants Evidence (MANDATORY)\n- timeout_ms: 3000\n\
+      - kill_grace_ms: 250\n- backoff_sequence: 1m -> 5m -> 15m\n- timeout_case: <helper\
+      \ exceeds 3000ms; terminate then force-kill after 250ms>\n- backoff_cases: <first/second/third\
+      \ failure delays and manual refresh bypass behavior>\n- orphan_process_check:\
+      \ <proof no helper remains after timeout/shutdown>\n- platform_classification:\
+      \ <darwin live/typecheck or non-darwin explicit skip>\n- broad_native_claim_rejected:\
+      \ Evidence that omits any constant is INCOMPLETE.\n\n## Context Injection CustomMessage\
+      \ Evidence (MANDATORY)\n- display: false\n- customType: \"dasein\"\n- timestamp_shape:\
+      \ <deterministic/valid timestamp shape used in injected CustomMessage>\n- conversion_to_llm_user_message:\
+      \ <proof hidden custom message becomes LLM user-message input>\n- ui_visibility_check:\
+      \ <proof hidden message is not rendered as normal chat UI content>\n- bounded_content_check:\
+      \ <pre-rendered ambient context string respects maxAgentChars and neutral label>\n\
+      - no_request_path_io: <proof injection reads only pre-rendered memory>\n- broad_context_claim_rejected:\
+      \ Evidence without all CustomMessage fields and conversion proof is INCOMPLETE.\n\
+      \n## Lifecycle Exact Proof Evidence (MANDATORY)\n- session_start: <startup registration/config/sensor\
+      \ initial refresh evidence>\n- session_shutdown: <cleanup event evidence>\n\
+      - per_sensor_cleanup_timeout_ms: 1000\n- active_refresh_abort: <proof active\
+      \ refresh is aborted before cleanup>\n- cleanup_error_aggregation: <proof errors\
+      \ are reported/aggregated deterministically>\n- request_path_non_blocking: <proof\
+      \ lifecycle cleanup does not run during request construction>\n- broad_lifecycle_claim_rejected:\
+      \ Evidence without session_start, session_shutdown, and 1000ms timeout is INCOMPLETE.\n"
     refs:
     - CONSTITUTION.md#testing-and-gates
     - CONSTITUTION.md#ux-and-pi-interaction-red-lines
