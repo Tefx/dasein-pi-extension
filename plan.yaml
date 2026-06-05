@@ -4577,9 +4577,9 @@ phases:
       - [ ] Support-claim and doc-sync conformance rows distinguish fake-host/API/source/live
       evidence correctly.
 
-      - [ ] Full conformance audit includes SettingsList common sensor controls `enabled`,
-      `ui`, `agent`, `intervalMs`, `timeoutMs`, `staleAfterMs`, `initialRefresh` and
-      visible recurring interval controls.
+      - [ ] Full conformance audit verifies `minimumPiVersion: "0.78.1"`, current
+      version capture, below-minimum/unavailable classification, and separate feature-probe
+      evidence.
 
       '
     evidence_template: '## refs Read Confirmation (MANDATORY)
