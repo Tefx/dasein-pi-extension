@@ -748,6 +748,19 @@ phases:
       `piVersion` capture/null behavior, mechanism evidence status lists, and below-minimum/unavailable
       classifications.
 
+      - [ ] Expected-red bounding box explicitly includes `tests/unit/commands-status.test.ts`
+      and `tests/unit/commands-sensors.test.ts`.
+
+      - [ ] `tests/unit/commands-status.test.ts` expected-red assertions cover `/dasein
+      status` payload: `piVersion`, `minimumPiVersion`, Pi mechanism evidence statuses,
+      config/state paths, active/disabled sensors, hidden contributors, permissions,
+      sensor metadata, load/status errors, and durable lapse health.
+
+      - [ ] `tests/unit/commands-sensors.test.ts` expected-red assertions cover builtin/user-added/load-failed
+      records, provenance, manifest permissions/input/output metadata, remote/background
+      behavior, effectiveIntervalMs, manifestDigest, acknowledgement, forcedDisabledReason,
+      and trusted-local-code warning.
+
       '
     evidence_template: "## refs Read Confirmation (MANDATORY)\nFor each ref in this\
       \ step:\n- docs/TECHNICAL_DESIGN.md#testing-gate-matrix — <key passage or \"\
