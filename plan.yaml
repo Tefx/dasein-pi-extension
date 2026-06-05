@@ -3998,6 +3998,16 @@ phases:
       not fake proof. 2. Ordinary CI remains valid even if live smoke is blocked.
       3. Every unobserved mechanism has a closure path before release claims.</risk_probes>
 
+
+      REVIEW-FIX ITERATION 2 MINIMUM PI VERSION STATUS:
+
+      Dasein status/runtime evidence must include exact `minimumPiVersion: "0.78.1"`,
+      current Pi version capture when available, unavailable-version classification,
+      and below-minimum classification without false support claims. Version support
+      classification is separate from API feature probes: a sufficient version does
+      not prove feature availability, and feature availability does not override a
+      below-minimum version.
+
       '
     verification: '- [ ] Ledger includes every mechanism from TECHNICAL_DESIGN > Verified
       Pi Mechanisms plus native helper and dynamic reload gates.
