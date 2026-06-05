@@ -1871,6 +1871,9 @@ phases:
 
       - [ ] Report distinguishes fake-host/API evidence from live Pi support claims.
 
+      - [ ] Conformance audit includes startup feature probes and fail-closed PiMechanismError/status
+      reporting for unavailable Pi APIs.
+
       '
     refs:
     - docs/TECHNICAL_DESIGN.md#verified-pi-mechanisms
