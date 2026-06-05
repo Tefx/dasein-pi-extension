@@ -2786,181 +2786,77 @@ phases:
       and `1m -> 5m -> 15m`; broad cleanup/backoff evidence is rejected.
 
       '
-    evidence_template: '## refs Read Confirmation (MANDATORY)
-
-      For each ref in this step:
-
-      - CONSTITUTION.md#testing-and-gates — <key passage or "NOT READ: <reason>">
-
-      - docs/TECHNICAL_DESIGN.md#builtin-sensors — <key passage or "NOT READ: <reason>">
-
-      - docs/TECHNICAL_DESIGN.md#testing-gate-matrix — <key passage or "NOT READ:
-      <reason>">
-
-      - docs/PRD.md#9-acceptance-criteria — <key passage or "NOT READ: <reason>">
-
-
-      ## side_effect_budget
-
-      - allowed: <copy allowed side effects from step description and confirm actual
-      changes stayed inside them>
-
-      - forbidden: <copy forbidden side effects from step description and confirm
-      none occurred>
-
-
-      ## risk_probes
-
-      - probe_1: <result/evidence>
-
-      - probe_2: <result/evidence>
-
-      - probe_3: <result/evidence or N/A>
-
-
-      ## verify-only purity
-
-      - role: read-only verifier/gate/auditor
-
-      - repo_product_files_changed: no repository/product files may be changed; disposable
-      runtime/config/test fixture files may change only when this step explicitly
-      requires them and cleanup evidence is provided
-
-      - repo_product_mutation_performed: no repository/product mutation may be performed;
-      documented disposable runtime/config/test mutations are allowed only within
-      the step side_effect_budget and must include cleanup evidence
-
-      - if repo/product mutation was necessary: STOP and report blocker for orchestrator/planner;
-      if disposable runtime/test mutation was required, record scope and cleanup evidence
-
-
-      ## raw_command_output
-
-      - command: <exact command or N/A>
-
-      - raw_stdout: <paste raw output or N/A>
-
-      - raw_stderr: <paste raw error output or N/A>
-
-      - exit_code: <code or N/A>
-
-
-      ## gate_decision_basis
-
-      | requirement_or_step_ref | evidence_ref | proof_status | unresolved_status
-      | blocks_remaining_gates | closure_path |
-
-      | --- | --- | --- | --- | --- | --- |
-
-      | <ref> | <artifact> | PROVEN|UNPROVEN|NEEDS_TEST|BLOCKED | <status> | yes/no
-      | <required action> |
-
-      - final_recommendation: OPEN | OPEN_WITH_DEBT | BLOCKED
-
-      - blockers: <list>
-
-      - required_actions: <list>
-
-
-      ## checklist_receipt
-
-      - <checklist item 1>: satisfied | failed | blocked | unobserved — <evidence
-      ref>
-
-      - <checklist item 2>: satisfied | failed | blocked | unobserved — <evidence
-      ref>
-
-
-      ## Geo Exact Privacy Fields Evidence (MANDATORY)
-
-      - exactCoordinates_field: <schema/default/control/proof for `sensors.geo.exactCoordinates`>
-
-      - exactAddress_field: <schema/default/control/proof for `sensors.geo.exactAddress`>
-
-      - exact_coordinate_positive_case: <agent=true + precision=exact + exactCoordinates=true
-      + fresh coordinates>
-
-      - exact_coordinate_negative_cases: <agent false / non-exact precision / exactCoordinates
-      false / stale or missing coordinates>
-
-      - exact_address_positive_case: <agent=true + precision=exact + exactAddress=true
-      + helper placemark/address>
-
-      - exact_address_negative_cases: <agent false / non-exact precision / exactAddress
-      false / missing placemark/address>
-
-      - settingslist_simple_field_controls: <proof simple boolean fields are exposed
-      where SettingsList is available>
-
-      - broad_gate_claim_rejected: Evidence that says only "exact privacy gates" without
-      both field names is INCOMPLETE.
-
-
-      ## Geo Tag Command Detail Evidence (MANDATORY)
-
-      - radius_m_bounds: "integer 1..100000 inclusive"
-
-      - radius_m_accept_cases: <1, representative valid value, 100000>
-
-      - radius_m_reject_cases: <0, 100001, non-integer, invalid token>
-
-      - GeoTagListPayload_shape: <exact payload fields: exactCoordinates, tags[].name,
-      radius_m, label, coordinates visible/redacted union>
-
-      - coordinate_redaction_exactCoordinates_false: <proof no lat/lon numbers in
-      command text or payload>
-
-      - coordinate_visibility_exactCoordinates_true: <proof visible only when all
-      exact gates pass>
-
-      - raw_command_output: <geo tag list/add/remove tests or smoke output>
-
-      - broad_geo_tag_claim_rejected: Evidence that does not name radius bounds, GeoTagListPayload,
-      and exactCoordinates redaction is INCOMPLETE.
-
-
-      ## User-Added Risky Sensor Inspectability Fields Evidence (MANDATORY)
-
-      - acknowledgedManifestDigest: <observed value/null and digest match/mismatch
-      scenario>
-
-      - acknowledgementRequired: <true/false cases for safe vs risky user-added sensors>
-
-      - acknowledgementSatisfied: <true/false cases before/after matching digest acknowledgement>
-
-      - defaultEnabled: <module default vs forced-disable behavior>
-
-      - effectiveEnabled: <effective runtime enabled state after risk rules>
-
-      - surfaces_checked: </dasein status, /dasein sensors, SettingsList where applicable>
-
-      - forced_disabled_matrix: <remote/network, recurring/background, both, safe
-      sensor>
-
-      - broad_acknowledgement_claim_rejected: Evidence that does not name all five
-      fields is INCOMPLETE.
-
-
-      ## Native Helper Deterministic Constants Evidence (MANDATORY)
-
-      - timeout_ms: 3000
-
-      - kill_grace_ms: 250
-
-      - backoff_sequence: 1m -> 5m -> 15m
-
-      - timeout_case: <helper exceeds 3000ms; terminate then force-kill after 250ms>
-
-      - backoff_cases: <first/second/third failure delays and manual refresh bypass
-      behavior>
-
-      - orphan_process_check: <proof no helper remains after timeout/shutdown>
-
-      - platform_classification: <darwin live/typecheck or non-darwin explicit skip>
-
-      - broad_native_claim_rejected: Evidence that omits any constant is INCOMPLETE.
-
-      '
+    evidence_template: "## refs Read Confirmation (MANDATORY)\nFor each exact refs\
+      \ entry listed on this step, provide a key passage or `NOT READ: <reason>`.\n\
+      Machine-checkable refs inventory generated from this step refs:\n- `CONSTITUTION.md#testing-and-gates`\
+      \ — <key passage or \"NOT READ: <reason>\">\n- `docs/TECHNICAL_DESIGN.md#builtin-sensors`\
+      \ — <key passage or \"NOT READ: <reason>\">\n- `docs/TECHNICAL_DESIGN.md#testing-gate-matrix`\
+      \ — <key passage or \"NOT READ: <reason>\">\n- `docs/PRD.md#9-acceptance-criteria`\
+      \ — <key passage or \"NOT READ: <reason>\">\n- `docs/TECHNICAL_DESIGN.md#core-contracts`\
+      \ — <key passage or \"NOT READ: <reason>\">\n- `docs/TECHNICAL_DESIGN.md#command-result-and-output-contract`\
+      \ — <key passage or \"NOT READ: <reason>\">\n\nrefs_inventory:\n  - CONSTITUTION.md#testing-and-gates\n\
+      \  - docs/TECHNICAL_DESIGN.md#builtin-sensors\n  - docs/TECHNICAL_DESIGN.md#testing-gate-matrix\n\
+      \  - docs/PRD.md#9-acceptance-criteria\n  - docs/TECHNICAL_DESIGN.md#core-contracts\n\
+      \  - docs/TECHNICAL_DESIGN.md#command-result-and-output-contract\n\n## side_effect_budget\n\
+      - allowed: <copy allowed side effects from step description and confirm actual\
+      \ changes stayed inside them>\n- forbidden: <copy forbidden side effects from\
+      \ step description and confirm none occurred>\n\n## risk_probes\n- probe_1:\
+      \ <result/evidence>\n- probe_2: <result/evidence>\n- probe_3: <result/evidence\
+      \ or N/A>\n\n## verify-only purity\n- role: read-only verifier/gate/auditor\n\
+      - repo_product_files_changed: no repository/product files may be changed; disposable\
+      \ runtime/config/test fixture files may change only when this step explicitly\
+      \ requires them and cleanup evidence is provided\n- repo_product_mutation_performed:\
+      \ no repository/product mutation may be performed; documented disposable runtime/config/test\
+      \ mutations are allowed only within the step side_effect_budget and must include\
+      \ cleanup evidence\n- if repo/product mutation was necessary: STOP and report\
+      \ blocker for orchestrator/planner; if disposable runtime/test mutation was\
+      \ required, record scope and cleanup evidence\n\n## raw_command_output\n- command:\
+      \ <exact command or N/A>\n- raw_stdout: <paste raw output or N/A>\n- raw_stderr:\
+      \ <paste raw error output or N/A>\n- exit_code: <code or N/A>\n\n## gate_decision_basis\n\
+      | requirement_or_step_ref | evidence_ref | proof_status | unresolved_status\
+      \ | blocks_remaining_gates | closure_path |\n| --- | --- | --- | --- | --- |\
+      \ --- |\n| <ref> | <artifact> | PROVEN|UNPROVEN|NEEDS_TEST|BLOCKED | <status>\
+      \ | yes/no | <required action> |\n- final_recommendation: OPEN | OPEN_WITH_DEBT\
+      \ | BLOCKED\n- blockers: <list>\n- required_actions: <list>\n\n## checklist_receipt\n\
+      - <checklist item 1>: satisfied | failed | blocked | unobserved — <evidence\
+      \ ref>\n- <checklist item 2>: satisfied | failed | blocked | unobserved — <evidence\
+      \ ref>\n\n## Geo Exact Privacy Fields Evidence (MANDATORY)\n- exactCoordinates_field:\
+      \ <schema/default/control/proof for `sensors.geo.exactCoordinates`>\n- exactAddress_field:\
+      \ <schema/default/control/proof for `sensors.geo.exactAddress`>\n- exact_coordinate_positive_case:\
+      \ <agent=true + precision=exact + exactCoordinates=true + fresh coordinates>\n\
+      - exact_coordinate_negative_cases: <agent false / non-exact precision / exactCoordinates\
+      \ false / stale or missing coordinates>\n- exact_address_positive_case: <agent=true\
+      \ + precision=exact + exactAddress=true + helper placemark/address>\n- exact_address_negative_cases:\
+      \ <agent false / non-exact precision / exactAddress false / missing placemark/address>\n\
+      - settingslist_simple_field_controls: <proof simple boolean fields are exposed\
+      \ where SettingsList is available>\n- broad_gate_claim_rejected: Evidence that\
+      \ says only \"exact privacy gates\" without both field names is INCOMPLETE.\n\
+      \n## Geo Tag Command Detail Evidence (MANDATORY)\n- radius_m_bounds: \"integer\
+      \ 1..100000 inclusive\"\n- radius_m_accept_cases: <1, representative valid value,\
+      \ 100000>\n- radius_m_reject_cases: <0, 100001, non-integer, invalid token>\n\
+      - GeoTagListPayload_shape: <exact payload fields: exactCoordinates, tags[].name,\
+      \ radius_m, label, coordinates visible/redacted union>\n- coordinate_redaction_exactCoordinates_false:\
+      \ <proof no lat/lon numbers in command text or payload>\n- coordinate_visibility_exactCoordinates_true:\
+      \ <proof visible only when all exact gates pass>\n- raw_command_output: <geo\
+      \ tag list/add/remove tests or smoke output>\n- broad_geo_tag_claim_rejected:\
+      \ Evidence that does not name radius bounds, GeoTagListPayload, and exactCoordinates\
+      \ redaction is INCOMPLETE.\n\n## User-Added Risky Sensor Inspectability Fields\
+      \ Evidence (MANDATORY)\n- acknowledgedManifestDigest: <observed value/null and\
+      \ digest match/mismatch scenario>\n- acknowledgementRequired: <true/false cases\
+      \ for safe vs risky user-added sensors>\n- acknowledgementSatisfied: <true/false\
+      \ cases before/after matching digest acknowledgement>\n- defaultEnabled: <module\
+      \ default vs forced-disable behavior>\n- effectiveEnabled: <effective runtime\
+      \ enabled state after risk rules>\n- surfaces_checked: </dasein status, /dasein\
+      \ sensors, SettingsList where applicable>\n- forced_disabled_matrix: <remote/network,\
+      \ recurring/background, both, safe sensor>\n- broad_acknowledgement_claim_rejected:\
+      \ Evidence that does not name all five fields is INCOMPLETE.\n\n## Native Helper\
+      \ Deterministic Constants Evidence (MANDATORY)\n- timeout_ms: 3000\n- kill_grace_ms:\
+      \ 250\n- backoff_sequence: 1m -> 5m -> 15m\n- timeout_case: <helper exceeds\
+      \ 3000ms; terminate then force-kill after 250ms>\n- backoff_cases: <first/second/third\
+      \ failure delays and manual refresh bypass behavior>\n- orphan_process_check:\
+      \ <proof no helper remains after timeout/shutdown>\n- platform_classification:\
+      \ <darwin live/typecheck or non-darwin explicit skip>\n- broad_native_claim_rejected:\
+      \ Evidence that omits any constant is INCOMPLETE.\n"
     refs:
     - CONSTITUTION.md#testing-and-gates
     - docs/TECHNICAL_DESIGN.md#builtin-sensors
