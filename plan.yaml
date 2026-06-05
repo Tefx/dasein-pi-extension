@@ -2637,6 +2637,15 @@ phases:
       the `GeoTagListPayload` shape, and coordinate redaction controlled by `sensors.geo.exactCoordinates`.
       Broad geo tag behavior wording is insufficient.
 
+
+      REVIEW-FIX ITERATION 6 USER-ADDED RISKY SENSOR INSPECTABILITY FIELDS:
+
+      User-added/risky sensor inspectability must explicitly own and verify exact
+      fields `acknowledgedManifestDigest`, `acknowledgementRequired`, `acknowledgementSatisfied`,
+      `defaultEnabled`, and `effectiveEnabled`. Broad "acknowledgement" wording is
+      insufficient; status, sensors, and SettingsList evidence must name all five
+      fields where those surfaces expose sensor metadata.
+
       '
     verification: '- [ ] All sensors phase steps are complete with refs confirmations
       and checklist receipts.
@@ -2658,6 +2667,9 @@ phases:
 
       - [ ] Gate decision basis reviews `radius_m` bounds `1..100000`, `GeoTagListPayload`,
       and `exactCoordinates` redaction evidence; broad tag behavior proof is rejected.
+
+      - [ ] Gate decision basis reviews all five risky sensor inspectability fields
+      and rejects broad acknowledgement-only proof.
 
       '
     evidence_template: '## refs Read Confirmation (MANDATORY)
@@ -2787,12 +2799,36 @@ phases:
       - broad_geo_tag_claim_rejected: Evidence that does not name radius bounds, GeoTagListPayload,
       and exactCoordinates redaction is INCOMPLETE.
 
+
+      ## User-Added Risky Sensor Inspectability Fields Evidence (MANDATORY)
+
+      - acknowledgedManifestDigest: <observed value/null and digest match/mismatch
+      scenario>
+
+      - acknowledgementRequired: <true/false cases for safe vs risky user-added sensors>
+
+      - acknowledgementSatisfied: <true/false cases before/after matching digest acknowledgement>
+
+      - defaultEnabled: <module default vs forced-disable behavior>
+
+      - effectiveEnabled: <effective runtime enabled state after risk rules>
+
+      - surfaces_checked: </dasein status, /dasein sensors, SettingsList where applicable>
+
+      - forced_disabled_matrix: <remote/network, recurring/background, both, safe
+      sensor>
+
+      - broad_acknowledgement_claim_rejected: Evidence that does not name all five
+      fields is INCOMPLETE.
+
       '
     refs:
     - CONSTITUTION.md#testing-and-gates
     - docs/TECHNICAL_DESIGN.md#builtin-sensors
     - docs/TECHNICAL_DESIGN.md#testing-gate-matrix
     - docs/PRD.md#9-acceptance-criteria
+    - docs/TECHNICAL_DESIGN.md#core-contracts
+    - docs/TECHNICAL_DESIGN.md#command-result-and-output-contract
     depends_on:
     - sensors-local-proof
     - sensors-tests
