@@ -791,6 +791,7 @@ phases:
     - docs/TECHNICAL_DESIGN.md#core-contracts
     depends_on:
     - core-tests
+    - core-behavior-guardrails
     agent: frontend-engineer
   - id: core-renderer-injector-external
     name: Complete renderer, injector, and external event intake
