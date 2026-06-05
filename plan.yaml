@@ -1132,11 +1132,11 @@ phases:
 
       '
     refs:
-    - docs/TECHNICAL_DESIGN.md#builtin-sensors/geo
-    - docs/TECHNICAL_DESIGN.md#error-model/native-helper-errors
-    - docs/PRD.md#7-3-builtin-sensors/geo-sensor
     - docs/PRD.md#8-2-privacy
     - CONSTITUTION.md#privacy-and-safety-laws
+    - docs/TECHNICAL_DESIGN.md#builtin-sensors
+    - docs/TECHNICAL_DESIGN.md#error-model
+    - docs/PRD.md#7-functional-requirements
     depends_on:
     - sensors-tests
     agent: frontend-engineer
