@@ -2553,6 +2553,10 @@ phases:
       - [ ] Proof explicitly labels remaining live Pi/TUI/native obligations as deferred
       to release_smoke, not satisfied here.
 
+      - [ ] Runtime proof invokes literal bare `/dasein` and captures TUI SettingsList
+      opening plus non-TUI help/status fallback; `/dasein status` or `/dasein help`
+      alone is insufficient.
+
       '
     evidence_template: '## refs Read Confirmation (MANDATORY)
 
