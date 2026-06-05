@@ -142,3 +142,12 @@ phases:
     - docs/PRD.md
     - docs/TECHNICAL_DESIGN.md
     agent: frontend-engineer
+- id: core
+  name: Core Broker Contracts and Implementation
+  status: locked
+  gate: Core broker behavior is contract-defined, tested, implemented, and independently
+    verified against request-path and config/state invariants.
+  context: Build the functional core contracts and executable core modules for config,
+    typed state, sensor runtime, renderer/injector, external events, and command parsing.
+  depends_on:
+  - scaffold
