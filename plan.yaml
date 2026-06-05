@@ -3343,6 +3343,13 @@ phases:
       status must report `ctx.ui.custom` availability/unavailability separately enough
       to avoid false support claims.
 
+
+      REVIEW-FIX ITERATION 6 CONTEXT INJECTION CUSTOMMESSAGE FIELDS:
+
+      Context injection proof must explicitly verify hidden Pi `CustomMessage` fields:
+      `display:false`, `customType:"dasein"`, deterministic timestamp shape, and conversion
+      to an LLM user message. Broad context-hook or hidden-message wording is insufficient.
+
       '
     verification: '- [ ] `npm run test:file -- tests/integration/pi-extension.test.ts`
       passes through the fake Pi host with raw output.
@@ -3369,6 +3376,9 @@ phases:
 
       - [ ] Evidence explicitly probes `ctx.ui.custom`, wires SettingsList through
       it only when available, and reports fail-closed status when unavailable.
+
+      - [ ] Evidence proves Pi context hook appends hidden CustomMessage with `display:false`,
+      `customType:"dasein"`, timestamp shape, and conversion to LLM user message.
 
       '
     evidence_template: "## refs Read Confirmation (MANDATORY)\nFor each ref in this\
@@ -3410,7 +3420,15 @@ phases:
       \ <available/unavailable classification and status payload>\n- live_probe_or_blocker:\
       \ <LIVE_SMOKE_VERIFIED/LIVE_SMOKE_PENDING/BLOCKED with evidence ref>\n- fail_closed_behavior:\
       \ <how UI setup/status reports when ctx.ui.custom is unavailable>\n- false_support_claim_check:\
-      \ <proof SettingsList support is not claimed when ctx.ui.custom is unavailable/unproven>\n"
+      \ <proof SettingsList support is not claimed when ctx.ui.custom is unavailable/unproven>\n\
+      \n## Context Injection CustomMessage Evidence (MANDATORY)\n- display: false\n\
+      - customType: \"dasein\"\n- timestamp_shape: <deterministic/valid timestamp\
+      \ shape used in injected CustomMessage>\n- conversion_to_llm_user_message: <proof\
+      \ hidden custom message becomes LLM user-message input>\n- ui_visibility_check:\
+      \ <proof hidden message is not rendered as normal chat UI content>\n- bounded_content_check:\
+      \ <pre-rendered ambient context string respects maxAgentChars and neutral label>\n\
+      - no_request_path_io: <proof injection reads only pre-rendered memory>\n- broad_context_claim_rejected:\
+      \ Evidence without all CustomMessage fields and conversion proof is INCOMPLETE.\n"
     refs:
     - docs/TECHNICAL_DESIGN.md#verified-pi-mechanisms
     - docs/PRD.md#7-7-launch-argument
