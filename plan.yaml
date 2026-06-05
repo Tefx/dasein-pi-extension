@@ -730,6 +730,7 @@ phases:
     - docs/TECHNICAL_DESIGN.md#core-contracts
     depends_on:
     - core-tests
+    - core-behavior-guardrails
     agent: frontend-engineer
   - id: core-sensor-runtime-loader
     name: Complete sensor loader, runtime, and lifecycle core
