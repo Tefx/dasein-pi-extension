@@ -2364,14 +2364,17 @@ phases:
       bypass rules.
 
       '
-    evidence_template: "## refs Read Confirmation (MANDATORY)\nFor each ref in this\
-      \ step:\n- docs/TECHNICAL_DESIGN.md#testing-gate-matrix — <key passage or \"\
-      NOT READ: <reason>\">\n- docs/PRD.md#9-5-builtin-sensors — <key passage or \"\
-      NOT READ: <reason>\">\n- docs/TECHNICAL_DESIGN.md#builtin-sensors — <key passage\
-      \ or \"NOT READ: <reason>\">\n- docs/TECHNICAL_DESIGN.md#error-model — <key\
-      \ passage or \"NOT READ: <reason>\">\n\n## side_effect_budget\n- allowed: <copy\
-      \ allowed side effects from step description and confirm actual changes stayed\
-      \ inside them>\n- forbidden: <copy forbidden side effects from step description\
+    evidence_template: "## refs Read Confirmation (MANDATORY)\nFor each exact refs\
+      \ entry listed on this step, provide a key passage or `NOT READ: <reason>`.\n\
+      Machine-checkable refs inventory generated from this step refs:\n- `docs/TECHNICAL_DESIGN.md#testing-gate-matrix`\
+      \ — <key passage or \"NOT READ: <reason>\">\n- `docs/PRD.md#9-5-builtin-sensors`\
+      \ — <key passage or \"NOT READ: <reason>\">\n- `docs/TECHNICAL_DESIGN.md#builtin-sensors`\
+      \ — <key passage or \"NOT READ: <reason>\">\n- `docs/TECHNICAL_DESIGN.md#error-model`\
+      \ — <key passage or \"NOT READ: <reason>\">\n\nrefs_inventory:\n  - docs/TECHNICAL_DESIGN.md#testing-gate-matrix\n\
+      \  - docs/PRD.md#9-5-builtin-sensors\n  - docs/TECHNICAL_DESIGN.md#builtin-sensors\n\
+      \  - docs/TECHNICAL_DESIGN.md#error-model\n\n## side_effect_budget\n- allowed:\
+      \ <copy allowed side effects from step description and confirm actual changes\
+      \ stayed inside them>\n- forbidden: <copy forbidden side effects from step description\
       \ and confirm none occurred>\n\n## risk_probes\n- probe_1: <result/evidence>\n\
       - probe_2: <result/evidence>\n- probe_3: <result/evidence or N/A>\n\n## protected_artifacts_and_deviation_record\n\
       - upstream_artifacts_reviewed: <contract/test step ids and file refs>\n- protected_test_or_contract_files_changed:\
