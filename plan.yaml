@@ -917,6 +917,7 @@ phases:
     - docs/TECHNICAL_DESIGN.md#core-contracts
     depends_on:
     - core-tests
+    - core-behavior-guardrails
     agent: frontend-engineer
   - id: core-static-proof
     name: Verify core local behavior and request-path safety
