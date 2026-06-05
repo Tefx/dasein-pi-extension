@@ -1631,6 +1631,9 @@ phases:
       - [ ] Ordinary `npm test` excludes live Pi smoke while fake-host tests remain
       runnable in CI.
 
+      - [ ] Expected-red fake-host tests cover startup API feature probes and fail-closed
+      `/dasein status` reporting for unavailable Pi mechanisms.
+
       '
     refs:
     - docs/TECHNICAL_DESIGN.md#verified-pi-mechanisms
