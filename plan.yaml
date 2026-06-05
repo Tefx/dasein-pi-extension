@@ -1344,6 +1344,11 @@ phases:
     - docs/PRD.md#9-acceptance-criteria
     depends_on:
     - sensors-local-proof
+    - sensors-tests
+    - sensors-clock-lapse
+    - sensors-geo-actions
+    - sensors-native-helper
+    - sensors-manifest-risk
     agent: gate-reviewer
 - id: pi_runtime
   name: Pi Runtime, Commands, and TUI Surfaces
