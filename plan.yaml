@@ -169,3 +169,12 @@ phases:
     hook, pi.events, status/widget, and SettingsList via fake-host CI proof.
   depends_on:
   - sensors
+- id: system_wiring
+  name: System Wiring and Ordinary CI Closure
+  status: locked
+  gate: No production stubs remain in entrypoints, ordinary CI gates pass, and fake-host
+    end-to-end path reaches real modules.
+  context: Connect module implementations through the real entrypoint and prove end-to-end
+    data flow through fake Pi host and ordinary CI gates.
+  depends_on:
+  - pi_runtime
