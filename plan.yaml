@@ -2715,6 +2715,9 @@ phases:
       - [ ] Conformance audit includes startup feature probes and fail-closed PiMechanismError/status
       reporting for unavailable Pi APIs.
 
+      - [ ] Conformance audit includes bare `/dasein` TUI SettingsList opening, non-TUI
+      help/status fallback, and no-mutation requirements.
+
       '
     evidence_template: '## refs Read Confirmation (MANDATORY)
 
