@@ -278,7 +278,17 @@ phases:
       sensor business logic beyond placeholders.</side_effect_budget>
 
       <risk_probes>1. package.json.dependencies absent/empty. 2. root index.ts delegates
-      only. 3. fake host isolates CI from live Pi claims.</risk_probes>'
+      only. 3. fake host isolates CI from live Pi claims.</risk_probes>
+
+
+      REVIEW-FIX ITERATION 1 SCAFFOLD COMPLETION SPECIFICS:
+
+      Completion must prove the root shim does no work except delegate to `./src/index.ts`,
+      the package can be loaded when symlinked as `~/.pi/agent/extensions/dasein`,
+      and SettingsList/getSettingsListTheme import resolution is valid in that symlinked
+      shape.
+
+      '
     verification: '- [ ] Required npm scripts typecheck/test/test:file/test:native/test:smoke
       exist with Technical Design command shapes.
 
