@@ -710,6 +710,16 @@ phases:
       routing precedence, deterministic result object, and user-facing help output.
       Help is a core command and must not be routed as a sensor action.
 
+
+      REVIEW-FIX ITERATION 2 MINIMUM PI VERSION STATUS:
+
+      Dasein status/runtime evidence must include exact `minimumPiVersion: "0.78.1"`,
+      current Pi version capture when available, unavailable-version classification,
+      and below-minimum classification without false support claims. Version support
+      classification is separate from API feature probes: a sufficient version does
+      not prove feature availability, and feature availability does not override a
+      below-minimum version.
+
       '
     verification: '- [ ] Test files are limited to tests/ and fixtures/helpers and
       cite the exact Technical Design gate matrix rows they implement.
