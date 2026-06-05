@@ -1693,6 +1693,199 @@ phases:
     data flow through fake Pi host and ordinary CI gates.
   depends_on:
   - pi_runtime
+  steps:
+  - id: system-wiring-stub-replacement
+    name: Replace placeholders and production stubs with real modules
+    status: pending
+    description: 'step_type: implementation
+
+      tags: [integration]
+
+      TARGET STATE: Production entrypoints and runtime composition use real core,
+      sensor, command, UI, native-helper, and Pi adapter modules; no `_Runtime*`,
+      `_Stub*`, `_Placeholder*`, hardcoded default-only, or parameter-discarding production
+      dependencies remain wired into index.ts/src/index.ts.
+
+      BOUNDING BOX: index.ts, src/index.ts, src/core/*, src/commands/*, src/ui/*,
+      src/sensors/*, src/native helper wrapper.
+
+      CONSTRAINTS: This is the serial integration seam after parallel module work;
+      do not reimplement modules, only connect final implementations and remove placeholders.
+
+      ## Completion Criteria (stub exclusion)
+
+      This is an IMPLEMENTATION step. Stub-only completion is NOT acceptable. Each
+      production dependency must process inputs and produce outputs that vary by inputs.
+
+      <side_effect_budget>Allowed: runtime composition/wiring/export cleanup and minimal
+      adapter glue. Forbidden: broad semantic rewrites of core/sensors/UI, new public
+      contracts, fake-live support claims, or leaving placeholder classes behind as
+      production dependencies.</side_effect_budget>
+
+      <risk_probes>1. Root shim remains delegation-only while src/index owns composition.
+      2. Shared registries/export files are changed in this single serial step to
+      avoid merge conflicts. 3. Fake host and live Pi paths use the same real modules,
+      not separate demo implementations.</risk_probes>
+
+      '
+    verification: '- [ ] Grep output for `_Runtime`, `_Stub`, `_Placeholder`, `NotImplementedError`,
+      `TODO stub`, and parameter-discard-only handlers is included, with zero production-wired
+      blockers or explicit non-production justification.
+
+      - [ ] Import trace evidence shows root index.ts -> src/index.ts -> real core/sensor/command/UI
+      modules.
+
+      - [ ] No contract/interface signatures from upstream phases are changed without
+      a deviation record.
+
+      - [ ] Existing phase-level focused tests still pass for touched integration
+      seams with raw output.
+
+      '
+    refs:
+    - docs/TECHNICAL_DESIGN.md#module-structure
+    - docs/TECHNICAL_DESIGN.md#data-flow
+    - docs/TECHNICAL_DESIGN.md#implementation-scaffold
+    - CONSTITUTION.md#architectural-dogmas
+    agent: frontend-engineer
+  - id: system-wiring-e2e-fake-host
+    name: Verify end-to-end fake-host flow through real modules
+    status: pending
+    description: 'step_type: verification
+
+      verification_scope: full-plan-check
+
+      PROOF ARTIFACT: Independent end-to-end fake-host evidence that representative
+      user-visible entrypoint actions traverse real modules from Pi fake host through
+      command/config/sensor/render/inject/UI paths and produce observable output/effects.
+
+      This protects system_wiring-gate, release_smoke readiness, and finalization.
+      It does not satisfy live Pi/native smoke.
+
+      Required vertical paths: `/dasein status`, `/dasein set` or SettingsList mutation,
+      `--dasein` launch overlay, `dasein:state:set/clear`, context hook injection,
+      status/widget output, `/dasein sensors`, and one sensor action (`lapse reset`
+      or geo action with mocked helper result).
+
+      <side_effect_budget>Allowed: read-only fake-host execution and report. Forbidden:
+      modifying code, using mocks at module boundaries instead of fake Pi host plus
+      real modules, or claiming live Pi support.</side_effect_budget>
+
+      <risk_probes>1. The path trace proves real implementations, not test-only doubles
+      after the Pi boundary. 2. Mutation path persists canonical patches only and
+      reaches render/UI update. 3. Context injection output is bounded and neutral
+      while status/UI remains inspectable.</risk_probes>
+
+      '
+    verification: '- [ ] Exact fake-host launch/test command is recorded with raw
+      stdout/stderr.
+
+      - [ ] Evidence table shows input submitted -> Pi fake route matched -> real
+      command/event/lifecycle/core module invoked -> state/config/render changed ->
+      observable output/effect.
+
+      - [ ] At least one safe interaction/mutation is exercised end-to-end through
+      the same real modules used by production entrypoint wiring.
+
+      - [ ] Evidence explicitly states remaining live Pi/native support obligations
+      are deferred to release_smoke.
+
+      '
+    refs:
+    - docs/TECHNICAL_DESIGN.md#data-flow
+    - docs/TECHNICAL_DESIGN.md#testing-gate-matrix
+    - docs/PRD.md#9-acceptance-criteria
+    - CONSTITUTION.md#quality-baselines
+    depends_on:
+    - system-wiring-stub-replacement
+    agent: integration-verifier
+  - id: system-wiring-ordinary-ci
+    name: Verify ordinary CI closure without live Pi smoke
+    status: pending
+    description: 'step_type: verification
+
+      verification_scope: full-plan-check
+
+      PROOF ARTIFACT: Independent ordinary CI closure for all non-live gates: typecheck,
+      npm test, native helper skip/pass behavior, package dependency policy, request-path
+      no-I/O, and fake-host integration. This is the earliest full-plan check before
+      release smoke.
+
+      <side_effect_budget>Allowed: read-only command execution and report. Forbidden:
+      code edits, running release smoke as part of ordinary npm test, or suppressing
+      broad failures as pre-existing without gate non-intersection evidence.</side_effect_budget>
+
+      <risk_probes>1. `npm test` skips live Pi TUI smoke and still exercises fake-host
+      integration. 2. `npm run test:native` skips explicitly off macOS and does not
+      mask macOS failures. 3. Any broad CI failure gets remediation ownership before
+      release_smoke/finalization.</risk_probes>
+
+      '
+    verification: '- [ ] `npm run typecheck` passes with raw stdout/stderr.
+
+      - [ ] `npm test` passes with raw stdout/stderr and excludes live Pi smoke.
+
+      - [ ] `npm run test:native` passes on macOS or skips with explicit non-macOS
+      reason and raw stdout/stderr.
+
+      - [ ] Static/package checks confirm zero non-Pi runtime dependencies and no
+      request-path forbidden imports.
+
+      '
+    refs:
+    - docs/TECHNICAL_DESIGN.md#testing-gate-matrix
+    - CONSTITUTION.md#testing-and-gates
+    - CONSTITUTION.md#quality-baselines
+    - docs/PRD.md#8-non-functional-requirements
+    depends_on:
+    - system-wiring-stub-replacement
+    agent: integration-verifier
+  - id: system-wiring-gate
+    name: Gate system wiring and ordinary CI
+    status: pending
+    description: 'step_type: gate
+
+      verification_scope: full-plan-check
+
+      DECISION ARTIFACT: Independent gate for vertical integration and ordinary CI.
+      Review placeholder removal, fake-host end-to-end flow, ordinary CI closure,
+      and remaining release-smoke obligations.
+
+      review_depth: THOROUGH
+
+      cross_cutting_focus: production stubs, entrypoint-to-effect path, ordinary vs
+      live gate separation, request-path safety, dependency policy.
+
+      <side_effect_budget>Allowed: read-only gate review. Forbidden: implementation
+      fixes, approving any production placeholder, or treating fake-host flow as live
+      Pi/native support.</side_effect_budget>
+
+      <risk_probes>1. Every claimed public entrypoint is wired to real modules. 2.
+      Broad ordinary CI failures block or receive remediation ownership now. 3. Release_smoke
+      has all live-only obligations explicitly carried forward.</risk_probes>
+
+      '
+    verification: '- [ ] All system_wiring steps are complete with refs confirmations
+      and checklist receipts.
+
+      - [ ] Gate decision basis confirms no production-wired placeholders/stubs remain
+      without an accepted non-production justification.
+
+      - [ ] Fake-host E2E proof and ordinary CI proof are present; live Pi/native
+      smoke is not claimed and remains owned by release_smoke.
+
+      - [ ] Final gate verdict is OPEN or BLOCKED with explicit blockers and required
+      actions.
+
+      '
+    refs:
+    - CONSTITUTION.md#testing-and-gates
+    - docs/TECHNICAL_DESIGN.md#testing-gate-matrix
+    - docs/TECHNICAL_DESIGN.md#verified-pi-mechanisms
+    depends_on:
+    - system-wiring-e2e-fake-host
+    - system-wiring-ordinary-ci
+    agent: gate-reviewer
 - id: release_smoke
   name: Live Pi and Native Release Smoke
   status: locked
