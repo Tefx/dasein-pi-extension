@@ -8,7 +8,54 @@
 # =============================================================
 version: 1
 project: dasein-pi-extension
-context: Implementation plan for dasein-pi-extension.
+strategy_ref: Approved architecture_basis from user prompt; Constitution + PRD + Technical
+  Design are authoritative.
+context: Implementation DAG for greenfield TypeScript Dasein Pi extension using approved
+  architecture_basis; work_type=new_capability; style=balanced with runtime/liveness
+  gates.
+project_guidance: 'Dasein constitutional guidance for all execution agents:
+
+  - Treat Dasein as a local Pi ambient context broker and sensor framework, not a
+  time/space/continuity plugin, memory product, policy engine, workflow engine, marketplace,
+  daemon supervisor, or project-local config reader.
+
+  - Preserve strict boundaries: Pi shell owns registration/UI plumbing; core owns
+  config, typed-state normalization, render order, truncation, state store, and injection;
+  sensors publish typed state and never own final prompt text or priority; injector
+  reads only pre-rendered in-memory context.
+
+  - Use global config only under ~/.pi/dasein/. Required precedence is defaults <
+  global disk config < launch args < slash/UI runtime changes. Runtime changes validate,
+  atomically persist canonical path patches, then commit memory; no autonomous or
+  hidden config mutation.
+
+  - Request-path injection must perform no disk I/O, subprocess, network, dynamic
+  import, native/helper import, sensor refresh/action/cleanup/discovery, config read/mutation,
+  durable state access, renderer invocation, or invalidation scheduling.
+
+  - Sensor state entering core storage/rendering/injection must be the exact typed
+  envelope: contract_version, schema_version, sensor_id, state_key, value, value_type,
+  collected_at, stale_after_ms, status, source. Drop/reject all other fields.
+
+  - Defaults must be privacy-preserving and token-light: geo disabled and agent-hidden
+  by default; exact location requires explicit agent+precision+exact flags; external
+  state is UI-visible but agent-hidden by default; default injected label is [ambient_ctx:
+  ...] and default per-field fragments are <=240 chars before core truncation.
+
+  - User-added sensors load only from <extension_root>/src/sensors/*.ts in directory/package
+  mode, are trusted local executable code at import time, require inspectable manifests,
+  and remote/recurring risky sensors stay disabled until acknowledged. No automatic
+  file watchers.
+
+  - Mock/fake-host tests are required but never release support claims. Live Pi smoke
+  is required before claiming support for slash commands, flags, context injection,
+  events, status/widget/SettingsList, lifecycle observation, and dynamic sensor reload.
+
+  - No non-Pi runtime npm dependencies in initial scope; Pi-owned runtime imports
+  must be peer dependencies with "*" only.
+
+  - Every completion must include checklist receipt and key-passage refs confirmation.
+  Design-system/DESIGN.md work is out of scope unless separately authorized.'
 phases:
 - id: scaffold
   name: Scaffold and Contract Foundation
