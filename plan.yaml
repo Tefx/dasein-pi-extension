@@ -2462,18 +2462,24 @@ phases:
       `effectiveEnabled` exactly.
 
       '
-    evidence_template: "## refs Read Confirmation (MANDATORY)\nFor each ref in this\
-      \ step:\n- CONSTITUTION.md#extension-and-sensor-laws — <key passage or \"NOT\
-      \ READ: <reason>\">\n- docs/TECHNICAL_DESIGN.md#sensor-loading-and-reload —\
-      \ <key passage or \"NOT READ: <reason>\">\n- docs/PRD.md#7-2-sensor-model —\
-      \ <key passage or \"NOT READ: <reason>\">\n- docs/PRD.md#9-7-sensor-loading-and-reload\
-      \ — <key passage or \"NOT READ: <reason>\">\n- docs/TECHNICAL_DESIGN.md#core-contracts\
-      \ — <key passage or \"NOT READ: <reason>\">\n\n## side_effect_budget\n- allowed:\
-      \ <copy allowed side effects from step description and confirm actual changes\
-      \ stayed inside them>\n- forbidden: <copy forbidden side effects from step description\
-      \ and confirm none occurred>\n\n## risk_probes\n- probe_1: <result/evidence>\n\
-      - probe_2: <result/evidence>\n- probe_3: <result/evidence or N/A>\n\n## protected_artifacts_and_deviation_record\n\
-      - upstream_artifacts_reviewed: <contract/test step ids and file refs>\n- protected_test_or_contract_files_changed:\
+    evidence_template: "## refs Read Confirmation (MANDATORY)\nFor each exact refs\
+      \ entry listed on this step, provide a key passage or `NOT READ: <reason>`.\n\
+      Machine-checkable refs inventory generated from this step refs:\n- `CONSTITUTION.md#extension-and-sensor-laws`\
+      \ — <key passage or \"NOT READ: <reason>\">\n- `docs/TECHNICAL_DESIGN.md#sensor-loading-and-reload`\
+      \ — <key passage or \"NOT READ: <reason>\">\n- `docs/PRD.md#7-2-sensor-model`\
+      \ — <key passage or \"NOT READ: <reason>\">\n- `docs/PRD.md#9-7-sensor-loading-and-reload`\
+      \ — <key passage or \"NOT READ: <reason>\">\n- `docs/TECHNICAL_DESIGN.md#core-contracts`\
+      \ — <key passage or \"NOT READ: <reason>\">\n- `docs/TECHNICAL_DESIGN.md#command-result-and-output-contract`\
+      \ — <key passage or \"NOT READ: <reason>\">\n\nrefs_inventory:\n  - CONSTITUTION.md#extension-and-sensor-laws\n\
+      \  - docs/TECHNICAL_DESIGN.md#sensor-loading-and-reload\n  - docs/PRD.md#7-2-sensor-model\n\
+      \  - docs/PRD.md#9-7-sensor-loading-and-reload\n  - docs/TECHNICAL_DESIGN.md#core-contracts\n\
+      \  - docs/TECHNICAL_DESIGN.md#command-result-and-output-contract\n\n## side_effect_budget\n\
+      - allowed: <copy allowed side effects from step description and confirm actual\
+      \ changes stayed inside them>\n- forbidden: <copy forbidden side effects from\
+      \ step description and confirm none occurred>\n\n## risk_probes\n- probe_1:\
+      \ <result/evidence>\n- probe_2: <result/evidence>\n- probe_3: <result/evidence\
+      \ or N/A>\n\n## protected_artifacts_and_deviation_record\n- upstream_artifacts_reviewed:\
+      \ <contract/test step ids and file refs>\n- protected_test_or_contract_files_changed:\
       \ <none or justified>\n- deviation_record:\n  - type: <none|contract_incomplete|test_incorrect|implementation_constraint_conflict>\n\
       \  - what: <description>\n  - why: <reason>\n  - impact: <downstream impact>\n\
       \n## raw_command_output\n- command: <exact command or N/A>\n- raw_stdout: <paste\
