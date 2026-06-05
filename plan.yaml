@@ -6880,27 +6880,28 @@ phases:
       \ — <key passage or \"NOT READ: <reason>\">\n- `docs/TECHNICAL_DESIGN.md#builtin-sensors`\
       \ — <key passage or \"NOT READ: <reason>\">\n- `docs/TECHNICAL_DESIGN.md#core-contracts`\
       \ — <key passage or \"NOT READ: <reason>\">\n- `docs/TECHNICAL_DESIGN.md#data-flow`\
+      \ — <key passage or \"NOT READ: <reason>\">\n- `docs/PRD.md#9-6-external-state`\
       \ — <key passage or \"NOT READ: <reason>\">\n\nrefs_inventory:\n  - docs/PRD.md#9-acceptance-criteria\n\
       \  - docs/TECHNICAL_DESIGN.md#command-design\n  - docs/TECHNICAL_DESIGN.md#configuration-files\n\
       \  - docs/TECHNICAL_DESIGN.md#verified-pi-mechanisms\n  - CONSTITUTION.md#testing-and-gates\n\
       \  - docs/TECHNICAL_DESIGN.md#command-result-and-output-contract\n  - docs/TECHNICAL_DESIGN.md#human-ui-rendering\n\
       \  - docs/TECHNICAL_DESIGN.md#builtin-sensors\n  - docs/TECHNICAL_DESIGN.md#core-contracts\n\
-      \  - docs/TECHNICAL_DESIGN.md#data-flow\n\n## side_effect_budget\n- allowed:\
-      \ <copy allowed side effects from step description and confirm actual changes\
-      \ stayed inside them>\n- forbidden: <copy forbidden side effects from step description\
-      \ and confirm none occurred>\n\n## risk_probes\n- probe_1: <result/evidence>\n\
-      - probe_2: <result/evidence>\n- probe_3: <result/evidence or N/A>\n\n## verify-only\
-      \ purity\n- role: read-only verifier/gate/auditor\n- repo_product_files_changed:\
-      \ no repository/product files may be changed; disposable runtime/config/test\
-      \ fixture files may change only when this step explicitly requires them and\
-      \ cleanup evidence is provided\n- repo_product_mutation_performed: no repository/product\
-      \ mutation may be performed; documented disposable runtime/config/test mutations\
-      \ are allowed only within the step side_effect_budget and must include cleanup\
-      \ evidence\n- if repo/product mutation was necessary: STOP and report blocker\
-      \ for orchestrator/planner; if disposable runtime/test mutation was required,\
-      \ record scope and cleanup evidence\n\n## raw_command_output\n- command: <exact\
-      \ command or N/A>\n- raw_stdout: <paste raw output or N/A>\n- raw_stderr: <paste\
-      \ raw error output or N/A>\n- exit_code: <code or N/A>\n\n## behavioral_proof_register\n\
+      \  - docs/TECHNICAL_DESIGN.md#data-flow\n  - docs/PRD.md#9-6-external-state\n\
+      \n## side_effect_budget\n- allowed: <copy allowed side effects from step description\
+      \ and confirm actual changes stayed inside them>\n- forbidden: <copy forbidden\
+      \ side effects from step description and confirm none occurred>\n\n## risk_probes\n\
+      - probe_1: <result/evidence>\n- probe_2: <result/evidence>\n- probe_3: <result/evidence\
+      \ or N/A>\n\n## verify-only purity\n- role: read-only verifier/gate/auditor\n\
+      - repo_product_files_changed: no repository/product files may be changed; disposable\
+      \ runtime/config/test fixture files may change only when this step explicitly\
+      \ requires them and cleanup evidence is provided\n- repo_product_mutation_performed:\
+      \ no repository/product mutation may be performed; documented disposable runtime/config/test\
+      \ mutations are allowed only within the step side_effect_budget and must include\
+      \ cleanup evidence\n- if repo/product mutation was necessary: STOP and report\
+      \ blocker for orchestrator/planner; if disposable runtime/test mutation was\
+      \ required, record scope and cleanup evidence\n\n## raw_command_output\n- command:\
+      \ <exact command or N/A>\n- raw_stdout: <paste raw output or N/A>\n- raw_stderr:\
+      \ <paste raw error output or N/A>\n- exit_code: <code or N/A>\n\n## behavioral_proof_register\n\
       | requirement_ref | behavior_claim | runtime_proof_expected | evidence_ref |\
       \ status | closure_path | gate_decision_basis |\n| --- | --- | --- | --- | ---\
       \ | --- | --- |\n| <ref> | <claim> | <expected proof> | <artifact/command> |\
