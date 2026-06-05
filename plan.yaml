@@ -2529,6 +2529,15 @@ phases:
       `staleAfterMs`, and `initialRefresh`. Visible recurring interval controls and
       their ConfigManager mutation path are blocking evidence, not optional UI polish.
 
+
+      REVIEW-FIX ITERATION 2 BARE `/dasein` OWNERSHIP:
+
+      Bare `/dasein` is a required public command behavior, not an interchangeable
+      alias. In TUI mode it MUST open the configuration UI/SettingsList. Outside TUI
+      mode it MUST fall back to concise deterministic help/status output. It MUST
+      NOT mutate config, disk, sensor state, or external state. Evidence must use
+      the literal bare `/dasein`; wording such as "or equivalent" is insufficient.
+
       '
     verification: '- [ ] `npm run test:file -- tests/unit/settings-list.test.ts tests/integration/pi-extension.test.ts`
       passes with raw output.
@@ -2548,6 +2557,9 @@ phases:
 
       - [ ] Evidence proves visible recurring interval controls mutate via ConfigManager
       and persist only validated canonical paths.
+
+      - [ ] Evidence proves literal bare `/dasein` in TUI mode opens SettingsList/configuration
+      UI, not a generic status/help command.
 
       '
     evidence_template: "## refs Read Confirmation (MANDATORY)\nFor each ref in this\
@@ -2580,7 +2592,13 @@ phases:
       - mutation_path: <SettingsList change -> FIFO ConfigManager queue -> canonical\
       \ path validation/persistence -> runtime update>\n- excluded_complex_fields_check:\
       \ <geo.tags/lapse.agentFields remain outside flat SettingsList controls unless\
-      \ separately justified>\n"
+      \ separately justified>\n\n## Bare `/dasein` Command Evidence (MANDATORY)\n\
+      - literal_command: `/dasein`\n- tui_mode_result: <SettingsList/configuration\
+      \ UI opened; artifact/capture required>\n- non_tui_result: <concise deterministic\
+      \ help/status fallback; raw output required>\n- config_mutation_check: <proof\
+      \ no config/disk/sensor/external mutation occurred>\n- rejected_substitute:\
+      \ Evidence using only `/dasein status`, `/dasein help`, or \"equivalent command\"\
+      \ is INCOMPLETE.\n"
     refs:
     - docs/TECHNICAL_DESIGN.md#testing-gate-matrix
     - docs/PRD.md#7-10-human-tui-surfaces
