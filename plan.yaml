@@ -4849,6 +4849,14 @@ phases:
       and `1000ms` per-sensor cleanup timeout. Shutdown must abort active refresh/helper
       work and aggregate cleanup errors without blocking request construction.
 
+
+      REVIEW-FIX ITERATION 8 RELEASE SMOKE SERIALIZATION:
+
+      Live-smoke steps are intentionally serialized because they may use disposable
+      Pi sessions, HOME/config roots, extension roots, sensor fixtures, native helper
+      permissions, and runtime state. This prevents parallel smoke steps from sharing
+      or corrupting disposable runtime resources.
+
       '
     verification: '- [ ] `npm run test:smoke -- tests/smoke/pi-settings-list.test.ts`
       or the documented live Pi equivalent is run with raw stdout/stderr, Pi version,
@@ -4903,6 +4911,10 @@ phases:
 
       - [ ] Live smoke observes `session_start` and `session_shutdown` lifecycle behavior
       with cleanup evidence or records exact blockers.
+
+      - [ ] Evidence records serialized execution assumptions and confirms disposable
+      runtime/config/extension/native resources are cleaned up before the next release-smoke
+      step consumes them.
 
       '
     evidence_template: "## refs Read Confirmation (MANDATORY)\nFor each exact refs\
@@ -4977,7 +4989,12 @@ phases:
       \ refresh is aborted before cleanup>\n- cleanup_error_aggregation: <proof errors\
       \ are reported/aggregated deterministically>\n- request_path_non_blocking: <proof\
       \ lifecycle cleanup does not run during request construction>\n- broad_lifecycle_claim_rejected:\
-      \ Evidence without session_start, session_shutdown, and 1000ms timeout is INCOMPLETE.\n"
+      \ Evidence without session_start, session_shutdown, and 1000ms timeout is INCOMPLETE.\n\
+      \n## Release Smoke Serialization Evidence (MANDATORY)\n- serialized_order: release-smoke-live-pi-tui\
+      \ -> release-smoke-dynamic-reload -> release-smoke-native-helper -> release-smoke-support-claim-ledger\
+      \ -> release-smoke-gate\n- isolated_runtime_roots: <HOME/config/extension/native\
+      \ resources used by this step>\n- cleanup_before_next_step: <proof or blocker>\n\
+      - no_parallel_resource_conflict: <proof serialized dependency was respected>\n"
     refs:
     - docs/TECHNICAL_DESIGN.md#verified-pi-mechanisms
     - docs/TECHNICAL_DESIGN.md#testing-gate-matrix
