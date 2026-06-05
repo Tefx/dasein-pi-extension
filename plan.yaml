@@ -1148,6 +1148,9 @@ phases:
       current `piVersion` or null, and mechanism evidenceStatuses without false support
       claims.
 
+      - [ ] `tests/unit/commands-status.test.ts` and `tests/unit/commands-sensors.test.ts`
+      are treated as protected expected-red tests and pass with raw output after implementation.
+
       '
     evidence_template: "## refs Read Confirmation (MANDATORY)\nFor each ref in this\
       \ step:\n- docs/TECHNICAL_DESIGN.md#command-design — <key passage or \"NOT READ:\
