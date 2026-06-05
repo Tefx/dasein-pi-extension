@@ -1435,6 +1435,9 @@ phases:
       - [ ] Gate decision basis reviews status payload `minimumPiVersion: "0.78.1"`,
       version capture/null, mechanism evidence statuses, and no false support claims.
 
+      - [ ] Gate decision basis reviews status/sensors command test-definition ownership
+      and downstream implementation/proof evidence for both files.
+
       '
     evidence_template: "## refs Read Confirmation (MANDATORY)\nFor each ref in this\
       \ step:\n- CONSTITUTION.md#testing-and-gates — <key passage or \"NOT READ: <reason>\"\
