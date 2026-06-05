@@ -5048,6 +5048,14 @@ phases:
       not prove feature availability, and feature availability does not override a
       below-minimum version.
 
+
+      REVIEW-FIX ITERATION 5 CTX.UI.CUSTOM FEATURE PROBE:
+
+      Pi feature-probe and live/support evidence must explicitly include `ctx.ui.custom`
+      as the custom UI mechanism used with SettingsList. `SettingsList` alone is insufficient;
+      status must report `ctx.ui.custom` availability/unavailability separately enough
+      to avoid false support claims.
+
       '
     verification: '- [ ] Ledger includes every mechanism from TECHNICAL_DESIGN > Verified
       Pi Mechanisms plus native helper and dynamic reload gates.
@@ -5066,6 +5074,9 @@ phases:
 
       - [ ] Support-claim ledger includes minimum Pi version, current version, below-minimum/unavailable
       classification, and separate feature-probe evidence rows.
+
+      - [ ] Support-claim ledger includes a separate `ctx.ui.custom` row with SOURCE/API/LIVE/BLOCKED
+      status and SettingsList dependency noted.
 
       '
     evidence_template: '## refs Read Confirmation (MANDATORY)
@@ -5160,6 +5171,24 @@ phases:
       probes>
 
       - status_payload_sample: <includes piVersion, minimumPiVersion, piMechanisms[].evidenceStatuses>
+
+
+      ## ctx.ui.custom Feature-Probe Evidence (MANDATORY)
+
+      - mechanism: ctx.ui.custom
+
+      - relationship_to_settingslist: <SettingsList is rendered through ctx.ui.custom/custom
+      UI path>
+
+      - fake_host_probe: <available/unavailable classification and status payload>
+
+      - live_probe_or_blocker: <LIVE_SMOKE_VERIFIED/LIVE_SMOKE_PENDING/BLOCKED with
+      evidence ref>
+
+      - fail_closed_behavior: <how UI setup/status reports when ctx.ui.custom is unavailable>
+
+      - false_support_claim_check: <proof SettingsList support is not claimed when
+      ctx.ui.custom is unavailable/unproven>
 
       '
     refs:
