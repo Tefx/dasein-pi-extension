@@ -2965,6 +2965,23 @@ phases:
       not prove feature availability, and feature availability does not override a
       below-minimum version.
 
+
+      REVIEW-FIX ITERATION 2 BARE `/dasein` OWNERSHIP:
+
+      Bare `/dasein` is a required public command behavior, not an interchangeable
+      alias. In TUI mode it MUST open the configuration UI/SettingsList. Outside TUI
+      mode it MUST fall back to concise deterministic help/status output. It MUST
+      NOT mutate config, disk, sensor state, or external state. Evidence must use
+      the literal bare `/dasein`; wording such as "or equivalent" is insufficient.
+
+
+      REVIEW-FIX ITERATION 2 SETTINGSLIST COMMON SENSOR CONTROLS:
+
+      SettingsList coverage must enumerate and prove every common sensor control required
+      by the Technical Design: `enabled`, `ui`, `agent`, `intervalMs`, `timeoutMs`,
+      `staleAfterMs`, and `initialRefresh`. Visible recurring interval controls and
+      their ConfigManager mutation path are blocking evidence, not optional UI polish.
+
       '
     verification: '- [ ] All Pi runtime phase steps are complete with refs confirmations
       and checklist receipts.
@@ -2981,6 +2998,13 @@ phases:
 
       - [ ] Gate decision basis reviews `minimumPiVersion: "0.78.1"`, current version
       capture, below-minimum/unavailable classification, and feature-probe separation.
+
+      - [ ] Gate decision basis explicitly reviews literal bare `/dasein` TUI and
+      non-TUI evidence; "or equivalent" evidence is rejected.
+
+      - [ ] Gate decision basis reviews exact SettingsList common sensor fields `enabled`,
+      `ui`, `agent`, `intervalMs`, `timeoutMs`, `staleAfterMs`, `initialRefresh` and
+      visible recurring interval mutation evidence.
 
       '
     evidence_template: '## refs Read Confirmation (MANDATORY)
@@ -3080,6 +3104,37 @@ phases:
       probes>
 
       - status_payload_sample: <includes piVersion, minimumPiVersion, piMechanisms[].evidenceStatuses>
+
+
+      ## Bare `/dasein` Command Evidence (MANDATORY)
+
+      - literal_command: `/dasein`
+
+      - tui_mode_result: <SettingsList/configuration UI opened; artifact/capture required>
+
+      - non_tui_result: <concise deterministic help/status fallback; raw output required>
+
+      - config_mutation_check: <proof no config/disk/sensor/external mutation occurred>
+
+      - rejected_substitute: Evidence using only `/dasein status`, `/dasein help`,
+      or "equivalent command" is INCOMPLETE.
+
+
+      ## SettingsList Common Sensor Controls Evidence (MANDATORY)
+
+      - required_fields: [`enabled`, `ui`, `agent`, `intervalMs`, `timeoutMs`, `staleAfterMs`,
+      `initialRefresh`]
+
+      - rendered_controls_by_sensor: <clock/geo/lapse/user-added examples or exact
+      blocker>
+
+      - visible_recurring_interval_controls: <proof `intervalMs` visibility/configurability/disableability>
+
+      - mutation_path: <SettingsList change -> FIFO ConfigManager queue -> canonical
+      path validation/persistence -> runtime update>
+
+      - excluded_complex_fields_check: <geo.tags/lapse.agentFields remain outside
+      flat SettingsList controls unless separately justified>
 
       '
     refs:
