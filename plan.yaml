@@ -1240,10 +1240,10 @@ phases:
       '
     refs:
     - CONSTITUTION.md#extension-and-sensor-laws
-    - docs/TECHNICAL_DESIGN.md#core-contracts/sensor-spec
     - docs/TECHNICAL_DESIGN.md#sensor-loading-and-reload
     - docs/PRD.md#7-2-sensor-model
     - docs/PRD.md#9-7-sensor-loading-and-reload
+    - docs/TECHNICAL_DESIGN.md#core-contracts
     depends_on:
     - sensors-tests
     agent: frontend-engineer
