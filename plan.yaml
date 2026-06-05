@@ -6003,6 +6003,14 @@ phases:
       === "exact"`, and `sensors.geo.exactAddress === true`. Broad "exact privacy
       gates" wording is insufficient.
 
+
+      REVIEW-FIX ITERATION 4 CORE CONFIG VALIDATION DETAILS:
+
+      Core config validation must deterministically enforce `core.maxAgentChars` as
+      an integer in the inclusive range `40..2000` and `core.injectedLabel` as a string
+      matching regex `[A-Za-z0-9_.:-]{1,32}`. Evidence must include boundary accepts/rejects
+      and must not rely on broad config-validation wording.
+
       '
     verification: '- [ ] All finalization steps are complete with refs confirmations
       and checklist receipts.
@@ -6035,6 +6043,9 @@ phases:
 
       - [ ] Final gate confirms both `sensors.geo.exactCoordinates` and `sensors.geo.exactAddress`
       have positive proof or owned blockers.
+
+      - [ ] Final gate confirms exact `core.maxAgentChars` and `core.injectedLabel`
+      validation proof or owned blockers.
 
       '
     evidence_template: "## refs Read Confirmation (MANDATORY)\nFor each ref in this\
@@ -6105,7 +6116,16 @@ phases:
       \ <agent false / non-exact precision / exactAddress false / missing placemark/address>\n\
       - settingslist_simple_field_controls: <proof simple boolean fields are exposed\
       \ where SettingsList is available>\n- broad_gate_claim_rejected: Evidence that\
-      \ says only \"exact privacy gates\" without both field names is INCOMPLETE.\n"
+      \ says only \"exact privacy gates\" without both field names is INCOMPLETE.\n\
+      \n## Core Config Validation Evidence (MANDATORY)\n- maxAgentChars_range: \"\
+      integer 40..2000 inclusive\"\n- maxAgentChars_accept_cases: <40, 240 default,\
+      \ 2000>\n- maxAgentChars_reject_cases: <39, 2001, non-integer, NaN/Infinity\
+      \ or invalid numeric token>\n- injectedLabel_regex: \"[A-Za-z0-9_.:-]{1,32}\"\
+      \n- injectedLabel_accept_cases: <valid examples including ambient_ctx>\n- injectedLabel_reject_cases:\
+      \ <empty, length 33, invalid characters, whitespace/control>\n- raw_command_output:\
+      \ <tests/commands proving deterministic validation>\n- broad_config_claim_rejected:\
+      \ Evidence that says only \"config validation\" without these two exact rules\
+      \ is INCOMPLETE.\n"
     refs:
     - CONSTITUTION.md
     - docs/PRD.md
@@ -6113,6 +6133,7 @@ phases:
     - docs/TECHNICAL_DESIGN.md#command-result-and-output-contract
     - docs/TECHNICAL_DESIGN.md#human-ui-rendering
     - docs/TECHNICAL_DESIGN.md#builtin-sensors
+    - docs/TECHNICAL_DESIGN.md#core-contracts
     depends_on:
     - finalization-full-spec-conformance
     - finalization-architecture-concurrency-review
