@@ -4621,6 +4621,9 @@ phases:
       - [ ] Any live-environment blockers are reported separately from fake-host/public
       CI proof.
 
+      - [ ] Black-box verification invokes literal bare `/dasein` and proves TUI SettingsList
+      behavior plus non-TUI help/status fallback from public docs only.
+
       '
     evidence_template: '## refs Read Confirmation (MANDATORY)
 
