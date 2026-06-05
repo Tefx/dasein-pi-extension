@@ -2686,9 +2686,9 @@ phases:
       SOURCE/API vs LIVE status distinction | pi-runtime-tests | mechanism tests defined
       | expected_red_output | OWNED | live proof owned by release_smoke |
 
-      | pi.tui | PRD > Human TUI Surfaces | status/widget/SettingsList expose config/state
-      visibly | pi-runtime-tests | TUI fake-host tests defined | expected_red_output
-      | OWNED | live TUI proof owned by release_smoke |
+      | pi.tui | PRD > Human TUI Surfaces | status/widget/ctx.ui.custom/SettingsList
+      expose config/state visibly | pi-runtime-tests | TUI fake-host tests defined
+      | expected_red_output | OWNED | live TUI proof owned by release_smoke |
 
       BOUNDING BOX: tests/integration/pi-extension.test.ts, tests/unit/settings-list.test.ts,
       fake Pi host fixtures, root index/src index fixtures.
@@ -2708,10 +2708,10 @@ phases:
       REVIEW-FIX ITERATION 1 PI FEATURE PROBES:
 
       Startup/runtime wiring must feature-probe required Pi mechanisms (`registerCommand`,
-      `registerFlag`, `context`, `pi.events`, `setStatus`, `setWidget`, `SettingsList`,
-      lifecycle/input/agent_end hooks) and fail closed per mechanism when unavailable.
-      `/dasein status` must report structured `PiMechanismError`/evidence status instead
-      of crashing or silently claiming support.
+      `registerFlag`, `context`, `pi.events`, `setStatus`, `setWidget`, `ctx.ui.custom`,
+      `SettingsList`, lifecycle/input/agent_end hooks) and fail closed per mechanism
+      when unavailable. `/dasein status` must report structured `PiMechanismError`/evidence
+      status instead of crashing or silently claiming support.
 
 
       REVIEW-FIX ITERATION 2 MINIMUM PI VERSION STATUS:
@@ -2762,7 +2762,7 @@ phases:
     verification: '- [ ] Test files are limited to tests/integration, tests/unit/settings-list,
       and fake-host fixtures.
 
-      - [ ] Expected-red evidence covers command/flag/context/events/lifecycle/status/widget/SettingsList
+      - [ ] Expected-red evidence covers command/flag/context/events/lifecycle/status/widget/ctx.ui.custom/SettingsList
       registration and behavior.
 
       - [ ] Tests assert evidenceStatuses lists preserve SOURCE_VERIFIED/API_VERIFIED/LIVE_SMOKE_PENDING
