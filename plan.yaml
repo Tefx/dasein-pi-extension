@@ -4641,21 +4641,22 @@ phases:
       ref>
 
 
-      ## SettingsList Common Sensor Controls Evidence (MANDATORY)
+      ## Minimum Pi Version / Status Evidence (MANDATORY)
 
-      - required_fields: [`enabled`, `ui`, `agent`, `intervalMs`, `timeoutMs`, `staleAfterMs`,
-      `initialRefresh`]
+      - minimumPiVersion: "0.78.1"
 
-      - rendered_controls_by_sensor: <clock/geo/lapse/user-added examples or exact
-      blocker>
+      - current_pi_version: <captured version or null/unavailable>
 
-      - visible_recurring_interval_controls: <proof `intervalMs` visibility/configurability/disableability>
+      - pi_binary_path: <path or unavailable>
 
-      - mutation_path: <SettingsList change -> FIFO ConfigManager queue -> canonical
-      path validation/persistence -> runtime update>
+      - below_minimum_case: <classification + no false support claim>
 
-      - excluded_complex_fields_check: <geo.tags/lapse.agentFields remain outside
-      flat SettingsList controls unless separately justified>
+      - unavailable_version_case: <classification + no false support claim>
+
+      - feature_probe_separation: <proof version check is distinct from API feature
+      probes>
+
+      - status_payload_sample: <includes piVersion, minimumPiVersion, piMechanisms[].evidenceStatuses>
 
       '
     refs:
