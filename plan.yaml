@@ -3889,6 +3889,14 @@ phases:
       `display:false`, `customType:"dasein"`, deterministic timestamp shape, and conversion
       to an LLM user message. Broad context-hook or hidden-message wording is insufficient.
 
+
+      REVIEW-FIX ITERATION 8 DISPOSABLE FAKE-HOST MUTATION BUDGET:
+
+      This verification remains read-only for repository/product code and docs, but
+      it may perform documented disposable fake-host HOME/config/runtime mutations
+      needed to exercise SettingsList/config paths. Evidence must include the fake
+      HOME/config root, changed paths, and cleanup/reset proof.
+
       '
     verification: '- [ ] Fake-host launch command/test is recorded exactly with raw
       output and surface captures.
@@ -3924,6 +3932,9 @@ phases:
 
       - [ ] Runtime proof captures hidden CustomMessage `display:false`, `customType:"dasein"`,
       timestamp shape, and LLM user-message conversion evidence.
+
+      - [ ] Evidence distinguishes allowed disposable runtime/config mutation from
+      forbidden repository/product/docs/code mutation and includes cleanup/reset proof.
 
       '
     evidence_template: "## refs Read Confirmation (MANDATORY)\nFor each exact refs\
@@ -4007,7 +4018,13 @@ phases:
       \ <proof hidden message is not rendered as normal chat UI content>\n- bounded_content_check:\
       \ <pre-rendered ambient context string respects maxAgentChars and neutral label>\n\
       - no_request_path_io: <proof injection reads only pre-rendered memory>\n- broad_context_claim_rejected:\
-      \ Evidence without all CustomMessage fields and conversion proof is INCOMPLETE.\n"
+      \ Evidence without all CustomMessage fields and conversion proof is INCOMPLETE.\n\
+      \n## Disposable Runtime/Config Mutation Evidence (MANDATORY)\n- repo_product_mutation:\
+      \ MUST be none\n- disposable_home_or_config_root: <path>\n- runtime_changes_performed:\
+      \ <settings/events/config paths changed>\n- canonical_paths_changed: <list>\n\
+      - cleanup_or_reset_evidence: <proof disposable state restored/removed>\n- persistent_user_config_unchanged:\
+      \ <proof or exact blocker>\n- mutation_scope_matches_side_effect_budget: <yes/no\
+      \ + explanation>\n"
     refs:
     - docs/TECHNICAL_DESIGN.md#verified-pi-mechanisms
     - docs/TECHNICAL_DESIGN.md#testing-gate-matrix
