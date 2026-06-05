@@ -2711,6 +2711,13 @@ phases:
       insufficient; status, sensors, and SettingsList evidence must name all five
       fields where those surfaces expose sensor metadata.
 
+
+      REVIEW-FIX CATCHUP NEGATIVE SENSOR DIRECTORY RULE:
+
+      Dasein must ignore/reject `~/.pi/dasein/sensors`; user-added sensors load only
+      from `<extension_root>/src/sensors/*.ts` in directory/package mode. No scanner,
+      fallback, or reload path may treat `~/.pi/dasein/sensors` as a sensor directory.
+
       '
     verification: '- [ ] `npm run test:file -- tests/unit/sensor-loader.test.ts tests/unit/commands-status.test.ts
       tests/unit/commands-sensors.test.ts` passes with raw output.
@@ -2728,6 +2735,9 @@ phases:
       - [ ] Evidence proves manifest/risk loading computes and exposes `acknowledgedManifestDigest`,
       `acknowledgementRequired`, `acknowledgementSatisfied`, `defaultEnabled`, and
       `effectiveEnabled` exactly.
+
+      - [ ] Evidence proves loader/reload paths do not scan or import from `~/.pi/dasein/sensors`
+      and use only `<extension_root>/src/sensors/*.ts` for user-added sensors.
 
       '
     evidence_template: "## refs Read Confirmation (MANDATORY)\nFor each exact refs\
@@ -2767,7 +2777,12 @@ phases:
       \ runtime enabled state after risk rules>\n- surfaces_checked: </dasein status,\
       \ /dasein sensors, SettingsList where applicable>\n- forced_disabled_matrix:\
       \ <remote/network, recurring/background, both, safe sensor>\n- broad_acknowledgement_claim_rejected:\
-      \ Evidence that does not name all five fields is INCOMPLETE.\n"
+      \ Evidence that does not name all five fields is INCOMPLETE.\n\n## Negative\
+      \ Sensor Directory Evidence (MANDATORY)\n- forbidden_path: ~/.pi/dasein/sensors\n\
+      - allowed_path: <extension_root>/src/sensors/*.ts\n- startup_scan_case: <proof\
+      \ forbidden path ignored/rejected>\n- manual_reload_case: <proof forbidden path\
+      \ ignored/rejected>\n- no_fallback_case: <proof no fallback scanner reads ~/.pi/dasein/sensors>\n\
+      - status_or_load_error_behavior: <how rejected/ignored path is reported if applicable>\n"
     refs:
     - CONSTITUTION.md#extension-and-sensor-laws
     - docs/TECHNICAL_DESIGN.md#sensor-loading-and-reload
