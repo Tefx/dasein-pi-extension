@@ -775,7 +775,16 @@ phases:
       \ <path or unavailable>\n- below_minimum_case: <classification + no false support\
       \ claim>\n- unavailable_version_case: <classification + no false support claim>\n\
       - feature_probe_separation: <proof version check is distinct from API feature\
-      \ probes>\n- status_payload_sample: <includes piVersion, minimumPiVersion, piMechanisms[].evidenceStatuses>\n"
+      \ probes>\n- status_payload_sample: <includes piVersion, minimumPiVersion, piMechanisms[].evidenceStatuses>\n\
+      \n## Status/Sensors Command Expected-Red Evidence (MANDATORY)\n- status_test_file:\
+      \ tests/unit/commands-status.test.ts\n- sensors_test_file: tests/unit/commands-sensors.test.ts\n\
+      - status_required_assertions: <piVersion, minimumPiVersion, piMechanisms evidenceStatuses,\
+      \ config/state paths, active/disabled sensors, hidden contributors, permissions,\
+      \ sensorMetadata, load/status errors, durable lapse health>\n- sensors_required_assertions:\
+      \ <builtin/user-added/load-failed records, provenance, manifest, permissions,\
+      \ remote/background behavior, effectiveIntervalMs, manifestDigest, acknowledgement,\
+      \ forcedDisabledReason, load errors, trusted-local-code warning>\n- expected_red_output:\
+      \ <raw command output exposing gaps>\n"
     refs:
     - docs/TECHNICAL_DESIGN.md#testing-gate-matrix
     - docs/TECHNICAL_DESIGN.md#core-contracts
