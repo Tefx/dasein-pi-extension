@@ -5517,6 +5517,15 @@ phases:
       changed sensor keeps old registry/rendered context. 3. Single-file packaged
       mode remains explicitly unsupported for user-added sensor discovery.</risk_probes>
 
+
+      REVIEW-FIX ITERATION 6 DYNAMIC RELOAD DISPOSABLE FIXTURE MUTATION:
+
+      This live-smoke verification is read-only with respect to repository/product
+      code, docs, and durable user config, but it explicitly may create, change, and
+      remove a disposable local `.ts` sensor fixture under the test-controlled `<extension_root>/src/sensors`
+      to prove dynamic reload. Evidence must include fixture path, before/after content
+      summary, cleanup, and confirmation that no persistent product mutation remains.
+
       '
     verification: '- [ ] `npm run test:smoke -- tests/smoke/pi-dynamic-reload.test.ts`
       or documented live Pi equivalent is run with raw stdout/stderr and Pi process
@@ -5530,6 +5539,9 @@ phases:
 
       - [ ] If blocked, exact missing environment/permission/path/command is reported
       without treating fake-host reload proof as live support.
+
+      - [ ] Evidence explicitly distinguishes allowed disposable sensor fixture mutation
+      from forbidden repo/product code/docs/config mutation and includes cleanup proof.
 
       '
     evidence_template: '## refs Read Confirmation (MANDATORY)
@@ -5607,6 +5619,28 @@ phases:
 
       - <checklist item 2>: satisfied | failed | blocked | unobserved — <evidence
       ref>
+
+
+      ## Dynamic Reload Disposable Fixture Mutation Evidence (MANDATORY)
+
+      - repo_product_mutation: MUST be none
+
+      - allowed_disposable_fixture: <test-controlled <extension_root>/src/sensors/*.ts
+      path>
+
+      - fixture_create_change_remove: <before/change/cleanup evidence>
+
+      - mutation_scope_guard: <proof only disposable fixture/runtime state changed>
+
+      - cleanup_evidence: <fixture removed/restored and test config cleaned>
+
+      - old_registry_keep_old_case: <invalid fixture keeps previous registry/rendered
+      context>
+
+      - changed_module_cache_bust_case: <changed fixture imported after /dasein reload>
+
+      - forbidden_persistent_changes: <product code/docs/config outside disposable
+      fixture remain unchanged>
 
       '
     refs:
