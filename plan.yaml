@@ -1223,6 +1223,14 @@ phases:
       Geo tag list performs no refresh/helper/state read. 3. Native helper tests skip
       explicitly on non-macOS rather than passing silently.</risk_probes>
 
+
+      REVIEW-FIX ITERATION 1 BUILTIN TOP-LEVEL SIDE-EFFECT PROOF:
+
+      First-party/builtin sensor modules must have static proof of no top-level filesystem,
+      subprocess, network, timer, native helper, config, refresh, or action side effects.
+      Sensor behavior must run only through declared refresh/observe/action hooks
+      under core runtime control.
+
       '
     verification: '- [ ] Test files are limited to tests/native and tests/unit/sensors
       plus focused fixtures.
