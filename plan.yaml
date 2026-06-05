@@ -6546,14 +6546,14 @@ phases:
       \ tag list/add/remove tests or smoke output>\n- broad_geo_tag_claim_rejected:\
       \ Evidence that does not name radius bounds, GeoTagListPayload, and exactCoordinates\
       \ redaction is INCOMPLETE.\n\n## Final Gate Verdict Vocabulary (MANDATORY)\n\
-      - allowed_values: OPEN | BLOCKED\n- forbidden_values: OPEN_WITH_DEBT and any\
-      \ value other than OPEN or BLOCKED\n- OPEN_allowed_when: <all blocker-class\
+      - allowed_values: OPEN | BLOCKED\n- forbidden_values: debt-open verdicts and\
+      \ any value other than OPEN or BLOCKED\n- OPEN_allowed_when: <all blocker-class\
       \ requirements proven or explicitly non-intersecting and no false live-support\
       \ claim remains>\n- BLOCKED_required_when: <any blocker, orphan requirement,\
       \ unowned live-support claim, missing required evidence, or unresolved behavioral\
-      \ obligation remains>\n- no_debt_open_state: Final gate has no OPEN_WITH_DEBT\
-      \ state; non-blocking debt must be documented but cannot replace required proof.\n\
-      \n## ctx.ui.custom Feature-Probe Evidence (MANDATORY)\n- mechanism: ctx.ui.custom\n\
+      \ obligation remains>\n- no_debt_open_state: Final gate has no debt-open state;\
+      \ non-blocking debt must be documented but cannot replace required proof.\n\n\
+      ## ctx.ui.custom Feature-Probe Evidence (MANDATORY)\n- mechanism: ctx.ui.custom\n\
       - relationship_to_settingslist: <SettingsList is rendered through ctx.ui.custom/custom\
       \ UI path>\n- fake_host_probe: <available/unavailable classification and status\
       \ payload>\n- live_probe_or_blocker: <LIVE_SMOKE_VERIFIED/LIVE_SMOKE_PENDING/BLOCKED\
