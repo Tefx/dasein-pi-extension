@@ -1348,6 +1348,342 @@ phases:
     hook, pi.events, status/widget, and SettingsList via fake-host CI proof.
   depends_on:
   - sensors
+  steps:
+  - id: pi-runtime-tests
+    name: Define expected-red Pi runtime and fake-host integration tests
+    status: pending
+    description: 'step_type: test
+
+      step_intent: test_define_red
+
+      expected_result: red
+
+      PROOF ARTIFACT: Test-only suite exposes missing Pi extension wiring for root/src
+      entrypoints, registerCommand, registerFlag, context hook, pi.events, lifecycle
+      hooks, status/widget, SettingsList, and fake-host observable output.
+
+      TRACEABILITY MATRIX:
+
+      | requirement_id | source_ref + key passage | obligation | owning_step_id |
+      checklist_item | evidence_field | status | non_intersection_or_escalation |
+
+      | pi.entrypoint | TECHNICAL_DESIGN > Module Structure/Data Flow | root shim
+      delegates and src/index composes extension runtime | pi-runtime-tests | entrypoint
+      fake-host tests defined | expected_red_output | OWNED | n/a |
+
+      | pi.mechanisms | TECHNICAL_DESIGN > Verified Pi Mechanisms | Pi APIs preserve
+      SOURCE/API vs LIVE status distinction | pi-runtime-tests | mechanism tests defined
+      | expected_red_output | OWNED | live proof owned by release_smoke |
+
+      | pi.tui | PRD > Human TUI Surfaces | status/widget/SettingsList expose config/state
+      visibly | pi-runtime-tests | TUI fake-host tests defined | expected_red_output
+      | OWNED | live TUI proof owned by release_smoke |
+
+      BOUNDING BOX: tests/integration/pi-extension.test.ts, tests/unit/settings-list.test.ts,
+      fake Pi host fixtures, root index/src index fixtures.
+
+      CONSTRAINTS: Tests/fixtures only; product runtime wiring is forbidden here.
+      Fake-host proof must be labeled API_VERIFIED/LIVE_SMOKE_PENDING, not LIVE_SMOKE_VERIFIED.
+
+      <side_effect_budget>Allowed: integration/unit tests and fake-host fixtures.
+      Forbidden: product Pi wiring, live support claims, DESIGN.md/design-system work,
+      or running live Pi smoke in ordinary npm test.</side_effect_budget>
+
+      <risk_probes>1. Fake host cannot satisfy release support claims. 2. TUI-only
+      surfaces are guarded by ctx.mode === "tui". 3. SettingsList test asserts visible
+      content/control data, not just view model existence.</risk_probes>
+
+      '
+    verification: '- [ ] Test files are limited to tests/integration, tests/unit/settings-list,
+      and fake-host fixtures.
+
+      - [ ] Expected-red evidence covers command/flag/context/events/lifecycle/status/widget/SettingsList
+      registration and behavior.
+
+      - [ ] Tests assert evidenceStatuses lists preserve SOURCE_VERIFIED/API_VERIFIED/LIVE_SMOKE_PENDING
+      separation.
+
+      - [ ] Ordinary `npm test` excludes live Pi smoke while fake-host tests remain
+      runnable in CI.
+
+      '
+    refs:
+    - docs/TECHNICAL_DESIGN.md#verified-pi-mechanisms
+    - docs/TECHNICAL_DESIGN.md#data-flow
+    - docs/TECHNICAL_DESIGN.md#testing-gate-matrix
+    - docs/PRD.md#7-10-human-tui-surfaces
+    - CONSTITUTION.md#ux-and-pi-interaction-red-lines
+    agent: frontend-engineer
+  - id: pi-runtime-extension-wiring
+    name: Complete Pi entrypoint, hooks, commands, flag, and events wiring
+    status: pending
+    description: 'step_type: implementation
+
+      tags: [integration]
+
+      Fill in stub bodies in root index.ts and src/index.ts per scaffold/core/sensors
+      contracts and pi-runtime-tests.
+
+      TARGET STATE: The Pi extension runtime composes real core and sensor modules,
+      registers `/dasein`, `--dasein` string flag, `context` injection, `pi.events`
+      set/clear subscribers, session lifecycle/cleanup, input/before_agent_start/agent_end
+      observation for lapse, and TUI status/widget update hooks with mechanism evidence
+      statuses.
+
+      UPSTREAM ARTIFACTS: scaffold root shim contract, core command/injector/event/lifecycle
+      APIs, sensors implementations, and fake-host tests are PROTECTED.
+
+      YOUR SCOPE: Runtime wiring and lifecycle plumbing only; do not change core semantics
+      or sensor business logic.
+
+      ## Completion Criteria (stub exclusion)
+
+      This is an IMPLEMENTATION step. Stub-only completion is NOT acceptable; private
+      `_Runtime*`, `_Stub*`, or `_Placeholder*` classes wired as production dependencies
+      do not satisfy completion.
+
+      <side_effect_budget>Allowed: root index.ts, src/index.ts, narrow Pi runtime
+      adapters/fake-host compatibility tests. Forbidden: hidden live support claims,
+      unguarded TUI calls outside tui mode, request-path I/O, or bypassing core command/config
+      mediation.</side_effect_budget>
+
+      <risk_probes>1. Context hook appends hidden custom message only from pre-rendered
+      memory. 2. Lifecycle cleanup aborts sensors/helpers without blocking request
+      construction. 3. Pi mechanism status reports live-smoke pending until release_smoke
+      proves otherwise.</risk_probes>
+
+      '
+    verification: '- [ ] `npm run test:file -- tests/integration/pi-extension.test.ts`
+      passes through the fake Pi host with raw output.
+
+      - [ ] Evidence shows source -> sink path for command registration, flag parsing,
+      context injection, events, lifecycle observation, and TUI guarded calls.
+
+      - [ ] Evidence statuses remain non-empty lists and do not report LIVE_SMOKE_VERIFIED
+      from fake-host execution.
+
+      - [ ] Grep evidence shows no `_Runtime*`/`_Stub*`/`_Placeholder*` production
+      dependency is introduced as final wiring.
+
+      '
+    refs:
+    - docs/TECHNICAL_DESIGN.md#verified-pi-mechanisms
+    - docs/TECHNICAL_DESIGN.md#data-flow/startup
+    - docs/TECHNICAL_DESIGN.md#data-flow/llm-injection
+    - docs/TECHNICAL_DESIGN.md#data-flow/shutdown
+    - docs/PRD.md#7-7-launch-argument
+    - docs/PRD.md#7-8-slash-commands
+    depends_on:
+    - pi-runtime-tests
+    agent: frontend-engineer
+  - id: pi-runtime-tui-surfaces
+    name: Complete status, widget, and SettingsList runtime surfaces
+    status: pending
+    description: 'step_type: implementation
+
+      tags: [integration, client-surface]
+
+      TARGET STATE: src/ui/status.ts, src/ui/widget.ts, and src/ui/settings.ts expose
+      user-observable status footer, optional widget, and SettingsList configuration
+      controls backed by real effective config/state/metadata and ConfigManager mutation
+      semantics.
+
+      ## Client Surface Completion Criteria (runtime output required)
+
+      Completion requires BOTH logic correctness and surface completeness: fake-host
+      TUI/status/widget/SettingsList output must be observable through captured UI
+      calls or equivalent terminal/snapshot artifacts. View models alone do not satisfy
+      this step.
+
+      CONSTRAINTS: No DESIGN.md/design-system work; verify functional Pi TUI behavior
+      and accessibility/visibility from specs, not visual design conformance. Object/array/map
+      fields such as geo.tags and lapse.agentFields are not flat SettingsList controls.
+
+      ## Completion Criteria (stub exclusion)
+
+      This is an IMPLEMENTATION step. Stub-only completion is NOT acceptable.
+
+      <side_effect_budget>Allowed: src/ui/status.ts, src/ui/widget.ts, src/ui/settings.ts,
+      focused tests. Forbidden: design-token work, hiding privacy-sensitive geo state,
+      direct config mutation outside ConfigManager, or TUI support claims without
+      release smoke.</side_effect_budget>
+
+      <risk_probes>1. SettingsList shows inspectability metadata before risky enablement
+      controls. 2. Status/widget clear when disabled via setStatus/setWidget undefined.
+      3. Runtime changes persist canonical paths only after validation/persistence
+      succeeds.</risk_probes>
+
+      '
+    verification: '- [ ] `npm run test:file -- tests/unit/settings-list.test.ts tests/integration/pi-extension.test.ts`
+      passes with raw output.
+
+      - [ ] Observable fake-host evidence shows status text, widget lines, and SettingsList
+      controls/content for core toggles, sensor common/simple fields, external visibility,
+      and user-added metadata.
+
+      - [ ] Evidence proves TUI surfaces omit disabled/ui-hidden/expired contributors
+      while keeping privacy-sensitive status inspectable.
+
+      - [ ] Evidence proves SettingsList change path enters the FIFO config mutation
+      queue and persists only the canonical changed path.
+
+      '
+    refs:
+    - docs/TECHNICAL_DESIGN.md#data-flow/human-ui-rendering
+    - docs/TECHNICAL_DESIGN.md#testing-gate-matrix
+    - docs/PRD.md#7-10-human-tui-surfaces
+    - docs/PRD.md#9-4-tui
+    - CONSTITUTION.md#ux-and-pi-interaction-red-lines
+    depends_on:
+    - pi-runtime-tests
+    agent: frontend-engineer
+  - id: pi-runtime-client-proof
+    name: Verify fake-host client/runtime liveness for Pi surfaces
+    status: pending
+    description: 'step_type: verification
+
+      verification_scope: phase-check
+
+      PROOF ARTIFACT: Independent client-runtime proof that Pi-facing surfaces are
+      observable in fake-host CI without claiming live release support.
+
+      Surface class: CLI/slash command output, Pi extension fake host, TUI status/widget/SettingsList
+      captures. This protects pi_runtime-gate and system_wiring-gate; release_smoke
+      still owns live Pi proof.
+
+      Behavioral proof register required for `/dasein`, `/dasein status`, `/dasein
+      sensors`, `/dasein set/apply`, `--dasein`, context hook, pi.events, status/widget,
+      SettingsList, and lifecycle observation.
+
+      <side_effect_budget>Allowed: read-only fake-host/runtime execution and report.
+      Forbidden: product edits, live Pi support claims, or accepting source/type evidence
+      as launched-surface proof.</side_effect_budget>
+
+      <risk_probes>1. At least one safe interaction reaches ConfigManager through
+      the fake SettingsList path. 2. Captures show meaningful non-blank status/widget/settings
+      output. 3. Every mechanism remains LIVE_SMOKE_PENDING until release smoke.</risk_probes>
+
+      '
+    verification: '- [ ] Fake-host launch command/test is recorded exactly with raw
+      output and surface captures.
+
+      - [ ] Runtime evidence shows `/dasein` or equivalent command output, context
+      hook injection, pi.events state update/clear, status/widget updates, and SettingsList
+      content.
+
+      - [ ] One safe documented interaction mutates a setting through the fake-host
+      UI path and shows canonical persistence delegation.
+
+      - [ ] Proof explicitly labels remaining live Pi/TUI/native obligations as deferred
+      to release_smoke, not satisfied here.
+
+      '
+    refs:
+    - docs/TECHNICAL_DESIGN.md#verified-pi-mechanisms
+    - docs/TECHNICAL_DESIGN.md#testing-gate-matrix
+    - docs/PRD.md#9-2-slash-commands
+    - docs/PRD.md#9-4-tui
+    - CONSTITUTION.md#quality-baselines
+    depends_on:
+    - pi-runtime-extension-wiring
+    - pi-runtime-tui-surfaces
+    agent: client-runtime-verifier
+  - id: pi-runtime-spec-conformance
+    name: Verify Pi runtime spec conformance
+    status: pending
+    description: 'step_type: verification
+
+      verification_scope: phase-check
+
+      PROOF ARTIFACT: Independent spec-conformance audit for only Pi runtime surfaces
+      touched by this phase. This is not a test-pass check; it hunts divergences between
+      implementation and PRD/Technical Design requirements.
+
+      SCOPE: entrypoint, Pi mechanisms/evidence statuses, slash/flag registration,
+      context injection, events, lifecycle, status/widget/SettingsList, fake-vs-live
+      evidence wording.
+
+      <side_effect_budget>Allowed: read-only spec/code/evidence review. Forbidden:
+      editing implementation, running live smoke as a substitute for conformance,
+      or auditing unrelated core/sensor internals already gated unless context changed.</side_effect_budget>
+
+      <risk_probes>1. Evidence status vocabulary is a list and preserves LIVE_SMOKE_PENDING.
+      2. TUI guards avoid non-TUI errors. 3. SettingsList exposes metadata before
+      enablement and omits complex fields.</risk_probes>
+
+      '
+    verification: '- [ ] Spec conformance report includes a requirements register
+      for touched Pi runtime sections with implementation file:line references.
+
+      - [ ] Each requirement verdict is CONFORMS, DIVERGES, PARTIAL, NEEDS_TEST, NOT_FOUND,
+      AMBIGUOUS_SPEC, or SPEC_POSSIBLY_STALE.
+
+      - [ ] Any behavioral precedence claim without runtime proof is marked NEEDS_TEST
+      with closure path.
+
+      - [ ] Report distinguishes fake-host/API evidence from live Pi support claims.
+
+      '
+    refs:
+    - docs/TECHNICAL_DESIGN.md#verified-pi-mechanisms
+    - docs/TECHNICAL_DESIGN.md#command-design
+    - docs/PRD.md#7-10-human-tui-surfaces
+    - docs/PRD.md#9-acceptance-criteria
+    - CONSTITUTION.md#ux-and-pi-interaction-red-lines
+    depends_on:
+    - pi-runtime-extension-wiring
+    - pi-runtime-tui-surfaces
+    agent: spec-verifier
+  - id: pi-runtime-gate
+    name: Gate Pi runtime and fake-host surfaces
+    status: pending
+    description: 'step_type: gate
+
+      verification_scope: phase-check
+
+      DECISION ARTIFACT: Independent gate for Pi runtime. Review fake-host runtime
+      proof, spec conformance, evidence status separation, client-surface liveness,
+      and user-visible TUI/CLI behavior before system wiring.
+
+      review_depth: THOROUGH
+
+      cross_cutting_focus: runtime entrypoint liveness, fake-vs-live distinction,
+      SettingsList observable content, request-path no-I/O, Pi mechanism evidence
+      statuses.
+
+      <side_effect_budget>Allowed: read-only gate review. Forbidden: implementation
+      fixes, approving source/type-only evidence for launched surfaces, or claiming
+      live support before release_smoke.</side_effect_budget>
+
+      <risk_probes>1. Fake-host client proof includes meaningful observable output
+      and one interaction. 2. Every live support obligation remains owned by release_smoke.
+      3. Gate blocks if Pi surfaces are only registered as handlers but not observable
+      via fake host.</risk_probes>
+
+      '
+    verification: '- [ ] All Pi runtime phase steps are complete with refs confirmations
+      and checklist receipts.
+
+      - [ ] Gate decision basis maps Pi mechanism, slash/flag, context/events, lifecycle,
+      status/widget, and SettingsList requirements to positive fake-host proof or
+      release_smoke ownership.
+
+      - [ ] Client runtime proof is present; build/type/source evidence alone is rejected
+      for user-visible surfaces.
+
+      - [ ] Final gate verdict is OPEN or BLOCKED with explicit blockers and required
+      actions.
+
+      '
+    refs:
+    - CONSTITUTION.md#ux-and-pi-interaction-red-lines
+    - CONSTITUTION.md#testing-and-gates
+    - docs/TECHNICAL_DESIGN.md#testing-gate-matrix
+    - docs/PRD.md#9-acceptance-criteria
+    depends_on:
+    - pi-runtime-client-proof
+    - pi-runtime-spec-conformance
+    agent: gate-reviewer
 - id: system_wiring
   name: System Wiring and Ordinary CI Closure
   status: locked
