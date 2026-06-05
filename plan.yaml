@@ -1212,6 +1212,9 @@ phases:
       - [ ] `npm run test:file -- tests/behavior/ambient-context.test.ts` is included
       in core proof raw output or explicitly reported with blocker/remediation ownership.
 
+      - [ ] Core proof includes commands-status coverage for `minimumPiVersion: "0.78.1"`,
+      current version capture/null, and below-minimum/unavailable classification.
+
       '
     evidence_template: '## refs Read Confirmation (MANDATORY)
 
