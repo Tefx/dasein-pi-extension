@@ -5328,6 +5328,14 @@ phases:
       is insufficient; evidence must name these fields and show values in success
       and relevant failure/reload cases.
 
+
+      REVIEW-FIX ITERATION 3 SETTINGSLIST NEGATIVE EXTERNAL-KEY PROOF:
+
+      SettingsList must NOT create controls for invalid external keys, dotted keys,
+      expired external state, or malformed external events. This negative proof is
+      blocking and distinct from positive common-control coverage and complex-field
+      exclusion.
+
       '
     verification: '- [ ] Black-box tests/commands use documented package scripts,
       slash commands, launch flag, config files, and event payloads only.
@@ -5356,6 +5364,10 @@ phases:
       outputs/data for `effectiveConfigVersion`, `launchArgsApplied`, `diskConfigLoaded`,
       `launchReappliedPaths`, and `runtimeOverriddenPaths` or exact public-surface
       blockers.
+
+      - [ ] Black-box verification attempts invalid/dotted/expired/malformed external
+      inputs and observes no SettingsList controls for them, while valid external
+      controls still render where public surface is available.
 
       '
     evidence_template: "## refs Read Confirmation (MANDATORY)\nFor each ref in this\
@@ -5409,7 +5421,15 @@ phases:
       \ `/dasein reload` result/test output>\n- failure_or_reload_case: <proof fields\
       \ remain present/meaningful when disk config/sensor reload fails and old state\
       \ is kept>\n- broad_payload_shape_claim_rejected: Evidence that does not name\
-      \ all five fields is INCOMPLETE.\n"
+      \ all five fields is INCOMPLETE.\n\n## SettingsList Negative External-Key Evidence\
+      \ (MANDATORY)\n- invalid_external_key_case: <payload/key used; proof no SettingsList\
+      \ control rendered>\n- dotted_external_key_case: <payload/key used; proof no\
+      \ SettingsList control rendered>\n- expired_external_state_case: <ttl/time scenario;\
+      \ proof no SettingsList control rendered>\n- malformed_external_event_case:\
+      \ <unknown field/multiline/overlong/control payload; proof rejected and no SettingsList\
+      \ control rendered>\n- valid_external_key_control_baseline: <valid key still\
+      \ renders `external.<key>.ui`/`external.<key>.agent` controls>\n- broad_external_controls_claim_rejected:\
+      \ Evidence that only proves valid controls or complex-field exclusion is INCOMPLETE.\n"
     refs:
     - docs/PRD.md#9-acceptance-criteria
     - docs/TECHNICAL_DESIGN.md#command-design
@@ -5417,6 +5437,7 @@ phases:
     - docs/TECHNICAL_DESIGN.md#verified-pi-mechanisms
     - CONSTITUTION.md#testing-and-gates
     - docs/TECHNICAL_DESIGN.md#command-result-and-output-contract
+    - docs/TECHNICAL_DESIGN.md#human-ui-rendering
     depends_on:
     - finalization-doc-sync
     agent: blind-tester
