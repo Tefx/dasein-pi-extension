@@ -151,3 +151,12 @@ phases:
     typed state, sensor runtime, renderer/injector, external events, and command parsing.
   depends_on:
   - scaffold
+- id: sensors
+  name: Builtin Sensors and Native Helper
+  status: locked
+  gate: Builtin sensors publish typed state, geo helper is bounded/fail-closed, and
+    sensor actions obey config mutation and privacy contracts.
+  context: Deliver clock, lapse, geo, and macOS helper behavior while preserving the
+    core-as-broker boundary.
+  depends_on:
+  - core
