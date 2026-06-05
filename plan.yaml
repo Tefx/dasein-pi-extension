@@ -1075,6 +1075,53 @@ phases:
 
       - [ ] Product implementation files are not modified by this behavior test-definition
       step.'
+    evidence_template: '## refs Read Confirmation (MANDATORY)
+
+      For each ref in this step:
+
+      - docs/TECHNICAL_DESIGN.md#testing-gate-matrix — <key passage for behavioral
+      guardrails row>
+
+      - docs/PRD.md#9-3-agent-injection — <key passage>
+
+      - docs/PRD.md#9-6-external-state — <key passage>
+
+      - CONSTITUTION.md#testing-and-gates — <key passage>
+
+
+      ## side_effect_budget
+
+      - allowed: tests/behavior/ambient-context.test.ts and minimal fixtures only
+
+      - forbidden: product implementation, docs/config edits, live support claims
+
+
+      ## risk_probes
+
+      - ordinary prompt does not force ambient mention
+
+      - disabled/sensitive fields absent from agent string while UI visibility remains
+      inspectable
+
+      - malformed publishers cannot inject multiline/overlong content
+
+
+      ## Structured Evidence
+
+      - files_changed: <test paths only>
+
+      - command: npm run test:file -- tests/behavior/ambient-context.test.ts
+
+      - raw_stdout: <paste raw output>
+
+      - exit_code: <code>
+
+      - expected_failures: <gaps exposed before implementation>
+
+
+      ## checklist_receipt
+
+      - <satisfied/failed/blocked/unobserved per checklist item>'
     refs:
     - docs/TECHNICAL_DESIGN.md#testing-gate-matrix
     - docs/PRD.md#9-3-agent-injection
