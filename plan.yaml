@@ -5259,7 +5259,8 @@ phases:
       - BLOCKED_allowed_when: <implementation blocker, false support claim, missing
       ordinary proof, or imprecise live blocker>
 
-      - forbidden_values: OPEN_WITH_LIVE_SUPPORT_PENDING and any unlisted verdict
+      - forbidden_values: any value other than OPEN, OPEN_WITH_LIVE_SUPPORT_PENDING,
+      or BLOCKED
 
       - support_claim_safety: <proof pending live support is not represented as LIVE_SMOKE_VERIFIED>
 
