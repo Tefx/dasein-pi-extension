@@ -952,6 +952,12 @@ phases:
     - docs/PRD.md#9-acceptance-criteria
     depends_on:
     - core-static-proof
+    - core-contracts
+    - core-tests
+    - core-config-state
+    - core-sensor-runtime-loader
+    - core-renderer-injector-external
+    - core-command-layer
     agent: gate-reviewer
 - id: sensors
   name: Builtin Sensors and Native Helper
