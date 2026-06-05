@@ -1324,6 +1324,13 @@ phases:
       all pass. 2. Tag add requires a fresh normalized coordinate snapshot. 3. Placemark
       absence degrades instead of inventing city/street/address.</risk_probes>
 
+
+      REVIEW-FIX ITERATION 1 HELPER COORDINATION:
+
+      This step depends on sensors-native-helper so geo action behavior consumes the
+      finalized helper output/error contract instead of racing a parallel helper contract
+      change.
+
       '
     verification: '- [ ] `npm run test:file -- tests/unit/sensors/geo.test.ts` passes
       with raw output.
