@@ -6178,6 +6178,13 @@ phases:
       from `<extension_root>/src/sensors/*.ts` in directory/package mode. No scanner,
       fallback, or reload path may treat `~/.pi/dasein/sensors` as a sensor directory.
 
+
+      REVIEW-FIX CATCHUP NATIVE HELPER OUTPUT CAPS:
+
+      Native helper stdout and stderr collection must each stop at `16KiB`. Later
+      proof/gates must explicitly review this cap instead of relying on broad helper
+      cleanup evidence.
+
       '
     verification: '- [ ] Requirements register covers every material requirement family
       from Constitution, PRD, and Technical Design touched by the implementation.
@@ -6249,6 +6256,9 @@ phases:
       - [ ] Full conformance audit includes negative sensor-directory rule: `~/.pi/dasein/sensors`
       is not scanned and `<extension_root>/src/sensors/*.ts` is the only user-added
       directory/package sensor path.
+
+      - [ ] Full conformance audit includes native helper stdout/stderr `16KiB` caps
+      as separate requirement rows.
 
       '
     evidence_template: "## refs Read Confirmation (MANDATORY)\nFor each exact refs\
@@ -6424,7 +6434,11 @@ phases:
       \ allowed_path: <extension_root>/src/sensors/*.ts\n- startup_scan_case: <proof\
       \ forbidden path ignored/rejected>\n- manual_reload_case: <proof forbidden path\
       \ ignored/rejected>\n- no_fallback_case: <proof no fallback scanner reads ~/.pi/dasein/sensors>\n\
-      - status_or_load_error_behavior: <how rejected/ignored path is reported if applicable>\n"
+      - status_or_load_error_behavior: <how rejected/ignored path is reported if applicable>\n\
+      \n## Native Helper stdout/stderr 16KiB Cap Evidence (MANDATORY)\n- stdout_cap:\
+      \ 16KiB\n- stderr_cap: 16KiB\n- stdout_over_cap_case: <proof collection stops/rejects\
+      \ safely>\n- stderr_over_cap_case: <proof collection stops/rejects safely>\n\
+      - no_unbounded_memory_case: <proof bounded collection>\n"
     refs:
     - CONSTITUTION.md
     - docs/PRD.md
