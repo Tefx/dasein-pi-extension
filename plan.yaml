@@ -1494,6 +1494,14 @@ phases:
       as positive. 3. Risky user-added sensor enablement is not satisfied by launch-only
       overlays.</risk_probes>
 
+
+      REVIEW-FIX ITERATION 1 BUILTIN TOP-LEVEL SIDE-EFFECT PROOF:
+
+      First-party/builtin sensor modules must have static proof of no top-level filesystem,
+      subprocess, network, timer, native helper, config, refresh, or action side effects.
+      Sensor behavior must run only through declared refresh/observe/action hooks
+      under core runtime control.
+
       '
     verification: '- [ ] `npm run test:file -- tests/unit/sensors/clock.test.ts tests/unit/sensors/geo.test.ts
       tests/unit/sensors/lapse.test.ts tests/unit/sensor-loader.test.ts tests/unit/commands-status.test.ts
