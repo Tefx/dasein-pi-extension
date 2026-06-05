@@ -1725,10 +1725,13 @@ phases:
       \ — <key passage or \"NOT READ: <reason>\">\n- `docs/TECHNICAL_DESIGN.md#core-contracts`\
       \ — <key passage or \"NOT READ: <reason>\">\n- `docs/TECHNICAL_DESIGN.md#verified-pi-mechanisms`\
       \ — <key passage or \"NOT READ: <reason>\">\n- `docs/TECHNICAL_DESIGN.md#data-flow`\
+      \ — <key passage or \"NOT READ: <reason>\">\n- `docs/TECHNICAL_DESIGN.md#rendering-contract`\
+      \ — <key passage or \"NOT READ: <reason>\">\n- `docs/PRD.md#9-6-external-state`\
       \ — <key passage or \"NOT READ: <reason>\">\n\nrefs_inventory:\n  - docs/TECHNICAL_DESIGN.md#testing-gate-matrix\n\
       \  - CONSTITUTION.md#testing-and-gates\n  - docs/PRD.md#8-non-functional-requirements\n\
       \  - docs/TECHNICAL_DESIGN.md#command-result-and-output-contract\n  - docs/TECHNICAL_DESIGN.md#core-contracts\n\
       \  - docs/TECHNICAL_DESIGN.md#verified-pi-mechanisms\n  - docs/TECHNICAL_DESIGN.md#data-flow\n\
+      \  - docs/TECHNICAL_DESIGN.md#rendering-contract\n  - docs/PRD.md#9-6-external-state\n\
       \n## side_effect_budget\n- allowed: <copy allowed side effects from step description\
       \ and confirm actual changes stayed inside them>\n- forbidden: <copy forbidden\
       \ side effects from step description and confirm none occurred>\n\n## risk_probes\n\
