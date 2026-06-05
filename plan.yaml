@@ -1520,6 +1520,10 @@ phases:
       - [ ] Evidence explicitly states this phase does not satisfy live Pi TUI, dynamic
       reload, or live CoreLocation release smoke.
 
+      - [ ] Static proof includes first-party/builtin sensor top-level side-effect
+      scan for filesystem, subprocess, network, timer, native helper, config, refresh,
+      and action execution.
+
       '
     refs:
     - docs/TECHNICAL_DESIGN.md#testing-gate-matrix
