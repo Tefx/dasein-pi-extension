@@ -219,6 +219,80 @@ phases:
     depends_on:
     - scaffold-contracts
     agent: frontend-engineer
+  - id: scaffold-complete
+    name: Complete package scaffold and fake-host harness
+    status: pending
+    description: 'step_type: implementation
+
+      Fill in stub bodies and scaffold files per scaffold-contracts and scaffold-tests.
+
+      UPSTREAM ARTIFACTS: scaffold-contracts signatures/package contract are AUTHORITATIVE;
+      scaffold-tests assertions are PROTECTED.
+
+      YOUR SCOPE: Replace stubs with working TypeScript package, root shim delegation,
+      src/index.ts composition placeholder, npm scripts, tsconfig, and fake Pi host
+      harness. Stub-only completion is not acceptable.
+
+      TRACEABILITY MATRIX: package script contract, no-runtime-dependency policy,
+      Pi root shim, and fake-host CI basis are OWNED.
+
+      <side_effect_budget>Allowed: package/tooling, root index.ts, src/index.ts shell,
+      tests fake host. Forbidden: non-Pi runtime deps, hidden live-support claims,
+      sensor business logic beyond placeholders.</side_effect_budget>
+
+      <risk_probes>1. package.json.dependencies absent/empty. 2. root index.ts delegates
+      only. 3. fake host isolates CI from live Pi claims.</risk_probes>'
+    verification: '- [ ] Required npm scripts typecheck/test/test:file/test:native/test:smoke
+      exist with Technical Design command shapes.
+
+      - [ ] Root index.ts delegates to ./src/index.ts and does no extra work.
+
+      - [ ] Package dependency policy and fake host tests pass or expose only downstream
+      product gaps.'
+    evidence_template: '## refs Read Confirmation (MANDATORY)
+
+      For each ref in this step:
+
+      - CONSTITUTION.md — <key passage or NOT READ: reason>
+
+      - docs/PRD.md — <key passage or NOT READ: reason>
+
+      - docs/TECHNICAL_DESIGN.md — <key passage or NOT READ: reason>
+
+
+      ## checklist_receipt
+
+      - satisfied: []
+
+      - failed: []
+
+      - blocked: []
+
+      - unobserved: []
+
+
+      ## Evidence
+
+      - artifact_paths: <files, tests, logs, screenshots, terminal captures, or matrices>
+
+      - commands: <exact commands, if applicable>
+
+      - raw_output: <paste stdout/stderr or explain non-execution blocker>
+
+      - side_effect_budget_observed: <allowed/forbidden side effects checked>
+
+      - risk_probes: <explicit answers to the risk probes>
+
+      - headline: PASS | PASS_WITH_DEBT | BLOCKED
+
+      '
+    refs:
+    - CONSTITUTION.md
+    - docs/PRD.md
+    - docs/TECHNICAL_DESIGN.md
+    depends_on:
+    - scaffold-tests
+    agent: frontend-engineer
 - id: core
   name: Core Broker Contracts and Implementation
   status: locked
