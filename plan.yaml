@@ -5093,6 +5093,16 @@ phases:
       NOT mutate config, disk, sensor state, or external state. Evidence must use
       the literal bare `/dasein`; wording such as "or equivalent" is insufficient.
 
+
+      REVIEW-FIX ITERATION 4 RELEASE GATE VERDICT VOCABULARY:
+
+      Allowed release-smoke gate verdicts are exactly `OPEN`, `OPEN_WITH_LIVE_SUPPORT_PENDING`,
+      or `BLOCKED`. `OPEN_WITH_LIVE_SUPPORT_PENDING` is allowed only when ordinary
+      CI/fake-host proof is intact, implementation completion is not blocked, every
+      missing live item has exact environment/permission/command closure path, and
+      no docs/status/support claim represents pending live behavior as verified release
+      support.
+
       '
     verification: '- [ ] All release_smoke steps are complete with refs confirmations
       and checklist receipts.
@@ -5114,6 +5124,10 @@ phases:
 
       - [ ] Gate decision basis reviews literal bare `/dasein` live SettingsList opening/fallback
       evidence or exact blockers.
+
+      - [ ] Evidence template and final gate verdict vocabulary use exactly OPEN,
+      OPEN_WITH_LIVE_SUPPORT_PENDING, or BLOCKED, with OPEN_WITH_LIVE_SUPPORT_PENDING
+      allowed only under explicit live-support-pending safety conditions.
 
       '
     evidence_template: '## refs Read Confirmation (MANDATORY)
@@ -5228,6 +5242,25 @@ phases:
 
       - rejected_substitute: Evidence using only `/dasein status`, `/dasein help`,
       or "equivalent command" is INCOMPLETE.
+
+
+      ## Release Smoke Gate Verdict Vocabulary (MANDATORY)
+
+      - allowed_values: OPEN | OPEN_WITH_LIVE_SUPPORT_PENDING | BLOCKED
+
+      - OPEN_allowed_when: <all live-required mechanisms verified or no pending support
+      claims remain>
+
+      - OPEN_WITH_LIVE_SUPPORT_PENDING_allowed_when: <ordinary CI/fake-host proof
+      intact; implementation complete; live blockers exact; no false release support
+      claims>
+
+      - BLOCKED_allowed_when: <implementation blocker, false support claim, missing
+      ordinary proof, or imprecise live blocker>
+
+      - forbidden_values: OPEN_WITH_DEBT and any unlisted verdict
+
+      - support_claim_safety: <proof pending live support is not represented as LIVE_SMOKE_VERIFIED>
 
       '
     refs:
