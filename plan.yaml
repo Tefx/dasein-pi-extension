@@ -2489,12 +2489,14 @@ phases:
       - failure_path_evidence: <proof or N/A>\n\n## checklist_receipt\n- <checklist\
       \ item 1>: satisfied | failed | blocked | unobserved — <evidence ref>\n- <checklist\
       \ item 2>: satisfied | failed | blocked | unobserved — <evidence ref>\n\n##\
-      \ Bare `/dasein` Command Evidence (MANDATORY)\n- literal_command: `/dasein`\n\
-      - tui_mode_result: <SettingsList/configuration UI opened; artifact/capture required>\n\
-      - non_tui_result: <concise deterministic help/status fallback; raw output required>\n\
-      - config_mutation_check: <proof no config/disk/sensor/external mutation occurred>\n\
-      - rejected_substitute: Evidence using only `/dasein status`, `/dasein help`,\
-      \ or \"equivalent command\" is INCOMPLETE.\n"
+      \ SettingsList Common Sensor Controls Evidence (MANDATORY)\n- required_fields:\
+      \ [`enabled`, `ui`, `agent`, `intervalMs`, `timeoutMs`, `staleAfterMs`, `initialRefresh`]\n\
+      - rendered_controls_by_sensor: <clock/geo/lapse/user-added examples or exact\
+      \ blocker>\n- visible_recurring_interval_controls: <proof `intervalMs` visibility/configurability/disableability>\n\
+      - mutation_path: <SettingsList change -> FIFO ConfigManager queue -> canonical\
+      \ path validation/persistence -> runtime update>\n- excluded_complex_fields_check:\
+      \ <geo.tags/lapse.agentFields remain outside flat SettingsList controls unless\
+      \ separately justified>\n"
     refs:
     - docs/TECHNICAL_DESIGN.md#testing-gate-matrix
     - docs/PRD.md#7-10-human-tui-surfaces
