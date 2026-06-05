@@ -6257,27 +6257,26 @@ phases:
       | requirement_or_step_ref | evidence_ref | proof_status | unresolved_status\
       \ | blocks_remaining_gates | closure_path |\n| --- | --- | --- | --- | --- |\
       \ --- |\n| <ref> | <artifact> | PROVEN|UNPROVEN|NEEDS_TEST|BLOCKED | <status>\
-      \ | yes/no | <required action> |\n- final_recommendation: OPEN | OPEN_WITH_DEBT\
-      \ | BLOCKED\n- blockers: <list>\n- required_actions: <list>\n\n## checklist_receipt\n\
-      - <checklist item 1>: satisfied | failed | blocked | unobserved — <evidence\
-      \ ref>\n- <checklist item 2>: satisfied | failed | blocked | unobserved — <evidence\
-      \ ref>\n\n## Minimum Pi Version / Status Evidence (MANDATORY)\n- minimumPiVersion:\
-      \ \"0.78.1\"\n- current_pi_version: <captured version or null/unavailable>\n\
-      - pi_binary_path: <path or unavailable>\n- below_minimum_case: <classification\
-      \ + no false support claim>\n- unavailable_version_case: <classification + no\
-      \ false support claim>\n- feature_probe_separation: <proof version check is\
-      \ distinct from API feature probes>\n- status_payload_sample: <includes piVersion,\
-      \ minimumPiVersion, piMechanisms[].evidenceStatuses>\n\n## Bare `/dasein` Command\
-      \ Evidence (MANDATORY)\n- literal_command: `/dasein`\n- tui_mode_result: <SettingsList/configuration\
-      \ UI opened; artifact/capture required>\n- non_tui_result: <concise deterministic\
-      \ help/status fallback; raw output required>\n- config_mutation_check: <proof\
-      \ no config/disk/sensor/external mutation occurred>\n- rejected_substitute:\
-      \ Evidence using only `/dasein status`, `/dasein help`, or any substitute command\
-      \ is INCOMPLETE.\n\n## SettingsList Common Sensor Controls Evidence (MANDATORY)\n\
-      - required_fields: [`enabled`, `ui`, `agent`, `intervalMs`, `timeoutMs`, `staleAfterMs`,\
-      \ `initialRefresh`]\n- rendered_controls_by_sensor: <clock/geo/lapse/user-added\
-      \ examples or exact blocker>\n- visible_recurring_interval_controls: <proof\
-      \ `intervalMs` visibility/configurability/disableability>\n- mutation_path:\
+      \ | yes/no | <required action> |\n- final_recommendation: OPEN | BLOCKED\n-\
+      \ blockers: <list>\n- required_actions: <list>\n\n## checklist_receipt\n- <checklist\
+      \ item 1>: satisfied | failed | blocked | unobserved — <evidence ref>\n- <checklist\
+      \ item 2>: satisfied | failed | blocked | unobserved — <evidence ref>\n\n##\
+      \ Minimum Pi Version / Status Evidence (MANDATORY)\n- minimumPiVersion: \"0.78.1\"\
+      \n- current_pi_version: <captured version or null/unavailable>\n- pi_binary_path:\
+      \ <path or unavailable>\n- below_minimum_case: <classification + no false support\
+      \ claim>\n- unavailable_version_case: <classification + no false support claim>\n\
+      - feature_probe_separation: <proof version check is distinct from API feature\
+      \ probes>\n- status_payload_sample: <includes piVersion, minimumPiVersion, piMechanisms[].evidenceStatuses>\n\
+      \n## Bare `/dasein` Command Evidence (MANDATORY)\n- literal_command: `/dasein`\n\
+      - tui_mode_result: <SettingsList/configuration UI opened; artifact/capture required>\n\
+      - non_tui_result: <concise deterministic help/status fallback; raw output required>\n\
+      - config_mutation_check: <proof no config/disk/sensor/external mutation occurred>\n\
+      - rejected_substitute: Evidence using only `/dasein status`, `/dasein help`,\
+      \ or any substitute command is INCOMPLETE.\n\n## SettingsList Common Sensor\
+      \ Controls Evidence (MANDATORY)\n- required_fields: [`enabled`, `ui`, `agent`,\
+      \ `intervalMs`, `timeoutMs`, `staleAfterMs`, `initialRefresh`]\n- rendered_controls_by_sensor:\
+      \ <clock/geo/lapse/user-added examples or exact blocker>\n- visible_recurring_interval_controls:\
+      \ <proof `intervalMs` visibility/configurability/disableability>\n- mutation_path:\
       \ <SettingsList change -> FIFO ConfigManager queue -> canonical path validation/persistence\
       \ -> runtime update>\n- excluded_complex_fields_check: <geo.tags/lapse.agentFields\
       \ remain outside flat SettingsList controls unless separately justified>\n\n\
@@ -6327,7 +6326,14 @@ phases:
       \ <proof visible only when all exact gates pass>\n- raw_command_output: <geo\
       \ tag list/add/remove tests or smoke output>\n- broad_geo_tag_claim_rejected:\
       \ Evidence that does not name radius bounds, GeoTagListPayload, and exactCoordinates\
-      \ redaction is INCOMPLETE.\n"
+      \ redaction is INCOMPLETE.\n\n## Final Gate Verdict Vocabulary (MANDATORY)\n\
+      - allowed_values: OPEN | BLOCKED\n- forbidden_values: OPEN_WITH_DEBT and any\
+      \ value other than OPEN or BLOCKED\n- OPEN_allowed_when: <all blocker-class\
+      \ requirements proven or explicitly non-intersecting and no false live-support\
+      \ claim remains>\n- BLOCKED_required_when: <any blocker, orphan requirement,\
+      \ unowned live-support claim, missing required evidence, or unresolved behavioral\
+      \ obligation remains>\n- no_debt_open_state: Final gate has no OPEN_WITH_DEBT\
+      \ state; non-blocking debt must be documented but cannot replace required proof.\n"
     refs:
     - CONSTITUTION.md
     - docs/PRD.md
