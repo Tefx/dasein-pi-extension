@@ -1323,6 +1323,145 @@ phases:
     - CONSTITUTION.md#testing-and-gates
     depends_on:
     - core-tests
+  - id: core-gate
+    name: Gate core broker phase
+    status: pending
+    description: 'step_type: gate
+
+      verification_scope: phase-check
+
+      DECISION ARTIFACT: Independent phase gate for core. Review contract purity,
+      expected-red test definition, implementation evidence, local proof, requirement
+      traceability, and blocker dispositions before sensors may begin.
+
+      review_depth: THOROUGH
+
+      review_depth_rationale: Core owns config/state precedence, request-path safety,
+      typed-state normalization, renderer output, and command mutation semantics;
+      these are cross-cutting downstream gate risks.
+
+      cross_cutting_focus: no project-local config, no request-path I/O, typed-state
+      envelope stripping, FIFO mutation queue, reload all-or-keep-old, deterministic
+      command/result surfaces.
+
+      <side_effect_budget>Allowed: read-only evidence review and BLOCK/OPEN decision.
+      Forbidden: implementing fixes, accepting sampled proof when matrix rows are
+      unproven, or approving fake/live evidence conflation.</side_effect_budget>
+
+      <risk_probes>1. Every OWNED requirement row has positive evidence or remediation.
+      2. Verifier findings that intersect downstream gates are not dismissed as out-of-scope/pre-existing.
+      3. Gate does not use typecheck/unit success as substitute for behavioral proof
+      register closure.</risk_probes>
+
+      '
+    verification: '- [ ] All core phase steps are complete with refs confirmations
+      and checklist receipts.
+
+      - [ ] Gate decision basis maps every core requirement/checklist row to evidence
+      status PROVEN or a blocking remediation path.
+
+      - [ ] No unresolved request-path, config/state, typed envelope, command mutation,
+      or external event blocker intersects sensors/pi_runtime/system_wiring gates.
+
+      - [ ] Final gate verdict is OPEN or BLOCKED with explicit blockers and required
+      actions.
+
+      - [ ] Gate decision basis reviews `tests/behavior/ambient-context.test.ts` behavioral
+      guardrails and confirms no orphan behavior row remains.
+
+      '
+    evidence_template: '## refs Read Confirmation (MANDATORY)
+
+      For each ref in this step:
+
+      - CONSTITUTION.md#testing-and-gates — <key passage or "NOT READ: <reason>">
+
+      - docs/TECHNICAL_DESIGN.md#testing-gate-matrix — <key passage or "NOT READ:
+      <reason>">
+
+      - docs/PRD.md#9-acceptance-criteria — <key passage or "NOT READ: <reason>">
+
+
+      ## side_effect_budget
+
+      - allowed: <copy allowed side effects from step description and confirm actual
+      changes stayed inside them>
+
+      - forbidden: <copy forbidden side effects from step description and confirm
+      none occurred>
+
+
+      ## risk_probes
+
+      - probe_1: <result/evidence>
+
+      - probe_2: <result/evidence>
+
+      - probe_3: <result/evidence or N/A>
+
+
+      ## verify-only purity
+
+      - role: read-only verifier/gate/auditor
+
+      - files_changed: MUST be none
+
+      - mutation_performed: MUST be false
+
+      - if mutation was necessary: STOP and report blocker for orchestrator/planner
+
+
+      ## raw_command_output
+
+      - command: <exact command or N/A>
+
+      - raw_stdout: <paste raw output or N/A>
+
+      - raw_stderr: <paste raw error output or N/A>
+
+      - exit_code: <code or N/A>
+
+
+      ## gate_decision_basis
+
+      | requirement_or_step_ref | evidence_ref | proof_status | unresolved_status
+      | blocks_remaining_gates | closure_path |
+
+      | --- | --- | --- | --- | --- | --- |
+
+      | <ref> | <artifact> | PROVEN|UNPROVEN|NEEDS_TEST|BLOCKED | <status> | yes/no
+      | <required action> |
+
+      - final_recommendation: OPEN | OPEN_WITH_DEBT | BLOCKED
+
+      - blockers: <list>
+
+      - required_actions: <list>
+
+
+      ## checklist_receipt
+
+      - <checklist item 1>: satisfied | failed | blocked | unobserved — <evidence
+      ref>
+
+      - <checklist item 2>: satisfied | failed | blocked | unobserved — <evidence
+      ref>
+
+      '
+    refs:
+    - CONSTITUTION.md#testing-and-gates
+    - docs/TECHNICAL_DESIGN.md#testing-gate-matrix
+    - docs/PRD.md#9-acceptance-criteria
+    depends_on:
+    - core-static-proof
+    - core-contracts
+    - core-tests
+    - core-config-state
+    - core-sensor-runtime-loader
+    - core-renderer-injector-external
+    - core-command-layer
+    - core-behavior-guardrails
+    agent: gate-reviewer
 - id: sensors
   name: Builtin Sensors and Native Helper
   status: locked
