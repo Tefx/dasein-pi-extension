@@ -720,6 +720,14 @@ phases:
       not prove feature availability, and feature availability does not override a
       below-minimum version.
 
+
+      REVIEW-FIX ITERATION 2 STATUS/SENSORS TEST-DEFINITION OWNERSHIP:
+
+      The core expected-red test definition explicitly owns `tests/unit/commands-status.test.ts`
+      and `tests/unit/commands-sensors.test.ts` from the Technical Design Testing
+      Gate Matrix. These tests protect `/dasein status` payload shape and `/dasein
+      sensors` inspectability/load-error/risk metadata output before command implementation.
+
       '
     verification: '- [ ] Test files are limited to tests/ and fixtures/helpers and
       cite the exact Technical Design gate matrix rows they implement.
