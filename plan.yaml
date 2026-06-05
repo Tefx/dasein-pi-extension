@@ -4278,6 +4278,10 @@ phases:
       - [ ] No production NotImplementedError/stub/placeholder and no write-only fields
       remain without explicit accepted exclusion.
 
+      - [ ] Wiring audit traces SettingsList controls for `enabled`, `ui`, `agent`,
+      `intervalMs`, `timeoutMs`, `staleAfterMs`, and `initialRefresh` to ConfigManager
+      consumers.
+
       '
     evidence_template: '## refs Read Confirmation (MANDATORY)
 
