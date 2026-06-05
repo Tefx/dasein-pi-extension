@@ -1347,6 +1347,7 @@ phases:
     - docs/PRD.md#7-functional-requirements
     depends_on:
     - sensors-tests
+    - sensors-native-helper
     agent: frontend-engineer
   - id: sensors-native-helper
     name: Complete macOS CoreLocation helper supervision
