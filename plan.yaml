@@ -5611,6 +5611,13 @@ phases:
       status must report `ctx.ui.custom` availability/unavailability separately enough
       to avoid false support claims.
 
+
+      REVIEW-FIX ITERATION 6 NATIVE HELPER DETERMINISTIC CONSTANTS:
+
+      Native helper supervision must explicitly verify timeout `3000ms`, graceful
+      kill grace `250ms`, and backoff sequence `1m -> 5m -> 15m`. Broad timeout/backoff/cleanup
+      wording is insufficient.
+
       '
     verification: '- [ ] All release_smoke steps are complete with refs confirmations
       and checklist receipts.
@@ -5639,6 +5646,10 @@ phases:
 
       - [ ] Gate decision basis reviews `ctx.ui.custom` live/support-ledger evidence
       separately from SettingsList evidence.
+
+      - [ ] Gate decision basis reviews native helper constants `3000ms`, `250ms`,
+      and `1m -> 5m -> 15m` where live/native smoke can execute or exact blockers
+      where it cannot.
 
       '
     evidence_template: '## refs Read Confirmation (MANDATORY)
@@ -5792,12 +5803,33 @@ phases:
       - false_support_claim_check: <proof SettingsList support is not claimed when
       ctx.ui.custom is unavailable/unproven>
 
+
+      ## Native Helper Deterministic Constants Evidence (MANDATORY)
+
+      - timeout_ms: 3000
+
+      - kill_grace_ms: 250
+
+      - backoff_sequence: 1m -> 5m -> 15m
+
+      - timeout_case: <helper exceeds 3000ms; terminate then force-kill after 250ms>
+
+      - backoff_cases: <first/second/third failure delays and manual refresh bypass
+      behavior>
+
+      - orphan_process_check: <proof no helper remains after timeout/shutdown>
+
+      - platform_classification: <darwin live/typecheck or non-darwin explicit skip>
+
+      - broad_native_claim_rejected: Evidence that omits any constant is INCOMPLETE.
+
       '
     refs:
     - CONSTITUTION.md#testing-and-gates
     - CONSTITUTION.md#ux-and-pi-interaction-red-lines
     - docs/TECHNICAL_DESIGN.md#verified-pi-mechanisms
     - docs/TECHNICAL_DESIGN.md#testing-gate-matrix
+    - docs/TECHNICAL_DESIGN.md#builtin-sensors
     depends_on:
     - release-smoke-support-claim-ledger
     - release-smoke-live-pi-tui
