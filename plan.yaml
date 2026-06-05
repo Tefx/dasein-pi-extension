@@ -2851,13 +2851,12 @@ phases:
       via fake host.</risk_probes>
 
 
-      REVIEW-FIX ITERATION 2 BARE `/dasein` OWNERSHIP:
+      REVIEW-FIX ITERATION 2 SETTINGSLIST COMMON SENSOR CONTROLS:
 
-      Bare `/dasein` is a required public command behavior, not an interchangeable
-      alias. In TUI mode it MUST open the configuration UI/SettingsList. Outside TUI
-      mode it MUST fall back to concise deterministic help/status output. It MUST
-      NOT mutate config, disk, sensor state, or external state. Evidence must use
-      the literal bare `/dasein`; wording such as "or equivalent" is insufficient.
+      SettingsList coverage must enumerate and prove every common sensor control required
+      by the Technical Design: `enabled`, `ui`, `agent`, `intervalMs`, `timeoutMs`,
+      `staleAfterMs`, and `initialRefresh`. Visible recurring interval controls and
+      their ConfigManager mutation path are blocking evidence, not optional UI polish.
 
       '
     verification: '- [ ] All Pi runtime phase steps are complete with refs confirmations
