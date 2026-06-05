@@ -1223,6 +1223,14 @@ phases:
       cancellation/no timer when no deadlines exist, stale/expired recompute after
       timer fire, and no request-path scheduling/I/O.
 
+
+      REVIEW-FIX ITERATION 8 EXTERNAL EVENT UNICODE SEPARATOR REJECTION:
+
+      External event validation must explicitly reject Unicode line separator U+2028
+      and paragraph separator U+2029 in `agent`, `ui`, and `source` strings, in addition
+      to ASCII control characters, CR, LF, and multiline payloads. Dasein must reject
+      without normalizing or mutating state.
+
       '
     verification: '- [ ] `npm run test:file -- tests/unit/external-events.test.ts
       tests/unit/renderer.test.ts tests/unit/injector.test.ts tests/static/no-request-io.test.ts`
@@ -1244,6 +1252,9 @@ phases:
       - [ ] Evidence proves exactly one render invalidation timer is scheduled at
       the minimum upcoming deadline, cancelled when no deadlines exist, and timer
       fire recomputes stale/expired values from in-memory state only.
+
+      - [ ] Evidence proves external event intake rejects U+2028 and U+2029 in `agent`,
+      `ui`, and `source` without normalization and without mutating state.
 
       '
     evidence_template: "## refs Read Confirmation (MANDATORY)\nFor each exact refs\
@@ -1294,7 +1305,15 @@ phases:
       \ proof request path does not schedule timers or perform disk/network/subprocess/dynamic\
       \ import/config mutation>\n- ui_publish_on_change: <proof status/widget updates\
       \ are published only when recomputed UI strings change>\n- broad_renderer_claim_rejected:\
-      \ Evidence that omits any exact scheduler case is INCOMPLETE.\n"
+      \ Evidence that omits any exact scheduler case is INCOMPLETE.\n\n## External\
+      \ Event Unicode Separator Evidence (MANDATORY)\n- U+2028_agent_case: <rejected\
+      \ without state mutation>\n- U+2028_ui_case: <rejected without state mutation>\n\
+      - U+2028_source_case: <rejected without state mutation>\n- U+2029_agent_case:\
+      \ <rejected without state mutation>\n- U+2029_ui_case: <rejected without state\
+      \ mutation>\n- U+2029_source_case: <rejected without state mutation>\n- ascii_control_baseline:\
+      \ <CR/LF/tab/control rejection>\n- no_normalization_or_truncation: <proof payload\
+      \ is rejected, not repaired>\n- broad_multiline_claim_rejected: Evidence that\
+      \ says only multiline/control without U+2028 and U+2029 is INCOMPLETE.\n"
     refs:
     - CONSTITUTION.md#quality-baselines
     - CONSTITUTION.md#testing-and-gates
@@ -1304,6 +1323,7 @@ phases:
     - docs/TECHNICAL_DESIGN.md#core-contracts
     - docs/TECHNICAL_DESIGN.md#verified-pi-mechanisms
     - docs/TECHNICAL_DESIGN.md#data-flow
+    - docs/PRD.md#9-6-external-state
     depends_on:
     - core-tests
     - core-behavior-guardrails
