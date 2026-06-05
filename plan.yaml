@@ -1396,53 +1396,25 @@ phases:
 
       - [ ] Product implementation files are not modified by this behavior test-definition
       step.'
-    evidence_template: '## refs Read Confirmation (MANDATORY)
-
-      For each ref in this step:
-
-      - docs/TECHNICAL_DESIGN.md#testing-gate-matrix — <key passage for behavioral
-      guardrails row>
-
-      - docs/PRD.md#9-3-agent-injection — <key passage>
-
-      - docs/PRD.md#9-6-external-state — <key passage>
-
-      - CONSTITUTION.md#testing-and-gates — <key passage>
-
-
-      ## side_effect_budget
-
-      - allowed: tests/behavior/ambient-context.test.ts and minimal fixtures only
-
-      - forbidden: product implementation, docs/config edits, live support claims
-
-
-      ## risk_probes
-
-      - ordinary prompt does not force ambient mention
-
-      - disabled/sensitive fields absent from agent string while UI visibility remains
-      inspectable
-
-      - malformed publishers cannot inject multiline/overlong content
-
-
-      ## Structured Evidence
-
-      - files_changed: <test paths only>
-
-      - command: npm run test:file -- tests/behavior/ambient-context.test.ts
-
-      - raw_stdout: <paste raw output>
-
-      - exit_code: <code>
-
-      - expected_failures: <gaps exposed before implementation>
-
-
-      ## checklist_receipt
-
-      - <satisfied/failed/blocked/unobserved per checklist item>'
+    evidence_template: "## refs Read Confirmation (MANDATORY)\nFor each ref in this\
+      \ step:\n- docs/TECHNICAL_DESIGN.md#testing-gate-matrix — <key passage or \"\
+      NOT READ: <reason>\">\n- docs/PRD.md#9-3-agent-injection — <key passage or \"\
+      NOT READ: <reason>\">\n- docs/PRD.md#9-6-external-state — <key passage or \"\
+      NOT READ: <reason>\">\n- CONSTITUTION.md#testing-and-gates — <key passage or\
+      \ \"NOT READ: <reason>\">\n\n## side_effect_budget\n- allowed: <copy allowed\
+      \ side effects from step description and confirm actual changes stayed inside\
+      \ them>\n- forbidden: <copy forbidden side effects from step description and\
+      \ confirm none occurred>\n\n## risk_probes\n- probe_1: <result/evidence>\n-\
+      \ probe_2: <result/evidence>\n- probe_3: <result/evidence or N/A>\n\n## raw_command_output\n\
+      - command: <exact command or N/A>\n- raw_stdout: <paste raw output or N/A>\n\
+      - raw_stderr: <paste raw error output or N/A>\n- exit_code: <code or N/A>\n\n\
+      ## structured_evidence\n- files_changed: <paths>\n- commands_executed:\n  -\
+      \ command: <exact command or N/A>\n    raw_stdout: <paste raw output or N/A>\n\
+      \    raw_stderr: <paste raw error output or N/A>\n    exit_code: <code or N/A>\n\
+      - artifacts: <contracts/tests/outputs created>\n- main_path_evidence: <proof>\n\
+      - failure_path_evidence: <proof or N/A>\n\n## checklist_receipt\n- <checklist\
+      \ item 1>: satisfied | failed | blocked | unobserved — <evidence ref>\n- <checklist\
+      \ item 2>: satisfied | failed | blocked | unobserved — <evidence ref>\n"
     refs:
     - docs/TECHNICAL_DESIGN.md#testing-gate-matrix
     - docs/PRD.md#9-3-agent-injection
