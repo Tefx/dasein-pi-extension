@@ -1507,6 +1507,14 @@ phases:
       and `1000ms` per-sensor cleanup timeout. Shutdown must abort active refresh/helper
       work and aggregate cleanup errors without blocking request construction.
 
+
+      REVIEW-FIX ITERATION 8 RENDER INVALIDATION SCHEDULER PROOF:
+
+      Renderer proof must explicitly verify exactly one in-memory invalidation timer
+      scheduled at the minimum upcoming sensor stale deadline or external expiresAt,
+      cancellation/no timer when no deadlines exist, stale/expired recompute after
+      timer fire, and no request-path scheduling/I/O.
+
       '
     verification: '- [ ] `npm run typecheck` passes with raw stdout/stderr.
 
@@ -1546,6 +1554,10 @@ phases:
       - [ ] Core proof includes lifecycle tests for `session_start` assumptions where
       core participates, `session_shutdown` cleanup behavior, and `1000ms` per-sensor
       cleanup timeout.
+
+      - [ ] Core proof raw output explicitly covers render invalidation scheduler
+      cases: exactly-one timer, minimum deadline, no-deadline cancellation, timer-fire
+      recompute, and no request-path scheduling/I/O.
 
       '
     evidence_template: "## refs Read Confirmation (MANDATORY)\nFor each exact refs\
@@ -1634,7 +1646,17 @@ phases:
       \ refresh is aborted before cleanup>\n- cleanup_error_aggregation: <proof errors\
       \ are reported/aggregated deterministically>\n- request_path_non_blocking: <proof\
       \ lifecycle cleanup does not run during request construction>\n- broad_lifecycle_claim_rejected:\
-      \ Evidence without session_start, session_shutdown, and 1000ms timeout is INCOMPLETE.\n"
+      \ Evidence without session_start, session_shutdown, and 1000ms timeout is INCOMPLETE.\n\
+      \n## Render Invalidation Scheduler Evidence (MANDATORY)\n- exactly_one_timer_case:\
+      \ <proof one timer is scheduled, not zero or multiple>\n- minimum_deadline_case:\
+      \ <proof timer uses min(field.collected_at + stale_after_ms, external.expiresAt)>\n\
+      - no_deadline_case: <proof existing timer is cancelled and no new timer is scheduled>\n\
+      - timer_fire_recompute_case: <proof stale sensor/expired external state is recomputed\
+      \ from in-memory state>\n- no_request_path_scheduling_or_io: <static/runtime\
+      \ proof request path does not schedule timers or perform disk/network/subprocess/dynamic\
+      \ import/config mutation>\n- ui_publish_on_change: <proof status/widget updates\
+      \ are published only when recomputed UI strings change>\n- broad_renderer_claim_rejected:\
+      \ Evidence that omits any exact scheduler case is INCOMPLETE.\n"
     refs:
     - docs/TECHNICAL_DESIGN.md#testing-gate-matrix
     - CONSTITUTION.md#testing-and-gates
@@ -1643,6 +1665,7 @@ phases:
     - docs/TECHNICAL_DESIGN.md#core-contracts
     - docs/TECHNICAL_DESIGN.md#verified-pi-mechanisms
     - docs/TECHNICAL_DESIGN.md#data-flow
+    - docs/TECHNICAL_DESIGN.md#rendering-contract
     depends_on:
     - core-config-state
     - core-sensor-runtime-loader
