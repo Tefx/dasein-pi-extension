@@ -1613,6 +1613,14 @@ phases:
       is insufficient; evidence must name these fields and show values in success
       and relevant failure/reload cases.
 
+
+      REVIEW-FIX ITERATION 4 CORE CONFIG VALIDATION DETAILS:
+
+      Core config validation must deterministically enforce `core.maxAgentChars` as
+      an integer in the inclusive range `40..2000` and `core.injectedLabel` as a string
+      matching regex `[A-Za-z0-9_.:-]{1,32}`. Evidence must include boundary accepts/rejects
+      and must not rely on broad config-validation wording.
+
       '
     verification: '- [ ] All core phase steps are complete with refs confirmations
       and checklist receipts.
@@ -1638,6 +1646,9 @@ phases:
       - [ ] Gate decision basis reviews exact status fields `effectiveConfigVersion`,
       `launchArgsApplied`, `diskConfigLoaded` and reload fields `launchReappliedPaths`,
       `runtimeOverriddenPaths`; broad payload-shape evidence is rejected.
+
+      - [ ] Gate decision basis reviews exact `core.maxAgentChars` and `core.injectedLabel`
+      validation evidence; broad config-validation proof is rejected.
 
       '
     evidence_template: "## refs Read Confirmation (MANDATORY)\nFor each ref in this\
@@ -1679,12 +1690,21 @@ phases:
       \ status` and `/dasein reload` result/test output>\n- failure_or_reload_case:\
       \ <proof fields remain present/meaningful when disk config/sensor reload fails\
       \ and old state is kept>\n- broad_payload_shape_claim_rejected: Evidence that\
-      \ does not name all five fields is INCOMPLETE.\n"
+      \ does not name all five fields is INCOMPLETE.\n\n## Core Config Validation\
+      \ Evidence (MANDATORY)\n- maxAgentChars_range: \"integer 40..2000 inclusive\"\
+      \n- maxAgentChars_accept_cases: <40, 240 default, 2000>\n- maxAgentChars_reject_cases:\
+      \ <39, 2001, non-integer, NaN/Infinity or invalid numeric token>\n- injectedLabel_regex:\
+      \ \"[A-Za-z0-9_.:-]{1,32}\"\n- injectedLabel_accept_cases: <valid examples including\
+      \ ambient_ctx>\n- injectedLabel_reject_cases: <empty, length 33, invalid characters,\
+      \ whitespace/control>\n- raw_command_output: <tests/commands proving deterministic\
+      \ validation>\n- broad_config_claim_rejected: Evidence that says only \"config\
+      \ validation\" without these two exact rules is INCOMPLETE.\n"
     refs:
     - CONSTITUTION.md#testing-and-gates
     - docs/TECHNICAL_DESIGN.md#testing-gate-matrix
     - docs/PRD.md#9-acceptance-criteria
     - docs/TECHNICAL_DESIGN.md#command-result-and-output-contract
+    - docs/TECHNICAL_DESIGN.md#core-contracts
     depends_on:
     - core-static-proof
     - core-contracts
