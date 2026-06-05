@@ -1245,6 +1245,10 @@ phases:
       - [ ] No product sensor/native implementation files are modified by this test-definition
       step.
 
+      - [ ] Expected-red tests/static checks cover first-party/builtin sensor top-level
+      side-effect bans: no filesystem, subprocess, network, timer, native helper,
+      config, refresh, or action side effects at import time.
+
       '
     refs:
     - docs/TECHNICAL_DESIGN.md#builtin-sensors
