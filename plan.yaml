@@ -178,3 +178,12 @@ phases:
     data flow through fake Pi host and ordinary CI gates.
   depends_on:
   - pi_runtime
+- id: release_smoke
+  name: Live Pi and Native Release Smoke
+  status: locked
+  gate: Live smoke evidence exists or reports exact environment blockers; release
+    support claims are not made from fake-host tests alone.
+  context: Separate live Pi/native release evidence from ordinary CI by probing real
+    Pi/TUI/native surfaces.
+  depends_on:
+  - system_wiring
