@@ -6570,6 +6570,14 @@ phases:
       cancellation/no timer when no deadlines exist, stale/expired recompute after
       timer fire, and no request-path scheduling/I/O.
 
+
+      REVIEW-FIX ITERATION 8 ATOMIC WRITE FSYNC PROOF:
+
+      Atomic config/durable-state writes must explicitly write a complete candidate
+      JSON document to a temp file in the same directory, fsync when the platform
+      exposes it, and rename over the target atomically. Failed writes must leave
+      previous files and active runtime unchanged.
+
       '
     verification: '- [ ] All finalization steps are complete with refs confirmations
       and checklist receipts.
@@ -6627,6 +6635,9 @@ phases:
 
       - [ ] Final gate confirms render invalidation scheduler exact proof or owned
       blockers for all timer/deadline/recompute/no-request-path obligations.
+
+      - [ ] Final gate confirms atomic write fsync/rename/failure-preservation proof
+      or owned blockers.
 
       '
     evidence_template: "## refs Read Confirmation (MANDATORY)\nFor each exact refs\
@@ -6787,7 +6798,16 @@ phases:
       \ proof request path does not schedule timers or perform disk/network/subprocess/dynamic\
       \ import/config mutation>\n- ui_publish_on_change: <proof status/widget updates\
       \ are published only when recomputed UI strings change>\n- broad_renderer_claim_rejected:\
-      \ Evidence that omits any exact scheduler case is INCOMPLETE.\n"
+      \ Evidence that omits any exact scheduler case is INCOMPLETE.\n\n## Atomic Write\
+      \ + fsync Evidence (MANDATORY)\n- temp_file_same_directory: <proof candidate\
+      \ JSON is written to temp file beside target>\n- fsync_when_available: <proof\
+      \ fsync is called when platform exposes it, or exact platform reason when unavailable>\n\
+      - atomic_rename: <proof rename replaces config.json/state.json atomically after\
+      \ successful write/fsync>\n- failed_write_preserves_previous_file: <proof previous\
+      \ file remains unchanged>\n- failed_write_preserves_active_runtime: <proof active\
+      \ config/runtime changes only after persistence succeeds>\n- applies_to: <config.json\
+      \ and state.json/lapse reset where applicable>\n- broad_atomic_claim_rejected:\
+      \ Evidence that omits fsync availability handling is INCOMPLETE.\n"
     refs:
     - CONSTITUTION.md
     - docs/PRD.md
