@@ -347,48 +347,83 @@ phases:
 
       For each ref in this step:
 
-      - CONSTITUTION.md — <key passage or NOT READ: reason>
+      - CONSTITUTION.md — <key passage or "NOT READ: <reason>">
 
-      - docs/PRD.md — <key passage or NOT READ: reason>
+      - docs/PRD.md — <key passage or "NOT READ: <reason>">
 
-      - docs/TECHNICAL_DESIGN.md — <key passage or NOT READ: reason>
-
-
-      ## checklist_receipt
-
-      - satisfied: []
-
-      - failed: []
-
-      - blocked: []
-
-      - unobserved: []
+      - docs/TECHNICAL_DESIGN.md — <key passage or "NOT READ: <reason>">
 
 
-      ## Behavioral Proof Register (MANDATORY for proof/gate steps)
+      ## side_effect_budget
+
+      - allowed: <copy allowed side effects from step description and confirm actual
+      changes stayed inside them>
+
+      - forbidden: <copy forbidden side effects from step description and confirm
+      none occurred>
+
+
+      ## risk_probes
+
+      - probe_1: <result/evidence>
+
+      - probe_2: <result/evidence>
+
+      - probe_3: <result/evidence or N/A>
+
+
+      ## verify-only purity
+
+      - role: read-only verifier/gate/auditor
+
+      - files_changed: MUST be none
+
+      - mutation_performed: MUST be false
+
+      - if mutation was necessary: STOP and report blocker for orchestrator/planner
+
+
+      ## raw_command_output
+
+      - command: <exact command or N/A>
+
+      - raw_stdout: <paste raw output or N/A>
+
+      - raw_stderr: <paste raw error output or N/A>
+
+      - exit_code: <code or N/A>
+
+
+      ## behavioral_proof_register
 
       | requirement_ref | behavior_claim | runtime_proof_expected | evidence_ref |
       status | closure_path | gate_decision_basis |
 
       | --- | --- | --- | --- | --- | --- | --- |
 
-      | <ref> | <claim> | <proof> | <artifact> | PROVEN/NEEDS_TEST/UNPROVEN/BLOCKED
-      | <fix/retest/non-intersection> | <OPEN/BLOCK basis> |
+      | <ref> | <claim> | <expected proof> | <artifact/command> | PROVEN|NEEDS_TEST|UNPROVEN|BLOCKED
+      | <remediation/non-intersection> | <gate impact> |
 
 
-      ## Evidence
+      ## checklist_receipt
 
-      - artifact_paths: <files, tests, logs, screenshots, terminal captures, or matrices>
+      - <checklist item 1>: satisfied | failed | blocked | unobserved — <evidence
+      ref>
 
-      - commands: <exact commands, if applicable>
+      - <checklist item 2>: satisfied | failed | blocked | unobserved — <evidence
+      ref>
 
-      - raw_output: <paste stdout/stderr or explain non-execution blocker>
 
-      - side_effect_budget_observed: <allowed/forbidden side effects checked>
+      ## scaffold_exact_obligations
 
-      - risk_probes: <explicit answers to the risk probes>
+      - symlinked_load_path: ~/.pi/agent/extensions/dasein
 
-      - headline: PASS | PASS_WITH_DEBT | BLOCKED
+      - root_index_shim: root index.ts delegates only to ./src/index.ts
+
+      - package_entrypoint: package.json.pi.extensions includes ./index.ts when present
+
+      - settingslist_import_resolution: SettingsList/getSettingsListTheme resolve
+      through approved Pi peer dependency path
 
       '
     refs:
