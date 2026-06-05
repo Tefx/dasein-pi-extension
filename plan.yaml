@@ -4036,6 +4036,9 @@ phases:
       - [ ] Gate decision basis reviews live launch flag parsing, event publishing,
       lifecycle observation, and hidden context conversion evidence or exact blockers.
 
+      - [ ] Gate decision basis reviews literal bare `/dasein` live SettingsList opening/fallback
+      evidence or exact blockers.
+
       '
     evidence_template: '## refs Read Confirmation (MANDATORY)
 
