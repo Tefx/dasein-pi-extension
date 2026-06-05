@@ -4913,18 +4913,21 @@ phases:
       ref>
 
 
-      ## Bare `/dasein` Command Evidence (MANDATORY)
+      ## SettingsList Common Sensor Controls Evidence (MANDATORY)
 
-      - literal_command: `/dasein`
+      - required_fields: [`enabled`, `ui`, `agent`, `intervalMs`, `timeoutMs`, `staleAfterMs`,
+      `initialRefresh`]
 
-      - tui_mode_result: <SettingsList/configuration UI opened; artifact/capture required>
+      - rendered_controls_by_sensor: <clock/geo/lapse/user-added examples or exact
+      blocker>
 
-      - non_tui_result: <concise deterministic help/status fallback; raw output required>
+      - visible_recurring_interval_controls: <proof `intervalMs` visibility/configurability/disableability>
 
-      - config_mutation_check: <proof no config/disk/sensor/external mutation occurred>
+      - mutation_path: <SettingsList change -> FIFO ConfigManager queue -> canonical
+      path validation/persistence -> runtime update>
 
-      - rejected_substitute: Evidence using only `/dasein status`, `/dasein help`,
-      or "equivalent command" is INCOMPLETE.
+      - excluded_complex_fields_check: <geo.tags/lapse.agentFields remain outside
+      flat SettingsList controls unless separately justified>
 
       '
     refs:
