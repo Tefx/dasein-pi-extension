@@ -4100,6 +4100,24 @@ phases:
       - <checklist item 2>: satisfied | failed | blocked | unobserved — <evidence
       ref>
 
+
+      ## Minimum Pi Version / Status Evidence (MANDATORY)
+
+      - minimumPiVersion: "0.78.1"
+
+      - current_pi_version: <captured version or null/unavailable>
+
+      - pi_binary_path: <path or unavailable>
+
+      - below_minimum_case: <classification + no false support claim>
+
+      - unavailable_version_case: <classification + no false support claim>
+
+      - feature_probe_separation: <proof version check is distinct from API feature
+      probes>
+
+      - status_payload_sample: <includes piVersion, minimumPiVersion, piMechanisms[].evidenceStatuses>
+
       '
     refs:
     - docs/TECHNICAL_DESIGN.md#verified-pi-mechanisms
