@@ -7665,9 +7665,14 @@ phases:
       \ inside them>\n- forbidden: <copy forbidden side effects from step description\
       \ and confirm none occurred>\n\n## risk_probes\n- probe_1: <result/evidence>\n\
       - probe_2: <result/evidence>\n- probe_3: <result/evidence or N/A>\n\n## verify-only\
-      \ purity\n- role: read-only verifier/gate/auditor\n- files_changed: MUST be\
-      \ none\n- mutation_performed: MUST be false\n- if mutation was necessary: STOP\
-      \ and report blocker for orchestrator/planner\n\n## raw_command_output\n- command:\
+      \ purity\n- role: read-only verifier/gate/auditor\n- repo_product_files_changed:\
+      \ MUST be none; disposable runtime/config/test fixture files may change only\
+      \ when this step explicitly requires them and cleanup evidence is provided\n\
+      - repo_product_mutation_performed: MUST be false; documented disposable runtime/config/test\
+      \ mutations are allowed only within the step side_effect_budget and must include\
+      \ cleanup evidence\n- if repo/product mutation was necessary: STOP and report\
+      \ blocker for orchestrator/planner; if disposable runtime/test mutation was\
+      \ required, record scope and cleanup evidence\n\n## raw_command_output\n- command:\
       \ <exact command or N/A>\n- raw_stdout: <paste raw output or N/A>\n- raw_stderr:\
       \ <paste raw error output or N/A>\n- exit_code: <code or N/A>\n\n## gate_decision_basis\n\
       | requirement_or_step_ref | evidence_ref | proof_status | unresolved_status\
