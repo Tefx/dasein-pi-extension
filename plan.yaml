@@ -1018,6 +1018,9 @@ phases:
       - [ ] Final gate verdict is OPEN or BLOCKED with explicit blockers and required
       actions.
 
+      - [ ] Gate decision basis reviews `tests/behavior/ambient-context.test.ts` behavioral
+      guardrails and confirms no orphan behavior row remains.
+
       '
     refs:
     - CONSTITUTION.md#testing-and-gates
