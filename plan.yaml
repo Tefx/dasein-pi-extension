@@ -458,7 +458,13 @@ phases:
       - [ ] Gate decision basis maps package, shim, fake-host, and dependency requirements
       to evidence.
 
-      - [ ] OPEN only if no blocker-class scaffold gaps remain.'
+      - [ ] OPEN only if no blocker-class scaffold gaps remain.
+
+      - [ ] Gate decision basis explicitly reviews symlinked load, root shim delegation,
+      package entrypoint, and SettingsList/getSettingsListTheme import-resolution
+      evidence.
+
+      '
     evidence_template: '## refs Read Confirmation (MANDATORY)
 
       For each ref in this step:
