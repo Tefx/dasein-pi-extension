@@ -1535,11 +1535,11 @@ phases:
 
       '
     refs:
-    - docs/TECHNICAL_DESIGN.md#data-flow/human-ui-rendering
     - docs/TECHNICAL_DESIGN.md#testing-gate-matrix
     - docs/PRD.md#7-10-human-tui-surfaces
     - docs/PRD.md#9-4-tui
     - CONSTITUTION.md#ux-and-pi-interaction-red-lines
+    - docs/TECHNICAL_DESIGN.md#data-flow
     depends_on:
     - pi-runtime-tests
     agent: frontend-engineer
