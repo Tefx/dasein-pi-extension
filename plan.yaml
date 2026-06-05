@@ -1252,6 +1252,9 @@ phases:
       - [ ] Core proof includes commands-status coverage for `minimumPiVersion: "0.78.1"`,
       current version capture/null, and below-minimum/unavailable classification.
 
+      - [ ] Core proof includes raw output for `tests/unit/commands-status.test.ts`
+      and `tests/unit/commands-sensors.test.ts` with status/sensors payload coverage.
+
       '
     evidence_template: "## refs Read Confirmation (MANDATORY)\nFor each ref in this\
       \ step:\n- docs/TECHNICAL_DESIGN.md#testing-gate-matrix — <key passage or \"\
