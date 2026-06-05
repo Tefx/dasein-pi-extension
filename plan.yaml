@@ -142,6 +142,83 @@ phases:
     - docs/PRD.md
     - docs/TECHNICAL_DESIGN.md
     agent: frontend-engineer
+  - id: scaffold-tests
+    name: Define expected-red scaffold and fake-host tests
+    status: pending
+    description: 'step_type: test
+
+      step_intent: test_define_red
+
+      expected_result: red
+
+      PROOF ARTIFACT: Test-only files define the package/static contract, fake Pi
+      host contract, root shim delegation check, and script/dependency policy before
+      product behavior is filled in.
+
+      TRACEABILITY MATRIX: scaffold.entrypoint/no_deps/fake_host rows from scaffold-contracts
+      are OWNED here as test assertions.
+
+      CONSTRAINTS: Tests and fixtures only; product code changes beyond contract stubs
+      are forbidden.
+
+      <side_effect_budget>Allowed: tests/static, tests/integration fake-host fixtures.
+      Forbidden: real product implementation or live Pi support claims.</side_effect_budget>
+
+      <risk_probes>1. Expected red exposes missing scaffold without overfitting to
+      fake host. 2. Fake host records APIs but cannot certify live TUI. 3. Dependency
+      assertion fails on any non-Pi runtime dependency.</risk_probes>'
+    verification: '- [ ] Test scope is limited to tests/ and fake fixtures plus contract
+      stubs.
+
+      - [ ] Expected-red output or documented exposed gaps show missing scaffold behavior
+      before completion.
+
+      - [ ] Tests assert root shim delegation, required npm scripts, dependency policy,
+      and fake-host recording shape.'
+    evidence_template: '## refs Read Confirmation (MANDATORY)
+
+      For each ref in this step:
+
+      - CONSTITUTION.md — <key passage or NOT READ: reason>
+
+      - docs/PRD.md — <key passage or NOT READ: reason>
+
+      - docs/TECHNICAL_DESIGN.md — <key passage or NOT READ: reason>
+
+
+      ## checklist_receipt
+
+      - satisfied: []
+
+      - failed: []
+
+      - blocked: []
+
+      - unobserved: []
+
+
+      ## Evidence
+
+      - artifact_paths: <files, tests, logs, screenshots, terminal captures, or matrices>
+
+      - commands: <exact commands, if applicable>
+
+      - raw_output: <paste stdout/stderr or explain non-execution blocker>
+
+      - side_effect_budget_observed: <allowed/forbidden side effects checked>
+
+      - risk_probes: <explicit answers to the risk probes>
+
+      - headline: PASS | PASS_WITH_DEBT | BLOCKED
+
+      '
+    refs:
+    - CONSTITUTION.md
+    - docs/PRD.md
+    - docs/TECHNICAL_DESIGN.md
+    depends_on:
+    - scaffold-contracts
+    agent: frontend-engineer
 - id: core
   name: Core Broker Contracts and Implementation
   status: locked
