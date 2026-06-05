@@ -3475,8 +3475,8 @@ phases:
       implementation and PRD/Technical Design requirements.
 
       SCOPE: entrypoint, Pi mechanisms/evidence statuses, slash/flag registration,
-      context injection, events, lifecycle, status/widget/SettingsList, fake-vs-live
-      evidence wording.
+      context injection, events, lifecycle, status/widget/ctx.ui.custom/SettingsList,
+      fake-vs-live evidence wording.
 
       <side_effect_budget>Allowed: read-only spec/code/evidence review. Forbidden:
       editing implementation, running live smoke as a substitute for conformance,
@@ -3490,10 +3490,10 @@ phases:
       REVIEW-FIX ITERATION 1 PI FEATURE PROBES:
 
       Startup/runtime wiring must feature-probe required Pi mechanisms (`registerCommand`,
-      `registerFlag`, `context`, `pi.events`, `setStatus`, `setWidget`, `SettingsList`,
-      lifecycle/input/agent_end hooks) and fail closed per mechanism when unavailable.
-      `/dasein status` must report structured `PiMechanismError`/evidence status instead
-      of crashing or silently claiming support.
+      `registerFlag`, `context`, `pi.events`, `setStatus`, `setWidget`, `ctx.ui.custom`,
+      `SettingsList`, lifecycle/input/agent_end hooks) and fail closed per mechanism
+      when unavailable. `/dasein status` must report structured `PiMechanismError`/evidence
+      status instead of crashing or silently claiming support.
 
 
       REVIEW-FIX ITERATION 2 MINIMUM PI VERSION STATUS:
