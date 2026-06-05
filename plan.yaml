@@ -962,6 +962,383 @@ phases:
     core-as-broker boundary.
   depends_on:
   - core
+  steps:
+  - id: sensors-tests
+    name: Define expected-red builtin sensor and native helper tests
+    status: pending
+    description: 'step_type: test
+
+      step_intent: test_define_red
+
+      expected_result: red
+
+      PROOF ARTIFACT: Test-only suite exposes missing clock, lapse, geo, native helper,
+      geo tag actions, and user-added sensor manifest/risk behavior before implementation.
+
+      TRACEABILITY MATRIX:
+
+      | requirement_id | source_ref + key passage | obligation | owning_step_id |
+      checklist_item | evidence_field | status | non_intersection_or_escalation |
+
+      | sensors.builtin | PRD > 7.3 Builtin Sensors + TECHNICAL_DESIGN > Builtin Sensors
+      | only clock/geo/lapse ship and follow SensorSpec | sensors-tests | builtin
+      specs tested | expected_red_output | OWNED | n/a |
+
+      | sensors.geo_privacy | PRD > Geo Sensor + TECHNICAL_DESIGN > Geo | geo defaults
+      off, exact output gated, tags canonical | sensors-tests | geo privacy/tag tests
+      defined | expected_red_output | OWNED | n/a |
+
+      | sensors.lapse | PRD > Lapse Sensor + TECHNICAL_DESIGN > Lapse | observe, persistence
+      separation, reset semantics | sensors-tests | lapse tests defined | expected_red_output
+      | OWNED | n/a |
+
+      | sensors.native | TECHNICAL_DESIGN > macOS native helper + Testing Gate Matrix
+      | helper typechecks on macOS and skips elsewhere | sensors-tests | native helper
+      test defined | expected_red_output | OWNED | n/a |
+
+      BOUNDING BOX: tests/unit/sensors/clock.test.ts, tests/unit/sensors/geo.test.ts,
+      tests/unit/sensors/lapse.test.ts, tests/native/macos-location-helper.test.ts,
+      loader risk fixtures.
+
+      CONSTRAINTS: Tests/fixtures only; product sensor/helper implementation is forbidden
+      in this step.
+
+      <side_effect_budget>Allowed: expected-red tests and fixtures. Forbidden: sensor
+      implementation, helper implementation, live Pi smoke claims, or treating native
+      skip as successful geo support.</side_effect_budget>
+
+      <risk_probes>1. Geo exact coordinates/address require every privacy gate. 2.
+      Geo tag list performs no refresh/helper/state read. 3. Native helper tests skip
+      explicitly on non-macOS rather than passing silently.</risk_probes>
+
+      '
+    verification: '- [ ] Test files are limited to tests/native and tests/unit/sensors
+      plus focused fixtures.
+
+      - [ ] Expected-red evidence covers clock precision, geo defaults/privacy/tags/helper
+      mapping, lapse observe/persistence/reset, and risky user-added sensor acknowledgement
+      behavior.
+
+      - [ ] Native helper test definition includes macOS-only execution and explicit
+      non-macOS skip reason.
+
+      - [ ] No product sensor/native implementation files are modified by this test-definition
+      step.
+
+      '
+    refs:
+    - docs/TECHNICAL_DESIGN.md#builtin-sensors
+    - docs/TECHNICAL_DESIGN.md#testing-gate-matrix
+    - docs/PRD.md#7-3-builtin-sensors
+    - docs/PRD.md#9-5-builtin-sensors
+    - CONSTITUTION.md#extension-and-sensor-laws
+    agent: frontend-engineer
+  - id: sensors-clock-lapse
+    name: Complete clock and lapse sensors
+    status: pending
+    description: 'step_type: implementation
+
+      Fill in stub bodies in src/sensors/clock.ts and src/sensors/lapse.ts per core
+      contracts and sensors-tests.
+
+      TARGET STATE: Clock publishes local time typed-state and compact render fragments
+      for exact/minute/hour/period/date; lapse observes Pi lifecycle events, derives
+      user_idle/agent_idle at correct sampling points, manages bounded durable continuity
+      through core, and implements `/dasein lapse reset` action without changing config.
+
+      YOUR SCOPE: SensorSpec implementations and focused tests only; core request-path,
+      Pi hook registration, and generic state-store behavior are upstream/core-owned.
+
+      ## Completion Criteria (stub exclusion)
+
+      This is an IMPLEMENTATION step. Stub-only completion is NOT acceptable.
+
+      <side_effect_budget>Allowed: src/sensors/clock.ts, src/sensors/lapse.ts, focused
+      tests. Forbidden: new builtin sensors, direct final prompt formatting, hidden
+      priority/order fields, unbounded lapse history, or durable writes during request
+      construction.</side_effect_budget>
+
+      <risk_probes>1. Lapse enabled/persist/agent controls remain separate. 2. If
+      both input and before_agent_start fire for one turn, lapse records once. 3.
+      Clock default fragments stay <=240 chars before global truncation.</risk_probes>
+
+      '
+    verification: '- [ ] `npm run test:file -- tests/unit/sensors/clock.test.ts tests/unit/sensors/lapse.test.ts`
+      passes with raw output.
+
+      - [ ] Evidence proves clock precision enum/defaults/manifests and compact render
+      fragments.
+
+      - [ ] Evidence proves lapse observe sampling, persistence gating, reset clear
+      exception, agentFields validation, no previous-run history storage, and request-path
+      I/O avoidance.
+
+      - [ ] Evidence shows both sensors publish only typed-state envelope fields through
+      the core runtime.
+
+      '
+    refs:
+    - docs/TECHNICAL_DESIGN.md#builtin-sensors/clock
+    - docs/TECHNICAL_DESIGN.md#builtin-sensors/lapse-continuity
+    - docs/PRD.md#7-3-builtin-sensors
+    - docs/PRD.md#9-5-builtin-sensors
+    - CONSTITUTION.md#extension-and-sensor-laws
+    depends_on:
+    - sensors-tests
+    agent: frontend-engineer
+  - id: sensors-geo-actions
+    name: Complete geo sensor and geo tag actions
+    status: pending
+    description: 'step_type: implementation
+
+      Fill in stub bodies in src/sensors/geo.ts per core contracts and sensors-tests.
+
+      TARGET STATE: Geo SensorSpec defaults to disabled/UI-visible/agent-hidden city
+      precision; invokes supervised helper only outside request path; maps permission/unavailable/timeout/parse
+      failures to typed error state; implements refresh and tag add/list/remove with
+      canonical tag storage and exact-location privacy gates.
+
+      YOUR SCOPE: Geo sensor behavior, validator, fields, render fragments, and action
+      payloads. Native Swift helper source is owned by sensors-native-helper.
+
+      ## Completion Criteria (stub exclusion)
+
+      This is an IMPLEMENTATION step. Stub-only completion is NOT acceptable.
+
+      <side_effect_budget>Allowed: src/sensors/geo.ts and focused tests. Forbidden:
+      cloud/IP geolocation, route tracking, maps UI, exact coordinate/address fabrication,
+      helper spawn in request path, or direct config writes outside ConfigMutationProposal.</side_effect_budget>
+
+      <risk_probes>1. Tag list never refreshes or exposes lat/lon unless exact gates
+      all pass. 2. Tag add requires a fresh normalized coordinate snapshot. 3. Placemark
+      absence degrades instead of inventing city/street/address.</risk_probes>
+
+      '
+    verification: '- [ ] `npm run test:file -- tests/unit/sensors/geo.test.ts` passes
+      with raw output.
+
+      - [ ] Evidence proves geo defaults, precision enum, exact coordinate/address
+      privacy gates, permission/unavailable/error mapping, helper backoff delegation,
+      and no request-path helper spawn.
+
+      - [ ] Evidence proves tag add/list/remove canonical storage, redaction, fresh-fix
+      requirement, not-found failure, and deletePaths proposal semantics.
+
+      - [ ] Evidence proves nearest-tag tie handling and stale/unavailable render
+      degradation.
+
+      '
+    refs:
+    - docs/TECHNICAL_DESIGN.md#builtin-sensors/geo
+    - docs/TECHNICAL_DESIGN.md#error-model/native-helper-errors
+    - docs/PRD.md#7-3-builtin-sensors/geo-sensor
+    - docs/PRD.md#8-2-privacy
+    - CONSTITUTION.md#privacy-and-safety-laws
+    depends_on:
+    - sensors-tests
+    agent: frontend-engineer
+  - id: sensors-native-helper
+    name: Complete macOS CoreLocation helper supervision
+    status: pending
+    description: 'step_type: implementation
+
+      TARGET STATE: src/native/macos-location-helper.swift and the TypeScript helper
+      supervision path produce/parse bounded JSON for one-shot CoreLocation collection,
+      enforce timeout/stdout/stderr caps, skip/fail closed when helper paths are unavailable,
+      and leave no orphan helper processes.
+
+      BOUNDING BOX: src/native/macos-location-helper.swift plus the narrow TypeScript
+      helper spawn wrapper used by geo.
+
+      CONSTRAINTS: Helper collection is explicit/manual or scheduled outside request
+      path; single-file packaged installs must fail closed with `helper-unavailable`
+      when no materialized helper path exists.
+
+      ## Completion Criteria (stub exclusion)
+
+      This is an IMPLEMENTATION step. Stub-only completion is NOT acceptable.
+
+      <side_effect_budget>Allowed: Swift helper source and narrow helper-supervision
+      wrapper/tests. Forbidden: helper spawn from injector/request path, background
+      location tracking, cloud geocoding, unbounded stdout/stderr, orphan processes,
+      or pretending non-macOS skip is live helper proof.</side_effect_budget>
+
+      <risk_probes>1. Timeout terminates then force-kills after grace period. 2. stdout/stderr
+      caps prevent runaway process output. 3. Missing packaged helper path produces
+      typed `helper-unavailable` without disabling non-geo features.</risk_probes>
+
+      '
+    verification: '- [ ] `npm run test:native -- tests/native/macos-location-helper.test.ts`
+      passes on macOS or skips with an explicit platform reason on non-macOS, with
+      raw output.
+
+      - [ ] Evidence proves helper stdout JSON success/error schema, timeout/process/permission/parse
+      mappings, backoff behavior, and stdout/stderr 16KiB caps.
+
+      - [ ] Evidence proves no helper spawn occurs during request-path injection and
+      no helper process survives timeout/shutdown.
+
+      - [ ] Evidence distinguishes helper typecheck/skip from live CoreLocation permission
+      success.
+
+      '
+    refs:
+    - docs/TECHNICAL_DESIGN.md#builtin-sensors/geo
+    - docs/TECHNICAL_DESIGN.md#testing-gate-matrix
+    - docs/TECHNICAL_DESIGN.md#error-model/native-helper-errors
+    - docs/PRD.md#9-5-builtin-sensors
+    depends_on:
+    - sensors-tests
+    agent: ios-developer
+  - id: sensors-manifest-risk
+    name: Complete user-added sensor manifest and risk loading behavior
+    status: pending
+    description: 'step_type: implementation
+
+      TARGET STATE: User-added local sensors loaded through the core loader expose
+      provenance, manifest, remote/background declarations, effectiveIntervalMs, manifestDigest,
+      acknowledgement state, forcedDisabledReason, and inspectable status/sensors
+      records before enablement; risky user-added sensors are forced disabled until
+      digest acknowledgement.
+
+      BOUNDING BOX: src/core/sensor-loader.ts, src/core/config.ts, src/commands/dasein-command.ts
+      status/sensors payload assembly, tests/unit/sensor-loader.test.ts, tests/unit/commands-status.test.ts,
+      tests/unit/commands-sensors.test.ts.
+
+      CONSTRAINTS: This completes user-added manifest/risk behavior that crosses loader/config/command
+      output; it must not add a sandbox or marketplace semantics.
+
+      ## Completion Criteria (stub exclusion)
+
+      This is an IMPLEMENTATION step. Stub-only completion is NOT acceptable.
+
+      <side_effect_budget>Allowed: loader/config/status-sensors output paths and tests.
+      Forbidden: remote package install, automatic third-party loading, claiming import-time
+      sandboxing, or enabling risky sensors from launch overlay alone.</side_effect_budget>
+
+      <risk_probes>1. SettingsList/slash enable must include current manifestDigest
+      for risky sensors. 2. Launch overlays never satisfy acknowledgement by themselves.
+      3. Inspectability metadata is visible while effectiveEnabled remains false.</risk_probes>
+
+      '
+    verification: '- [ ] `npm run test:file -- tests/unit/sensor-loader.test.ts tests/unit/commands-status.test.ts
+      tests/unit/commands-sensors.test.ts` passes with raw output.
+
+      - [ ] Evidence proves manifestDigest canonical inputs and invalidation after
+      metadata/effective scheduling changes.
+
+      - [ ] Evidence proves risky user-added sensors stay forced disabled for module
+      defaults, disk enabled-only, launch enabled-only, and slash enabled-only cases.
+
+      - [ ] Evidence proves `/dasein sensors` and `/dasein status` expose provenance,
+      permissions, remote/background behavior, effectiveIntervalMs, acknowledgement,
+      and forcedDisabledReason before enablement.
+
+      '
+    refs:
+    - CONSTITUTION.md#extension-and-sensor-laws
+    - docs/TECHNICAL_DESIGN.md#core-contracts/sensor-spec
+    - docs/TECHNICAL_DESIGN.md#sensor-loading-and-reload
+    - docs/PRD.md#7-2-sensor-model
+    - docs/PRD.md#9-7-sensor-loading-and-reload
+    depends_on:
+    - sensors-tests
+    agent: frontend-engineer
+  - id: sensors-local-proof
+    name: Verify builtin sensors and native helper local gates
+    status: pending
+    description: 'step_type: verification
+
+      verification_scope: phase-check
+
+      PROOF ARTIFACT: Independent phase-check proof for builtin sensors, user-added
+      manifest/risk behavior, and native helper ordinary-gate behavior. This is not
+      live Pi or live CoreLocation release proof.
+
+      Behavioral proof register required for clock, lapse, geo privacy/actions, native
+      helper skip/typecheck, and risky user sensor acknowledgement behavior.
+
+      <side_effect_budget>Allowed: read-only test/static execution and report. Forbidden:
+      code edits, live support claims, or treating non-macOS native skip as successful
+      helper operation.</side_effect_budget>
+
+      <risk_probes>1. Native helper evidence is classified as typecheck/skip/live
+      accurately. 2. Geo exact-location privacy gates are proven negative as well
+      as positive. 3. Risky user-added sensor enablement is not satisfied by launch-only
+      overlays.</risk_probes>
+
+      '
+    verification: '- [ ] `npm run test:file -- tests/unit/sensors/clock.test.ts tests/unit/sensors/geo.test.ts
+      tests/unit/sensors/lapse.test.ts tests/unit/sensor-loader.test.ts tests/unit/commands-status.test.ts
+      tests/unit/commands-sensors.test.ts` passes with raw output.
+
+      - [ ] `npm run test:native -- tests/native/macos-location-helper.test.ts` passes
+      or skips with explicit platform reason and raw output.
+
+      - [ ] Behavioral proof register maps every sensors requirement to PROVEN, NEEDS_TEST,
+      UNPROVEN, BLOCKED, or non-intersecting closure path.
+
+      - [ ] Evidence explicitly states this phase does not satisfy live Pi TUI, dynamic
+      reload, or live CoreLocation release smoke.
+
+      '
+    refs:
+    - docs/TECHNICAL_DESIGN.md#testing-gate-matrix
+    - CONSTITUTION.md#testing-and-gates
+    - docs/PRD.md#9-5-builtin-sensors
+    - docs/PRD.md#9-7-sensor-loading-and-reload
+    depends_on:
+    - sensors-clock-lapse
+    - sensors-geo-actions
+    - sensors-native-helper
+    - sensors-manifest-risk
+    agent: integration-verifier
+  - id: sensors-gate
+    name: Gate builtin sensors and native helper
+    status: pending
+    description: 'step_type: gate
+
+      verification_scope: phase-check
+
+      DECISION ARTIFACT: Independent gate for sensors. Review expected-red tests,
+      implementations, local/native proof, privacy controls, typed-state boundaries,
+      and fake/live evidence separation before Pi runtime wiring begins.
+
+      review_depth: THOROUGH
+
+      cross_cutting_focus: geo privacy and exactness, lapse durability bounds, user-added
+      sensor trust boundary, native helper cleanup, no request-path helper/I/O.
+
+      <side_effect_budget>Allowed: read-only gate review. Forbidden: implementation
+      fixes, approving missing native skip evidence, or converting local/native proof
+      into live Pi support claims.</side_effect_budget>
+
+      <risk_probes>1. Geo/lapse/clock are the only builtin sensors. 2. Any live-smoke
+      requirement remains owned by release_smoke, not hidden. 3. User-added sensor
+      import-time code is represented as trusted local code, not sandboxed.</risk_probes>
+
+      '
+    verification: '- [ ] All sensors phase steps are complete with refs confirmations
+      and checklist receipts.
+
+      - [ ] Gate decision basis maps clock, geo, lapse, native helper, and user-added
+      manifest/risk obligations to positive evidence or remediation.
+
+      - [ ] No unresolved sensors blocker intersects pi_runtime, system_wiring, release_smoke,
+      or finalization gates without remediation ownership.
+
+      - [ ] Final gate verdict is OPEN or BLOCKED with explicit blockers and required
+      actions.
+
+      '
+    refs:
+    - CONSTITUTION.md#testing-and-gates
+    - docs/TECHNICAL_DESIGN.md#builtin-sensors
+    - docs/TECHNICAL_DESIGN.md#testing-gate-matrix
+    - docs/PRD.md#9-acceptance-criteria
+    depends_on:
+    - sensors-local-proof
+    agent: gate-reviewer
 - id: pi_runtime
   name: Pi Runtime, Commands, and TUI Surfaces
   status: locked
