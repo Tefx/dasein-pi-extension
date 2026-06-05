@@ -780,9 +780,9 @@ phases:
     - CONSTITUTION.md#quality-baselines
     - CONSTITUTION.md#testing-and-gates
     - docs/TECHNICAL_DESIGN.md#rendering-contract
-    - docs/TECHNICAL_DESIGN.md#core-contracts/external-state-event
     - docs/PRD.md#7-4-external-state-bridge
     - docs/PRD.md#7-9-agent-context-injection
+    - docs/TECHNICAL_DESIGN.md#core-contracts
     depends_on:
     - core-tests
     agent: frontend-engineer
