@@ -4490,6 +4490,23 @@ phases:
       - <checklist item 2>: satisfied | failed | blocked | unobserved — <evidence
       ref>
 
+
+      ## SettingsList Common Sensor Controls Evidence (MANDATORY)
+
+      - required_fields: [`enabled`, `ui`, `agent`, `intervalMs`, `timeoutMs`, `staleAfterMs`,
+      `initialRefresh`]
+
+      - rendered_controls_by_sensor: <clock/geo/lapse/user-added examples or exact
+      blocker>
+
+      - visible_recurring_interval_controls: <proof `intervalMs` visibility/configurability/disableability>
+
+      - mutation_path: <SettingsList change -> FIFO ConfigManager queue -> canonical
+      path validation/persistence -> runtime update>
+
+      - excluded_complex_fields_check: <geo.tags/lapse.agentFields remain outside
+      flat SettingsList controls unless separately justified>
+
       '
     refs:
     - CONSTITUTION.md
