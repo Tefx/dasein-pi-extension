@@ -9,3 +9,11 @@
 version: 1
 project: dasein-pi-extension
 context: Implementation plan for dasein-pi-extension.
+phases:
+- id: scaffold
+  name: Scaffold and Contract Foundation
+  status: pending
+  gate: Scaffold contracts, tooling, and fake-host proof basis are ready for implementation
+    phases.
+  context: Establish the TypeScript package, root Pi extension shim, shared contracts,
+    and fake host proof basis for Dasein.
