@@ -3821,6 +3821,88 @@ phases:
       lifecycle observation, and hidden context conversion evidence or exact blockers.
 
       '
+    evidence_template: '## refs Read Confirmation (MANDATORY)
+
+      For each ref in this step:
+
+      - CONSTITUTION.md#testing-and-gates — <key passage or "NOT READ: <reason>">
+
+      - CONSTITUTION.md#ux-and-pi-interaction-red-lines — <key passage or "NOT READ:
+      <reason>">
+
+      - docs/TECHNICAL_DESIGN.md#verified-pi-mechanisms — <key passage or "NOT READ:
+      <reason>">
+
+      - docs/TECHNICAL_DESIGN.md#testing-gate-matrix — <key passage or "NOT READ:
+      <reason>">
+
+
+      ## side_effect_budget
+
+      - allowed: <copy allowed side effects from step description and confirm actual
+      changes stayed inside them>
+
+      - forbidden: <copy forbidden side effects from step description and confirm
+      none occurred>
+
+
+      ## risk_probes
+
+      - probe_1: <result/evidence>
+
+      - probe_2: <result/evidence>
+
+      - probe_3: <result/evidence or N/A>
+
+
+      ## verify-only purity
+
+      - role: read-only verifier/gate/auditor
+
+      - files_changed: MUST be none
+
+      - mutation_performed: MUST be false
+
+      - if mutation was necessary: STOP and report blocker for orchestrator/planner
+
+
+      ## raw_command_output
+
+      - command: <exact command or N/A>
+
+      - raw_stdout: <paste raw output or N/A>
+
+      - raw_stderr: <paste raw error output or N/A>
+
+      - exit_code: <code or N/A>
+
+
+      ## gate_decision_basis
+
+      | requirement_or_step_ref | evidence_ref | proof_status | unresolved_status
+      | blocks_remaining_gates | closure_path |
+
+      | --- | --- | --- | --- | --- | --- |
+
+      | <ref> | <artifact> | PROVEN|UNPROVEN|NEEDS_TEST|BLOCKED | <status> | yes/no
+      | <required action> |
+
+      - final_recommendation: OPEN | OPEN_WITH_DEBT | BLOCKED
+
+      - blockers: <list>
+
+      - required_actions: <list>
+
+
+      ## checklist_receipt
+
+      - <checklist item 1>: satisfied | failed | blocked | unobserved — <evidence
+      ref>
+
+      - <checklist item 2>: satisfied | failed | blocked | unobserved — <evidence
+      ref>
+
+      '
     refs:
     - CONSTITUTION.md#testing-and-gates
     - CONSTITUTION.md#ux-and-pi-interaction-red-lines
