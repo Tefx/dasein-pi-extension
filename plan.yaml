@@ -3303,6 +3303,15 @@ phases:
       `/dasein` observable behavior consumes the Pi command/custom-UI registration
       path and shares `tests/integration/pi-extension.test.ts`.
 
+
+      REVIEW-FIX ITERATION 6 USER-ADDED RISKY SENSOR INSPECTABILITY FIELDS:
+
+      User-added/risky sensor inspectability must explicitly own and verify exact
+      fields `acknowledgedManifestDigest`, `acknowledgementRequired`, `acknowledgementSatisfied`,
+      `defaultEnabled`, and `effectiveEnabled`. Broad "acknowledgement" wording is
+      insufficient; status, sensors, and SettingsList evidence must name all five
+      fields where those surfaces expose sensor metadata.
+
       '
     verification: '- [ ] `npm run test:file -- tests/unit/settings-list.test.ts tests/integration/pi-extension.test.ts`
       passes with raw output.
@@ -3337,6 +3346,10 @@ phases:
 
       - [ ] Evidence is collected after `pi-runtime-extension-wiring` completes so
       SettingsList/bare `/dasein` proof uses the real Pi wiring path.
+
+      - [ ] SettingsList evidence shows user-added sensor inspectability fields `acknowledgedManifestDigest`,
+      `acknowledgementRequired`, `acknowledgementSatisfied`, `defaultEnabled`, and
+      `effectiveEnabled` before risky enablement controls.
 
       '
     evidence_template: "## refs Read Confirmation (MANDATORY)\nFor each ref in this\
@@ -3394,7 +3407,16 @@ phases:
       \ <agent false / non-exact precision / exactAddress false / missing placemark/address>\n\
       - settingslist_simple_field_controls: <proof simple boolean fields are exposed\
       \ where SettingsList is available>\n- broad_gate_claim_rejected: Evidence that\
-      \ says only \"exact privacy gates\" without both field names is INCOMPLETE.\n"
+      \ says only \"exact privacy gates\" without both field names is INCOMPLETE.\n\
+      \n## User-Added Risky Sensor Inspectability Fields Evidence (MANDATORY)\n- acknowledgedManifestDigest:\
+      \ <observed value/null and digest match/mismatch scenario>\n- acknowledgementRequired:\
+      \ <true/false cases for safe vs risky user-added sensors>\n- acknowledgementSatisfied:\
+      \ <true/false cases before/after matching digest acknowledgement>\n- defaultEnabled:\
+      \ <module default vs forced-disable behavior>\n- effectiveEnabled: <effective\
+      \ runtime enabled state after risk rules>\n- surfaces_checked: </dasein status,\
+      \ /dasein sensors, SettingsList where applicable>\n- forced_disabled_matrix:\
+      \ <remote/network, recurring/background, both, safe sensor>\n- broad_acknowledgement_claim_rejected:\
+      \ Evidence that does not name all five fields is INCOMPLETE.\n"
     refs:
     - docs/TECHNICAL_DESIGN.md#testing-gate-matrix
     - docs/PRD.md#7-10-human-tui-surfaces
@@ -3403,6 +3425,8 @@ phases:
     - docs/TECHNICAL_DESIGN.md#data-flow
     - docs/TECHNICAL_DESIGN.md#human-ui-rendering
     - docs/TECHNICAL_DESIGN.md#builtin-sensors
+    - docs/TECHNICAL_DESIGN.md#core-contracts
+    - docs/TECHNICAL_DESIGN.md#command-result-and-output-contract
     depends_on:
     - pi-runtime-tests
     - pi-runtime-extension-wiring
