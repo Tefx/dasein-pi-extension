@@ -6054,6 +6054,15 @@ phases:
       to ASCII control characters, CR, LF, and multiline payloads. Dasein must reject
       without normalizing or mutating state.
 
+
+      REVIEW-FIX CATCHUP CONSTITUTION AMENDMENT CONTROL:
+
+      `finalization-doc-sync` must not amend `CONSTITUTION.md` unless explicit human
+      approval is provided. If CONSTITUTION.md is changed, evidence must include human
+      approval, amendment reason, affected invariants, verification impact, and migration
+      notes. Normal doc sync should update non-constitution docs/evidence ledgers
+      without weakening constitutional rules.
+
       '
     verification: '- [ ] Requirements register covers every material requirement family
       from Constitution, PRD, and Technical Design touched by the implementation.
@@ -6118,6 +6127,9 @@ phases:
 
       - [ ] Full conformance audit includes U+2028 and U+2029 external event string
       rejection as separate requirement rows.
+
+      - [ ] Conformance audit checks whether CONSTITUTION.md changed and verifies
+      explicit human approval/amendment evidence if it did.
 
       '
     evidence_template: "## refs Read Confirmation (MANDATORY)\nFor each exact refs\
@@ -6281,7 +6293,14 @@ phases:
       \ mutation>\n- U+2029_source_case: <rejected without state mutation>\n- ascii_control_baseline:\
       \ <CR/LF/tab/control rejection>\n- no_normalization_or_truncation: <proof payload\
       \ is rejected, not repaired>\n- broad_multiline_claim_rejected: Evidence that\
-      \ says only multiline/control without U+2028 and U+2029 is INCOMPLETE.\n"
+      \ says only multiline/control without U+2028 and U+2029 is INCOMPLETE.\n\n##\
+      \ Constitution Amendment Control Evidence (MANDATORY)\n- constitution_changed:\
+      \ yes | no\n- if_no: <proof CONSTITUTION.md unchanged>\n- if_yes_human_approval:\
+      \ <approver + timestamp + exact approval text>\n- amendment_reason: <why amendment\
+      \ was required>\n- affected_invariants: <dogmas/laws/quality baselines affected>\n\
+      - verification_impact: <tests/gates/docs affected>\n- migration_notes: <required\
+      \ migration or none with reason>\n- forbidden_without_approval: CONSTITUTION.md\
+      \ amendment without explicit human approval is BLOCKING.\n"
     refs:
     - CONSTITUTION.md
     - docs/PRD.md
@@ -6295,6 +6314,7 @@ phases:
     - docs/TECHNICAL_DESIGN.md#data-flow
     - docs/TECHNICAL_DESIGN.md#rendering-contract
     - docs/PRD.md#9-6-external-state
+    - CONSTITUTION.md#constitution-version-and-amendment-lifecycle
     depends_on:
     - finalization-doc-sync
     - finalization-full-wiring-audit
