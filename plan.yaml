@@ -295,7 +295,15 @@ phases:
       - [ ] Root index.ts delegates to ./src/index.ts and does no extra work.
 
       - [ ] Package dependency policy and fake host tests pass or expose only downstream
-      product gaps.'
+      product gaps.
+
+      - [ ] Runtime/static receipt proves symlinked `~/.pi/agent/extensions/dasein`
+      load reaches the root shim and delegates to `./src/index.ts`.
+
+      - [ ] Runtime/static receipt proves SettingsList/getSettingsListTheme import
+      resolution works from the symlinked extension load shape.
+
+      '
     evidence_template: '## refs Read Confirmation (MANDATORY)
 
       For each ref in this step:
