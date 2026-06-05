@@ -4033,6 +4033,9 @@ phases:
       - [ ] Support-claim ledger includes launch flag parsing, event publishing, lifecycle
       observation, and hidden context conversion rows with live/fake status separation.
 
+      - [ ] Support-claim ledger includes minimum Pi version, current version, below-minimum/unavailable
+      classification, and separate feature-probe evidence rows.
+
       '
     evidence_template: '## refs Read Confirmation (MANDATORY)
 
