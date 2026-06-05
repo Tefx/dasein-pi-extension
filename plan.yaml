@@ -2362,6 +2362,9 @@ phases:
       and structured fail-closed `/dasein status` reporting when a fake-host mechanism
       is unavailable.
 
+      - [ ] Evidence proves literal bare `/dasein` is registered/routed and does not
+      mutate config/state in either TUI or non-TUI mode.
+
       '
     evidence_template: "## refs Read Confirmation (MANDATORY)\nFor each ref in this\
       \ step:\n- docs/TECHNICAL_DESIGN.md#verified-pi-mechanisms — <key passage or\
