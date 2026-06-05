@@ -4444,7 +4444,7 @@ phases:
       launch flag parsing (`--dasein`), event publishing via `pi.events`, lifecycle
       observation (`input` or fallback `before_agent_start`, plus `agent_end`), and
       hidden custom-message context conversion, in addition to slash commands, context
-      hook, status/widget, and SettingsList.
+      hook, status/widget, ctx.ui.custom, and SettingsList.
 
 
       REVIEW-FIX ITERATION 2 MINIMUM PI VERSION STATUS:
