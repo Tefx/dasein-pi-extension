@@ -1899,6 +1899,7 @@ phases:
     depends_on:
     - system-wiring-e2e-fake-host
     - system-wiring-ordinary-ci
+    - system-wiring-stub-replacement
     agent: gate-reviewer
 - id: release_smoke
   name: Live Pi and Native Release Smoke
