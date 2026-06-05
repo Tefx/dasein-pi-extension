@@ -3522,11 +3522,12 @@ phases:
       - [ ] Live smoke evidence explicitly covers hidden custom-message context conversion
       to LLM input or records an exact blocker.
 
-      - [ ] Live smoke invokes literal bare `/dasein` in a live TUI and captures SettingsList/configuration
-      UI opening or an exact blocker.
+      - [ ] Live TUI smoke captures SettingsList common sensor controls `enabled`,
+      `ui`, `agent`, `intervalMs`, `timeoutMs`, `staleAfterMs`, and `initialRefresh`,
+      or exact blockers per field family.
 
-      - [ ] Live smoke invokes literal bare `/dasein` outside TUI mode when feasible
-      and captures deterministic help/status fallback or exact blocker.
+      - [ ] Live TUI smoke toggles or changes one visible recurring interval/common
+      control safely and verifies ConfigManager mutation behavior or exact blocker.
 
       '
     evidence_template: '## refs Read Confirmation (MANDATORY)
