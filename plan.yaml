@@ -1702,6 +1702,10 @@ phases:
       - [ ] Grep evidence shows no `_Runtime*`/`_Stub*`/`_Placeholder*` production
       dependency is introduced as final wiring.
 
+      - [ ] Evidence covers startup feature probes for each required Pi mechanism
+      and structured fail-closed `/dasein status` reporting when a fake-host mechanism
+      is unavailable.
+
       '
     refs:
     - docs/TECHNICAL_DESIGN.md#verified-pi-mechanisms
