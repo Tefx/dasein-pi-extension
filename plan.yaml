@@ -5916,6 +5916,13 @@ phases:
       matching regex `[A-Za-z0-9_.:-]{1,32}`. Evidence must include boundary accepts/rejects
       and must not rely on broad config-validation wording.
 
+
+      REVIEW-FIX ITERATION 4 GEO TAG COMMAND DETAILS:
+
+      Geo tag command coverage must explicitly verify `radius_m` integer bounds `1..100000`,
+      the `GeoTagListPayload` shape, and coordinate redaction controlled by `sensors.geo.exactCoordinates`.
+      Broad geo tag behavior wording is insufficient.
+
       '
     verification: '- [ ] Black-box tests/commands use documented package scripts,
       slash commands, launch flag, config files, and event payloads only.
@@ -5956,6 +5963,10 @@ phases:
       - [ ] Black-box verification exercises public config/command paths for `core.maxAgentChars`
       boundary values and `core.injectedLabel` regex accept/reject cases or exact
       blockers.
+
+      - [ ] Black-box verification exercises public geo tag commands for `radius_m`
+      bounds, `GeoTagListPayload`, and coordinate redaction using `exactCoordinates`
+      or exact blockers.
 
       '
     evidence_template: "## refs Read Confirmation (MANDATORY)\nFor each ref in this\
@@ -6037,7 +6048,16 @@ phases:
       \ <empty, length 33, invalid characters, whitespace/control>\n- raw_command_output:\
       \ <tests/commands proving deterministic validation>\n- broad_config_claim_rejected:\
       \ Evidence that says only \"config validation\" without these two exact rules\
-      \ is INCOMPLETE.\n"
+      \ is INCOMPLETE.\n\n## Geo Tag Command Detail Evidence (MANDATORY)\n- radius_m_bounds:\
+      \ \"integer 1..100000 inclusive\"\n- radius_m_accept_cases: <1, representative\
+      \ valid value, 100000>\n- radius_m_reject_cases: <0, 100001, non-integer, invalid\
+      \ token>\n- GeoTagListPayload_shape: <exact payload fields: exactCoordinates,\
+      \ tags[].name, radius_m, label, coordinates visible/redacted union>\n- coordinate_redaction_exactCoordinates_false:\
+      \ <proof no lat/lon numbers in command text or payload>\n- coordinate_visibility_exactCoordinates_true:\
+      \ <proof visible only when all exact gates pass>\n- raw_command_output: <geo\
+      \ tag list/add/remove tests or smoke output>\n- broad_geo_tag_claim_rejected:\
+      \ Evidence that does not name radius bounds, GeoTagListPayload, and exactCoordinates\
+      \ redaction is INCOMPLETE.\n"
     refs:
     - docs/PRD.md#9-acceptance-criteria
     - docs/TECHNICAL_DESIGN.md#command-design
