@@ -775,6 +775,15 @@ phases:
       matching regex `[A-Za-z0-9_.:-]{1,32}`. Evidence must include boundary accepts/rejects
       and must not rely on broad config-validation wording.
 
+
+      REVIEW-FIX ITERATION 6 USER-ADDED RISKY SENSOR INSPECTABILITY FIELDS:
+
+      User-added/risky sensor inspectability must explicitly own and verify exact
+      fields `acknowledgedManifestDigest`, `acknowledgementRequired`, `acknowledgementSatisfied`,
+      `defaultEnabled`, and `effectiveEnabled`. Broad "acknowledgement" wording is
+      insufficient; status, sensors, and SettingsList evidence must name all five
+      fields where those surfaces expose sensor metadata.
+
       '
     verification: '- [ ] Test files are limited to tests/ and fixtures/helpers and
       cite the exact Technical Design gate matrix rows they implement.
@@ -825,6 +834,10 @@ phases:
       - [ ] Expected-red config tests assert `core.injectedLabel` accepts `[A-Za-z0-9_.:-]{1,32}`
       strings and rejects empty, too-long, whitespace/control, and invalid-character
       labels.
+
+      - [ ] Expected-red status/sensors command tests explicitly assert `acknowledgedManifestDigest`,
+      `acknowledgementRequired`, `acknowledgementSatisfied`, `defaultEnabled`, and
+      `effectiveEnabled` in sensor metadata/risk outputs.
 
       '
     evidence_template: "## refs Read Confirmation (MANDATORY)\nFor each ref in this\
@@ -891,7 +904,16 @@ phases:
       \ <empty, length 33, invalid characters, whitespace/control>\n- raw_command_output:\
       \ <tests/commands proving deterministic validation>\n- broad_config_claim_rejected:\
       \ Evidence that says only \"config validation\" without these two exact rules\
-      \ is INCOMPLETE.\n"
+      \ is INCOMPLETE.\n\n## User-Added Risky Sensor Inspectability Fields Evidence\
+      \ (MANDATORY)\n- acknowledgedManifestDigest: <observed value/null and digest\
+      \ match/mismatch scenario>\n- acknowledgementRequired: <true/false cases for\
+      \ safe vs risky user-added sensors>\n- acknowledgementSatisfied: <true/false\
+      \ cases before/after matching digest acknowledgement>\n- defaultEnabled: <module\
+      \ default vs forced-disable behavior>\n- effectiveEnabled: <effective runtime\
+      \ enabled state after risk rules>\n- surfaces_checked: </dasein status, /dasein\
+      \ sensors, SettingsList where applicable>\n- forced_disabled_matrix: <remote/network,\
+      \ recurring/background, both, safe sensor>\n- broad_acknowledgement_claim_rejected:\
+      \ Evidence that does not name all five fields is INCOMPLETE.\n"
     refs:
     - docs/TECHNICAL_DESIGN.md#testing-gate-matrix
     - docs/TECHNICAL_DESIGN.md#core-contracts
