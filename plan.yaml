@@ -2869,6 +2869,9 @@ phases:
       - [ ] Final gate verdict is OPEN or BLOCKED with explicit blockers and required
       actions.
 
+      - [ ] Gate decision basis explicitly reviews literal bare `/dasein` TUI and
+      non-TUI evidence; "or equivalent" evidence is rejected.
+
       '
     evidence_template: '## refs Read Confirmation (MANDATORY)
 
