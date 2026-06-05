@@ -3329,6 +3329,82 @@ phases:
       to LLM input or records an exact blocker.
 
       '
+    evidence_template: '## refs Read Confirmation (MANDATORY)
+
+      For each ref in this step:
+
+      - docs/TECHNICAL_DESIGN.md#verified-pi-mechanisms — <key passage or "NOT READ:
+      <reason>">
+
+      - docs/TECHNICAL_DESIGN.md#testing-gate-matrix — <key passage or "NOT READ:
+      <reason>">
+
+      - docs/PRD.md#9-4-tui — <key passage or "NOT READ: <reason>">
+
+      - CONSTITUTION.md#ux-and-pi-interaction-red-lines — <key passage or "NOT READ:
+      <reason>">
+
+
+      ## side_effect_budget
+
+      - allowed: <copy allowed side effects from step description and confirm actual
+      changes stayed inside them>
+
+      - forbidden: <copy forbidden side effects from step description and confirm
+      none occurred>
+
+
+      ## risk_probes
+
+      - probe_1: <result/evidence>
+
+      - probe_2: <result/evidence>
+
+      - probe_3: <result/evidence or N/A>
+
+
+      ## verify-only purity
+
+      - role: read-only verifier/gate/auditor
+
+      - files_changed: MUST be none
+
+      - mutation_performed: MUST be false
+
+      - if mutation was necessary: STOP and report blocker for orchestrator/planner
+
+
+      ## raw_command_output
+
+      - command: <exact command or N/A>
+
+      - raw_stdout: <paste raw output or N/A>
+
+      - raw_stderr: <paste raw error output or N/A>
+
+      - exit_code: <code or N/A>
+
+
+      ## behavioral_proof_register
+
+      | requirement_ref | behavior_claim | runtime_proof_expected | evidence_ref |
+      status | closure_path | gate_decision_basis |
+
+      | --- | --- | --- | --- | --- | --- | --- |
+
+      | <ref> | <claim> | <expected proof> | <artifact/command> | PROVEN|NEEDS_TEST|UNPROVEN|BLOCKED
+      | <remediation/non-intersection> | <gate impact> |
+
+
+      ## checklist_receipt
+
+      - <checklist item 1>: satisfied | failed | blocked | unobserved — <evidence
+      ref>
+
+      - <checklist item 2>: satisfied | failed | blocked | unobserved — <evidence
+      ref>
+
+      '
     refs:
     - docs/TECHNICAL_DESIGN.md#verified-pi-mechanisms
     - docs/TECHNICAL_DESIGN.md#testing-gate-matrix
