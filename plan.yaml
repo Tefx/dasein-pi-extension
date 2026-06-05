@@ -1677,6 +1677,15 @@ phases:
       construction. 3. Pi mechanism status reports live-smoke pending until release_smoke
       proves otherwise.</risk_probes>
 
+
+      REVIEW-FIX ITERATION 1 PI FEATURE PROBES:
+
+      Startup/runtime wiring must feature-probe required Pi mechanisms (`registerCommand`,
+      `registerFlag`, `context`, `pi.events`, `setStatus`, `setWidget`, `SettingsList`,
+      lifecycle/input/agent_end hooks) and fail closed per mechanism when unavailable.
+      `/dasein status` must report structured `PiMechanismError`/evidence status instead
+      of crashing or silently claiming support.
+
       '
     verification: '- [ ] `npm run test:file -- tests/integration/pi-extension.test.ts`
       passes through the fake Pi host with raw output.
