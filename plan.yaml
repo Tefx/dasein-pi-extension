@@ -4890,6 +4890,15 @@ phases:
       permissions, and runtime state. This prevents parallel smoke steps from sharing
       or corrupting disposable runtime resources.
 
+
+      REVIEW-FIX ITERATION 8 DISPOSABLE LIVE-SMOKE MUTATION BUDGET:
+
+      This live-smoke step remains read-only for repository/product code and docs,
+      but it may toggle/change settings only inside a test-controlled disposable HOME/Pi
+      config root/session. Evidence must include disposable path, changed canonical
+      config paths, cleanup/reset, and proof no persistent user config outside the
+      test-controlled path was modified.
+
       '
     verification: '- [ ] `npm run test:smoke -- tests/smoke/pi-settings-list.test.ts`
       or the documented live Pi equivalent is run with raw stdout/stderr, Pi version,
@@ -4948,6 +4957,9 @@ phases:
       - [ ] Evidence records serialized execution assumptions and confirms disposable
       runtime/config/extension/native resources are cleaned up before the next release-smoke
       step consumes them.
+
+      - [ ] Evidence distinguishes allowed disposable runtime/config mutation from
+      forbidden repository/product/docs/code mutation and includes cleanup/reset proof.
 
       '
     evidence_template: "## refs Read Confirmation (MANDATORY)\nFor each exact refs\
@@ -5027,7 +5039,13 @@ phases:
       \ -> release-smoke-dynamic-reload -> release-smoke-native-helper -> release-smoke-support-claim-ledger\
       \ -> release-smoke-gate\n- isolated_runtime_roots: <HOME/config/extension/native\
       \ resources used by this step>\n- cleanup_before_next_step: <proof or blocker>\n\
-      - no_parallel_resource_conflict: <proof serialized dependency was respected>\n"
+      - no_parallel_resource_conflict: <proof serialized dependency was respected>\n\
+      \n## Disposable Runtime/Config Mutation Evidence (MANDATORY)\n- repo_product_mutation:\
+      \ MUST be none\n- disposable_home_or_config_root: <path>\n- runtime_changes_performed:\
+      \ <settings/events/config paths changed>\n- canonical_paths_changed: <list>\n\
+      - cleanup_or_reset_evidence: <proof disposable state restored/removed>\n- persistent_user_config_unchanged:\
+      \ <proof or exact blocker>\n- mutation_scope_matches_side_effect_budget: <yes/no\
+      \ + explanation>\n"
     refs:
     - docs/TECHNICAL_DESIGN.md#verified-pi-mechanisms
     - docs/TECHNICAL_DESIGN.md#testing-gate-matrix
