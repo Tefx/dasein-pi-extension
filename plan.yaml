@@ -4482,6 +4482,14 @@ phases:
       not prove feature availability, and feature availability does not override a
       below-minimum version.
 
+
+      REVIEW-FIX ITERATION 2 SETTINGSLIST COMMON SENSOR CONTROLS:
+
+      SettingsList coverage must enumerate and prove every common sensor control required
+      by the Technical Design: `enabled`, `ui`, `agent`, `intervalMs`, `timeoutMs`,
+      `staleAfterMs`, and `initialRefresh`. Visible recurring interval controls and
+      their ConfigManager mutation path are blocking evidence, not optional UI polish.
+
       '
     verification: '- [ ] Requirements register covers every material requirement family
       from Constitution, PRD, and Technical Design touched by the implementation.
@@ -4499,6 +4507,10 @@ phases:
       - [ ] Full conformance audit verifies `minimumPiVersion: "0.78.1"`, current
       version capture, below-minimum/unavailable classification, and separate feature-probe
       evidence.
+
+      - [ ] Full conformance audit includes SettingsList common sensor controls `enabled`,
+      `ui`, `agent`, `intervalMs`, `timeoutMs`, `staleAfterMs`, `initialRefresh` and
+      visible recurring interval controls.
 
       '
     evidence_template: '## refs Read Confirmation (MANDATORY)
@@ -4588,6 +4600,23 @@ phases:
       probes>
 
       - status_payload_sample: <includes piVersion, minimumPiVersion, piMechanisms[].evidenceStatuses>
+
+
+      ## SettingsList Common Sensor Controls Evidence (MANDATORY)
+
+      - required_fields: [`enabled`, `ui`, `agent`, `intervalMs`, `timeoutMs`, `staleAfterMs`,
+      `initialRefresh`]
+
+      - rendered_controls_by_sensor: <clock/geo/lapse/user-added examples or exact
+      blocker>
+
+      - visible_recurring_interval_controls: <proof `intervalMs` visibility/configurability/disableability>
+
+      - mutation_path: <SettingsList change -> FIFO ConfigManager queue -> canonical
+      path validation/persistence -> runtime update>
+
+      - excluded_complex_fields_check: <geo.tags/lapse.agentFields remain outside
+      flat SettingsList controls unless separately justified>
 
       '
     refs:
