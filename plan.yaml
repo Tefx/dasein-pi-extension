@@ -2349,6 +2349,9 @@ phases:
       - [ ] Remaining blockers have explicit closure paths and do not invalidate ordinary
       CI proof unless they intersect release support claims.
 
+      - [ ] Support-claim ledger includes launch flag parsing, event publishing, lifecycle
+      observation, and hidden context conversion rows with live/fake status separation.
+
       '
     refs:
     - docs/TECHNICAL_DESIGN.md#verified-pi-mechanisms
