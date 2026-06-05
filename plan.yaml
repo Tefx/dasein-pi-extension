@@ -2660,9 +2660,9 @@ phases:
       - [ ] Proof explicitly labels remaining live Pi/TUI/native obligations as deferred
       to release_smoke, not satisfied here.
 
-      - [ ] Client runtime proof captures SettingsList common controls `enabled`,
-      `ui`, `agent`, `intervalMs`, `timeoutMs`, `staleAfterMs`, and `initialRefresh`,
-      including one recurring interval interaction.
+      - [ ] Runtime proof captures status payload with `piVersion`, `minimumPiVersion:
+      "0.78.1"`, and Pi mechanism evidenceStatuses; below-minimum/unavailable cases
+      have closure paths or fixtures.
 
       '
     evidence_template: '## refs Read Confirmation (MANDATORY)
