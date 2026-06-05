@@ -6399,6 +6399,15 @@ phases:
       the `GeoTagListPayload` shape, and coordinate redaction controlled by `sensors.geo.exactCoordinates`.
       Broad geo tag behavior wording is insufficient.
 
+
+      REVIEW-FIX ITERATION 6 USER-ADDED RISKY SENSOR INSPECTABILITY FIELDS:
+
+      User-added/risky sensor inspectability must explicitly own and verify exact
+      fields `acknowledgedManifestDigest`, `acknowledgementRequired`, `acknowledgementSatisfied`,
+      `defaultEnabled`, and `effectiveEnabled`. Broad "acknowledgement" wording is
+      insufficient; status, sensors, and SettingsList evidence must name all five
+      fields where those surfaces expose sensor metadata.
+
       '
     verification: '- [ ] Black-box tests/commands use documented package scripts,
       slash commands, launch flag, config files, and event payloads only.
@@ -6443,6 +6452,9 @@ phases:
       - [ ] Black-box verification exercises public geo tag commands for `radius_m`
       bounds, `GeoTagListPayload`, and coordinate redaction using `exactCoordinates`
       or exact blockers.
+
+      - [ ] Black-box verification observes public status/sensors/SettingsList metadata
+      or exact blockers for all five risky sensor inspectability fields.
 
       '
     evidence_template: "## refs Read Confirmation (MANDATORY)\nFor each ref in this\
@@ -6533,7 +6545,16 @@ phases:
       \ <proof visible only when all exact gates pass>\n- raw_command_output: <geo\
       \ tag list/add/remove tests or smoke output>\n- broad_geo_tag_claim_rejected:\
       \ Evidence that does not name radius bounds, GeoTagListPayload, and exactCoordinates\
-      \ redaction is INCOMPLETE.\n"
+      \ redaction is INCOMPLETE.\n\n## User-Added Risky Sensor Inspectability Fields\
+      \ Evidence (MANDATORY)\n- acknowledgedManifestDigest: <observed value/null and\
+      \ digest match/mismatch scenario>\n- acknowledgementRequired: <true/false cases\
+      \ for safe vs risky user-added sensors>\n- acknowledgementSatisfied: <true/false\
+      \ cases before/after matching digest acknowledgement>\n- defaultEnabled: <module\
+      \ default vs forced-disable behavior>\n- effectiveEnabled: <effective runtime\
+      \ enabled state after risk rules>\n- surfaces_checked: </dasein status, /dasein\
+      \ sensors, SettingsList where applicable>\n- forced_disabled_matrix: <remote/network,\
+      \ recurring/background, both, safe sensor>\n- broad_acknowledgement_claim_rejected:\
+      \ Evidence that does not name all five fields is INCOMPLETE.\n"
     refs:
     - docs/PRD.md#9-acceptance-criteria
     - docs/TECHNICAL_DESIGN.md#command-design
