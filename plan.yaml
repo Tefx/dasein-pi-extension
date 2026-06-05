@@ -658,10 +658,9 @@ phases:
     refs:
     - CONSTITUTION.md#architectural-dogmas
     - CONSTITUTION.md#testing-and-gates
-    - docs/TECHNICAL_DESIGN.md#core-contracts/config-source-and-precedence
-    - docs/TECHNICAL_DESIGN.md#core-contracts/state-store
     - docs/PRD.md#7-5-configuration-storage-and-schema
     - docs/PRD.md#7-6-configuration-precedence-and-runtime-persistence
+    - docs/TECHNICAL_DESIGN.md#core-contracts
     depends_on:
     - core-tests
     agent: frontend-engineer
