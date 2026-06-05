@@ -6130,6 +6130,13 @@ phases:
       notes. Normal doc sync should update non-constitution docs/evidence ledgers
       without weakening constitutional rules.
 
+
+      REVIEW-FIX CATCHUP NEGATIVE SENSOR DIRECTORY RULE:
+
+      Dasein must ignore/reject `~/.pi/dasein/sensors`; user-added sensors load only
+      from `<extension_root>/src/sensors/*.ts` in directory/package mode. No scanner,
+      fallback, or reload path may treat `~/.pi/dasein/sensors` as a sensor directory.
+
       '
     verification: '- [ ] Requirements register covers every material requirement family
       from Constitution, PRD, and Technical Design touched by the implementation.
@@ -6197,6 +6204,10 @@ phases:
 
       - [ ] Conformance audit checks whether CONSTITUTION.md changed and verifies
       explicit human approval/amendment evidence if it did.
+
+      - [ ] Full conformance audit includes negative sensor-directory rule: `~/.pi/dasein/sensors`
+      is not scanned and `<extension_root>/src/sensors/*.ts` is the only user-added
+      directory/package sensor path.
 
       '
     evidence_template: "## refs Read Confirmation (MANDATORY)\nFor each exact refs\
@@ -6367,7 +6378,12 @@ phases:
       \ was required>\n- affected_invariants: <dogmas/laws/quality baselines affected>\n\
       - verification_impact: <tests/gates/docs affected>\n- migration_notes: <required\
       \ migration or none with reason>\n- forbidden_without_approval: CONSTITUTION.md\
-      \ amendment without explicit human approval is BLOCKING.\n"
+      \ amendment without explicit human approval is BLOCKING.\n\n## Negative Sensor\
+      \ Directory Evidence (MANDATORY)\n- forbidden_path: ~/.pi/dasein/sensors\n-\
+      \ allowed_path: <extension_root>/src/sensors/*.ts\n- startup_scan_case: <proof\
+      \ forbidden path ignored/rejected>\n- manual_reload_case: <proof forbidden path\
+      \ ignored/rejected>\n- no_fallback_case: <proof no fallback scanner reads ~/.pi/dasein/sensors>\n\
+      - status_or_load_error_behavior: <how rejected/ignored path is reported if applicable>\n"
     refs:
     - CONSTITUTION.md
     - docs/PRD.md
@@ -6382,6 +6398,9 @@ phases:
     - docs/TECHNICAL_DESIGN.md#rendering-contract
     - docs/PRD.md#9-6-external-state
     - CONSTITUTION.md#constitution-version-and-amendment-lifecycle
+    - docs/PRD.md#7-2-sensor-model
+    - docs/PRD.md#9-7-sensor-loading-and-reload
+    - CONSTITUTION.md#extension-and-sensor-laws
     depends_on:
     - finalization-doc-sync
     - finalization-full-wiring-audit
