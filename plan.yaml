@@ -2113,6 +2113,16 @@ phases:
       Sensor behavior must run only through declared refresh/observe/action hooks
       under core runtime control.
 
+
+      REVIEW-FIX ITERATION 4 GEO EXACT PRIVACY FIELDS:
+
+      Geo exact-location behavior must explicitly name and verify both `sensors.geo.exactCoordinates`
+      and `sensors.geo.exactAddress`. Exact coordinate output requires `sensors.geo.agent
+      === true`, `sensors.geo.precision === "exact"`, and `sensors.geo.exactCoordinates
+      === true`. Exact address output requires `sensors.geo.agent === true`, `sensors.geo.precision
+      === "exact"`, and `sensors.geo.exactAddress === true`. Broad "exact privacy
+      gates" wording is insufficient.
+
       '
     verification: '- [ ] `npm run test:file -- tests/unit/sensors/clock.test.ts tests/unit/sensors/geo.test.ts
       tests/unit/sensors/lapse.test.ts tests/unit/sensor-loader.test.ts tests/unit/commands-status.test.ts
@@ -2130,6 +2140,9 @@ phases:
       - [ ] Static proof includes first-party/builtin sensor top-level side-effect
       scan for filesystem, subprocess, network, timer, native helper, config, refresh,
       and action execution.
+
+      - [ ] Sensor proof explicitly covers `sensors.geo.exactCoordinates` and `sensors.geo.exactAddress`
+      positive/negative exact-output cases.
 
       '
     evidence_template: '## refs Read Confirmation (MANDATORY)
@@ -2205,12 +2218,38 @@ phases:
       - <checklist item 2>: satisfied | failed | blocked | unobserved — <evidence
       ref>
 
+
+      ## Geo Exact Privacy Fields Evidence (MANDATORY)
+
+      - exactCoordinates_field: <schema/default/control/proof for `sensors.geo.exactCoordinates`>
+
+      - exactAddress_field: <schema/default/control/proof for `sensors.geo.exactAddress`>
+
+      - exact_coordinate_positive_case: <agent=true + precision=exact + exactCoordinates=true
+      + fresh coordinates>
+
+      - exact_coordinate_negative_cases: <agent false / non-exact precision / exactCoordinates
+      false / stale or missing coordinates>
+
+      - exact_address_positive_case: <agent=true + precision=exact + exactAddress=true
+      + helper placemark/address>
+
+      - exact_address_negative_cases: <agent false / non-exact precision / exactAddress
+      false / missing placemark/address>
+
+      - settingslist_simple_field_controls: <proof simple boolean fields are exposed
+      where SettingsList is available>
+
+      - broad_gate_claim_rejected: Evidence that says only "exact privacy gates" without
+      both field names is INCOMPLETE.
+
       '
     refs:
     - docs/TECHNICAL_DESIGN.md#testing-gate-matrix
     - CONSTITUTION.md#testing-and-gates
     - docs/PRD.md#9-5-builtin-sensors
     - docs/PRD.md#9-7-sensor-loading-and-reload
+    - docs/TECHNICAL_DESIGN.md#builtin-sensors
     depends_on:
     - sensors-clock-lapse
     - sensors-geo-actions
