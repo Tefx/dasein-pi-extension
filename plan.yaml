@@ -18,7 +18,7 @@ phases:
   context: Establish the TypeScript package, root Pi extension shim, shared contracts,
     and fake host proof basis for Dasein.
   steps:
-  - id: contracts
+  - id: scaffold-contracts
     name: Define scaffold and fake-host contracts
     status: pending
     description: 'step_type: contract
