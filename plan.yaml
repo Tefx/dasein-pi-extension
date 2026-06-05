@@ -116,7 +116,15 @@ phases:
       - [ ] No runtime implementation logic is present beyond stubs/types/interfaces.
 
       - [ ] Refs confirmation cites Constitution dependency/entrypoint laws and Technical
-      Design scaffold contract.'
+      Design scaffold contract.
+
+      - [ ] Contract artifacts explicitly name symlinked `~/.pi/agent/extensions/dasein`
+      load behavior and root `index.ts` shim delegation to `./src/index.ts`.
+
+      - [ ] Contract artifacts explicitly name SettingsList/getSettingsListTheme import
+      resolution and approved Pi peer dependency placement.
+
+      '
     evidence_template: '## refs Read Confirmation (MANDATORY)
 
       For each ref in this step:
