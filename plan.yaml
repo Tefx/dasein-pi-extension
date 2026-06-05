@@ -423,100 +423,40 @@ phases:
       evidence.
 
       '
-    evidence_template: '## refs Read Confirmation (MANDATORY)
-
-      For each ref in this step:
-
-      - CONSTITUTION.md — <key passage or "NOT READ: <reason>">
-
-      - docs/PRD.md — <key passage or "NOT READ: <reason>">
-
-      - docs/TECHNICAL_DESIGN.md — <key passage or "NOT READ: <reason>">
-
-
-      ## side_effect_budget
-
-      - allowed: <copy allowed side effects from step description and confirm actual
-      changes stayed inside them>
-
-      - forbidden: <copy forbidden side effects from step description and confirm
-      none occurred>
-
-
-      ## risk_probes
-
-      - probe_1: <result/evidence>
-
-      - probe_2: <result/evidence>
-
-      - probe_3: <result/evidence or N/A>
-
-
-      ## verify-only purity
-
-      - role: read-only verifier/gate/auditor
-
-      - repo_product_files_changed: no repository/product files may be changed; disposable
-      runtime/config/test fixture files may change only when this step explicitly
-      requires them and cleanup evidence is provided
-
-      - repo_product_mutation_performed: no repository/product mutation may be performed;
-      documented disposable runtime/config/test mutations are allowed only within
-      the step side_effect_budget and must include cleanup evidence
-
-      - if repo/product mutation was necessary: STOP and report blocker for orchestrator/planner;
-      if disposable runtime/test mutation was required, record scope and cleanup evidence
-
-
-      ## raw_command_output
-
-      - command: <exact command or N/A>
-
-      - raw_stdout: <paste raw output or N/A>
-
-      - raw_stderr: <paste raw error output or N/A>
-
-      - exit_code: <code or N/A>
-
-
-      ## gate_decision_basis
-
-      | requirement_or_step_ref | evidence_ref | proof_status | unresolved_status
-      | blocks_remaining_gates | closure_path |
-
-      | --- | --- | --- | --- | --- | --- |
-
-      | <ref> | <artifact> | PROVEN|UNPROVEN|NEEDS_TEST|BLOCKED | <status> | yes/no
-      | <required action> |
-
-      - final_recommendation: OPEN | OPEN_WITH_DEBT | BLOCKED
-
-      - blockers: <list>
-
-      - required_actions: <list>
-
-
-      ## checklist_receipt
-
-      - <checklist item 1>: satisfied | failed | blocked | unobserved — <evidence
-      ref>
-
-      - <checklist item 2>: satisfied | failed | blocked | unobserved — <evidence
-      ref>
-
-
-      ## scaffold_exact_obligations
-
-      - symlinked_load_path: ~/.pi/agent/extensions/dasein
-
-      - root_index_shim: root index.ts delegates only to ./src/index.ts
-
-      - package_entrypoint: package.json.pi.extensions includes ./index.ts when present
-
-      - settingslist_import_resolution: SettingsList/getSettingsListTheme resolve
-      through approved Pi peer dependency path
-
-      '
+    evidence_template: "## refs Read Confirmation (MANDATORY)\nFor each exact refs\
+      \ entry listed on this step, provide a key passage or `NOT READ: <reason>`.\n\
+      Machine-checkable refs inventory generated from this step refs:\n- `CONSTITUTION.md`\
+      \ — <key passage or \"NOT READ: <reason>\">\n- `docs/PRD.md` — <key passage\
+      \ or \"NOT READ: <reason>\">\n- `docs/TECHNICAL_DESIGN.md` — <key passage or\
+      \ \"NOT READ: <reason>\">\n\nrefs_inventory:\n  - CONSTITUTION.md\n  - docs/PRD.md\n\
+      \  - docs/TECHNICAL_DESIGN.md\n\n## side_effect_budget\n- allowed: <copy allowed\
+      \ side effects from step description and confirm actual changes stayed inside\
+      \ them>\n- forbidden: <copy forbidden side effects from step description and\
+      \ confirm none occurred>\n\n## risk_probes\n- probe_1: <result/evidence>\n-\
+      \ probe_2: <result/evidence>\n- probe_3: <result/evidence or N/A>\n\n## verify-only\
+      \ purity\n- role: read-only verifier/gate/auditor\n- repo_product_files_changed:\
+      \ no repository/product files may be changed; disposable runtime/config/test\
+      \ fixture files may change only when this step explicitly requires them and\
+      \ cleanup evidence is provided\n- repo_product_mutation_performed: no repository/product\
+      \ mutation may be performed; documented disposable runtime/config/test mutations\
+      \ are allowed only within the step side_effect_budget and must include cleanup\
+      \ evidence\n- if repo/product mutation was necessary: STOP and report blocker\
+      \ for orchestrator/planner; if disposable runtime/test mutation was required,\
+      \ record scope and cleanup evidence\n\n## raw_command_output\n- command: <exact\
+      \ command or N/A>\n- raw_stdout: <paste raw output or N/A>\n- raw_stderr: <paste\
+      \ raw error output or N/A>\n- exit_code: <code or N/A>\n\n## gate_decision_basis\n\
+      | requirement_or_step_ref | evidence_ref | proof_status | unresolved_status\
+      \ | blocks_remaining_gates | closure_path |\n| --- | --- | --- | --- | --- |\
+      \ --- |\n| <ref> | <artifact> | PROVEN|UNPROVEN|NEEDS_TEST|BLOCKED | <status>\
+      \ | yes/no | <required action> |\n- final_recommendation: OPEN | OPEN_WITH_DEBT\
+      \ | BLOCKED\n- blockers: <list>\n- required_actions: <list>\n\n## checklist_receipt\n\
+      - <checklist item 1>: satisfied | failed | blocked | unobserved — <evidence\
+      \ ref>\n- <checklist item 2>: satisfied | failed | blocked | unobserved — <evidence\
+      \ ref>\n\n## scaffold_exact_obligations\n- symlinked_load_path: ~/.pi/agent/extensions/dasein\n\
+      - root_index_shim: root index.ts delegates only to ./src/index.ts\n- package_entrypoint:\
+      \ package.json.pi.extensions includes ./index.ts when present\n- settingslist_import_resolution:\
+      \ SettingsList/getSettingsListTheme resolve through approved Pi peer dependency\
+      \ path\n"
     refs:
     - CONSTITUTION.md
     - docs/PRD.md
