@@ -2392,6 +2392,15 @@ phases:
       the `GeoTagListPayload` shape, and coordinate redaction controlled by `sensors.geo.exactCoordinates`.
       Broad geo tag behavior wording is insufficient.
 
+
+      REVIEW-FIX ITERATION 6 USER-ADDED RISKY SENSOR INSPECTABILITY FIELDS:
+
+      User-added/risky sensor inspectability must explicitly own and verify exact
+      fields `acknowledgedManifestDigest`, `acknowledgementRequired`, `acknowledgementSatisfied`,
+      `defaultEnabled`, and `effectiveEnabled`. Broad "acknowledgement" wording is
+      insufficient; status, sensors, and SettingsList evidence must name all five
+      fields where those surfaces expose sensor metadata.
+
       '
     verification: '- [ ] `npm run test:file -- tests/unit/sensors/clock.test.ts tests/unit/sensors/geo.test.ts
       tests/unit/sensors/lapse.test.ts tests/unit/sensor-loader.test.ts tests/unit/commands-status.test.ts
@@ -2415,6 +2424,10 @@ phases:
 
       - [ ] Sensor proof includes raw geo tag command output/tests for `radius_m`
       bounds, `GeoTagListPayload`, and `exactCoordinates` redaction.
+
+      - [ ] Sensor proof includes raw output for all five exact inspectability fields:
+      `acknowledgedManifestDigest`, `acknowledgementRequired`, `acknowledgementSatisfied`,
+      `defaultEnabled`, `effectiveEnabled`.
 
       '
     evidence_template: '## refs Read Confirmation (MANDATORY)
@@ -2538,6 +2551,28 @@ phases:
       - broad_geo_tag_claim_rejected: Evidence that does not name radius bounds, GeoTagListPayload,
       and exactCoordinates redaction is INCOMPLETE.
 
+
+      ## User-Added Risky Sensor Inspectability Fields Evidence (MANDATORY)
+
+      - acknowledgedManifestDigest: <observed value/null and digest match/mismatch
+      scenario>
+
+      - acknowledgementRequired: <true/false cases for safe vs risky user-added sensors>
+
+      - acknowledgementSatisfied: <true/false cases before/after matching digest acknowledgement>
+
+      - defaultEnabled: <module default vs forced-disable behavior>
+
+      - effectiveEnabled: <effective runtime enabled state after risk rules>
+
+      - surfaces_checked: </dasein status, /dasein sensors, SettingsList where applicable>
+
+      - forced_disabled_matrix: <remote/network, recurring/background, both, safe
+      sensor>
+
+      - broad_acknowledgement_claim_rejected: Evidence that does not name all five
+      fields is INCOMPLETE.
+
       '
     refs:
     - docs/TECHNICAL_DESIGN.md#testing-gate-matrix
@@ -2545,6 +2580,8 @@ phases:
     - docs/PRD.md#9-5-builtin-sensors
     - docs/PRD.md#9-7-sensor-loading-and-reload
     - docs/TECHNICAL_DESIGN.md#builtin-sensors
+    - docs/TECHNICAL_DESIGN.md#core-contracts
+    - docs/TECHNICAL_DESIGN.md#command-result-and-output-contract
     depends_on:
     - sensors-clock-lapse
     - sensors-geo-actions
