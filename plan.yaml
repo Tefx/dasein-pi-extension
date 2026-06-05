@@ -2401,6 +2401,9 @@ phases:
       - [ ] Final gate verdict is OPEN, OPEN_WITH_LIVE_SUPPORT_PENDING, or BLOCKED
       with explicit blockers and required actions.
 
+      - [ ] Gate decision basis reviews live launch flag parsing, event publishing,
+      lifecycle observation, and hidden context conversion evidence or exact blockers.
+
       '
     refs:
     - CONSTITUTION.md#testing-and-gates
