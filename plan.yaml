@@ -465,6 +465,494 @@ phases:
     typed state, sensor runtime, renderer/injector, external events, and command parsing.
   depends_on:
   - scaffold
+  steps:
+  - id: core-contracts
+    name: Define core broker contracts
+    status: pending
+    description: 'step_type: contract
+
+      contract_purity: ENFORCED
+
+      TARGET STATE: TypeScript module-boundary contracts for config, state store,
+      sensor spec/runtime, renderer/injector, external events, lifecycle, and command
+      result types match the authoritative Technical Design and preserve the approved
+      architecture basis.
+
+      TRACEABILITY MATRIX:
+
+      | requirement_id | source_ref + key passage | obligation | owning_step_id |
+      checklist_item | evidence_field | status | non_intersection_or_escalation |
+
+      | core.config | TECHNICAL_DESIGN > Core Contracts > Dasein Config/Config Source
+      | typed config, precedence, FIFO mutation, and reload result contracts | core-contracts
+      | core config interfaces and mutation result contracts pinned | contract_artifacts
+      | OWNED | n/a |
+
+      | core.sensor_state | CONSTITUTION > Extension and Sensor Laws + TECHNICAL_DESIGN
+      > Sensor Spec/State | typed-state envelope and sensor contracts are exact and
+      sensor-agnostic | core-contracts | sensor contracts and state envelope pinned
+      | contract_artifacts | OWNED | n/a |
+
+      | core.render_command | TECHNICAL_DESIGN > Rendering Contract + Command Design
+      | renderer/injector and command parser/result contracts are exact | core-contracts
+      | render and command contracts pinned | contract_artifacts | OWNED | n/a |
+
+      BOUNDING BOX: src/core/types.ts, src/core/config.ts, src/core/state.ts, src/core/sensor-loader.ts,
+      src/core/sensor-runtime.ts, src/core/renderer.ts, src/core/injector.ts, src/core/external-events.ts,
+      src/core/lifecycle.ts, src/commands/dasein-command.ts, tests/unit/* contract
+      fixtures.
+
+      CONSTRAINTS: Contract-only; signatures, types, docstrings, schema constants,
+      and stubs are allowed; runtime business logic, disk I/O behavior, sensor implementations,
+      and Pi registration are forbidden here.
+
+      <side_effect_budget>Allowed: create or refine TypeScript contract/type/stub
+      files for core and command boundaries. Forbidden: final runtime behavior, live
+      Pi claims, hidden config sources, sensor business logic, or non-Pi runtime dependencies.</side_effect_budget>
+
+      <risk_probes>1. Sensor-owned final prompt strings/order fields cannot survive
+      contracts. 2. Config precedence and runtime override state are not collapsed
+      into a single mutable blob. 3. Request-path injector contract reads only pre-rendered
+      in-memory context.</risk_probes>
+
+      '
+    verification: '- [ ] Contract artifacts define the exact DaseinConfig, ConfigManager,
+      SensorSpec, SensorSnapshot, ExternalState, RenderedContext, and DaseinCommandResult
+      surfaces from the refs without implementation logic.
+
+      - [ ] Contract artifacts preserve core-as-broker boundaries: sensors publish
+      typed state, core normalizes/renders, Pi shell owns UI plumbing.
+
+      - [ ] Contract evidence includes an authority trace from each cited requirement
+      row to a concrete exported type/signature/stub.
+
+      - [ ] No runtime dependency, disk I/O implementation, sensor refresh, or Pi
+      registration logic is shipped by this contract step.
+
+      '
+    refs:
+    - CONSTITUTION.md#architectural-dogmas
+    - CONSTITUTION.md#extension-and-sensor-laws
+    - docs/TECHNICAL_DESIGN.md#core-contracts
+    - docs/TECHNICAL_DESIGN.md#rendering-contract
+    - docs/TECHNICAL_DESIGN.md#command-design
+    - docs/PRD.md#7-functional-requirements
+    agent: frontend-engineer
+  - id: core-tests
+    name: Define expected-red core proof suite
+    status: pending
+    description: 'step_type: test
+
+      step_intent: test_define_red
+
+      expected_result: red
+
+      PROOF ARTIFACT: Test-only suite exposes the core behavior gaps before implementation:
+      config precedence/atomicity/queue, command parsing/result typing, sensor loader/runtime
+      typed state, external event validation, renderer determinism, and request-path
+      no-I/O.
+
+      TRACEABILITY MATRIX: core.config, core.sensor_state, core.render_command, request_path_safety,
+      and external_state rows are OWNED here as test assertions mapped to docs/TECHNICAL_DESIGN.md
+      > Testing Gate Matrix target files.
+
+      BOUNDING BOX: tests/unit/config.test.ts, tests/unit/config-atomicity.test.ts,
+      tests/unit/config-queue.test.ts, tests/unit/state-file.test.ts, tests/unit/command-parser.test.ts,
+      tests/unit/command-result.test.ts, tests/unit/sensor-loader.test.ts, tests/unit/reload.test.ts,
+      tests/unit/install-mode.test.ts, tests/unit/sensor-runtime.test.ts, tests/unit/lifecycle.test.ts,
+      tests/unit/external-events.test.ts, tests/unit/renderer.test.ts, tests/unit/injector.test.ts,
+      tests/static/no-request-io.test.ts.
+
+      CONSTRAINTS: Tests/fixtures/helpers only; product runtime code edits are forbidden
+      except imports against upstream contract stubs.
+
+      <side_effect_budget>Allowed: test files and fake fixtures. Forbidden: product
+      implementation, live Pi assumptions, weakening expected-red semantics, or using
+      mocks as integration proof.</side_effect_budget>
+
+      <risk_probes>1. Tests include spec-exact minimal fixtures, not convenience-only
+      config shapes. 2. Request-path no-I/O assertions cover transitive imports, not
+      just direct calls. 3. Expected red exposes missing behavior without accepting
+      fake-host proof as live proof.</risk_probes>
+
+      '
+    verification: '- [ ] Test files are limited to tests/ and fixtures/helpers and
+      cite the exact Technical Design gate matrix rows they implement.
+
+      - [ ] Expected-red evidence lists exposed gaps for config, command, sensor runtime/loader,
+      external events, renderer, and injector no-I/O.
+
+      - [ ] Spec-derived minimal fixtures cover documented config/event/command formats
+      without convenience-only fields.
+
+      - [ ] Product implementation files are not modified beyond importing contract
+      stubs needed for compilation.
+
+      '
+    refs:
+    - docs/TECHNICAL_DESIGN.md#testing-gate-matrix
+    - docs/TECHNICAL_DESIGN.md#core-contracts
+    - docs/TECHNICAL_DESIGN.md#rendering-contract
+    - docs/TECHNICAL_DESIGN.md#command-design
+    - CONSTITUTION.md#testing-and-gates
+    - docs/PRD.md#9-acceptance-criteria
+    depends_on:
+    - core-contracts
+    agent: frontend-engineer
+  - id: core-config-state
+    name: Complete config manager and state store logic
+    status: pending
+    description: 'step_type: implementation
+
+      Fill in stub bodies in src/core/config.ts and src/core/state.ts per core-contracts
+      and core-tests.
+
+      UPSTREAM ARTIFACTS: core-contracts exported config/state interfaces are AUTHORITATIVE;
+      core-tests config/state assertions are PROTECTED.
+
+      TARGET STATE: ConfigManager composes defaults, disk, launch, and runtime overlays
+      with the documented precedence; serializes all runtime mutations through one
+      FIFO queue; persists only validated canonical path patches atomically; and manages
+      in-memory sensor/external/rendered state plus bounded lapse durable state exactly
+      as specified.
+
+      YOUR SCOPE: Replace NotImplementedError/pass/... markers with working logic
+      inside existing signatures. Use Edit-style focused changes; if a contract artifact
+      is wrong, record a deviation instead of silently rewriting public surfaces.
+
+      Hardened acceptance: cover missing-file fallback, malformed config/state fallback,
+      explicit delete/null semantics, partial-write failure, runtime-overridden-vs-launch
+      precedence after reload, and FIFO conflict ordering.
+
+      ## Completion Criteria (stub exclusion)
+
+      This is an IMPLEMENTATION step. Stub-only completion is NOT acceptable. Each
+      deliverable MUST contain substantive logic that processes inputs and produces
+      outputs varying by inputs.
+
+      <side_effect_budget>Allowed: src/core/config.ts, src/core/state.ts, focused
+      test updates required by protected tests. Forbidden: project-local config discovery,
+      implicit cwd walking, full-effective-config persistence, geo cache durability,
+      external state durability, or request-path I/O.</side_effect_budget>
+
+      <risk_probes>1. Runtime slash/UI changes override launch only after disk persistence
+      succeeds. 2. Failed atomic writes leave disk and active runtime unchanged. 3.
+      Lapse persistence reads/writes only when persist rules allow, except explicit
+      reset.</risk_probes>
+
+      '
+    verification: '- [ ] `npm run test:file -- tests/unit/config.test.ts tests/unit/config-atomicity.test.ts
+      tests/unit/config-queue.test.ts tests/unit/state-file.test.ts` passes with raw
+      output.
+
+      - [ ] Main-path evidence proves defaults < disk < launch < runtime and canonical
+      patch persistence.
+
+      - [ ] Failure-path evidence proves malformed disk/state fallback, all-or-nothing
+      apply, failed write no-commit behavior, and reload runtime-overridden path preservation.
+
+      - [ ] Grep/import evidence shows no project-local config reads, cwd walkups,
+      or request-path config mutation routes.
+
+      '
+    refs:
+    - CONSTITUTION.md#architectural-dogmas
+    - CONSTITUTION.md#testing-and-gates
+    - docs/TECHNICAL_DESIGN.md#core-contracts/config-source-and-precedence
+    - docs/TECHNICAL_DESIGN.md#core-contracts/state-store
+    - docs/PRD.md#7-5-configuration-storage-and-schema
+    - docs/PRD.md#7-6-configuration-precedence-and-runtime-persistence
+    depends_on:
+    - core-tests
+    agent: frontend-engineer
+  - id: core-sensor-runtime-loader
+    name: Complete sensor loader, runtime, and lifecycle core
+    status: pending
+    description: 'step_type: implementation
+
+      Fill in stub bodies in src/core/sensor-loader.ts, src/core/sensor-runtime.ts,
+      and src/core/lifecycle.ts per core-contracts and core-tests.
+
+      TARGET STATE: Directory/package and single-file install modes, SensorSpec validation,
+      manifest digest/risk acknowledgement, all-or-keep-old reload, typed-state normalization,
+      one-active-refresh scheduling, observe routing, stale derivation, cleanup, and
+      load-error reporting are implemented as core broker behavior.
+
+      UPSTREAM ARTIFACTS: core-contracts SensorSpec/SensorRegistry/SensorSnapshot/DaseinReloadResult
+      are AUTHORITATIVE; core-tests loader/runtime/lifecycle assertions are PROTECTED.
+
+      YOUR SCOPE: Complete behavior within pinned signatures. Do not implement builtin
+      sensor business logic here except through generic registry/runtime paths.
+
+      Hardened acceptance: candidate registry failure keeps the old registry/config/runtime/rendered
+      context; user-added risky sensors are forced disabled until digest acknowledgement;
+      dynamic imports never occur in the request path.
+
+      ## Completion Criteria (stub exclusion)
+
+      This is an IMPLEMENTATION step. Stub-only completion is NOT acceptable.
+
+      <side_effect_budget>Allowed: src/core/sensor-loader.ts, src/core/sensor-runtime.ts,
+      src/core/lifecycle.ts, focused tests. Forbidden: builtin sensor-specific shortcuts,
+      hidden sensor priority, automatic file watchers, dynamic import/request-path
+      coupling, or sandbox claims for user-added import-time code.</side_effect_budget>
+
+      <risk_probes>1. Load failures remain inspectable without replacing known-good
+      active registry. 2. Manifest digest changes invalidate acknowledgement. 3. Disabled
+      sensors do not refresh or inject enabled-state values.</risk_probes>
+
+      '
+    verification: '- [ ] `npm run test:file -- tests/unit/sensor-loader.test.ts tests/unit/reload.test.ts
+      tests/unit/install-mode.test.ts tests/unit/sensor-runtime.test.ts tests/unit/lifecycle.test.ts`
+      passes with raw output.
+
+      - [ ] Evidence proves default-export-only SensorSpec validation, duplicate/reserved
+      key failures, install-mode behavior, and all-or-keep-old reload.
+
+      - [ ] Evidence proves every committed snapshot/field uses only the typed-state
+      envelope and raw sensor properties are dropped or rejected.
+
+      - [ ] Evidence proves observe/refresh/cleanup paths do not perform request-path
+      I/O and no automatic file watcher exists.
+
+      '
+    refs:
+    - CONSTITUTION.md#extension-and-sensor-laws
+    - docs/TECHNICAL_DESIGN.md#core-contracts/sensor-spec
+    - docs/TECHNICAL_DESIGN.md#core-contracts/sensor-state
+    - docs/TECHNICAL_DESIGN.md#sensor-loading-and-reload
+    - docs/PRD.md#7-2-sensor-model
+    - docs/PRD.md#7-11-sensor-reload
+    depends_on:
+    - core-tests
+    agent: frontend-engineer
+  - id: core-renderer-injector-external
+    name: Complete renderer, injector, and external event intake
+    status: pending
+    description: 'step_type: implementation
+
+      Fill in stub bodies in src/core/renderer.ts, src/core/injector.ts, and src/core/external-events.ts
+      per core-contracts and core-tests.
+
+      TARGET STATE: Renderer owns deterministic ordering, visibility, stale/expiry
+      handling, truncation, omittedKeys, neutral agent string, status/widget view
+      strings, render invalidation timers, and sanitized external state; injector
+      appends only the pre-rendered in-memory agent string; external events validate
+      and store/clear bounded local ambient state.
+
+      UPSTREAM ARTIFACTS: RenderedContext, ExternalStateSnapshot, injector contract,
+      and no-I/O tests are AUTHORITATIVE/PROTECTED.
+
+      Gate Preview: the gate WILL reject any disk/network/subprocess/dynamic import/config
+      mutation in injector or its request-path dependencies, any sensor-owned final
+      prompt formatting surviving normalization, and any multiline/control-character
+      external payload acceptance.
+
+      ## Completion Criteria (stub exclusion)
+
+      This is an IMPLEMENTATION step. Stub-only completion is NOT acceptable.
+
+      <side_effect_budget>Allowed: src/core/renderer.ts, src/core/injector.ts, src/core/external-events.ts,
+      focused tests. Forbidden: request-path recomputation, sensor refresh/action
+      calls during rendering/injection, external publisher trust escalation, hidden
+      priority semantics, or raw JSON injection by default.</side_effect_budget>
+
+      <risk_probes>1. External snapshots are not sensor envelopes and order after
+      sensors unless explicitly in renderOrder. 2. Render invalidation recomputes
+      from memory only. 3. Disabled/hidden/expired/truncated contributors remain inspectable
+      through omittedKeys/status data.</risk_probes>
+
+      '
+    verification: '- [ ] `npm run test:file -- tests/unit/external-events.test.ts
+      tests/unit/renderer.test.ts tests/unit/injector.test.ts tests/static/no-request-io.test.ts`
+      passes with raw output.
+
+      - [ ] No-I/O static evidence covers injector transitive dependencies and denylisted
+      APIs.
+
+      - [ ] Golden rendering evidence covers deterministic order, `external:<key>`
+      fairness, truncation, omittedKeys, disabled/hidden contributors, stale/expired
+      values, and neutral `[ambient_ctx: ...]` labeling.
+
+      - [ ] External event evidence covers unknown fields, multiline/control payload
+      rejection, TTL bounds/defaults, and clear payload exactness.
+
+      '
+    refs:
+    - CONSTITUTION.md#quality-baselines
+    - CONSTITUTION.md#testing-and-gates
+    - docs/TECHNICAL_DESIGN.md#rendering-contract
+    - docs/TECHNICAL_DESIGN.md#core-contracts/external-state-event
+    - docs/PRD.md#7-4-external-state-bridge
+    - docs/PRD.md#7-9-agent-context-injection
+    depends_on:
+    - core-tests
+    agent: frontend-engineer
+  - id: core-command-layer
+    name: Complete command parser and core command execution layer
+    status: pending
+    description: 'step_type: implementation
+
+      Fill in stub bodies in src/commands/dasein-command.ts and any narrow command
+      helper modules per core-contracts and core-tests.
+
+      TARGET STATE: `/dasein` command parsing/result construction is deterministic
+      and covers core commands, launch grammar reuse, slash set/apply mutation delegation,
+      sensor-action routing, structured errors, canonical path echoing, lexicographic
+      update/delete reporting, status/sensors/reload payloads, and no mutation on
+      parse failures.
+
+      UPSTREAM ARTIFACTS: ParsedDaseinCommand and DaseinCommandResult contracts are
+      AUTHORITATIVE; command parser/result tests are PROTECTED.
+
+      YOUR SCOPE: Command parsing and command-to-core delegation only; Pi `registerCommand`
+      wiring belongs to pi_runtime, not this step.
+
+      Gate Preview: the gate WILL reject ad hoc text-only command paths, parser coercion
+      that contradicts quoted/bare grammar, and sensor action execution before parse/path
+      validation succeeds.
+
+      ## Completion Criteria (stub exclusion)
+
+      This is an IMPLEMENTATION step. Stub-only completion is NOT acceptable.
+
+      <side_effect_budget>Allowed: src/commands/dasein-command.ts and narrow command
+      helpers/tests. Forbidden: Pi registration, TUI SettingsList rendering, direct
+      sensor config writes, direct disk writes outside ConfigManager, or text-only
+      command results without structured data.</side_effect_budget>
+
+      <risk_probes>1. Duplicate canonical apply paths fail before mutation. 2. Sensor
+      reserved words cannot shadow core commands. 3. Sensor actions only return proposals
+      mediated by ConfigManager.</risk_probes>
+
+      '
+    verification: '- [ ] `npm run test:file -- tests/unit/command-parser.test.ts tests/unit/command-result.test.ts
+      tests/unit/commands-status.test.ts tests/unit/commands-sensors.test.ts` passes
+      with raw output.
+
+      - [ ] Evidence covers quoted value parsing, invalid escape/unterminated quote,
+      finite numeric grammar, booleans, duplicate canonical paths, short aliases,
+      external paths, and launch parsing reuse.
+
+      - [ ] Evidence covers deterministic status/sensors/reload/set/apply/sensor-action
+      result objects and messages.
+
+      - [ ] Evidence proves parse/path errors do not mutate runtime config or disk
+      config.
+
+      '
+    refs:
+    - docs/TECHNICAL_DESIGN.md#command-design
+    - docs/TECHNICAL_DESIGN.md#core-contracts/launch-flag-grammar
+    - docs/PRD.md#7-8-slash-commands
+    - docs/PRD.md#9-2-slash-commands
+    - CONSTITUTION.md#ux-and-pi-interaction-red-lines
+    depends_on:
+    - core-tests
+    agent: frontend-engineer
+  - id: core-static-proof
+    name: Verify core local behavior and request-path safety
+    status: pending
+    description: 'step_type: verification
+
+      verification_scope: local-check
+
+      PROOF ARTIFACT: Independent local-check proof for the core phase protecting
+      core-gate, sensors-gate, pi_runtime-gate, and system_wiring ordinary CI. The
+      verifier must find issues, not patch them.
+
+      Scope: run the core-focused test matrix and typecheck from a clean checkout
+      state; inspect request-path imports and config/source boundaries for drift.
+
+      Behavioral proof register required: requirement_ref, behavior_claim, runtime_proof_expected,
+      evidence_ref, status, closure_path, gate_decision_basis for config precedence,
+      typed-state envelope, no-I/O injection, renderer determinism, command errors,
+      external events, reload all-or-keep-old.
+
+      <side_effect_budget>Allowed: read-only test/static execution and evidence report.
+      Forbidden: editing files, toggling checklist items, or treating fake-host/mock
+      evidence as live Pi support.</side_effect_budget>
+
+      <risk_probes>1. Mock-heavy unit tests are balanced by static import proof for
+      the request path. 2. Any broad failure gets remediation ownership instead of
+      being labeled pre-existing. 3. Core proof does not claim builtin sensor or Pi
+      runtime completion.</risk_probes>
+
+      '
+    verification: '- [ ] `npm run typecheck` passes with raw stdout/stderr.
+
+      - [ ] `npm test` or the documented core `npm run test:file -- ...` matrix passes
+      with raw stdout/stderr and does not require live Pi.
+
+      - [ ] Static no-request-I/O proof includes direct and transitive import scan
+      for src/core/injector.ts and dependencies.
+
+      - [ ] Behavioral proof register classifies every core obligation as PROVEN,
+      NEEDS_TEST, UNPROVEN, BLOCKED, or explicitly non-intersecting with downstream
+      gates.
+
+      '
+    refs:
+    - docs/TECHNICAL_DESIGN.md#testing-gate-matrix
+    - CONSTITUTION.md#testing-and-gates
+    - docs/PRD.md#8-non-functional-requirements
+    depends_on:
+    - core-config-state
+    - core-sensor-runtime-loader
+    - core-renderer-injector-external
+    - core-command-layer
+    agent: integration-verifier
+  - id: core-gate
+    name: Gate core broker phase
+    status: pending
+    description: 'step_type: gate
+
+      verification_scope: phase-check
+
+      DECISION ARTIFACT: Independent phase gate for core. Review contract purity,
+      expected-red test definition, implementation evidence, local proof, requirement
+      traceability, and blocker dispositions before sensors may begin.
+
+      review_depth: THOROUGH
+
+      review_depth_rationale: Core owns config/state precedence, request-path safety,
+      typed-state normalization, renderer output, and command mutation semantics;
+      these are cross-cutting downstream gate risks.
+
+      cross_cutting_focus: no project-local config, no request-path I/O, typed-state
+      envelope stripping, FIFO mutation queue, reload all-or-keep-old, deterministic
+      command/result surfaces.
+
+      <side_effect_budget>Allowed: read-only evidence review and BLOCK/OPEN decision.
+      Forbidden: implementing fixes, accepting sampled proof when matrix rows are
+      unproven, or approving fake/live evidence conflation.</side_effect_budget>
+
+      <risk_probes>1. Every OWNED requirement row has positive evidence or remediation.
+      2. Verifier findings that intersect downstream gates are not dismissed as out-of-scope/pre-existing.
+      3. Gate does not use typecheck/unit success as substitute for behavioral proof
+      register closure.</risk_probes>
+
+      '
+    verification: '- [ ] All core phase steps are complete with refs confirmations
+      and checklist receipts.
+
+      - [ ] Gate decision basis maps every core requirement/checklist row to evidence
+      status PROVEN or a blocking remediation path.
+
+      - [ ] No unresolved request-path, config/state, typed envelope, command mutation,
+      or external event blocker intersects sensors/pi_runtime/system_wiring gates.
+
+      - [ ] Final gate verdict is OPEN or BLOCKED with explicit blockers and required
+      actions.
+
+      '
+    refs:
+    - CONSTITUTION.md#testing-and-gates
+    - docs/TECHNICAL_DESIGN.md#testing-gate-matrix
+    - docs/PRD.md#9-acceptance-criteria
+    depends_on:
+    - core-static-proof
+    agent: gate-reviewer
 - id: sensors
   name: Builtin Sensors and Native Helper
   status: locked
