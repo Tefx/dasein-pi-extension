@@ -16535,3 +16535,42 @@ phases:
     never as a user/custom message fallback.
   depends_on:
   - ux_polish
+  steps:
+  - id: prompt-channel-docs-plan
+    name: Document ambient prompt channel hardening
+    status: pending
+    description: Update PRD and Technical Design so Dasein's primary agent-spacetime
+      goal is preserved while ambient context is injected through before_agent_start
+      system/developer prompt semantics, not through CustomMessage/user prompt conversion.
+      Explicitly document why display:false custom messages are insufficient because
+      Pi convertToLlm() serializes custom messages as user messages.
+    verification: PRD states default agent injection remains enabled and is system/developer
+      prompt-scoped. Technical Design identifies the CustomMessage->user failure mode
+      and specifies before_agent_start.systemPrompt as the supported channel. Docs
+      distinguish visible UI, transcript, and model instruction channels.
+    refs:
+    - docs/PRD.md
+    - docs/TECHNICAL_DESIGN.md
+  - id: prompt-channel-implementation
+    name: Move ambient context from custom/user message to system prompt channel
+    status: pending
+    description: Change Dasein runtime so ambient context is appended to the per-turn
+      system prompt in before_agent_start, while lifecycle observation still runs.
+      Remove default context-hook CustomMessage injection from live runtime or make
+      it no-op for Dasein ambient context. Preserve core.agentInjectionEnabled=true.
+      Update tests and live smoke contract to prove no ambient context is serialized
+      as a user message while agent still receives time/user_idle context through
+      system/developer prompt semantics.
+    verification: core.agentInjectionEnabled remains true by default. Dasein does
+      not append ambient CustomMessage in context hook by default. before_agent_start
+      returns a systemPrompt containing bounded Dasein ambient context when agent
+      injection is enabled. Tests prove convertToLlm has no role=user ambient Dasein
+      message. Focused tests and npm test exit 0.
+    refs:
+    - src/index.ts
+    - src/core/injector.ts
+    - tests/integration/pi-runtime-red.test.ts
+    - tests/unit/injector.test.ts
+    - tests/smoke/contracts/live-pi-smoke-gate-contract.test.ts
+    depends_on:
+    - prompt-channel-docs-plan
