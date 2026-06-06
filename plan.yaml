@@ -15912,44 +15912,44 @@ phases:
       for `before_agent_start`, `input`, and `agent_end`; eventual persistence alone
       is insufficient. 3. Distinguish exact evidence statuses from release-ledger
       `PROVEN` rows without inventing new status vocabulary.</risk_probes>'
-    verification: '- [ ] refs confirmation cites key passages for every listed ref
+    verification: '- [x] refs confirmation cites key passages for every listed ref
       or an explicit `NOT READ` reason.
 
-      - [ ] B1 independent proof shows a malicious sensor action proposal for `core.agentInjectionEnabled=false`
+      - [x] B1 independent proof shows a malicious sensor action proposal for `core.agentInjectionEnabled=false`
       or another out-of-namespace path is rejected before ConfigManager persistence/commit
       and leaves runtime plus disk config unchanged.
 
-      - [ ] B1 independent proof shows a valid own-namespace proposal under `sensors.<sensorKey>.*`
+      - [x] B1 independent proof shows a valid own-namespace proposal under `sensors.<sensorKey>.*`
       succeeds where applicable and returns deterministic updated/deleted paths only
       inside that namespace.
 
-      - [ ] B1 grep/import trace proves no production path still calls unscoped `manager.applyRuntimeProposal(proposal)`
+      - [x] B1 grep/import trace proves no production path still calls unscoped `manager.applyRuntimeProposal(proposal)`
       or applies `result.mutation` without caller `sensorKey` enforcement.
 
-      - [ ] B2 independent proof shows `before_agent_start`, `input`, and `agent_end`
+      - [x] B2 independent proof shows `before_agent_start`, `input`, and `agent_end`
       handlers return before durable `state.json` write begins or completes.
 
-      - [ ] B2 independent proof shows coalesced asynchronous durable write eventually
+      - [x] B2 independent proof shows coalesced asynchronous durable write eventually
       persists the latest lapse timestamps after rapid observations.
 
-      - [ ] B2 independent proof shows async durable write failure appears in `/dasein
+      - [x] B2 independent proof shows async durable write failure appears in `/dasein
       status`/status errors without blocking handler return.
 
-      - [ ] W1 independent proof confirms status payload/final artifacts do not underclaim
+      - [x] W1 independent proof confirms status payload/final artifacts do not underclaim
       proven live-smoke rows, or records a precise non-blocking disposition preserving
       exact vocabulary.
 
-      - [ ] `npm run typecheck` exits 0 with raw stdout/stderr captured.
+      - [x] `npm run typecheck` exits 0 with raw stdout/stderr captured.
 
-      - [ ] Focused tests for B1/B2, and W1 if changed, exit 0 with raw stdout/stderr
+      - [x] Focused tests for B1/B2, and W1 if changed, exit 0 with raw stdout/stderr
       captured.
 
-      - [ ] `npm test` exits 0 with raw stdout/stderr captured.
+      - [x] `npm test` exits 0 with raw stdout/stderr captured.
 
-      - [ ] `npm run test:smoke` exits 0 or reports exact environment blockers without
+      - [x] `npm run test:smoke` exits 0 or reports exact environment blockers without
       false live support overclaim.
 
-      - [ ] Behavioral proof register marks B1 and B2 `PROVEN`; any `UNPROVEN`, `NEEDS_TEST`,
+      - [x] Behavioral proof register marks B1 and B2 `PROVEN`; any `UNPROVEN`, `NEEDS_TEST`,
       or `BLOCKED` row blocks finalization-gate rather than being waived.'
     evidence_template: '## refs Read Confirmation (MANDATORY)
 
