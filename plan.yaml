@@ -517,7 +517,7 @@ phases:
       load shape: PROVEN.'
   - id: scaffold-static-proof
     name: Verify scaffold static and fake-host foundation
-    status: claimed
+    status: done
     description: 'step_type: verification
 
       PROOF ARTIFACT: Independent local-check proof that scaffold/tooling and fake-host
@@ -588,6 +588,60 @@ phases:
     agent: integration-verifier
     claimed_by: integration-verifier
     claimed_at: '2026-06-06T03:49:53.263840+00:00'
+    done_at: '2026-06-06T03:54:03.412384+00:00'
+    evidence: '## refs Read Confirmation
+
+      - `CONSTITUTION.md` — Dasein must load from `~/.pi/agent/extensions/dasein`;
+      zero non-Pi runtime npm deps; fake/mock proof is not live integration proof.
+
+      - `docs/PRD.md` — source/API verification does not equal release support; live
+      smoke gates are separate.
+
+      - `docs/TECHNICAL_DESIGN.md` — required scripts and package/static/fake-host
+      gates verify root shim, symlink load, peer deps, SettingsList/getSettingsListTheme
+      resolution, while `npm test` excludes live Pi smoke.
+
+
+      verdict: PASS
+
+      blockers: []
+
+      orchestrator_action_hint: COMPLETE
+
+      gate_open_allowed: true
+
+
+      ## verify-only purity
+
+      - `git status --short` in worktree produced no output; no files changed.
+
+
+      ## receipts
+
+      - `npm run typecheck` → exit 0 (`tsc --noEmit`).
+
+      - targeted `npm run test:file -- tests/static/package-json.test.ts tests/static/contracts/scaffold-package-contract.test.ts
+      tests/integration/contracts/fake-pi-host-contract.test.ts tests/integration/contracts/fake-pi-host-entrypoint.test.ts
+      tests/unit/contracts/scaffold-contract.test.ts tests/behavior/contracts/no-runtime-logic-contract.test.ts`
+      → exit 0; 17 pass, 0 fail.
+
+      - `npm test` → exit 0; 17 pass, 0 fail; no live Pi required.
+
+      - symlink/import proof → exact `~/.pi/agent/extensions/dasein`-shape symlink
+      load, default export `function`, root shim exact delegate, `dependencies` `{}`,
+      Pi peers only, `npm_test_smoke_included: false`, Pi peer packages resolved.
+
+
+      ## checklist_receipt
+
+      - Raw typecheck output captured: PROVEN.
+
+      - Raw targeted scaffold/static/fake-host tests captured: PROVEN.
+
+      - Failure classification/live support separation: PROVEN; no failures and no
+      live support claim inferred.
+
+      - Symlinked load/root shim/SettingsList-getSettingsListTheme evidence: PROVEN.'
   - id: scaffold-gate
     name: Gate scaffold foundation
     status: pending
