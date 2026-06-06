@@ -9714,6 +9714,160 @@ phases:
       ## checklist_receipt
 
       All six live Pi TUI smoke fix checklist items proven; blockers none.'
+  - id: release-smoke-fix-live-pi-tui-artifact-coverage
+    name: Strengthen live Pi TUI smoke artifact coverage
+    status: pending
+    description: 'step_type: implementation
+
+      work_type: proof_closure
+
+      agent_source: project
+
+      TARGET STATE:
+
+      `npm run test:smoke` produces live Pi smoke artifacts that prove the three missing
+      release-smoke obligations with literal, mechanism-specific evidence rather than
+      API-key availability alone: bare `/dasein` command registration/invocation,
+      `--dasein` flag registration/parsing/effect, and context-hook hidden Dasein
+      message append plus LLM conversion.
+
+
+      BOUNDING BOX:
+
+      - Primary writable surface: `tests/smoke/contracts/live-pi-smoke-gate-contract.test.ts`.
+
+      - Generated evidence surface: `.dasein/live-pi-smoke/latest/` artifacts created
+      by the smoke run.
+
+      - Product runtime files such as `index.ts` and `src/core/injector.ts` are authority/behavior
+      references for probe expectations, not the default mutation target for this
+      focused artifact-coverage fix.
+
+
+      REQUIREMENT TRACEABILITY MATRIX:
+
+      | requirement_id | source_ref + key passage | obligation | owning_step_id |
+      checklist_item | evidence_field | status | non_intersection_or_escalation |
+
+      | --- | --- | --- | --- | --- | --- | --- | --- |
+
+      | R1 | `release-smoke-live-pi-tui` retest blocker: `/dasein` live command registration/invocation
+      not proven | Smoke artifacts must show literal `/dasein` registered and invoked
+      through a live Pi process/TUI route | `release-smoke-fix-live-pi-tui-artifact-coverage`
+      | `/dasein` literal proof checklist item | `slashCommandProof` with registration
+      name, invocation transcript, result/effect | OWNED | Blocks `release-smoke-live-pi-tui`;
+      no deferral allowed |
+
+      | R2 | `release-smoke-live-pi-tui` retest blocker: `--dasein` live flag registration/parsing
+      not proven | Smoke artifacts must show literal `--dasein` launch input, parsed
+      value, and observed effect/effective configuration or exact blocker | `release-smoke-fix-live-pi-tui-artifact-coverage`
+      | `--dasein` literal flag proof checklist item | `launchFlagProof` with argv,
+      getFlag value, parsed/effective result | OWNED | Blocks `release-smoke-live-pi-tui`;
+      no deferral allowed |
+
+      | R3 | `release-smoke-live-pi-tui` retest blocker: context injection not proven
+      | Smoke artifacts must show Pi `context` hook execution, hidden Dasein CustomMessage
+      append, and LLM user-message conversion | `release-smoke-fix-live-pi-tui-artifact-coverage`
+      | context hook and hidden message proof checklist item | `contextHookProof`
+      with hook event, before/after messages, CustomMessage fields, LLM conversion
+      | OWNED | Blocks `release-smoke-live-pi-tui`; no deferral allowed |
+
+      | R4 | `CONSTITUTION.md#quality-baselines` and `#ux-and-pi-interaction-red-lines`:
+      mock/API source proof is not live support proof | Evidence must preserve the
+      already-proven real Pi binary boundary and must not downgrade to fake-host/API-key-only
+      claims | `release-smoke-fix-live-pi-tui-artifact-coverage` | real Pi boundary
+      preservation checklist item | `environment` and `hostBoundary` fields | OWNED
+      | Blocks support-claim gate if violated |
+
+
+      CONSTRAINTS:
+
+      - Preserve already-proven evidence: real Pi binary process boundary `/opt/homebrew/bin/pi
+      v0.78.1` when available, `fakeHost false`, status/widget rendered artifact,
+      and SettingsList interaction/persistence.
+
+      - Do not count `Object.keys(pi)` entries such as `registerFlag`/`getFlag` as
+      proof of literal `--dasein` parsing.
+
+      - Do not count `input`, `session_start`, or `session_shutdown` logs as proof
+      of the Pi `context` hook.
+
+      - Do not count a hidden-message object alone as proof of LLM conversion; the
+      artifact must include conversion to the LLM user-message shape.
+
+      - Product runtime code changes are out of scope for this focused smoke-artifact
+      coverage fix unless the smoke harness proves there is no observable hook to
+      exercise; in that case return an exact blocker rather than broad product rewrites.
+
+
+      ## Completion Criteria (stub exclusion)
+
+      This is an IMPLEMENTATION step for the smoke artifact harness. Stub-only completion
+      is NOT acceptable. Each new probe/artifact field MUST be produced by a real
+      `npm run test:smoke` execution path and MUST vary based on observed live Pi
+      inputs/results.
+
+
+      <side_effect_budget>Allowed: modify the smoke test/probe/artifact generation
+      and create disposable `.dasein/live-pi-smoke/latest/` evidence via `npm run
+      test:smoke`; use disposable HOME/Pi config roots. Forbidden: repository docs/product-code
+      rewrites unrelated to smoke coverage, fake-host substitution, permanent user
+      config mutation, support claims without observed live behavior, or treating
+      API-key enumeration as registration/invocation/parsing proof.</side_effect_budget>
+
+      <risk_probes>1. The smoke runner proves literal `/dasein` and `--dasein` strings
+      through live registration/invocation/parsing artifacts, not renamed aliases
+      or API shape discovery. 2. Context evidence exercises the Pi `context` hook
+      and hidden message append, not lifecycle/input hooks. 3. Existing green artifacts
+      for binary boundary, status/widget, and SettingsList remain present after strengthening
+      coverage.</risk_probes>'
+    verification: '- [ ] `npm run test:smoke` is run and raw stdout/stderr plus artifact
+      directory path are included.
+
+      - [ ] Artifact coverage proves literal bare `/dasein` command registration and
+      live invocation, including the exact registered command name, exact invoked
+      slash text, live Pi process boundary, and observed result/effect.
+
+      - [ ] Artifact coverage proves literal `--dasein` flag registration/parsing,
+      including launch argv with `--dasein`, parsed value from the live host path,
+      and observed effect/effective configuration or an exact blocker.
+
+      - [ ] Artifact coverage proves context injection through the Pi `context` hook,
+      including before/after message counts, appended hidden Dasein CustomMessage
+      fields (`display:false`, `customType:"dasein"`, deterministic timestamp shape),
+      and conversion to an LLM user message.
+
+      - [ ] The existing proven artifacts for real Pi binary boundary, `fakeHost false`,
+      status/widget rendering, and SettingsList interaction/persistence remain present
+      and are not weakened.
+
+      - [ ] `checklist_receipt.json` or equivalent machine-readable artifact contains
+      `slashCommandProof`, `launchFlagProof`, and `contextHookProof` fields with PASS/BLOCKED
+      statuses and exact blocker text for any environment-only gap.
+
+      - [ ] No fake-host, source-only, or API-key-enumeration evidence is presented
+      as live registration/invocation/parsing/context proof.'
+    evidence_template: "## refs Read Confirmation (MANDATORY)\nFor each ref in this\
+      \ step:\n- docs/TECHNICAL_DESIGN.md#verified-pi-mechanisms — <key passage or\
+      \ NOT READ: reason>\n- docs/TECHNICAL_DESIGN.md#testing-gate-matrix — <key passage\
+      \ or NOT READ: reason>\n- docs/PRD.md#9-4-tui — <key passage or NOT READ: reason>\n\
+      - CONSTITUTION.md#quality-baselines — <key passage or NOT READ: reason>\n- CONSTITUTION.md#ux-and-pi-interaction-red-lines\
+      \ — <key passage or NOT READ: reason>\n\n## Smoke Command Receipt\n- command:\
+      \ `npm run test:smoke`\n- exit_code: <code>\n- raw_stdout_stderr: |\n  <paste\
+      \ raw output>\n- artifact_dir: `.dasein/live-pi-smoke/latest/`\n\n## Required\
+      \ Artifact Coverage\n- slashCommandProof: <artifact filename + JSON/transcript\
+      \ excerpt proving literal `/dasein` registration and invocation>\n- launchFlagProof:\
+      \ <artifact filename + JSON/transcript excerpt proving literal `--dasein` argv,\
+      \ parsed value, and effect/effective config>\n- contextHookProof: <artifact\
+      \ filename + JSON/transcript excerpt proving `context` hook, hidden CustomMessage\
+      \ append, and LLM conversion>\n- preservedEvidence: <artifact filenames for\
+      \ Pi binary/version/fakeHost false/status-widget/SettingsList>\n\n## Blocker\
+      \ Disposition\n- blockers: <none or exact environment/product-observation blockers>\n\
+      - fake_host_or_api_key_only_claims_removed: <yes/no>\n- remaining_gap_for_release-smoke-live-pi-tui:\
+      \ <none or exact gap>"
+    depends_on:
+    - release-smoke-fix-live-pi-tui-smoke
+    agent: frontend-engineer
 - id: finalization
   name: Documentation Sync and Final Deep Review
   status: locked
