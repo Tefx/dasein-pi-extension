@@ -13605,3 +13605,201 @@ phases:
     depends_on:
     - finalization-reload-launch-path-failure-branches-retest
     agent: frontend-engineer
+  - id: finalization-external-state-sensor-runtime-blockers-retest
+    name: Retest external state visibility and sensor runtime blockers
+    status: pending
+    description: 'step_type: test
+
+      step_intent: retest_green
+
+      expected_result: green
+
+      verification_scope: full-plan-check
+
+      PROOF ARTIFACT: Independent retest proving the B1 external-state visibility/config-mutation
+      blocker and B2 sensor-runtime timeout/scheduler blocker are closed before `finalization-full-wiring-audit`
+      and `finalization-black-box-verification` rerun.
+
+
+      As an INDEPENDENT TESTER (`integration-verifier`), validate from a fresh perspective
+      that the finalization blockers are closed by executing focused tests and the
+      full npm suite. This retest is expected GREEN after `finalization-external-state-sensor-runtime-blockers-fix`.
+      Finding a remaining defect is a valuable verification outcome but must be reported
+      as BLOCKED with exact reproduction and finalization impact.
+
+
+      SCOPE:
+
+      - B1: public/fake-host or nearest focused harness for `pi.events.on(''dasein:state:set'')
+      -> broker.setExternal -> external bridge/state store -> renderer` behavior,
+      including valid agent text, absent explicit config, malformed payload rejection,
+      no direct config mutation, no `state.json` persistence, and no rendered-output
+      mutation on rejection.
+
+      - B2: `src/core/sensor-runtime.ts` refresh/schedule behavior using effective
+      `timeoutMs` and `intervalMs`, including slow refresh timeout/error, actual recurring
+      refresh or explicit supported bounded mechanism per spec, disabled/null interval
+      behavior, and cleanup/shutdown timer safety.
+
+
+      REQUIREMENT-TO-CHECKLIST TRACEABILITY MATRIX:
+
+      | requirement_id | source_ref + key passage | obligation | owning_step_id |
+      checklist_item | evidence_field | status | non_intersection_or_escalation |
+
+      | --- | --- | --- | --- | --- | --- | --- | --- |
+
+      | RT-ES-DEFAULT | docs/PRD.md#9-6-external-state + reported B1 evidence | Retest
+      proves external events with agent content do not enable agent visibility by
+      default and do not mutate config. | finalization-external-state-sensor-runtime-blockers-retest
+      | External default agent-hidden focused retest passes with raw output. | external_default_retest
+      | OWNED | Required before final audits rerun. |
+
+      | RT-ES-REJECT | CONSTITUTION.md#architectural-dogmas + reported B1 evidence
+      | Retest proves malformed external event rejection leaves external state/config/disk/render
+      unchanged. | finalization-external-state-sensor-runtime-blockers-retest | Malformed
+      rejection no-mutation focused retest passes with raw output. | malformed_reject_retest
+      | OWNED | Required before final audits rerun. |
+
+      | RT-SR-TIMEOUT | docs/TECHNICAL_DESIGN.md#builtin-sensors + reported B2 evidence
+      | Retest proves configured `timeoutMs` aborts/errors slow refreshes. | finalization-external-state-sensor-runtime-blockers-retest
+      | TimeoutMs slow-refresh focused retest passes with raw output. | timeout_retest
+      | OWNED | Required before final audits rerun. |
+
+      | RT-SR-INTERVAL | docs/TECHNICAL_DESIGN.md#builtin-sensors + CONSTITUTION.md#non-goals
+      | Retest proves interval scheduling is not hollow and is disableable/cleanup-safe.
+      | finalization-external-state-sensor-runtime-blockers-retest | IntervalMs scheduler
+      focused retest passes with raw output. | interval_retest | OWNED | Required
+      before final audits rerun. |
+
+
+      <side_effect_budget>Allowed: read-only test execution, focused probes, and temporary
+      test harness artifacts if required by the existing runner. Forbidden: product
+      code edits, docs edits, plan edits, config mutation outside isolated test fixtures,
+      or accepting source inspection without focused behavioral proof.</side_effect_budget>
+
+      <risk_probes>1. Retest must observe no config mutation from external state events;
+      passing renderer output alone is insufficient. 2. Retest must exercise malformed
+      rejection before/after snapshots; validation-only unit tests are insufficient.
+      3. Retest must exercise actual async timeout/scheduler behavior; config validation
+      and SettingsList control presence alone are insufficient.</risk_probes>'
+    verification: '- [ ] refs confirmation includes key passages for external defaults/no
+      mutation and sensor timeout/interval semantics.
+
+      - [ ] `npm run typecheck` exits 0 in the independent retest environment.
+
+      - [ ] Focused tests prove external default agent-hidden behavior without active
+      config mutation when a valid event contains `payload.agent` but no explicit
+      `external.<key>.agent=true` config.
+
+      - [ ] Focused tests prove malformed external event rejection leaves external
+      bridge/list state, active config, `state.json`, and rendered output unchanged.
+
+      - [ ] Focused tests prove configured `timeoutMs` aborts/errors a slow sensor
+      refresh and records the expected failure/result semantics.
+
+      - [ ] Focused tests prove `intervalMs` scheduling performs actual refresh or
+      an explicit supported bounded mechanism per spec, including disabled/null interval
+      and cleanup/shutdown cases.
+
+      - [ ] `npm test` exits 0 with raw stdout/stderr, or any failure is classified
+      with exact blocker/non-intersection disposition for finalization.
+
+      - [ ] Retest report states that downstream `finalization-full-wiring-audit`
+      and `finalization-black-box-verification` are dependency-ordered after this
+      retest in plan state.'
+    evidence_template: '## refs Read Confirmation (MANDATORY)
+
+      For each ref in this step:
+
+      - docs/PRD.md#9-6-external-state — <key passage>
+
+      - docs/TECHNICAL_DESIGN.md#configuration-files — <key passage>
+
+      - docs/TECHNICAL_DESIGN.md#builtin-sensors — <key passage>
+
+      - CONSTITUTION.md#architectural-dogmas — <key passage>
+
+      - CONSTITUTION.md#non-goals — <key passage>
+
+      - CONSTITUTION.md#performance-laws — <key passage>
+
+      - CONSTITUTION.md#privacy-and-safety-laws — <key passage>
+
+
+      ## Verification Report
+
+      Tester: integration-verifier (independent of frontend-engineer)
+
+      Scope: B1 external state visibility/config mutation and B2 sensor runtime timeout/scheduler
+      closure.
+
+
+      ## Commands
+
+      - `npm run typecheck` exit <code>
+
+      - focused external-state command(s): <command(s)> exit <code>
+
+      - focused external-state raw output: <stdout/stderr>
+
+      - focused sensor-runtime command(s): <command(s)> exit <code>
+
+      - focused sensor-runtime raw output: <stdout/stderr>
+
+      - `npm test` exit <code>
+
+      - full test raw output: <stdout/stderr>
+
+
+      ## Behavioral Proof Register
+
+      | requirement_ref | behavior_claim | runtime_proof_expected | evidence_ref |
+      status | closure_path | gate_decision_basis |
+
+      | --- | --- | --- | --- | --- | --- | --- |
+
+      | RT-ES-DEFAULT | External event payload agent content remains agent-hidden
+      by default and does not mutate config. | Focused test/probe. | <evidence_ref>
+      | PROVEN/UNPROVEN/BLOCKED | <path> | Blocks final audits if not PROVEN. |
+
+      | RT-ES-REJECT | Malformed external event rejection mutates nothing. | Focused
+      before/after snapshot test. | <evidence_ref> | PROVEN/UNPROVEN/BLOCKED | <path>
+      | Blocks final audits if not PROVEN. |
+
+      | RT-SR-TIMEOUT | Configured timeoutMs aborts/errors slow refresh. | Focused
+      async timeout test. | <evidence_ref> | PROVEN/UNPROVEN/BLOCKED | <path> | Blocks
+      final audits if not PROVEN. |
+
+      | RT-SR-INTERVAL | IntervalMs scheduling is real or explicitly bounded per spec
+      and cleanup-safe. | Focused timer/scheduler test. | <evidence_ref> | PROVEN/UNPROVEN/BLOCKED
+      | <path> | Blocks final audits if not PROVEN. |
+
+
+      ## Downstream Dependency Check
+
+      - finalization-full-wiring-audit depends_on includes this retest: yes/no
+
+      - finalization-black-box-verification depends_on includes this retest: yes/no
+
+
+      ## checklist_receipt
+
+      - refs confirmation: satisfied/failed/blocked/unobserved
+
+      - typecheck: satisfied/failed/blocked/unobserved
+
+      - external default agent-hidden/no config mutation: satisfied/failed/blocked/unobserved
+
+      - malformed rejection no mutation: satisfied/failed/blocked/unobserved
+
+      - timeoutMs abort/error: satisfied/failed/blocked/unobserved
+
+      - intervalMs scheduling/bounded mechanism: satisfied/failed/blocked/unobserved
+
+      - npm test: satisfied/failed/blocked/unobserved
+
+      - downstream dependency check: satisfied/failed/blocked/unobserved'
+    depends_on:
+    - finalization-external-state-sensor-runtime-blockers-fix
+    agent: integration-verifier
