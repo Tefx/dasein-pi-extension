@@ -14138,39 +14138,39 @@ phases:
       This is an IMPLEMENTATION step. Stub-only completion is NOT acceptable. Each
       deliverable MUST contain substantive logic or contract deletion that removes
       the dead path and proves observable behavior through public/production paths.'
-    verification: '- [ ] W1: `createLapsePersistenceController` is either reachable
+    verification: '- [x] W1: `createLapsePersistenceController` is either reachable
       from a non-test production caller or is no longer a public orphan/export-gate
       seam; grep/import-trace evidence is recorded.
 
-      - [ ] W6: invalid builtin sensor enum/config values, including at least `sensors.clock.precision`,
+      - [x] W6: invalid builtin sensor enum/config values, including at least `sensors.clock.precision`,
       are rejected through the public ConfigManager/assignment path, not only by spec-local
       unit calls.
 
-      - [ ] W12: a user-added sensor simple enum field emitted by SettingsList can
+      - [x] W12: a user-added sensor simple enum field emitted by SettingsList can
       be applied through ConfigManager successfully, or SettingsList no longer emits
       unreachable controls; evidence includes the user sensor enum control and mutation
       result.
 
-      - [ ] W2: `SensorSpec.renderAgent`/`renderUI` are no longer write-only production
+      - [x] W2: `SensorSpec.renderAgent`/`renderUI` are no longer write-only production
       contracts; if removed, associated builtin/tests/contracts are updated and core-owned
       final rendering remains intact.
 
-      - [ ] LIVE_PI_SMOKE_EVENT_BUS_CONTEXT_RENDER: smoke/spec proof asserts unconfigured
+      - [x] LIVE_PI_SMOKE_EVENT_BUS_CONTEXT_RENDER: smoke/spec proof asserts unconfigured
       external weather is agent-hidden by default and separately proves configured
       `external.weather.agent=true` makes weather/rain agent-visible through a public
       config/launch path.
 
-      - [ ] `npm run typecheck` exits 0 with raw stdout/stderr captured.
+      - [x] `npm run typecheck` exits 0 with raw stdout/stderr captured.
 
-      - [ ] Focused tests covering all five blockers exit 0 with raw stdout/stderr
+      - [x] Focused tests covering all five blockers exit 0 with raw stdout/stderr
       captured.
 
-      - [ ] `npm test` exits 0 with raw stdout/stderr captured.
+      - [x] `npm test` exits 0 with raw stdout/stderr captured.
 
-      - [ ] `npm run test:smoke` exits 0 or emits an exact environment-blocker artifact
+      - [x] `npm run test:smoke` exits 0 or emits an exact environment-blocker artifact
       without false live support overclaim.
 
-      - [ ] Sibling grep/search evidence shows no remaining write-only render hooks,
+      - [x] Sibling grep/search evidence shows no remaining write-only render hooks,
       unconsumed config validators, unreachable SettingsList user-field controls,
       or unconfigured external agent-visible smoke assertions.'
     evidence_template: '## refs Read Confirmation (MANDATORY)
