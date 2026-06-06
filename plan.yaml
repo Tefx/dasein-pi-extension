@@ -13706,7 +13706,7 @@ phases:
       All eight checklist items proven and toggled. Blockers: none.'
   - id: finalization-external-state-sensor-runtime-blockers-retest
     name: Retest external state visibility and sensor runtime blockers
-    status: pending
+    status: claimed
     description: 'step_type: test
 
       step_intent: retest_green
@@ -13902,3 +13902,5 @@ phases:
     depends_on:
     - finalization-external-state-sensor-runtime-blockers-fix
     agent: integration-verifier
+    claimed_by: integration-verifier
+    claimed_at: '2026-06-06T11:42:45.584458+00:00'
