@@ -9056,7 +9056,7 @@ phases:
       All six dynamic reload checklist items proven.'
   - id: release-smoke-native-helper
     name: Run native helper live smoke or explicit skip/blocker report
-    status: pending
+    status: claimed
     description: 'step_type: verification
 
       verification_scope: full-plan-check
@@ -9181,6 +9181,8 @@ phases:
     depends_on:
     - release-smoke-dynamic-reload
     agent: integration-verifier
+    claimed_by: integration-verifier
+    claimed_at: '2026-06-06T09:49:57.654357+00:00'
   - id: release-smoke-support-claim-ledger
     name: Verify support-claim ledger and live/fake evidence separation
     status: pending
