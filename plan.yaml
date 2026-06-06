@@ -4146,7 +4146,7 @@ phases:
       and non-intersecting with this ordinary core retest.'
 - id: sensors
   name: Builtin Sensors and Native Helper
-  status: in_progress
+  status: done
   gate: Builtin sensors publish typed state, geo helper is bounded/fail-closed, and
     sensor actions obey config mutation and privacy contracts.
   context: Deliver clock, lapse, geo, and macOS helper behavior while preserving the
@@ -5407,7 +5407,7 @@ phases:
       All 11 local proof checklist items proven.'
   - id: sensors-gate
     name: Gate builtin sensors and native helper
-    status: claimed
+    status: done
     description: 'step_type: gate
 
       verification_scope: phase-check
@@ -5624,6 +5624,94 @@ phases:
     agent: gate-reviewer
     claimed_by: gate-reviewer
     claimed_at: '2026-06-06T06:41:02.238869+00:00'
+    done_at: '2026-06-06T06:46:46.232208+00:00'
+    evidence: '## refs Read Confirmation
+
+      - `CONSTITUTION.md#testing-and-gates` — static/unit gates verify no request-path
+      I/O, typed envelope, core-owned rendering, request config immutability; no live
+      smoke claim without live proof.
+
+      - `CONSTITUTION.md#extension-and-sensor-laws` — sensors typed and explicitly
+      discoverable; core discards non-envelope fields.
+
+      - `docs/TECHNICAL_DESIGN.md#builtin-sensors` — builtins clock/geo/lapse; geo
+      helper outside request path; exact output privacy-gated.
+
+      - `docs/TECHNICAL_DESIGN.md#testing-gate-matrix` — typecheck, npm test, native
+      helper gate, focused file-scoped checks; no live Pi smoke in ordinary CI.
+
+      - `docs/TECHNICAL_DESIGN.md#core-contracts` — typed sensor envelope and config
+      precedence; request-path store memory-only.
+
+      - `docs/TECHNICAL_DESIGN.md#command-result-and-output-contract` — status/sensors/reload
+      deterministic typed outputs and structured errors.
+
+      - `docs/PRD.md#7-2-sensor-model` — user sensors load only `<extension_root>/src/sensors/*.ts`;
+      injection never refreshes/performs I/O.
+
+      - `docs/PRD.md#9-7-sensor-loading-and-reload` — reload all-or-keep-old; risky
+      sensors disabled until acknowledged; no `~/.pi/dasein/sensors`.
+
+
+      headline: PASS
+
+      verdict: OPEN
+
+      gate_open_allowed: true
+
+      blockers: []
+
+      orchestrator_action_hint: COMPLETE
+
+
+      ## Commands
+
+      - `npm run typecheck` exit 0.
+
+      - `npm test` exit 0; 31 discovered files; 97 pass, 0 fail/skipped.
+
+      - `npm run test:native` exit 0; explicit scaffold/native skip.
+
+      - `npm run test:native -- tests/native/macos-location-helper.test.ts` exit 0;
+      2 pass, 1 explicit skip.
+
+      - focused sensors/status/settings/reload/injector/no-request-io exit 0; 33 pass.
+
+      - focused loader/runtime/no-request-io exit 0; 9 pass.
+
+
+      ## behavioral_proof_register
+
+      - SENSORS-GATE-BLOCKER-001 geo privacy leak: PROVEN closed by `sensors-renderer-geo-privacy-retest`;
+      city precision exact-false suppresses placemark/city/district/street/formattedAddress/lat/lon/accuracy/permission/nearestTag;
+      exact positive case still works.
+
+      - Clock/geo/lapse builtin contracts: PROVEN.
+
+      - Status/sensors/SettingsList metadata controls: PROVEN.
+
+      - Reload/loading rules and `~/.pi/dasein/sensors` negative rule: PROVEN.
+
+      - Native helper constants/caps/backoff: PROVEN (3000ms, 250ms, 1m→5m→15m, stdout/stderr
+      16KiB).
+
+      - Five risky inspectability fields: PROVEN (`acknowledgedManifestDigest`, `acknowledgementRequired`,
+      `acknowledgementSatisfied`, `defaultEnabled`, `effectiveEnabled`).
+
+      - Live Pi TUI/dynamic reload/live CoreLocation release smoke: EXCLUDED_WITH_AUTHORITY;
+      not claimed.
+
+
+      ## blocker_ledger
+
+      - SENSORS-GATE-BLOCKER-001: RESOLVED.
+
+      - open blockers: none.
+
+
+      ## checklist_receipt
+
+      All 12 sensors-gate checklist items proven.'
   - id: sensors-renderer-geo-privacy-fix
     name: Fix core renderer geo privacy leak
     status: done
@@ -6088,7 +6176,7 @@ phases:
       All six retest checklist items proven.'
 - id: pi_runtime
   name: Pi Runtime, Commands, and TUI Surfaces
-  status: locked
+  status: pending
   gate: Pi-facing runtime surfaces are wired, fake-host verified, and client/runtime
     observable without claiming live release support.
   context: Wire Dasein into Pi extension lifecycle, slash commands, flags, context
