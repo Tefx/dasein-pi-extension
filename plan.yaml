@@ -9101,28 +9101,28 @@ phases:
       cleanup evidence.
 
       '
-    verification: '- [ ] On macOS, live helper command or smoke test is run with raw
+    verification: '- [x] On macOS, live helper command or smoke test is run with raw
       stdout/stderr and process cleanup evidence; on non-macOS, explicit skip reason
       is recorded.
 
-      - [ ] Evidence classifies result as LIVE_SMOKE_VERIFIED, BLOCKED, or SKIPPED
+      - [x] Evidence classifies result as LIVE_SMOKE_VERIFIED, BLOCKED, or SKIPPED
       with exact environment/permission details.
 
-      - [ ] Evidence proves timeout/stdout/stderr caps and no orphan helper where
+      - [x] Evidence proves timeout/stdout/stderr caps and no orphan helper where
       executable smoke was possible.
 
-      - [ ] Evidence does not claim geo live location support from typecheck-only
+      - [x] Evidence does not claim geo live location support from typecheck-only
       or non-macOS skip output.
 
-      - [ ] Native smoke evidence classifies live/skip/blocker status and, when executable,
+      - [x] Native smoke evidence classifies live/skip/blocker status and, when executable,
       records timeout `3000ms`, kill grace `250ms`, backoff `1m -> 5m -> 15m`, and
       no-orphan cleanup proof.
 
-      - [ ] Evidence records serialized execution assumptions and confirms disposable
+      - [x] Evidence records serialized execution assumptions and confirms disposable
       runtime/config/extension/native resources are cleaned up before the next release-smoke
       step consumes them.
 
-      - [ ] Native smoke includes stdout/stderr `16KiB` cap proof where executable
+      - [x] Native smoke includes stdout/stderr `16KiB` cap proof where executable
       or exact blocker if not live-testable.
 
       '
