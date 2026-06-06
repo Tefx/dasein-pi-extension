@@ -9935,6 +9935,270 @@ phases:
       ## checklist_receipt
 
       All seven artifact coverage checklist items proven; blockers none.'
+  - id: release-smoke-fix-live-pi-tui-checklist-receipt
+    name: Strengthen live Pi TUI smoke checklist receipt coverage
+    status: pending
+    description: 'step_type: implementation
+
+      work_type: proof_closure
+
+      agent_source: project
+
+      TARGET STATE:
+
+      `npm run test:smoke` produces smoke artifacts and a machine-readable checklist
+      receipt that covers every remaining `release-smoke-live-pi-tui` checklist obligation
+      with a falsifiable `PROVEN` or true environment `BLOCKED` disposition. The strengthened
+      receipt must preserve already-proven evidence while adding live/artifact coverage
+      for pi.events state set/clear, lifecycle cleanup sequence, bare `/dasein` outside
+      TUI, SettingsList common sensor controls, and `ctx.ui.custom` invocation/render.
+
+
+      BOUNDING BOX:
+
+      - Primary writable surface: `tests/smoke/contracts/live-pi-smoke-gate-contract.test.ts`
+      and closely related smoke artifact/receipt generation helpers if they already
+      exist.
+
+      - Generated evidence surface: `.dasein/live-pi-smoke/latest/` artifacts created
+      by `npm run test:smoke`.
+
+      - Product runtime files are authority/behavior references for probe expectations,
+      not the default mutation target for this focused smoke-artifact fix.
+
+
+      REQUIREMENT TRACEABILITY MATRIX:
+
+      | requirement_id | source_ref + key passage | obligation | owning_step_id |
+      checklist_item | evidence_field | status | non_intersection_or_escalation |
+
+      | --- | --- | --- | --- | --- | --- | --- | --- |
+
+      | R1 | `release-smoke-live-pi-tui` checklist: `pi.events` publish/receive for
+      `dasein:state:set` and `dasein:state:clear` | Smoke artifacts must prove live
+      publish/receive behavior for both events or record a true environment blocker
+      | `release-smoke-fix-live-pi-tui-checklist-receipt` | pi.events set/clear proof
+      | `eventBusProof.stateSet`, `eventBusProof.stateClear`, checklist receipt row
+      | OWNED | Blocks `release-smoke-live-pi-tui`; no deferral allowed |
+
+      | R2 | `release-smoke-live-pi-tui` checklist: lifecycle observation and cleanup
+      | Smoke artifacts must prove `before_agent_start` and `agent_end`, plus `session_start`/`session_shutdown`
+      Dasein cleanup/clear-status/clear-widget sequence, or record a true environment
+      blocker | `release-smoke-fix-live-pi-tui-checklist-receipt` | lifecycle cleanup
+      proof | `lifecycleProof.beforeAgentStart`, `lifecycleProof.agentEnd`, `lifecycleProof.sessionStart`,
+      `lifecycleProof.sessionShutdown`, `cleanupSequence` | OWNED | Blocks `release-smoke-live-pi-tui`;
+      no deferral allowed |
+
+      | R3 | `release-smoke-live-pi-tui` checklist: bare `/dasein` outside TUI | Smoke
+      artifacts must invoke literal bare `/dasein` outside TUI and prove deterministic
+      fallback/help/status output, or record a true environment blocker | `release-smoke-fix-live-pi-tui-checklist-receipt`
+      | bare non-TUI fallback proof | `slashCommandProof.bareDaseinNonTui` | OWNED
+      | Blocks `release-smoke-live-pi-tui`; `/dasein status` is not a substitute |
+
+      | R4 | `release-smoke-live-pi-tui` checklist: SettingsList common controls |
+      Smoke artifacts must enumerate/prove `enabled`, `ui`, `agent`, `intervalMs`,
+      `timeoutMs`, `staleAfterMs`, and `initialRefresh` controls with visible labels/values
+      and mutation path where applicable, or field-family true environment blockers
+      | `release-smoke-fix-live-pi-tui-checklist-receipt` | SettingsList common controls
+      proof | `settingsListProof.commonControls[]` and per-control receipt rows |
+      OWNED | Blocks `release-smoke-live-pi-tui`; partial control proof must remain
+      unproven/blocked per control |
+
+      | R5 | `release-smoke-live-pi-tui` checklist: `ctx.ui.custom` invocation/render
+      path | Smoke artifacts must prove `ctx.ui.custom` is invoked and renders/returns
+      the SettingsList custom UI path, separate from API-key presence, or record a
+      true environment blocker | `release-smoke-fix-live-pi-tui-checklist-receipt`
+      | ctx.ui.custom path proof | `customUiProof.invocation`, `customUiProof.renderArtifact`,
+      receipt row | OWNED | Blocks `release-smoke-live-pi-tui`; API key enumeration
+      is insufficient |
+
+      | R6 | Current retest result: already proven real Pi boundary, fake-host false,
+      `/dasein status`, `--dasein`, context conversion, status/widget sentinels, and
+      `core.statusEnabled` toggle | Strengthening must preserve these existing artifact
+      proofs and mark them `PROVEN` in the machine-readable receipt with evidence
+      refs | `release-smoke-fix-live-pi-tui-checklist-receipt` | preservation of already-proven
+      smoke evidence | `hostBoundary`, `launchFlagProof`, `contextHookProof`, `statusWidgetProof`,
+      `statusEnabledProof`, receipt rows | OWNED | Regression would block the same
+      live smoke retest |
+
+      | R7 | `CONSTITUTION.md#quality-baselines` and `#ux-and-pi-interaction-red-lines`:
+      mock/API source proof is not live support proof | The receipt must not convert
+      fake-host, source-only, or API-key presence into live support proof; every non-PROVEN
+      item must have exact environment blocker text and closure path | `release-smoke-fix-live-pi-tui-checklist-receipt`
+      | machine-readable receipt disposition integrity | `checklist_receipt.json`
+      rows with `PROVEN` or `ENV_BLOCKED`, evidence refs, blocker text, and closure
+      path | OWNED | Blocks support-claim gate if violated |
+
+
+      CONSTRAINTS:
+
+      - Update the smoke artifact machine-readable receipt (`checklist_receipt.json`
+      or the project-equivalent artifact) so the client verifier can map every `release-smoke-live-pi-tui`
+      checklist item to exactly one status: `PROVEN` or true environment `BLOCKED`/`ENV_BLOCKED`
+      with exact closure path.
+
+      - True environment blockers are limited to missing/incompatible Pi binary/version,
+      unavailable TUI target, permissions, extension load path/symlink, native/runtime
+      process access, or missing documented command path. Missing smoke harness instrumentation
+      is NOT an environment blocker; it is in scope for this fix.
+
+      - Preserve already-proven artifacts: real Pi boundary, `fakeHost false`, `/dasein
+      status`, `--dasein` flag, context injection conversion, status/widget sentinels,
+      and `core.statusEnabled` toggle.
+
+      - Do not count `/dasein status` as proof of literal bare `/dasein` outside TUI.
+
+      - Do not count `Object.keys(pi)`, API-key enumeration, or `SettingsList` constructor
+      availability as proof of `ctx.ui.custom` invocation/render.
+
+      - Product runtime code changes are out of scope for this focused smoke-artifact
+      coverage fix unless the smoke harness proves that the product surface itself
+      cannot emit the required evidence; in that case produce a precise blocker in
+      the receipt rather than broad rewrites.
+
+
+      ## Completion Criteria (stub exclusion)
+
+      This is an IMPLEMENTATION step for the smoke artifact harness. Stub-only completion
+      is NOT acceptable. Each new receipt row and artifact field MUST be produced
+      by a real `npm run test:smoke` execution path and MUST include evidence refs
+      or exact environment blocker refs.
+
+
+      <side_effect_budget>Allowed: modify smoke test/probe/artifact generation; create
+      disposable `.dasein/live-pi-smoke/latest/` evidence via `npm run test:smoke`;
+      use disposable HOME/Pi config roots. Forbidden: repository docs/product-code
+      rewrites unrelated to smoke coverage, fake-host substitution, permanent user
+      config mutation, false live support claims, or marking harness gaps as environment
+      blockers.</side_effect_budget>
+
+      <risk_probes>1. The receipt row count and item labels align one-to-one with
+      `release-smoke-live-pi-tui` checklist items, including previously proven items.
+      2. `ctx.ui.custom` proof shows invocation/render path, not just API availability
+      or SettingsList object construction. 3. Lifecycle cleanup proof distinguishes
+      Dasein cleanup, clear-status, and clear-widget ordering/status from generic
+      lifecycle log presence.</risk_probes>'
+    verification: '- [ ] `npm run test:smoke` is run and raw stdout/stderr plus `.dasein/live-pi-smoke/latest/`
+      artifact paths are included.
+
+      - [ ] Machine-readable checklist receipt maps every `release-smoke-live-pi-tui`
+      checklist item to `PROVEN` or true environment `BLOCKED`/`ENV_BLOCKED`, with
+      `evidence_ref`, `blocker`, and `closure_path` fields.
+
+      - [ ] Receipt/artifacts prove live `pi.events` publish/receive for `dasein:state:set`
+      and `dasein:state:clear`, or mark only true environment blockers.
+
+      - [ ] Receipt/artifacts prove `before_agent_start`, `agent_end`, `session_start`,
+      and `session_shutdown` lifecycle behavior plus Dasein cleanup/clear-status/clear-widget
+      sequence, or mark only true environment blockers.
+
+      - [ ] Receipt/artifacts prove literal bare `/dasein` outside TUI deterministic
+      fallback/help/status output; `/dasein status` alone is explicitly rejected as
+      substitution.
+
+      - [ ] Receipt/artifacts enumerate SettingsList common sensor controls `enabled`,
+      `ui`, `agent`, `intervalMs`, `timeoutMs`, `staleAfterMs`, and `initialRefresh`
+      with per-control `PROVEN` or true environment blocker rows.
+
+      - [ ] Receipt/artifacts prove `ctx.ui.custom` invocation/render path for SettingsList
+      separately from API key presence.
+
+      - [ ] Already-proven smoke evidence remains `PROVEN`: real Pi boundary, fake-host
+      false, `/dasein status`, `--dasein`, context injection conversion, status/widget
+      sentinels, and `core.statusEnabled` toggle.
+
+      - [ ] No fake-host, source-only, API-key-enumeration, or harness-missing evidence
+      is presented as live proof or as a true environment blocker.'
+    evidence_template: '## refs Read Confirmation (MANDATORY)
+
+      For each ref in this step:
+
+      - `docs/TECHNICAL_DESIGN.md#verified-pi-mechanisms` — <key passage or NOT READ:
+      reason>
+
+      - `docs/TECHNICAL_DESIGN.md#testing-gate-matrix` — <key passage or NOT READ:
+      reason>
+
+      - `docs/PRD.md#9-4-tui` — <key passage or NOT READ: reason>
+
+      - `CONSTITUTION.md#quality-baselines` — <key passage or NOT READ: reason>
+
+      - `CONSTITUTION.md#ux-and-pi-interaction-red-lines` — <key passage or NOT READ:
+      reason>
+
+
+      ## Smoke Command Receipt
+
+      - command: <exact npm run test:smoke command>
+
+      - exit_code: <code>
+
+      - raw_stdout_stderr: <paste or artifact ref>
+
+      - artifact_dir: <path>
+
+      - changed_files: <paths>
+
+
+      ## Machine-Readable Checklist Receipt
+
+      - receipt_path: <path to checklist_receipt.json or equivalent>
+
+      - total_release_smoke_live_pi_tui_items: <N>
+
+      - proven_count: <N>
+
+      - env_blocked_count: <N>
+
+      - other_status_count: 0 required
+
+
+      ## Required Rows / Evidence Refs
+
+      | checklist_item | status: PROVEN/ENV_BLOCKED | evidence_ref | blocker | closure_path
+      |
+
+      | --- | --- | --- | --- | --- |
+
+      | pi.events `dasein:state:set` | <status> | <artifact ref> | <if blocked> |
+      <if blocked> |
+
+      | pi.events `dasein:state:clear` | <status> | <artifact ref> | <if blocked>
+      | <if blocked> |
+
+      | `before_agent_start` | <status> | <artifact ref> | <if blocked> | <if blocked>
+      |
+
+      | `agent_end` | <status> | <artifact ref> | <if blocked> | <if blocked> |
+
+      | `session_start` cleanup | <status> | <artifact ref> | <if blocked> | <if blocked>
+      |
+
+      | `session_shutdown` cleanup/clear-status/clear-widget | <status> | <artifact
+      ref> | <if blocked> | <if blocked> |
+
+      | bare `/dasein` outside TUI fallback/help/status | <status> | <artifact ref>
+      | <if blocked> | <if blocked> |
+
+      | SettingsList controls: enabled/ui/agent/intervalMs/timeoutMs/staleAfterMs/initialRefresh
+      | <per-control statuses> | <artifact refs> | <if blocked> | <if blocked> |
+
+      | `ctx.ui.custom` invocation/render path | <status> | <artifact ref> | <if blocked>
+      | <if blocked> |
+
+      | already-proven evidence preservation | PROVEN required | <artifact refs> |
+      n/a | n/a |
+
+
+      ## checklist_receipt
+
+      - [ ] All verification checklist items satisfied, failed, blocked, or unobserved
+      with exact evidence refs.
+
+      - [ ] Any blocked item is a true environment blocker, not missing harness instrumentation.'
+    depends_on:
+    - release-smoke-fix-live-pi-tui-artifact-coverage
+    agent: frontend-engineer
 - id: finalization
   name: Documentation Sync and Final Deep Review
   status: locked
