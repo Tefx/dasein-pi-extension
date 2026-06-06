@@ -517,7 +517,7 @@ phases:
       load shape: PROVEN.'
   - id: scaffold-static-proof
     name: Verify scaffold static and fake-host foundation
-    status: pending
+    status: claimed
     description: 'step_type: verification
 
       PROOF ARTIFACT: Independent local-check proof that scaffold/tooling and fake-host
@@ -586,6 +586,8 @@ phases:
     depends_on:
     - scaffold-complete
     agent: integration-verifier
+    claimed_by: integration-verifier
+    claimed_at: '2026-06-06T03:49:53.263840+00:00'
   - id: scaffold-gate
     name: Gate scaffold foundation
     status: pending
