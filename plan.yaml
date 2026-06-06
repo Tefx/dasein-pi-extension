@@ -11249,7 +11249,7 @@ phases:
       All ten wiring checklist items proven and toggled. Blockers: none.'
   - id: finalization-full-spec-conformance
     name: Full spec conformance audit
-    status: pending
+    status: claimed
     description: 'step_type: audit
 
       verification_scope: full-plan-check
@@ -11718,6 +11718,8 @@ phases:
     - finalization-doc-sync
     - finalization-full-wiring-audit
     agent: spec-verifier
+    claimed_by: spec-verifier
+    claimed_at: '2026-06-06T12:42:43.452358+00:00'
   - id: finalization-architecture-concurrency-review
     name: Architecture, lifecycle, and concurrency review
     status: claimed
