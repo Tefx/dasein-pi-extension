@@ -2746,59 +2746,59 @@ phases:
       explicit as static/contract/runtime fake proof, not broad injector no-I/O.
 
       '
-    verification: '- [ ] All core phase steps are complete with refs confirmations
+    verification: '- [x] All core phase steps are complete with refs confirmations
       and checklist receipts.
 
-      - [ ] Gate decision basis maps every core requirement/checklist row to evidence
+      - [x] Gate decision basis maps every core requirement/checklist row to evidence
       status PROVEN or a blocking remediation path.
 
-      - [ ] Gate decision basis reviews `core-static-boundary-retest` and confirms
+      - [x] Gate decision basis reviews `core-static-boundary-retest` and confirms
       B1 is PROVEN closed before opening the core gate.
 
-      - [ ] Gate decision basis reviews `core-gate-b4-external-default-retest` and
+      - [x] Gate decision basis reviews `core-gate-b4-external-default-retest` and
       confirms B4 external default agent visibility is PROVEN closed: unconfigured
       external key is agent-hidden, explicit `external.<key>.agent=true` still appears,
       unconfigured UI remains visible, and B1/B2/B3 remain closed.
 
-      - [ ] No unresolved request-path, config/state, typed envelope, command mutation,
+      - [x] No unresolved request-path, config/state, typed envelope, command mutation,
       external event, renderer visibility, agent injection/privacy, or ordinary-CI
       blocker intersects sensors/pi_runtime/system_wiring gates.
 
-      - [ ] Final gate verdict is OPEN or BLOCKED with explicit blockers and required
+      - [x] Final gate verdict is OPEN or BLOCKED with explicit blockers and required
       actions.
 
-      - [ ] Gate decision basis reviews `tests/behavior/ambient-context.test.ts` behavioral
+      - [x] Gate decision basis reviews `tests/behavior/ambient-context.test.ts` behavioral
       guardrails and confirms no orphan behavior row remains.
 
-      - [ ] Gate decision basis reviews status payload `minimumPiVersion: "0.78.1"`,
+      - [x] Gate decision basis reviews status payload `minimumPiVersion: "0.78.1"`,
       version capture/null, mechanism evidence statuses, and no false support claims.
 
-      - [ ] Gate decision basis reviews status/sensors command test-definition ownership
+      - [x] Gate decision basis reviews status/sensors command test-definition ownership
       and downstream implementation/proof evidence for both files.
 
-      - [ ] Gate decision basis reviews exact status fields `effectiveConfigVersion`,
+      - [x] Gate decision basis reviews exact status fields `effectiveConfigVersion`,
       `launchArgsApplied`, `diskConfigLoaded` and reload fields `launchReappliedPaths`,
       `runtimeOverriddenPaths`; broad payload-shape evidence is rejected.
 
-      - [ ] Gate decision basis reviews exact `core.maxAgentChars` and `core.injectedLabel`
+      - [x] Gate decision basis reviews exact `core.maxAgentChars` and `core.injectedLabel`
       validation evidence; broad config-validation proof is rejected.
 
-      - [ ] Gate decision basis reviews exact CustomMessage fields `display:false`,
+      - [x] Gate decision basis reviews exact CustomMessage fields `display:false`,
       `customType:"dasein"`, timestamp shape, and conversion proof obligations.
 
-      - [ ] Gate decision basis reviews lifecycle cleanup `1000ms` per-sensor timeout
+      - [x] Gate decision basis reviews lifecycle cleanup `1000ms` per-sensor timeout
       and active-refresh abort proof.
 
-      - [ ] Gate decision basis reviews exact render invalidation scheduler proof
+      - [x] Gate decision basis reviews exact render invalidation scheduler proof
       and rejects broad renderer/no-I/O evidence that omits timer behavior.
 
-      - [ ] Gate decision basis reviews atomic write fsync evidence and rejects broad
+      - [x] Gate decision basis reviews atomic write fsync evidence and rejects broad
       atomic-write proof that omits fsync availability handling.
 
-      - [ ] Gate decision basis reviews U+2028 and U+2029 external event rejection
+      - [x] Gate decision basis reviews U+2028 and U+2029 external event rejection
       evidence and rejects broad multiline/control-only proof.
 
-      - [ ] Gate decision basis reviews explicit renderer hook purity proof and enforceability
+      - [x] Gate decision basis reviews explicit renderer hook purity proof and enforceability
       disposition.'
     evidence_template: "## Gate Review Report\n**Reviewer**: gate-reviewer (independent\
       \ of phase implementation)\n**Phase**: core\n**Timestamp**: <ISO 8601>\n\n###\
