@@ -3483,20 +3483,20 @@ phases:
       a scoped file command? 2. Does B3 have positive SettingsList proof or a genuine
       non-intersecting deferral with owner? 3. Does the closure register distinguish
       PROVEN, DEFERRED, and BLOCKED rather than using vague PASS language?</risk_probes>'
-    verification: '- [ ] `npm run typecheck` exits successfully with raw stdout/stderr
+    verification: '- [x] `npm run typecheck` exits successfully with raw stdout/stderr
       evidence.
 
-      - [ ] Ordinary `npm test` exits successfully with raw stdout/stderr evidence.
+      - [x] Ordinary `npm test` exits successfully with raw stdout/stderr evidence.
 
-      - [ ] Explicit non-native discovery/enumeration proves ordinary `npm test` covers
+      - [x] Explicit non-native discovery/enumeration proves ordinary `npm test` covers
       every non-native `.test.ts` file on this shell, including top-level unit/static
       files.
 
-      - [ ] SettingsList matrix target has concrete test proof from `tests/unit/settings-list.test.ts`
+      - [x] SettingsList matrix target has concrete test proof from `tests/unit/settings-list.test.ts`
       or an authoritative DEFERRED disposition with concrete downstream owner and
       non-intersection rationale.
 
-      - [ ] Gate blocker closure register marks B2 and B3 PROVEN or BLOCKED with evidence
+      - [x] Gate blocker closure register marks B2 and B3 PROVEN or BLOCKED with evidence
       refs, and records B1 as already closed with no regression.'
     evidence_template: "## refs Read Confirmation (MANDATORY)\nFor each ref in this\
       \ step:\n- CONSTITUTION.md#testing-and-gates — <key passage>\n- docs/TECHNICAL_DESIGN.md#implementation-scaffold\
