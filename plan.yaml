@@ -14419,37 +14419,37 @@ phases:
       test-only references? 2. Does smoke evidence prove both external hidden-by-default
       and configured-agent-visible paths? 3. Does any remaining render hook/config
       validator have a production consumer or an explicit accepted removal rationale?</risk_probes>'
-    verification: '- [ ] refs confirmation includes key passages for every listed
+    verification: '- [x] refs confirmation includes key passages for every listed
       ref or an explicit `NOT READ` reason.
 
-      - [ ] W1 retest evidence proves no test-only public orphan remains for `createLapsePersistenceController`.
+      - [x] W1 retest evidence proves no test-only public orphan remains for `createLapsePersistenceController`.
 
-      - [ ] W6 retest evidence proves public ConfigManager/assignment validation rejects
+      - [x] W6 retest evidence proves public ConfigManager/assignment validation rejects
       invalid builtin sensor enum strings, including an invalid clock precision case.
 
-      - [ ] W12 retest evidence builds a user sensor enum SettingsList control and
+      - [x] W12 retest evidence builds a user sensor enum SettingsList control and
       applies the mutation through ConfigManager successfully, or proves such unreachable
       controls are no longer emitted.
 
-      - [ ] W2 retest evidence proves `SensorSpec.renderAgent`/`renderUI` are not
+      - [x] W2 retest evidence proves `SensorSpec.renderAgent`/`renderUI` are not
       write-only production contracts and that final prompt/render strings remain
       core-owned.
 
-      - [ ] LIVE retest evidence proves unconfigured external weather is agent-hidden
+      - [x] LIVE retest evidence proves unconfigured external weather is agent-hidden
       by default and configured `external.weather.agent=true` is agent-visible through
       public config/launch before expecting weather/rain in context.
 
-      - [ ] `npm run typecheck` exits 0 with raw stdout/stderr captured.
+      - [x] `npm run typecheck` exits 0 with raw stdout/stderr captured.
 
-      - [ ] Focused tests for W1, W6, W12, W2, and LIVE_PI_SMOKE_EVENT_BUS_CONTEXT_RENDER
+      - [x] Focused tests for W1, W6, W12, W2, and LIVE_PI_SMOKE_EVENT_BUS_CONTEXT_RENDER
       exit 0 with raw stdout/stderr captured.
 
-      - [ ] `npm test` exits 0 with raw stdout/stderr captured.
+      - [x] `npm test` exits 0 with raw stdout/stderr captured.
 
-      - [ ] `npm run test:smoke` exits 0 or reports exact environment blockers without
+      - [x] `npm run test:smoke` exits 0 or reports exact environment blockers without
       false live support overclaim.
 
-      - [ ] Behavioral proof register marks each blocker `PROVEN`, or marks `BLOCKED`
+      - [x] Behavioral proof register marks each blocker `PROVEN`, or marks `BLOCKED`
       with a concrete closure path that blocks the relevant final audit rather than
       being waived.'
     evidence_template: "## Verification Report\n**Tester**: integration-verifier (independent\
