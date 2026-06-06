@@ -12885,3 +12885,175 @@ phases:
       ## checklist_receipt
 
       All eight finalization-audit-blockers-fix checklist items proven; blockers none.'
+  - id: finalization-reload-launch-path-failure-branches-fix
+    name: Fix reload launch path metadata failure branches
+    status: pending
+    description: 'step_type: implementation
+
+      agent_source: project
+
+      work_type: defect_repair
+
+      TARGET STATE: `/dasein reload` preserves and reports `launchReappliedPaths`
+      across top-level reload failure branches. When sensor candidate/registry loading
+      fails or ConfigManager reload fails, the public reload result must retain the
+      non-runtime-overridden launch overlay paths that remain active under all-or-keep-old
+      semantics instead of replacing them with `[]`.
+
+
+      BOUNDING BOX:
+
+      - `src/index.ts` top-level `/dasein` command handler and reloadResult path around
+      the reported call chain: registration near 988-995, reload routing near 510,
+      registry candidate load near 953, registry failure result near 955-956, and
+      config reload failure branch near 977.
+
+      - Existing ConfigManager/lifecycle reload result contracts only where needed
+      to preserve already-provided `launchReappliedPaths`.
+
+      - Existing fake-host reload tests or nearest command/runtime test harness.
+
+
+      REQUIREMENT-TO-CHECKLIST TRACEABILITY MATRIX:
+
+      | requirement_id | source_ref + key passage | obligation | owning_step_id |
+      checklist_item | evidence_field | status | non_intersection_or_escalation |
+
+      | --- | --- | --- | --- | --- | --- | --- | --- |
+
+      | RLP-FB-1 | docs/TECHNICAL_DESIGN.md#sensor-loading-and-reload/manual-reload
+      + reported B1 call chain | Sensor-load failure branch must keep/report active
+      launch overlay paths instead of returning `launchReappliedPaths: []`. | finalization-reload-launch-path-failure-branches-fix
+      | Sensor-load failure fake-host reload test proves non-runtime-overridden launch
+      paths are retained. | sensor_failure_reload_paths | OWNED | Blocks finalization
+      wiring and black-box verification. |
+
+      | RLP-FB-2 | docs/TECHNICAL_DESIGN.md#configuration-files + docs/PRD.md#9-acceptance-criteria
+      | Config reload failure branch must keep/report active launch overlay paths
+      while preserving all-or-keep-old behavior. | finalization-reload-launch-path-failure-branches-fix
+      | Config-reload failure fake-host reload test proves non-runtime-overridden
+      launch paths are retained. | config_failure_reload_paths | OWNED | Blocks finalization
+      wiring and black-box verification. |
+
+      | RLP-FB-3 | CONSTITUTION.md#architectural-dogmas + CONSTITUTION.md#ux-and-pi-interaction-red-lines
+      | Runtime output must make effective configuration and human-visible launch
+      override state inspectable without false support claims. | finalization-reload-launch-path-failure-branches-fix
+      | Command/public result output copies preserved `launchReappliedPaths` in relevant
+      failure cases. | public_reload_output_paths | OWNED | Blocks final gate payload-field
+      proof. |
+
+
+      REPAIR CONTRACT:
+
+      - Fix the reported B1 family in one batched pass; do not only patch the first
+      `[]` literal if sibling failure branches still drop launch metadata.
+
+      - Preserve all-or-keep-old semantics: failed sensor/config reload must not replace
+      active runtime state, but metadata must still prove which launch overlays remain
+      applied.
+
+      - Preserve runtime-overridden path semantics: paths overridden by slash/UI runtime
+      changes must not be falsely reported as reapplied launch paths.
+
+      - Do not weaken `/dasein reload`, status payload, ConfigManager, lifecycle,
+      or command output contracts to match the broken failure branch.
+
+      - Do not add runtime npm dependencies.
+
+
+      ## Completion Criteria (stub exclusion)
+
+      This is an IMPLEMENTATION step. Stub-only completion is NOT acceptable. The
+      fix must contain substantive TypeScript behavior that preserves real reload
+      metadata based on inputs and failure branch state.
+
+
+      <side_effect_budget>Allowed: targeted TypeScript repairs in reload result wiring
+      plus focused tests/probes. Forbidden: direct plan.yaml edits, docs/constitution
+      edits, replacing runtime proof with mock-only assertions, dropping all-or-keep-old
+      behavior, hiding failure state, or introducing new runtime npm dependencies.</side_effect_budget>
+
+      <risk_probes>1. Both sensor-load failure and config-reload failure branches
+      preserve launchReappliedPaths. 2. Runtime-overridden launch paths remain excluded
+      from reapplied launch metadata. 3. Public command output copies the lifecycle/reload
+      metadata exactly rather than recomputing or blanking it.</risk_probes>
+
+
+      KNOWN RISK / Gate Preview:
+
+      - Finalization gates will reject success-path-only `launchReappliedPaths` evidence.
+      Failure branches forced by fake-host sensor/config failures must show retained
+      non-runtime-overridden launch paths.'
+    verification: '- [ ] `npm run typecheck` exits 0 after the fix.
+
+      - [ ] Focused `/dasein reload` fake-host test with launch flags plus forced
+      sensor-load/registry failure proves `result.data.launchReappliedPaths` retains
+      non-runtime-overridden launch paths.
+
+      - [ ] Focused `/dasein reload` fake-host test with launch flags plus forced
+      ConfigManager/config reload failure proves `result.data.launchReappliedPaths`
+      retains non-runtime-overridden launch paths.
+
+      - [ ] Focused test or assertion proves runtime-overridden paths are not falsely
+      included in `launchReappliedPaths`.
+
+      - [ ] Focused public command output test proves `command`/handler output copies
+      preserved `reload.launchReappliedPaths` in failure cases.
+
+      - [ ] `npm test` exits 0 or evidence explains the exact focused subset plus
+      why full npm test is deferred to the independent retest.'
+    evidence_template: '## refs Read Confirmation (MANDATORY)
+
+      For each ref in this step:
+
+      - docs/TECHNICAL_DESIGN.md#sensor-loading-and-reload/manual-reload — <key passage>
+
+      - docs/TECHNICAL_DESIGN.md#configuration-files — <key passage>
+
+      - docs/PRD.md#9-acceptance-criteria — <key passage>
+
+      - CONSTITUTION.md#architectural-dogmas — <key passage>
+
+      - CONSTITUTION.md#ux-and-pi-interaction-red-lines — <key passage>
+
+
+      ## Fix Receipt
+
+      - files_changed: <paths>
+
+      - branch_paths_fixed: <sensor-load failure, config reload failure, siblings
+      searched>
+
+
+      ## Commands
+
+      - typecheck_command: `npm run typecheck`
+
+      - typecheck_exit: <code>
+
+      - focused_test_command: <exact command>
+
+      - focused_test_stdout: <paste raw output>
+
+      - npm_test_command: `npm test`
+
+      - npm_test_exit_or_deferral: <code or reason>
+
+
+      ## Behavioral Proof
+
+      - sensor_failure_reload_paths: <evidence>
+
+      - config_failure_reload_paths: <evidence>
+
+      - runtime_override_exclusion: <evidence>
+
+      - public_reload_output_paths: <evidence>
+
+
+      ## checklist_receipt
+
+      - <each checklist item satisfied/failed/blocked/unobserved>'
+    depends_on:
+    - finalization-audit-blockers-fix
+    agent: frontend-engineer
