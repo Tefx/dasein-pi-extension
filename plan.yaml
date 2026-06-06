@@ -16733,7 +16733,7 @@ phases:
       with total=11 proven=11 blocked=0; git diff --check produced no output.'
 - id: minimal_ui
   name: Minimal UI Simplification
-  status: pending
+  status: in_progress
   gate: Widget product surface removed; agent inspect command added; idle null suppressed
     and documented; tests pass.
   depends_on:
@@ -16741,10 +16741,12 @@ phases:
   steps:
   - id: minimal-ui.remove-widget-add-agent-inspect
     name: Remove widget surface and add agent inspect command
-    status: pending
+    status: claimed
     description: 'Implement KISS UI simplification: remove Dasein widget config/runtime/docs/tests,
       add /dasein inspect agent to show the exact pre-rendered agent system prompt
       block, and suppress meaningless idle null output from lapse rendering.'
     verification: npm run typecheck; focused command/renderer/config/settings tests;
       npm test; npm run test:smoke if live smoke contracts changed; git diff --check.
     agent: general
+    claimed_by: general
+    claimed_at: '2026-06-06T19:36:55.392916+00:00'
