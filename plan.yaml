@@ -12621,80 +12621,80 @@ phases:
       explicit as static/contract/runtime fake proof, not broad injector no-I/O.
 
       '
-    verification: '- [ ] All finalization steps are complete with refs confirmations
+    verification: '- [x] All finalization steps are complete with refs confirmations
       and checklist receipts.
 
-      - [ ] Final gate decision basis reviews requirement matrix rows, evidence refs,
+      - [x] Final gate decision basis reviews requirement matrix rows, evidence refs,
       unresolved statuses, and closure paths for all phases.
 
-      - [ ] No orphan authoritative requirement, production wiring gap, request-path
+      - [x] No orphan authoritative requirement, production wiring gap, request-path
       I/O blocker, false live-support claim, or unowned broad verifier failure remains.
 
-      - [ ] Final verdict is OPEN or BLOCKED with explicit blockers, live-support
+      - [x] Final verdict is OPEN or BLOCKED with explicit blockers, live-support
       status, and required actions.
 
-      - [ ] Final gate confirms minimum Pi version/status classification has positive
+      - [x] Final gate confirms minimum Pi version/status classification has positive
       proof or exact owned blockers and no false support claims.
 
-      - [ ] Final decision basis confirms bare `/dasein` has positive proof or owned
+      - [x] Final decision basis confirms bare `/dasein` has positive proof or owned
       blockers for TUI SettingsList opening and non-TUI fallback.
 
-      - [ ] Final gate confirms SettingsList common timing/control obligations have
+      - [x] Final gate confirms SettingsList common timing/control obligations have
       positive proof or exact owned blockers.
 
-      - [ ] Final gate confirms exact status/reload payload fields `effectiveConfigVersion`,
+      - [x] Final gate confirms exact status/reload payload fields `effectiveConfigVersion`,
       `launchArgsApplied`, `diskConfigLoaded`, `launchReappliedPaths`, and `runtimeOverriddenPaths`
       have positive proof or owned blockers.
 
-      - [ ] Final gate confirms SettingsList negative external-key proof has positive
+      - [x] Final gate confirms SettingsList negative external-key proof has positive
       evidence or exact owned blockers for invalid keys, dotted keys, expired external
       state, and malformed external events.
 
-      - [ ] Final gate confirms both `sensors.geo.exactCoordinates` and `sensors.geo.exactAddress`
+      - [x] Final gate confirms both `sensors.geo.exactCoordinates` and `sensors.geo.exactAddress`
       have positive proof or owned blockers.
 
-      - [ ] Final gate confirms exact `core.maxAgentChars` and `core.injectedLabel`
+      - [x] Final gate confirms exact `core.maxAgentChars` and `core.injectedLabel`
       validation proof or owned blockers.
 
-      - [ ] Final gate confirms geo tag `radius_m`, `GeoTagListPayload`, and `exactCoordinates`
+      - [x] Final gate confirms geo tag `radius_m`, `GeoTagListPayload`, and `exactCoordinates`
       redaction proof or owned blockers.
 
-      - [ ] Final gate confirms `ctx.ui.custom` has positive feature-probe/live evidence
+      - [x] Final gate confirms `ctx.ui.custom` has positive feature-probe/live evidence
       or exact owned blockers, distinct from SettingsList.
 
-      - [ ] Final gate confirms exact risky sensor inspectability fields `acknowledgedManifestDigest`,
+      - [x] Final gate confirms exact risky sensor inspectability fields `acknowledgedManifestDigest`,
       `acknowledgementRequired`, `acknowledgementSatisfied`, `defaultEnabled`, and
       `effectiveEnabled` have positive proof or owned blockers.
 
-      - [ ] Final gate confirms native helper deterministic constants `3000ms`, `250ms`,
+      - [x] Final gate confirms native helper deterministic constants `3000ms`, `250ms`,
       and `1m -> 5m -> 15m` have positive proof or exact blockers.
 
-      - [ ] Final gate confirms context injection CustomMessage fields and conversion-to-LLM
+      - [x] Final gate confirms context injection CustomMessage fields and conversion-to-LLM
       proof have positive evidence or exact blockers.
 
-      - [ ] Final gate confirms exact lifecycle proof for `session_start`, `session_shutdown`,
+      - [x] Final gate confirms exact lifecycle proof for `session_start`, `session_shutdown`,
       and `1000ms` per-sensor cleanup timeout or owned blockers.
 
-      - [ ] Final gate confirms render invalidation scheduler exact proof or owned
+      - [x] Final gate confirms render invalidation scheduler exact proof or owned
       blockers for all timer/deadline/recompute/no-request-path obligations.
 
-      - [ ] Final gate confirms atomic write fsync/rename/failure-preservation proof
+      - [x] Final gate confirms atomic write fsync/rename/failure-preservation proof
       or owned blockers.
 
-      - [ ] Final gate confirms external event U+2028/U+2029 rejection proof or owned
+      - [x] Final gate confirms external event U+2028/U+2029 rejection proof or owned
       blockers.
 
-      - [ ] Final gate blocks any CONSTITUTION.md amendment lacking explicit human
+      - [x] Final gate blocks any CONSTITUTION.md amendment lacking explicit human
       approval, amendment reason, affected invariants, verification impact, and migration
       notes.
 
-      - [ ] Final gate confirms negative sensor-directory proof for `~/.pi/dasein/sensors`
+      - [x] Final gate confirms negative sensor-directory proof for `~/.pi/dasein/sensors`
       or owned blockers.
 
-      - [ ] Final gate confirms native helper stdout/stderr `16KiB` cap proof or owned
+      - [x] Final gate confirms native helper stdout/stderr `16KiB` cap proof or owned
       blockers.
 
-      - [ ] Final gate confirms renderer hook purity proof or owned blockers.
+      - [x] Final gate confirms renderer hook purity proof or owned blockers.
 
       '
     evidence_template: "## refs Read Confirmation (MANDATORY)\nFor each exact refs\
