@@ -3590,6 +3590,161 @@ phases:
 
       All five retest checklist items proven. Live Pi TUI smoke remains a separate
       release-scope gate and does not intersect this ordinary non-native retest.'
+  - id: core-gate-b4-external-default-fix
+    name: Fix B4 external default agent visibility
+    status: pending
+    description: 'step_type: implementation
+
+      agent_source: project
+
+      TARGET STATE:
+
+      Unconfigured external state remains human-visible by default but agent-hidden
+      by default. `src/core/renderer.ts` must not inject an external key into the
+      agent string unless effective config explicitly sets `external.<key>.agent=true`.
+      Explicit `external.<key>.agent=true` must still render in agent context, and
+      unconfigured/implicit external UI visibility must remain visible to UI/status
+      surfaces.
+
+
+      AUTHORITATIVE REFS:
+
+      - `docs/PRD.md#9-6-external-state`: per-key external controls are independent;
+      unconfigured keys are UI-visible by default and agent-hidden by default.
+
+      - `docs/TECHNICAL_DESIGN.md#core-contracts`: unconfigured external key default
+      is `{ ui: true, agent: false }`.
+
+      - `CONSTITUTION.md#privacy-and-safety-laws`: every injected field must be traceable
+      to configured sensor/external state key and hidden fields must not be injected.
+
+
+      REQUIREMENT TRACEABILITY MATRIX:
+
+      | requirement_id | source_ref + key passage | obligation | owning_step_id |
+      checklist_item | evidence_field | status | non_intersection_or_escalation |
+
+      |---|---|---|---|---|---|---|---|
+
+      | B4.external-agent-default-hidden | PRD 9.6 + Technical Design Core Contracts
+      | Unconfigured external keys default `agent:false`; no ambient_ctx injection
+      for unconfigured external agent payloads | core-gate-b4-external-default-fix
+      | renderer default changed to agent-hidden | `renderer_diff_summary`, `focused_test_output`
+      | OWNED | Blocks core-gate, agent injection/privacy, pi_runtime, and downstream
+      gates if unproven. |
+
+      | B4.external-agent-explicit-opt-in | PRD 9.6 | Explicit `external.<key>.agent=true`
+      still allows agent injection | core-gate-b4-external-default-fix | explicit
+      opt-in still renders | `focused_test_output` | OWNED | Blocks if regression
+      hides explicitly configured agent-visible external state. |
+
+      | B4.external-ui-default-visible | PRD 9.6 + Constitution privacy law | Unconfigured
+      external UI remains visible by default to human-facing context | core-gate-b4-external-default-fix
+      | UI default remains visible | `focused_test_output` | OWNED | Blocks if privacy
+      fix hides required human-visible state. |
+
+
+      BOUNDING BOX:
+
+      - `src/core/renderer.ts`
+
+      - `tests/unit/renderer.test.ts`
+
+      - `tests/unit/external-events.test.ts` if existing external visibility tests
+      need alignment
+
+      - `tests/unit/injector.test.ts` and `tests/behavior/ambient-context.test.ts`
+      only for focused regression assertions if the renderer proof cannot otherwise
+      cover the injection/privacy path
+
+
+      CONSTRAINTS:
+
+      - Preserve existing explicit configured visibility behavior for `external.<key>.ui`
+      and `external.<key>.agent`.
+
+      - Do not change external event validation, TTL, source sanitization, config
+      path grammar, or sensor visibility defaults.
+
+      - Do not weaken B1/B2/B3 closure or ordinary `npm test` coverage.
+
+      - Do not add new runtime dependencies.
+
+
+      ## Completion Criteria (stub exclusion)
+
+      This is an IMPLEMENTATION step. Stub-only completion is NOT acceptable. The
+      renderer behavior must process actual effective config and external snapshots
+      so outputs vary based on unconfigured defaults and explicit `external.<key>.agent=true`
+      / `.ui` settings.
+
+
+      <side_effect_budget>Allowed: modify `src/core/renderer.ts` and focused test
+      files needed to prove B4. Forbidden: changing PRD/design defaults, suppressing
+      the runtime probe by filtering labels only, weakening injector/request-path
+      protections, changing unrelated external event acceptance, or broad package/script
+      edits.</side_effect_budget>
+
+      <risk_probes>1. Search for sibling `?? true` or default-agent-visible fallbacks
+      on external visibility beyond the reported renderer line. 2. Verify the fix
+      changes agent visibility semantics, not only test strings or probe output formatting.
+      3. Verify UI-visible default remains true while agent-visible default becomes
+      false.</risk_probes>'
+    verification: '- [ ] `src/core/renderer.ts` treats absent `config.external[key]`
+      agent visibility as `false`, not `true`.
+
+      - [ ] Focused tests prove an unconfigured external key with an agent payload
+      is omitted from the rendered/injected agent string.
+
+      - [ ] Focused tests prove `external.<key>.agent=true` still renders the external
+      agent payload.
+
+      - [ ] Focused tests prove unconfigured external UI remains visible by default.
+
+      - [ ] Sibling search evidence shows no remaining external visibility fallback
+      defaults unconfigured agent exposure to visible.'
+    evidence_template: '## refs Read Confirmation (MANDATORY)
+
+      For each ref in this step:
+
+      - `CONSTITUTION.md#privacy-and-safety-laws` — key passage or "NOT READ: <reason>"
+
+      - `docs/PRD.md#9-6-external-state` — key passage or "NOT READ: <reason>"
+
+      - `docs/TECHNICAL_DESIGN.md#core-contracts` — key passage or "NOT READ: <reason>"
+
+      - `docs/TECHNICAL_DESIGN.md#testing-gate-matrix` — key passage or "NOT READ:
+      <reason>"
+
+
+      ## B4 Fix Receipt
+
+      - changed_files: <paths>
+
+      - renderer_diff_summary: <what default changed and where>
+
+      - sibling_search_command: <command used to find external visibility fallbacks>
+
+      - sibling_search_output: <raw output or none found>
+
+      - focused_test_command: <exact command>
+
+      - focused_test_output: <raw stdout/stderr>
+
+      - checklist_receipt: <satisfied/failed/blocked/unobserved for each checklist
+      item>
+
+
+      ## Regression Notes
+
+      - B1/B2/B3 regression risk introduced: <none or details>
+
+      - explicit_agent_true_still_visible: <evidence>
+
+      - unconfigured_ui_default_still_visible: <evidence>'
+    depends_on:
+    - core-gate-blocker-retest
+    agent: frontend-engineer
 - id: sensors
   name: Builtin Sensors and Native Helper
   status: locked
