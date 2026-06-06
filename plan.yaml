@@ -661,14 +661,14 @@ phases:
 
       <risk_probes>1. Every scaffold requirement has positive proof or remediation.
       2. No runtime dependency drift. 3. No live Pi claim is based on fake-host proof.</risk_probes>'
-    verification: '- [ ] All scaffold steps have checklist receipts and refs confirmations.
+    verification: '- [x] All scaffold steps have checklist receipts and refs confirmations.
 
-      - [ ] Gate decision basis maps package, shim, fake-host, and dependency requirements
+      - [x] Gate decision basis maps package, shim, fake-host, and dependency requirements
       to evidence.
 
-      - [ ] OPEN only if no blocker-class scaffold gaps remain.
+      - [x] OPEN only if no blocker-class scaffold gaps remain.
 
-      - [ ] Gate decision basis explicitly reviews symlinked load, root shim delegation,
+      - [x] Gate decision basis explicitly reviews symlinked load, root shim delegation,
       package entrypoint, and SettingsList/getSettingsListTheme import-resolution
       evidence.
 
