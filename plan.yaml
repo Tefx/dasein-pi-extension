@@ -8546,7 +8546,7 @@ phases:
   steps:
   - id: release-smoke-live-pi-tui
     name: Run live Pi TUI slash, context, status/widget, and SettingsList smoke
-    status: claimed
+    status: done
     description: 'step_type: verification
 
       verification_scope: full-plan-check
@@ -8804,6 +8804,80 @@ phases:
     agent: client-runtime-verifier
     claimed_by: client-runtime-verifier
     claimed_at: '2026-06-06T09:10:46.075605+00:00'
+    done_at: '2026-06-06T09:15:35.646071+00:00'
+    evidence: '## refs Read Confirmation
+
+      - `docs/TECHNICAL_DESIGN.md#verified-pi-mechanisms` — LIVE_SMOKE_VERIFIED means
+      observed in live Pi process; source/API alone cannot ship support claims.
+
+      - `docs/TECHNICAL_DESIGN.md#testing-gate-matrix` — release smoke uses `npm run
+      test:smoke` against live Pi TUI/process.
+
+      - `docs/PRD.md#9-4-tui` — status footer, widget, and SettingsList controls reflect
+      effective config.
+
+      - `CONSTITUTION.md#ux-and-pi-interaction-red-lines` — Pi/UI mechanisms must
+      be live-verified against real Pi binary/load before support claims.
+
+      - `docs/TECHNICAL_DESIGN.md#data-flow` — startup registers `--dasein` and `/dasein`,
+      context injection, TUI status/widget, SettingsList, and shutdown cleanup.
+
+
+      headline: PASS
+
+      verdict: PASS
+
+      blockers: []
+
+
+      ## Command
+
+      - `npm run test:smoke` exit 0; live Pi smoke gate passed, 1 pass, 0 skipped.
+
+      - Supplementary direct live Pi `/dasein sensors` probe exit 0.
+
+      - Pi binary `/opt/homebrew/bin/pi`, version `0.78.1`, minimum `0.78.1`, host
+      boundary `live-pi-process-not-fake-host`.
+
+
+      ## Artifacts
+
+      - `.dasein/live-pi-smoke/latest/checklist_receipt.json`: 11 total, 11 PROVEN,
+      0 BLOCKED.
+
+      - environment, slash-command, launch-flag, context-injection, event-bus, lifecycle-cleanup,
+      TUI-render, SettingsList persistence, custom-no-api-key, no-fake-host artifacts
+      all present.
+
+
+      ## Coverage
+
+      - bare `/dasein` TUI and outside TUI, `/dasein status`, `/dasein sensors`: PROVEN.
+
+      - `--dasein` launch flag parsing/effect: PROVEN.
+
+      - context hook hidden CustomMessage and LLM conversion: PROVEN.
+
+      - status/widget render and cleanup clearing: PROVEN.
+
+      - SettingsList content/common controls and safe core status toggle persisted
+      through ConfigManager: PROVEN.
+
+      - pi.events `dasein:state:set`/`clear`: PROVEN.
+
+      - lifecycle session_start, before_agent_start/input, agent_end, session_shutdown
+      cleanup: PROVEN.
+
+      - ctx.ui.custom render path: PROVEN.
+
+      - fake-host/source/API-only proof not used as live proof: PROVEN.
+
+      - disposable temp HOME/runtime artifacts and no product mutation: PROVEN.
+
+
+      ## checklist_receipt
+
+      All 18 release-smoke-live-pi-tui checklist items proven.'
   - id: release-smoke-dynamic-reload
     name: Run live Pi dynamic sensor reload smoke
     status: pending
