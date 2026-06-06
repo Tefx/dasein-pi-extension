@@ -16636,7 +16636,7 @@ phases:
       was also migrated to before_agent_start systemPrompt proof and passes.'
 - id: geo_permission_helper
   name: macOS Geo Permission Helper
-  status: in_progress
+  status: done
   gate: Geo helper can trigger/participate in macOS Location Services permission flow
     without exposing exact location by default.
   depends_on:
@@ -16644,7 +16644,7 @@ phases:
   steps:
   - id: geo-permission-app-helper
     name: Add app-bundled macOS location helper path
-    status: claimed
+    status: done
     description: 'Implement a bounded macOS .app bundle helper/probe path so CoreLocation
       requests are attributed to an app with a location usage description instead
       of swift-frontend/raw CLI. Preserve Dasein privacy defaults: exact coordinates/address
@@ -16658,3 +16658,44 @@ phases:
       preserved; commands run and outputs; unresolved live permission state.
     claimed_by: llm-agent-expert
     claimed_at: '2026-06-06T17:08:18.562183+00:00'
+    done_at: '2026-06-06T17:23:37.943869+00:00'
+    evidence: 'Files changed: src/native/macos-location-helper.swift, src/native/macos-location-helper.ts,
+      src/sensors/geo.ts, tests/native/macos-location-helper.test.ts, tests/unit/sensors/geo.test.ts,
+      docs/PRD.md, docs/TECHNICAL_DESIGN.md.
+
+
+      Helper/app-bundle behavior: macOS directory/package runtime now builds/reuses
+      <extension_root>/.dasein/native/DaseinLocationHelper.app with bundle id works.earendil.dasein.location-helper,
+      Info.plist Location Services usage strings, AppKit initialization, and app executable
+      spawn shape <app>/Contents/MacOS/DaseinLocationHelper --once. Swift helper now
+      waits for CoreLocation authorization callback before requestLocation. Single-file
+      packaged fallback remains fail-closed unless a materialized helper path exists.
+
+
+      Privacy defaults preserved: geo defaults remain enabled=false, ui=true, agent=false,
+      city precision, exactAddress=false, exactCoordinates=false. Tests still prove
+      exact coordinate/address output requires explicit exact gates.
+
+
+      Commands run and outputs:
+
+      - npm run typecheck -> exit 0
+
+      - npm run test:file -- tests/unit/sensors/geo.test.ts tests/native/macos-location-helper.test.ts
+      -> 9 pass, 0 fail
+
+      - npm test -> 157 pass, 0 fail
+
+      - npm run test:native -> 3 pass, 1 skipped, 0 fail
+
+      - npm run test:smoke -> 3 pass, 0 fail
+
+      - git diff --check -> exit 0
+
+
+      Live permission state: temporary AppKit app-bundle probe returned ok:true after
+      the user clicked Allow, proving the app-bundle authorization path works. The
+      new production bundle works.earendil.dasein.location-helper is generated and
+      registered but currently reports timeout/not_determined until the user allows
+      the new ''Dasein Location Helper'' entry in Location Services; no exact coordinates/address
+      are reported in evidence.'
