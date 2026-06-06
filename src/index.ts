@@ -31,7 +31,7 @@ export type * from "./core/renderer.ts";
 export type * from "./core/injector.ts";
 export type * from "./core/external-events.ts";
 export type * from "./core/lifecycle.ts";
-export type * from "./commands/dasein-command.ts";
+export * from "./commands/dasein-command.ts";
 export {
   CORE_INJECTED_LABEL_CONSTRAINT,
   CORE_MAX_AGENT_CHARS_CONSTRAINT,
