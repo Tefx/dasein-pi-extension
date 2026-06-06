@@ -119,7 +119,7 @@ export interface DaseinReloadCommandResult {
 
 export interface CreateDaseinLifecycleInput {
   cleanupTimeoutMs?: number;
-  runtimes?: readonly { abortActiveRefreshes?: () => number }[];
+  runtimes?: readonly { abortActiveRefreshes?: () => number; stopRecurringRefreshes?: () => void }[];
   helpers?: readonly { abort?: () => void; terminate?: () => void; kill?: () => void }[];
   cleanupHandlers?: readonly (() => Promise<void> | void)[];
 }
@@ -220,6 +220,7 @@ export const createDaseinLifecycle = (input: CreateDaseinLifecycleInput = {}): D
       for (const runtime of input.runtimes ?? []) {
         try {
           runtime.abortActiveRefreshes?.();
+          runtime.stopRecurringRefreshes?.();
         } catch (error) {
           errors.push(error);
         }

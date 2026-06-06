@@ -7,7 +7,7 @@
  * the typed-state envelope before it can enter storage/rendering.
  */
 
-import { delay, nextTurn } from "./runtime-timers.ts";
+import { cancelRuntimeTimer, delayUntilAbort, nextTurn, scheduleRuntimeTimer, type RuntimeTimer } from "./runtime-timers.ts";
 
 import type {
   SensorAction,
@@ -121,6 +121,7 @@ export interface SensorRuntimeHarness {
   commitAttemptCount(): number;
   read(now: number): { status: "enabled" | "disabled" | "stale" | "error"; mutatedStore: false };
   abortActiveRefreshes(): number;
+  stopRecurringRefreshes(): void;
   getSnapshot(): SensorSnapshot | null;
 }
 
@@ -131,6 +132,7 @@ export interface LapseLifecycleObservationResult {
 }
 
 const DEFAULT_STALE_AFTER_MS = 120000;
+const DEFAULT_TIMEOUT_MS = 2000;
 
 export const normalizeSensorRefreshResult = <TState = unknown>(input: NormalizeSensorRefreshInput<TState>): SensorSnapshot => {
   const metadata = input.metadata ?? {};
@@ -177,11 +179,77 @@ export const createSensorRuntime = (input: CreateSensorRuntimeInput): SensorRunt
   let generation = 0;
   let snapshot: SensorSnapshot | null = null;
   let pendingReason: string | null = null;
+  let recurringTimer: RuntimeTimer | null = null;
+  let recurringStopped = false;
   const now = input.now ?? (() => 1_000);
   let config: SensorConfig = input.config ?? { enabled: true, ui: true, agent: true, staleAfterMs: input.staleAfterMs ?? DEFAULT_STALE_AFTER_MS };
-  const staleAfterMs = input.staleAfterMs ?? config.staleAfterMs ?? DEFAULT_STALE_AFTER_MS;
   const source = input.source ?? { sensor_id: input.sensorKey, source_kind: "builtin" as const };
   const outputFields = input.outputFields ?? [{ state_key: `${input.sensorKey}.value`, value_type: "string" as const }];
+
+  const currentIntervalMs = (): number | null =>
+    typeof config.intervalMs === "number" && Number.isInteger(config.intervalMs) && config.intervalMs > 0 ? config.intervalMs : null;
+
+  const currentStaleAfterMs = (): number => {
+    if (typeof input.staleAfterMs === "number" && Number.isInteger(input.staleAfterMs) && input.staleAfterMs > 0) return input.staleAfterMs;
+    if (typeof config.staleAfterMs === "number" && Number.isInteger(config.staleAfterMs) && config.staleAfterMs > 0) return config.staleAfterMs;
+    const intervalMs = currentIntervalMs();
+    return intervalMs === null ? DEFAULT_STALE_AFTER_MS : intervalMs * 2;
+  };
+
+  const currentTimeoutMs = (): number =>
+    typeof config.timeoutMs === "number" && Number.isInteger(config.timeoutMs) && config.timeoutMs > 0 ? config.timeoutMs : DEFAULT_TIMEOUT_MS;
+
+  const clearRecurringTimer = (): void => {
+    if (recurringTimer !== null) {
+      cancelRuntimeTimer(recurringTimer);
+      recurringTimer = null;
+    }
+  };
+
+  const scheduleNextRecurring = (): void => {
+    clearRecurringTimer();
+    if (recurringStopped || config.enabled !== true) return;
+    const intervalMs = currentIntervalMs();
+    if (intervalMs === null) return;
+    recurringTimer = scheduleRuntimeTimer(() => {
+      recurringTimer = null;
+      void refreshNow({ reason: "interval" });
+    }, intervalMs, { unref: true });
+  };
+
+  const queueFollowUpRefresh = (reason: string): void => {
+    scheduleRuntimeTimer(() => {
+      void refreshNow({ reason });
+    }, 0);
+  };
+
+  const commitSnapshotForRefresh = (nextSnapshot: SensorSnapshot): void => {
+    snapshot = nextSnapshot;
+    input.onCommit?.(nextSnapshot);
+    commitAttempts += 1;
+  };
+
+  const commitTimeoutSnapshot = (refreshGeneration: number, startedAt: number, timeoutError: SensorError): SensorActionRefreshResult => {
+    const finishedAt = now();
+    if (refreshGeneration === generation) {
+      const staleAfterMs = currentStaleAfterMs();
+      commitSnapshotForRefresh(normalizeSensorRefreshResult({
+        sensorKey: input.sensorKey,
+        fields: makeErrorFields(input.sensorKey, outputFields, collectedAtForTest(finishedAt), staleAfterMs, source, timeoutError),
+        outputFields,
+        collectedAt: collectedAtForTest(finishedAt),
+        staleAfterMs,
+        source,
+        status: "error",
+        error: timeoutError,
+        startedAt,
+        finishedAt,
+        generation: refreshGeneration,
+        timedOut: true,
+      }));
+    }
+    return { ok: false, snapshot, error: timeoutError };
+  };
 
   const refreshNow = async (options: { reason: string; durationMs?: number; generation?: number; bypassBackoff?: boolean }): Promise<SensorActionRefreshResult> => {
     if (activeController !== null) {
@@ -190,36 +258,66 @@ export const createSensorRuntime = (input: CreateSensorRuntimeInput): SensorRunt
         ? { ok: false, snapshot, error: { kind: "unknown", message: "refresh already active; follow-up coalesced" } }
         : { ok: true, snapshot, fresh: true });
     }
+    if (config.enabled !== true) {
+      return { ok: false, snapshot, error: { kind: "config", message: `${input.sensorKey} sensor is disabled` } };
+    }
 
+    clearRecurringTimer();
     const controller = new AbortController();
     activeController = controller;
     activeRefreshes = 1;
     generation = options.generation ?? generation + 1;
     const refreshGeneration = generation;
     const startedAt = now();
-    await delay(options.durationMs ?? 0);
-    const finishedAt = now();
+    let timeoutTimer: RuntimeTimer | null = null;
+    const timeoutError: SensorError = { kind: "timeout", message: `${input.sensorKey} refresh timed out after ${currentTimeoutMs()}ms` };
 
-    try {
-      if (!controller.signal.aborted && refreshGeneration === generation) {
+    const performRefresh = async (): Promise<SensorActionRefreshResult> => {
+      try {
+        await delayUntilAbort(options.durationMs ?? 0, controller.signal);
+        if (controller.signal.aborted || refreshGeneration !== generation) {
+          return { ok: false, snapshot, error: { kind: "unknown", message: "refresh aborted before collection" } };
+        }
         const refreshReturn = input.refresh === undefined
           ? { value: "Fri_14:32+08" }
           : await input.refresh({ config, signal: controller.signal, now }, snapshot);
-        const normalizedInput = refreshReturnToNormalizeInput(input.sensorKey, refreshReturn, outputFields, collectedAtForTest(startedAt), staleAfterMs, source, startedAt, finishedAt, refreshGeneration, input.normalizeState);
-        snapshot = normalizeSensorRefreshResult(normalizedInput);
-        input.onCommit?.(snapshot);
-        commitAttempts += 1;
+        const finishedAt = now();
+        if (controller.signal.aborted || refreshGeneration !== generation) {
+          return { ok: false, snapshot, error: { kind: "unknown", message: "refresh aborted before commit" } };
+        }
+        const normalizedInput = refreshReturnToNormalizeInput(input.sensorKey, refreshReturn, outputFields, collectedAtForTest(startedAt), currentStaleAfterMs(), source, startedAt, finishedAt, refreshGeneration, input.normalizeState);
+        commitSnapshotForRefresh(normalizeSensorRefreshResult(normalizedInput));
+        return snapshot === null
+          ? { ok: false, snapshot, error: { kind: "unknown", message: "refresh produced no committed snapshot" } }
+          : { ok: true, snapshot, fresh: true };
+      } catch (error) {
+        const sensorError: SensorError = controller.signal.aborted
+          ? timeoutError
+          : { kind: "unknown", message: error instanceof Error ? error.message : String(error) };
+        return { ok: false, snapshot, error: sensorError };
       }
-      return snapshot === null
-        ? { ok: false, snapshot, error: { kind: "unknown", message: "refresh produced no committed snapshot" } }
-        : { ok: true, snapshot, fresh: true };
-    } catch (error) {
-      const sensorError: SensorError = { kind: "unknown", message: error instanceof Error ? error.message : String(error) };
-      return { ok: false, snapshot, error: sensorError };
+    };
+
+    const timeout = new Promise<SensorActionRefreshResult>((resolve) => {
+      timeoutTimer = scheduleRuntimeTimer(() => {
+        controller.abort();
+        resolve(commitTimeoutSnapshot(refreshGeneration, startedAt, timeoutError));
+      }, currentTimeoutMs());
+    });
+
+    try {
+      return await Promise.race([performRefresh(), timeout]);
     } finally {
+      if (timeoutTimer !== null) cancelRuntimeTimer(timeoutTimer);
       activeController = null;
       activeRefreshes = 0;
+      const followUpReason = pendingReason;
       pendingReason = null;
+      if (followUpReason !== null && !recurringStopped) {
+        queueFollowUpRefresh(followUpReason);
+      } else {
+        scheduleNextRecurring();
+      }
     }
   };
 
@@ -231,21 +329,33 @@ export const createSensorRuntime = (input: CreateSensorRuntimeInput): SensorRunt
     if (observed === null) return null;
     const finishedAt = now();
     generation += 1;
-    const normalizedInput = refreshReturnToNormalizeInput(input.sensorKey, observed, outputFields, collectedAtForTest(startedAt), staleAfterMs, source, startedAt, finishedAt, generation, input.normalizeState);
-    snapshot = normalizeSensorRefreshResult(normalizedInput);
-    input.onCommit?.(snapshot);
-    commitAttempts += 1;
-    return { ok: true, snapshot, fresh: true };
+    const normalizedInput = refreshReturnToNormalizeInput(input.sensorKey, observed, outputFields, collectedAtForTest(startedAt), currentStaleAfterMs(), source, startedAt, finishedAt, generation, input.normalizeState);
+    const committed = normalizeSensorRefreshResult(normalizedInput);
+    commitSnapshotForRefresh(committed);
+    return { ok: true, snapshot: committed, fresh: true };
   };
+
+  const stopRecurringRefreshes = (): void => {
+    recurringStopped = true;
+    clearRecurringTimer();
+    pendingReason = null;
+  };
+
+  scheduleNextRecurring();
 
   return {
     refreshNow,
     observeEvent,
     scheduleRefresh: (reason: string): void => {
-      pendingReason = reason;
+      if (activeController !== null) {
+        pendingReason = reason;
+        return;
+      }
+      queueFollowUpRefresh(reason);
     },
     setConfig: (nextConfig: SensorConfig): void => {
       config = nextConfig;
+      scheduleNextRecurring();
     },
     commitSnapshot: (nextSnapshot: SensorSnapshot): void => {
       snapshot = nextSnapshot;
@@ -259,11 +369,16 @@ export const createSensorRuntime = (input: CreateSensorRuntimeInput): SensorRunt
       return { status: snapshot.status, mutatedStore: false };
     },
     abortActiveRefreshes: () => {
-      if (activeController === null) return 0;
+      clearRecurringTimer();
+      if (activeController === null) {
+        pendingReason = null;
+        return 0;
+      }
       activeController.abort();
       pendingReason = null;
       return 1;
     },
+    stopRecurringRefreshes,
     getSnapshot: () => snapshot,
   };
 };
@@ -318,6 +433,27 @@ export const observeLapseLifecycle = async (events: readonly SensorObservationEv
     requestPathIo: false,
   };
 };
+
+const makeErrorFields = (
+  sensorKey: string,
+  outputFields: readonly { state_key: string; value_type: SensorValueType }[],
+  collectedAt: number,
+  staleAfterMs: number,
+  source: SensorStateSource,
+  error: SensorError,
+): Record<string, SensorStateField> => Object.fromEntries(
+  outputFields.map((field) => [field.state_key, makeField({
+    sensorKey,
+    stateKey: field.state_key,
+    value: null,
+    valueType: "null",
+    collectedAt,
+    staleAfterMs,
+    source,
+    status: "error",
+    error,
+  })]),
+);
 
 const refreshReturnToNormalizeInput = (
   sensorKey: string,

@@ -479,12 +479,6 @@ class DaseinAmbientContextBroker {
     const result = this.externalBridge.set(payload);
     if (!result.ok) return;
     this.stateStore.setExternalState(result.snapshot);
-    if (result.snapshot.agent !== null || result.snapshot.ui !== null) {
-      this.config.external[result.snapshot.key] = {
-        ui: result.snapshot.ui !== null,
-        agent: result.snapshot.agent !== null,
-      };
-    }
     this.renderOnly();
   }
 

@@ -169,11 +169,11 @@ test("[expected-red] context hook appends a hidden Dasein CustomMessage converte
   assert.match(content, /^\[ambient_ctx:/u);
 });
 
-test("[expected-red] pi.events external state updates are subscribed, sanitized, and reflected through context", async () => {
-  const host = await registerInFakeHost();
-  await invokeFakeLifecycle(host, "session_start");
+test("pi.events external state keeps unconfigured agent payload hidden until ConfigManager-owned visibility enables it", async () => {
+  const defaultHiddenHost = await registerInFakeHost();
+  await invokeFakeLifecycle(defaultHiddenHost, "session_start");
 
-  host.pi.events.emit("dasein:state:set", {
+  defaultHiddenHost.pi.events.emit("dasein:state:set", {
     key: "weather",
     agent: "rain soon",
     ui: "weather rain soon",
@@ -181,11 +181,58 @@ test("[expected-red] pi.events external state updates are subscribed, sanitized,
     ttlMs: 60_000,
   });
 
+  const hiddenContextEvent: MutableContextEvent = { messages: [] };
+  await invokeFakeLifecycle(defaultHiddenHost, "context", hiddenContextEvent);
+
+  assert.equal(hiddenContextEvent.messages.length, 1);
+  assert.doesNotMatch(messageContent(hiddenContextEvent.messages[0]), /weather|rain/u);
+
+  const launchVisibleHost = await registerInFakeHost({ dasein: "external.weather.agent=true" });
+  await invokeFakeLifecycle(launchVisibleHost, "session_start");
+  launchVisibleHost.pi.events.emit("dasein:state:set", {
+    key: "weather",
+    agent: "rain soon",
+    ui: "weather rain soon",
+    source: "test-fixture",
+    ttlMs: 60_000,
+  });
+
+  const visibleContextEvent: MutableContextEvent = { messages: [] };
+  await invokeFakeLifecycle(launchVisibleHost, "context", visibleContextEvent);
+
+  assert.equal(visibleContextEvent.messages.length, 1);
+  assert.match(messageContent(visibleContextEvent.messages[0]), /weather=rain soon/u);
+});
+
+test("pi.events malformed Unicode-separator external updates preserve previous state without mutation", async () => {
+  const host = await registerInFakeHost({ dasein: "external.weather.agent=true" });
+  await invokeFakeLifecycle(host, "session_start");
+
+  host.pi.events.emit("dasein:state:set", {
+    key: "weather",
+    agent: "safe rain",
+    ui: "safe weather",
+    source: "test-fixture",
+    ttlMs: 60_000,
+  });
+
+  for (const separator of ["\u2028", "\u2029"] as const) {
+    host.pi.events.emit("dasein:state:set", {
+      key: "weather",
+      agent: `bad${separator}rain`,
+      ui: "bad weather",
+      source: "test-fixture",
+      ttlMs: 60_000,
+    });
+  }
+
   const contextEvent: MutableContextEvent = { messages: [] };
   await invokeFakeLifecycle(host, "context", contextEvent);
 
   assert.equal(contextEvent.messages.length, 1);
-  assert.match(messageContent(contextEvent.messages[0]), /weather|rain/u);
+  const content = messageContent(contextEvent.messages[0]);
+  assert.match(content, /weather=safe rain/u);
+  assert.doesNotMatch(content, /bad|weather=bad/u);
 });
 
 test("[expected-red] TUI session start publishes status and widget only through ctx.ui in tui mode", async () => {
