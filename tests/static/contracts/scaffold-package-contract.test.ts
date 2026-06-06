@@ -68,7 +68,12 @@ test("required npm scripts preserve the Technical Design command shapes", () => 
   assert.match(testRunner, /--import", "tsx", "--test"/u);
   assert.match(testRunner, /endsWith\("\.test\.ts"\)/u);
   assert.equal(packageJson.scripts?.["test:file"], "node --import tsx --test");
-  assert.equal(packageJson.scripts?.["test:native"], "node --import tsx --test tests/native/**/*.test.ts");
+  assert.equal(packageJson.scripts?.["test:native"], "node scripts/run-native-tests.mjs");
+  const nativeTestRunner = readText("scripts/run-native-tests.mjs");
+  assert.match(nativeTestRunner, /tests\/native/u);
+  assert.doesNotMatch(nativeTestRunner, /tests\/smoke/u);
+  assert.match(nativeTestRunner, /--import", "tsx", "--test"/u);
+  assert.match(nativeTestRunner, /endsWith\("\.test\.ts"\)/u);
   assert.equal(packageJson.scripts?.["test:smoke"], "node --import tsx --test tests/smoke/**/*.test.ts");
 });
 

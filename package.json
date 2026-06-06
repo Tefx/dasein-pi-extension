@@ -19,7 +19,7 @@
     "test": "node scripts/run-non-native-tests.mjs",
     "test:file": "node --import tsx --test",
     "pretest:native": "node scripts/prepare-native-test-env.mjs",
-    "test:native": "node --import tsx --test tests/native/**/*.test.ts",
+    "test:native": "node scripts/run-native-tests.mjs",
     "test:smoke": "node --import tsx --test tests/smoke/**/*.test.ts"
   },
   "devDependencies": {
