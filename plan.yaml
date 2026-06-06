@@ -9599,26 +9599,26 @@ phases:
       proof must include before/after canonical config evidence, not only rendered
       text. 3. Status/widget proof must demonstrate rendered/user-observable surface
       or a precise Pi limitation with an independently reviewable alternative.</risk_probes>'
-    verification: '- [ ] `npm run test:smoke` raw stdout/stderr shows live Pi smoke
+    verification: '- [x] `npm run test:smoke` raw stdout/stderr shows live Pi smoke
       no longer exits via scaffold skip when live Pi prerequisites are present; if
       blocked, output names exact missing binary/version/TUI/extension path/permission/command.
 
-      - [ ] Smoke evidence covers literal `/dasein`, context injection, status/widget,
+      - [x] Smoke evidence covers literal `/dasein`, context injection, status/widget,
       and SettingsList live surfaces using the real Pi binary/process path when available.
 
-      - [ ] SettingsList proof includes deterministic documented interaction path
+      - [x] SettingsList proof includes deterministic documented interaction path
       plus before/after canonical config evidence under a disposable HOME/Pi config
       root, or an exact implementation blocker that the downstream live-smoke step
       can retest.
 
-      - [ ] Status/widget proof includes rendered footer/widget visual/snapshot/terminal
+      - [x] Status/widget proof includes rendered footer/widget visual/snapshot/terminal
       artifact, or explicit Pi limitation plus an acceptable alternative artifact
       proving user-observable surface.
 
-      - [ ] Evidence explicitly separates live Pi proof from fake-host/API/source
+      - [x] Evidence explicitly separates live Pi proof from fake-host/API/source
       proof and does not upgrade unobserved mechanisms to live support.
 
-      - [ ] Disposable runtime/config paths and cleanup/reset proof are included for
+      - [x] Disposable runtime/config paths and cleanup/reset proof are included for
       any live interaction mutation.'
     evidence_template: "## refs Read Confirmation (MANDATORY)\nFor each ref in this\
       \ step:\n- tests/smoke/contracts/live-pi-smoke-gate-contract.test.ts — <key\
