@@ -1633,20 +1633,20 @@ phases:
       work and aggregate cleanup errors without blocking request construction.
 
       '
-    verification: '- [ ] `npm run test:file -- tests/unit/sensor-loader.test.ts tests/unit/reload.test.ts
+    verification: '- [x] `npm run test:file -- tests/unit/sensor-loader.test.ts tests/unit/reload.test.ts
       tests/unit/install-mode.test.ts tests/unit/sensor-runtime.test.ts tests/unit/lifecycle.test.ts`
       passes with raw output.
 
-      - [ ] Evidence proves default-export-only SensorSpec validation, duplicate/reserved
+      - [x] Evidence proves default-export-only SensorSpec validation, duplicate/reserved
       key failures, install-mode behavior, and all-or-keep-old reload.
 
-      - [ ] Evidence proves every committed snapshot/field uses only the typed-state
+      - [x] Evidence proves every committed snapshot/field uses only the typed-state
       envelope and raw sensor properties are dropped or rejected.
 
-      - [ ] Evidence proves observe/refresh/cleanup paths do not perform request-path
+      - [x] Evidence proves observe/refresh/cleanup paths do not perform request-path
       I/O and no automatic file watcher exists.
 
-      - [ ] Evidence proves sensor lifecycle cleanup uses `1000ms` per-sensor timeout,
+      - [x] Evidence proves sensor lifecycle cleanup uses `1000ms` per-sensor timeout,
       aborts active refreshes, and aggregates cleanup errors deterministically.
 
       '
