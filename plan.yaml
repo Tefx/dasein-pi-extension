@@ -258,19 +258,19 @@ phases:
       package/static checks are insufficient.
 
       '
-    verification: '- [ ] Test scope is limited to tests/ and fake fixtures plus contract
+    verification: '- [x] Test scope is limited to tests/ and fake fixtures plus contract
       stubs.
 
-      - [ ] Expected-red output or documented exposed gaps show missing scaffold behavior
+      - [x] Expected-red output or documented exposed gaps show missing scaffold behavior
       before completion.
 
-      - [ ] Tests assert root shim delegation, required npm scripts, dependency policy,
+      - [x] Tests assert root shim delegation, required npm scripts, dependency policy,
       and fake-host recording shape.
 
-      - [ ] Expected-red static tests assert symlinked `~/.pi/agent/extensions/dasein`
+      - [x] Expected-red static tests assert symlinked `~/.pi/agent/extensions/dasein`
       load and root `index.ts` shim delegation exactly.
 
-      - [ ] Expected-red static tests assert SettingsList/getSettingsListTheme imports
+      - [x] Expected-red static tests assert SettingsList/getSettingsListTheme imports
       resolve only through approved Pi peer dependency paths.
 
       '
