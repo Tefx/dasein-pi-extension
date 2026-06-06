@@ -7294,7 +7294,7 @@ phases:
     claimed_at: '2026-06-06T07:23:30.850750+00:00'
   - id: pi-runtime-spec-conformance
     name: Verify Pi runtime spec conformance
-    status: pending
+    status: claimed
     description: 'step_type: verification
 
       verification_scope: phase-check
@@ -7457,6 +7457,8 @@ phases:
     - pi-runtime-extension-wiring
     - pi-runtime-tui-surfaces
     agent: spec-verifier
+    claimed_by: spec-verifier
+    claimed_at: '2026-06-06T07:23:39.766137+00:00'
   - id: pi-runtime-gate
     name: Gate Pi runtime and fake-host surfaces
     status: pending
