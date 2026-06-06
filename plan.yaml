@@ -8277,13 +8277,11 @@ phases:
       - [ ] Gate decision basis confirms no production-wired placeholders/stubs remain
       without an accepted non-production justification.
 
-      - [ ] Fake-host E2E proof and ordinary CI proof are present; live Pi/native
-      smoke is not claimed and remains owned by release_smoke.
+      - [ ] Fake-host E2E proof, native test discovery proof, and ordinary CI proof
+      are present; live Pi/native smoke is not claimed and remains owned by release_smoke.
 
       - [ ] Final gate verdict is OPEN or BLOCKED with explicit blockers and required
-      actions.
-
-      '
+      actions.'
     evidence_template: "## refs Read Confirmation (MANDATORY)\nFor each exact refs\
       \ entry listed on this step, provide a key passage or `NOT READ: <reason>`.\n\
       Machine-checkable refs inventory generated from this step refs:\n- `CONSTITUTION.md#testing-and-gates`\
@@ -8320,6 +8318,7 @@ phases:
     - docs/TECHNICAL_DESIGN.md#verified-pi-mechanisms
     depends_on:
     - system-wiring-e2e-fake-host
+    - system-wiring-native-test-discovery-fix
     - system-wiring-ordinary-ci
     - system-wiring-stub-replacement
     agent: gate-reviewer
