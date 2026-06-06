@@ -13,18 +13,27 @@ strategy_ref: Approved architecture_basis from user prompt; Constitution + PRD +
 context: Implementation DAG for greenfield TypeScript Dasein Pi extension using approved
   architecture_basis; work_type=new_capability; style=balanced with runtime/liveness
   gates.
-project_guidance: 'Constitution-bound execution guidance: Dasein must remain a minimal,
-  local, dependency-light Pi extension with zero non-Pi external runtime npm dependencies;
-  core owns typed-state normalization, deterministic ordering, truncation, budgets,
-  rendering, and context injection; Pi extension/UI shell owns Pi command/TUI plumbing;
-  sensors publish only the typed-state envelope and must not own final prompt formatting,
-  ordering, or config mutation; user-added sensors load only from explicit local <extension_root>/src/sensors/*.ts
-  files in directory/package mode and discovery must be explicit/inspectable; automatic
-  file watchers must not be introduced; reload and sensor failures must preserve safe
-  old state and surface typed load/status evidence; Pi extension boundary claims require
-  live Pi binary/runtime proof, not mock-only evidence; release smoke evidence must
-  preserve exact commands, fixture paths, raw stdout/stderr, cleanup proof, and live-vs-fake
-  support-claim separation.'
+project_guidance: 'Constitutional constraints for all downstream agents: Dasein is
+  a standalone local Pi ambient context broker/sensor framework, not a time/space
+  plugin, memory product, ranking/policy/workflow engine, or plugin marketplace. Keep
+  architecture minimal, local, dependency-light, and loadable as a Pi extension from
+  ~/.pi/agent/extensions/dasein. Core owns typed-state normalization, deterministic
+  ordering, render budgets/truncation, renderable view models, and Pi context injection;
+  sensors publish typed state only and must not own final prompt text, injection order,
+  priority, config mutation, or hidden fields. Configuration is global-only under
+  ~/.pi/dasein/ with precedence defaults < global disk config < launch args < slash/UI
+  runtime changes; do not read implicit project-local config or infer project behavior
+  from cwd/repo files. Request-path injection must be read-only and must not perform
+  disk I/O, subprocess, network, dynamic import, sensor refresh/action/cleanup/discovery,
+  or config mutation. Enabled sensors and injected fields must be human-visible and
+  traceable; remote/network-capable sensors are default-off and require explicit human-visible
+  opt-in. Builtin sensors are limited to clock, geo, and lapse; continuity is lapse
+  semantics, not a separate sensor. User-added sensors load only from explicit configured
+  local sensor files, are inspectable, and do not run recurring work by default. Mock
+  tests are not integration proof; Pi extension boundaries and UI/Pi mechanisms require
+  live Pi or equivalent binary-path evidence before support claims. Documentation
+  must preserve these boundaries and not amend CONSTITUTION.md without explicit human
+  approval and amendment evidence.'
 phases:
 - id: scaffold
   name: Scaffold and Contract Foundation
