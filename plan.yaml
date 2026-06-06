@@ -1550,7 +1550,7 @@ phases:
     claimed_at: '2026-06-06T04:28:37.970857+00:00'
   - id: core-sensor-runtime-loader
     name: Complete sensor loader, runtime, and lifecycle core
-    status: pending
+    status: claimed
     description: 'step_type: implementation
 
       Fill in stub bodies in src/core/sensor-loader.ts, src/core/sensor-runtime.ts,
@@ -1658,6 +1658,8 @@ phases:
     - core-tests
     - core-behavior-guardrails
     agent: frontend-engineer
+    claimed_by: frontend-engineer
+    claimed_at: '2026-06-06T04:28:48.452153+00:00'
   - id: core-renderer-injector-external
     name: Complete renderer, injector, and external event intake
     status: claimed
