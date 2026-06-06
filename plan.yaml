@@ -16069,3 +16069,130 @@ phases:
       ## checklist_receipt
 
       All thirteen checklist items proven and toggled. Blockers: none.'
+  - id: finalization-status-output-contract-blocker-fix
+    name: Fix final status output contract blocker
+    status: pending
+    description: 'step_type: implementation
+
+      Fix final gate blocker B-FINAL-001: production `/dasein status` output currently
+      omits required status inspectability fields proven by live artifact. Populate
+      production status output with hidden/disabled contributor records and effective
+      lapse enabled/persist/agent controls required by PRD/Technical Design, without
+      weakening fake/live proof separation or release gate vocabulary.
+
+      <side_effect_budget>Allowed: modify production status payload/formatting and
+      focused tests. Forbidden: changing final release verdict vocabulary; weakening
+      privacy defaults; making fake-host evidence claim live support.</side_effect_budget>
+
+      <risk_probes>1. Production status must not rely on fixture-only hiddenContributors
+      defaults. 2. Lapse controls must reflect effective config, not stale defaults.
+      3. Live smoke artifacts must show fields without overclaiming unsupported Pi
+      mechanisms.</risk_probes>
+
+
+      B-FINAL-001 evidence from gate-reviewer:
+
+      - Requirement refs: docs/PRD.md:591 and 795 require `/dasein status` to show
+      effective config, sensor health/freshness, lapse persistence health/presence.
+
+      - docs/TECHNICAL_DESIGN.md:983 requires disabled/hidden contributors inspectable.
+
+      - docs/TECHNICAL_DESIGN.md:1467 requires disabled/hidden contributors and effective
+      lapse collection/persistence/injection controls.
+
+      - Observed: `src/index.ts:997-1015` builds status without hiddenContributors
+      or effective lapse enabled/persist/agent controls.
+
+      - Observed: `src/commands/dasein-command.ts:857-859` defaults hiddenContributors
+      to [] when production does not supply it.
+
+      - Observed live artifact `.dasein/live-pi-smoke/latest/slash-command-proof.json`:
+      hiddenContributors=[], disabledSensors=[geo], lapse metadata keys omit persist
+      and agent config.
+
+
+      Also investigate W-FINAL-001 flake risk: first `npm test` in final gate failed
+      ENOENT for lapse async test fixture sensor directory, rerun passed. Fix fixture
+      cleanup/isolation if reproducible or evident.'
+    verification: '- [ ] refs confirmation cites status output contract, hidden contributor
+      inspectability, lapse controls, and testing/live proof separation.
+
+      - [ ] Production `/dasein status` includes non-empty hidden contributor records
+      when configured hidden contributors exist, not only fixture defaults.
+
+      - [ ] Production `/dasein status` includes effective lapse collection/persistence/injection
+      controls: enabled/persist/agent (or exact documented names preserving semantics).
+
+      - [ ] Live smoke/status proof artifacts include the required fields without
+      changing release gate verdict vocabulary.
+
+      - [ ] Fixture-only tests are supplemented by production-path status assertions
+      for hidden contributors and lapse controls.
+
+      - [ ] W-FINAL-001 ENOENT flake is investigated; either fixed or evidence explains
+      non-reproducible/non-blocking disposition with test isolation proof.
+
+      - [ ] `npm run typecheck` exits 0 with raw output.
+
+      - [ ] Focused status/live-smoke/lapse fixture tests exit 0 with raw output.
+
+      - [ ] `npm test` exits 0 with raw output.
+
+      - [ ] `npm run test:smoke` exits 0 with raw output.'
+    refs:
+    - CONSTITUTION.md
+    - docs/PRD.md
+    - docs/TECHNICAL_DESIGN.md
+    depends_on:
+    - finalization-sensor-action-lapse-durable-blockers-retest
+    agent: frontend-engineer
+  - id: finalization-status-output-contract-blocker-retest
+    name: Retest final status output contract blocker
+    status: pending
+    description: 'step_type: verification
+
+      Independently retest B-FINAL-001 status output contract blocker and W-FINAL-001
+      flake disposition after the fix. This is read-only verification.
+
+      <side_effect_budget>Allowed: read/run tests. Forbidden: changing production
+      code/docs/tests or waiving blocker without proof.</side_effect_budget>
+
+      <risk_probes>1. Production status proof must cover real extension output path,
+      not only command formatter fixtures. 2. Hidden contributor/lapse control fields
+      must survive live smoke artifact capture. 3. Any rerun-only flake must be classified
+      with evidence, not ignored.</risk_probes>'
+    verification: '- [ ] refs confirmation cites status output contract, hidden contributor
+      inspectability, lapse controls, and testing/live proof separation.
+
+      - [ ] Independent proof shows production `/dasein status` includes hidden contributor
+      records and disabled contributor inspectability when applicable.
+
+      - [ ] Independent proof shows production `/dasein status` includes effective
+      lapse enabled/persist/agent controls.
+
+      - [ ] Independent proof shows live smoke/status artifact includes required fields
+      without false live support overclaim and without altering release gate verdict
+      vocabulary.
+
+      - [ ] Independent proof addresses W-FINAL-001 flake: repeated/focused lapse
+      async tests pass or exact blocker is reported.
+
+      - [ ] `npm run typecheck` exits 0 with raw output.
+
+      - [ ] focused status/lapse/live-smoke tests exit 0 with raw output.
+
+      - [ ] `npm test` exits 0 with raw output.
+
+      - [ ] `npm run test:native` exits 0 or accepted skip semantics with raw output.
+
+      - [ ] `npm run test:smoke` exits 0 with raw output.
+
+      - [ ] Behavioral proof register marks B-FINAL-001 PROVEN and W-FINAL-001 PROVEN
+      or NON_BLOCKING_WITH_EVIDENCE; any BLOCKED row prevents final gate.'
+    refs:
+    - CONSTITUTION.md
+    - docs/PRD.md
+    - docs/TECHNICAL_DESIGN.md
+    depends_on:
+    - finalization-status-output-contract-blocker-fix
+    agent: integration-verifier
