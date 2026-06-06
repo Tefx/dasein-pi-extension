@@ -3181,7 +3181,7 @@ phases:
       weakened, B1 closed.'
   - id: core-gate-blocker-fix
     name: Fix ordinary npm test and SettingsList matrix blockers
-    status: pending
+    status: claimed
     description: 'step_type: implementation
 
       agent_source: project
@@ -3332,6 +3332,8 @@ phases:
     - core-behavior-guardrails
     - core-static-boundary-retest
     agent: frontend-engineer
+    claimed_by: frontend-engineer
+    claimed_at: '2026-06-06T05:10:52.324717+00:00'
   - id: core-gate-blocker-retest
     name: Retest core gate blockers B2 and B3
     status: pending
