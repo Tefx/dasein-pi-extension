@@ -5485,39 +5485,39 @@ phases:
       cleanup evidence.
 
       '
-    verification: '- [ ] All sensors phase steps are complete with refs confirmations
+    verification: '- [x] All sensors phase steps are complete with refs confirmations
       and checklist receipts.
 
-      - [ ] Gate decision basis maps clock, geo, lapse, native helper, and user-added
+      - [x] Gate decision basis maps clock, geo, lapse, native helper, and user-added
       manifest/risk obligations to positive evidence or remediation.
 
-      - [ ] No unresolved sensors blocker intersects pi_runtime, system_wiring, release_smoke,
+      - [x] No unresolved sensors blocker intersects pi_runtime, system_wiring, release_smoke,
       or finalization gates without remediation ownership.
 
-      - [ ] SENSORS-GATE-BLOCKER-001 is reviewed against `sensors-renderer-geo-privacy-retest`
+      - [x] SENSORS-GATE-BLOCKER-001 is reviewed against `sensors-renderer-geo-privacy-retest`
       evidence and is PROVEN closed before any OPEN recommendation.
 
-      - [ ] Final gate verdict is OPEN or BLOCKED with explicit blockers and required
+      - [x] Final gate verdict is OPEN or BLOCKED with explicit blockers and required
       actions.
 
-      - [ ] Gate decision basis reviews builtin/first-party sensor top-level side-effect
+      - [x] Gate decision basis reviews builtin/first-party sensor top-level side-effect
       proof and blocks if import-time side effects remain.
 
-      - [ ] Gate decision basis reviews both `sensors.geo.exactCoordinates` and `sensors.geo.exactAddress`;
+      - [x] Gate decision basis reviews both `sensors.geo.exactCoordinates` and `sensors.geo.exactAddress`;
       broad exact-privacy-gate evidence is rejected.
 
-      - [ ] Gate decision basis reviews `radius_m` bounds `1..100000`, `GeoTagListPayload`,
+      - [x] Gate decision basis reviews `radius_m` bounds `1..100000`, `GeoTagListPayload`,
       and `exactCoordinates` redaction evidence; broad tag behavior proof is rejected.
 
-      - [ ] Gate decision basis reviews all five risky sensor inspectability fields
+      - [x] Gate decision basis reviews all five risky sensor inspectability fields
       and rejects broad acknowledgement-only proof.
 
-      - [ ] Gate decision basis reviews exact native helper constants `3000ms`, `250ms`,
+      - [x] Gate decision basis reviews exact native helper constants `3000ms`, `250ms`,
       and `1m -> 5m -> 15m`; broad cleanup/backoff evidence is rejected.
 
-      - [ ] Gate decision basis reviews negative sensor-directory proof for `~/.pi/dasein/sensors`.
+      - [x] Gate decision basis reviews negative sensor-directory proof for `~/.pi/dasein/sensors`.
 
-      - [ ] Gate decision basis reviews native helper stdout/stderr `16KiB` cap evidence.'
+      - [x] Gate decision basis reviews native helper stdout/stderr `16KiB` cap evidence.'
     evidence_template: "## refs Read Confirmation (MANDATORY)\nFor each exact refs\
       \ entry listed on this step, provide a key passage or `NOT READ: <reason>`.\n\
       Machine-checkable refs inventory generated from this step refs:\n- `CONSTITUTION.md#testing-and-gates`\
