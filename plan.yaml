@@ -15761,3 +15761,184 @@ phases:
     depends_on:
     - finalization-arch-spec-blockers-retest
     agent: frontend-engineer
+  - id: finalization-sensor-action-lapse-durable-blockers-retest
+    name: Retest sensor action namespace and async lapse persistence blockers
+    status: pending
+    description: 'step_type: test
+
+      step_intent: retest_green
+
+      expected_result: green
+
+      verification_scope: full-plan-check
+
+      agent_source: project
+
+
+      PROOF ARTIFACT:
+
+      Independent retest for `finalization-sensor-action-lapse-durable-blockers-fix`,
+      covering finalization blockers `B1_SENSOR_ACTION_NAMESPACE_ESCAPE`, `B2_LAPSE_EVENT_HANDLER_AWAITS_DURABLE_WRITE`,
+      and optional warning `W1_STATUS_PAYLOAD_UNDERCLAIMS_LIVE_SMOKE` if the fix step
+      handled it.
+
+
+      SCOPE:
+
+      Use the main workspace public/source/test surfaces only. Do not modify code,
+      docs, config, plan state, or `.vectl/worktrees/**`. Re-run the implementer commands
+      or stronger equivalent focused commands and record raw output.
+
+
+      REQUIREMENT-TO-CHECKLIST TRACEABILITY MATRIX:
+
+      | requirement_id | source_ref + key passage | obligation | owning_step_id |
+      checklist_item | evidence_field | status | non_intersection_or_escalation |
+
+      | --- | --- | --- | --- | --- | --- | --- | --- |
+
+      | B1_SENSOR_ACTION_NAMESPACE_ESCAPE | docs/TECHNICAL_DESIGN.md#core-contracts/sensor-spec
+      + Constitution sensor/config boundaries | Sensor action proposals are mediated
+      with caller `sensorKey` and cannot mutate outside `sensors.<sensorKey>.*`. |
+      finalization-sensor-action-lapse-durable-blockers-retest | B1 independent namespace
+      proof checklist | `B1_independent_namespace_register` | OWNED | Blocks finalization-gate
+      if UNPROVEN/BLOCKED. |
+
+      | B2_LAPSE_EVENT_HANDLER_AWAITS_DURABLE_WRITE | docs/TECHNICAL_DESIGN.md#core-contracts/sensor-spec
+      + docs/TECHNICAL_DESIGN.md#core-contracts/state-store | Lapse lifecycle observations
+      return before durable write begins/completes, later coalesce/write latest timestamps,
+      and surface async write errors in status. | finalization-sensor-action-lapse-durable-blockers-retest
+      | B2 independent async durable proof checklist | `B2_independent_async_durable_register`
+      | OWNED | Blocks finalization-gate if UNPROVEN/BLOCKED. |
+
+      | W1_STATUS_PAYLOAD_UNDERCLAIMS_LIVE_SMOKE | docs/TECHNICAL_DESIGN.md#verified-pi-mechanisms
+      + command result status payload contract | Status/live-smoke artifacts preserve
+      exact evidence vocabulary and do not underclaim proven live-smoke rows or overclaim
+      pending rows. | finalization-sensor-action-lapse-durable-blockers-retest | W1
+      independent status vocabulary checklist | `W1_independent_status_disposition`
+      | OWNED | Should-fix; unresolved disposition must include non-intersection rationale.
+      |
+
+
+      BEHAVIORAL PROOF REGISTER REQUIRED:
+
+      Each row must include `requirement_ref`, `behavior_claim`, `runtime_proof_expected`,
+      `evidence_ref`, `status`, `closure_path`, and `gate_decision_basis`.
+
+
+      INDEPENDENCE:
+
+      Use independent verification as `integration-verifier`; do not rely on implementer
+      summaries. This step must not use the same agent as the fix step.
+
+
+      <side_effect_budget>Allowed: read-only verification commands, grep/import traces,
+      fake-host/live-smoke execution, and report artifacts. Forbidden: source/test/doc
+      edits, plan mutation, `.vectl/worktrees/**` evidence, live support overclaim,
+      or accepting mock-only proof for live-smoke status vocabulary.</side_effect_budget>
+
+      <risk_probes>1. Verify the production sensor-action path, not only the exported
+      helper in `src/core/config.ts`. 2. Prove event handler return-before-write-begins
+      for `before_agent_start`, `input`, and `agent_end`; eventual persistence alone
+      is insufficient. 3. Distinguish exact evidence statuses from release-ledger
+      `PROVEN` rows without inventing new status vocabulary.</risk_probes>'
+    verification: '- [ ] refs confirmation cites key passages for every listed ref
+      or an explicit `NOT READ` reason.
+
+      - [ ] B1 independent proof shows a malicious sensor action proposal for `core.agentInjectionEnabled=false`
+      or another out-of-namespace path is rejected before ConfigManager persistence/commit
+      and leaves runtime plus disk config unchanged.
+
+      - [ ] B1 independent proof shows a valid own-namespace proposal under `sensors.<sensorKey>.*`
+      succeeds where applicable and returns deterministic updated/deleted paths only
+      inside that namespace.
+
+      - [ ] B1 grep/import trace proves no production path still calls unscoped `manager.applyRuntimeProposal(proposal)`
+      or applies `result.mutation` without caller `sensorKey` enforcement.
+
+      - [ ] B2 independent proof shows `before_agent_start`, `input`, and `agent_end`
+      handlers return before durable `state.json` write begins or completes.
+
+      - [ ] B2 independent proof shows coalesced asynchronous durable write eventually
+      persists the latest lapse timestamps after rapid observations.
+
+      - [ ] B2 independent proof shows async durable write failure appears in `/dasein
+      status`/status errors without blocking handler return.
+
+      - [ ] W1 independent proof confirms status payload/final artifacts do not underclaim
+      proven live-smoke rows, or records a precise non-blocking disposition preserving
+      exact vocabulary.
+
+      - [ ] `npm run typecheck` exits 0 with raw stdout/stderr captured.
+
+      - [ ] Focused tests for B1/B2, and W1 if changed, exit 0 with raw stdout/stderr
+      captured.
+
+      - [ ] `npm test` exits 0 with raw stdout/stderr captured.
+
+      - [ ] `npm run test:smoke` exits 0 or reports exact environment blockers without
+      false live support overclaim.
+
+      - [ ] Behavioral proof register marks B1 and B2 `PROVEN`; any `UNPROVEN`, `NEEDS_TEST`,
+      or `BLOCKED` row blocks finalization-gate rather than being waived.'
+    evidence_template: '## refs Read Confirmation (MANDATORY)
+
+      For each ref in this step:
+
+      - <filename/section> — <key passage or `NOT READ: <reason>`>
+
+
+      ## Independent Retest Commands
+
+      - `npm run typecheck`: <exit code + raw stdout/stderr>
+
+      - focused B1/B2/W1 command: <command + exit code + raw stdout/stderr>
+
+      - `npm test`: <exit code + raw stdout/stderr>
+
+      - `npm run test:smoke`: <exit code + raw stdout/stderr or exact environment
+      blocker>
+
+
+      ## Behavioral Proof Register
+
+      | requirement_ref | behavior_claim | runtime_proof_expected | evidence_ref |
+      status | closure_path | gate_decision_basis |
+
+      | --- | --- | --- | --- | --- | --- | --- |
+
+      | B1_SENSOR_ACTION_NAMESPACE_ESCAPE | <claim> | <proof> | <artifact> | PROVEN/UNPROVEN/BLOCKED
+      | <path> | finalization-gate |
+
+      | B2_LAPSE_EVENT_HANDLER_AWAITS_DURABLE_WRITE | <claim> | <proof> | <artifact>
+      | PROVEN/UNPROVEN/BLOCKED | <path> | finalization-gate |
+
+      | W1_STATUS_PAYLOAD_UNDERCLAIMS_LIVE_SMOKE | <claim/disposition> | <proof> |
+      <artifact> | PROVEN/SHOULD_FIX/DEFERRED/BLOCKED | <path> | finalization-gate
+      |
+
+
+      ## Source/Artifact Probes
+
+      - B1 production path trace: <grep/import trace>
+
+      - B2 timing/coalescing/error trace: <test artifact>
+
+      - W1 status/live-smoke vocabulary trace: <artifact/disposition>
+
+
+      ## checklist_receipt
+
+      - <map each checklist item to satisfied/failed/blocked/unobserved>
+
+
+      ## Headline
+
+      - PASS | PASS_WITH_DEBT | FAIL
+
+      - blockers: <none or exact blocker>
+
+      - should_fix: <W1 disposition if any>'
+    depends_on:
+    - finalization-sensor-action-lapse-durable-blockers-fix
+    agent: integration-verifier
