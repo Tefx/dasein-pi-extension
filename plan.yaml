@@ -404,18 +404,18 @@ phases:
       shape.
 
       '
-    verification: '- [ ] Required npm scripts typecheck/test/test:file/test:native/test:smoke
+    verification: '- [x] Required npm scripts typecheck/test/test:file/test:native/test:smoke
       exist with Technical Design command shapes.
 
-      - [ ] Root index.ts delegates to ./src/index.ts and does no extra work.
+      - [x] Root index.ts delegates to ./src/index.ts and does no extra work.
 
-      - [ ] Package dependency policy and fake host tests pass or expose only downstream
+      - [x] Package dependency policy and fake host tests pass or expose only downstream
       product gaps.
 
-      - [ ] Runtime/static receipt proves symlinked `~/.pi/agent/extensions/dasein`
+      - [x] Runtime/static receipt proves symlinked `~/.pi/agent/extensions/dasein`
       load reaches the root shim and delegates to `./src/index.ts`.
 
-      - [ ] Runtime/static receipt proves SettingsList/getSettingsListTheme import
+      - [x] Runtime/static receipt proves SettingsList/getSettingsListTheme import
       resolution works from the symlinked extension load shape.
 
       '
