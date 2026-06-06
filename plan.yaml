@@ -3745,6 +3745,175 @@ phases:
     depends_on:
     - core-gate-blocker-retest
     agent: frontend-engineer
+  - id: core-gate-b4-external-default-retest
+    name: Retest B4 external default agent visibility
+    status: pending
+    description: 'step_type: verification
+
+      step_intent: retest_green
+
+      expected_result: green
+
+      verification_scope: phase-check
+
+      agent_source: project
+
+      INDEPENDENT RETEST:
+
+      As an independent verifier, retest B4 after `core-gate-b4-external-default-fix`.
+      This retest protects `core-gate` plus downstream agent injection/privacy gates
+      in `pi_runtime`, `system_wiring`, `release_smoke`, and `finalization`.
+
+
+      PROOF ARTIFACT:
+
+      Produce an explicit probe closure register for B4 and regression closure for
+      B1/B2/B3. Finding a remaining B4 or regression issue is a valid verification
+      outcome, but the step is incomplete without raw command output and a structured
+      closure path.
+
+
+      REQUIREMENT TRACEABILITY MATRIX:
+
+      | requirement_id | source_ref + key passage | obligation | owning_step_id |
+      checklist_item | evidence_field | status | non_intersection_or_escalation |
+
+      |---|---|---|---|---|---|---|---|
+
+      | B4.external-agent-default-hidden | PRD 9.6 + Technical Design Core Contracts
+      | Unconfigured external key with `agent` payload must not appear in rendered/injected
+      agent context | core-gate-b4-external-default-retest | B4 runtime/probe closure
+      register marks hidden default PROVEN | `probe_closure_register.B4` | OWNED |
+      Blocks core-gate if unproven. |
+
+      | B4.external-agent-explicit-opt-in | PRD 9.6 | Explicit `external.<key>.agent=true`
+      must still appear in agent context | core-gate-b4-external-default-retest |
+      explicit opt-in proof present | `focused_renderer_external_output` | OWNED |
+      Blocks if opt-in regressed. |
+
+      | B4.external-ui-default-visible | PRD 9.6 + Constitution privacy visibility
+      | Unconfigured external UI remains visible by default | core-gate-b4-external-default-retest
+      | UI default proof present | `focused_renderer_external_output` | OWNED | Blocks
+      if human visibility regressed. |
+
+      | B1-B3.no-regression | prior closure evidence | B1 static/request-path boundary,
+      B2 ordinary npm full suite, and B3 SettingsList matrix remain closed | core-gate-b4-external-default-retest
+      | B1/B2/B3 no-regression recorded | `probe_closure_register.B1_B2_B3` | OWNED
+      | Blocks core-gate if regression is observed. |
+
+
+      RETEST COMMAND FAMILY:
+
+      - `npm run typecheck`
+
+      - `npm test`
+
+      - focused renderer/external/injector/behavior test commands that directly exercise
+      unconfigured external state, explicit `external.<key>.agent=true`, UI default
+      visibility, and ambient-context injection omission
+
+
+      BEHAVIORAL PROOF REGISTER REQUIRED:
+
+      For B4 and B1/B2/B3, include rows with `requirement_ref`, `behavior_claim`,
+      `runtime_proof_expected`, `evidence_ref`, `status`, `closure_path`, and `gate_decision_basis`.
+      B4 must be PROVEN or BLOCKED; vague PASS language is insufficient.
+
+
+      <side_effect_budget>Allowed: read repo state and execute verification/probe
+      commands. Forbidden: code edits, test edits, changing package scripts, approving
+      unconfigured agent leakage as non-blocking, or treating typecheck/unit success
+      alone as B4 behavioral proof.</side_effect_budget>
+
+      <risk_probes>1. Re-run or recreate the gate runtime probe pattern that previously
+      emitted `[ambient_ctx: weather=secret-agent-value]` and prove the unconfigured
+      key is absent. 2. Verify explicit opt-in still appears so the fix did not over-suppress
+      external state. 3. Verify ordinary test/typecheck success plus focused renderer/external/injector/behavior
+      coverage, not sampled proof only.</risk_probes>'
+    verification: '- [ ] `npm run typecheck` exits successfully with raw stdout/stderr
+      evidence.
+
+      - [ ] Ordinary `npm test` exits successfully with raw stdout/stderr evidence
+      and no B1/B2/B3 regression.
+
+      - [ ] Focused renderer/external tests prove unconfigured external agent payload
+      is omitted from agent context.
+
+      - [ ] Focused renderer/external tests prove explicit `external.<key>.agent=true`
+      still appears in agent context.
+
+      - [ ] Focused renderer/external tests prove unconfigured external UI remains
+      visible by default.
+
+      - [ ] Focused injector/behavior proof or equivalent runtime probe shows the
+      previous `[ambient_ctx: weather=secret-agent-value]` leakage is closed for an
+      unconfigured external key.
+
+      - [ ] Probe closure register marks B4 PROVEN or BLOCKED and records B1/B2/B3
+      as still closed with evidence refs.'
+    evidence_template: '## refs Read Confirmation (MANDATORY)
+
+      For each ref in this step:
+
+      - `CONSTITUTION.md#privacy-and-safety-laws` — key passage or "NOT READ: <reason>"
+
+      - `docs/PRD.md#9-6-external-state` — key passage or "NOT READ: <reason>"
+
+      - `docs/TECHNICAL_DESIGN.md#core-contracts` — key passage or "NOT READ: <reason>"
+
+      - `docs/TECHNICAL_DESIGN.md#testing-gate-matrix` — key passage or "NOT READ:
+      <reason>"
+
+
+      ## Command Evidence
+
+      - typecheck_command: `npm run typecheck`
+
+      - typecheck_raw_output: <paste stdout/stderr>
+
+      - npm_test_command: `npm test`
+
+      - npm_test_raw_output: <paste stdout/stderr>
+
+      - focused_renderer_external_command: <exact command>
+
+      - focused_renderer_external_output: <paste stdout/stderr>
+
+      - focused_injector_behavior_or_probe_command: <exact command/probe>
+
+      - focused_injector_behavior_or_probe_output: <paste stdout/stderr>
+
+
+      ## Probe Closure Register
+
+      | blocker | requirement_ref | behavior_claim | runtime_proof_expected | evidence_ref
+      | status | closure_path | gate_decision_basis |
+
+      |---|---|---|---|---|---|---|---|
+
+      | B4 | PRD 9.6 / Technical Design Core Contracts | Unconfigured external state
+      is UI-visible and agent-hidden | probe/test shows no `[ambient_ctx: weather=secret-agent-value]`
+      for unconfigured key; explicit opt-in still appears | <artifact> | PROVEN/BLOCKED
+      | <none or remediation step needed> | <why core-gate can/cannot open> |
+
+      | B1 | prior retest | Static/request-path boundary remains closed | typecheck/npm/focused
+      no-I/O proof as applicable | <artifact> | PROVEN/BLOCKED | <path> | <basis>
+      |
+
+      | B2 | prior retest | ordinary npm full suite remains closed | ordinary `npm
+      test` raw output | <artifact> | PROVEN/BLOCKED | <path> | <basis> |
+
+      | B3 | prior retest | SettingsList matrix remains closed | ordinary/focused
+      SettingsList evidence or no-regression basis | <artifact> | PROVEN/BLOCKED |
+      <path> | <basis> |
+
+
+      ## Checklist Receipt
+
+      - <satisfied/failed/blocked/unobserved for each checklist item>'
+    depends_on:
+    - core-gate-b4-external-default-fix
+    agent: integration-verifier
 - id: sensors
   name: Builtin Sensors and Native Helper
   status: locked
