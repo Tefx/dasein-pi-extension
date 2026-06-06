@@ -202,6 +202,8 @@ export interface SensorListRecord {
   acknowledgedManifestDigest?: string | null;
   acknowledgementRequired?: boolean;
   acknowledgementSatisfied?: boolean;
+  defaultEnabled?: boolean;
+  effectiveEnabled?: boolean;
   forcedDisabledReason?: ForcedDisabledReason;
   loadError?: SensorLoadError;
   healthError?: SensorError;

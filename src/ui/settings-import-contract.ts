@@ -230,6 +230,12 @@ export const buildSettingsListVisibilityModel = (
     items.push(metadata(entry.key, "backgroundWork", "Declared background work", entry.backgroundWork.description));
     items.push(metadata(entry.key, "effectiveIntervalMs", "Effective interval", entry.effectiveIntervalMs));
     items.push(metadata(entry.key, "manifestDigest", "Manifest digest", entry.manifestDigest));
+    items.push(metadata(entry.key, "acknowledgedManifestDigest", "Acknowledged manifest digest", entry.acknowledgedManifestDigest));
+    items.push(metadata(entry.key, "acknowledgementRequired", "Acknowledgement required", entry.acknowledgementRequired));
+    items.push(metadata(entry.key, "acknowledgementSatisfied", "Acknowledgement satisfied", entry.acknowledgementSatisfied));
+    items.push(metadata(entry.key, "defaultEnabled", "Default enabled", entry.defaultEnabled));
+    items.push(metadata(entry.key, "effectiveEnabled", "Effective enabled", entry.effectiveEnabled));
+    items.push(metadata(entry.key, "forcedDisabledReason", "Forced disabled reason", entry.forcedDisabledReason ?? null));
 
     for (const field of COMMON_SENSOR_FIELDS) {
       items.push(commonSensorControl(entry.key, sensorConfig, field, entry.manifestDigest, entry.acknowledgementRequired));

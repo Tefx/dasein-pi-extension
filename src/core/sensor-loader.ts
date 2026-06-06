@@ -7,7 +7,7 @@
  */
 
 import { createHash } from "node:crypto";
-import { join, resolve } from "node:path";
+import { dirname, join, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 
 import { CORE_RESERVED_COMMAND_WORDS } from "./config.ts";
@@ -169,6 +169,10 @@ export const loadSensorRegistry = async (input: LoadSensorRegistryInput): Promis
 
   for (const moduleCandidate of modules) {
     const file = moduleCandidate.filePath;
+    if (!isCanonicalUserSensorFile(input.extensionRoot, file)) {
+      loadErrors.push({ file, kind: "scan", message: "user-added sensors must be loaded only from <extension_root>/src/sensors/*.ts" });
+      continue;
+    }
     const spec = moduleCandidate.defaultExport;
     if (!isRecord(spec)) {
       loadErrors.push({ file, kind: "invalid-spec", message: "sensor module must default-export a SensorSpec" });
@@ -259,6 +263,10 @@ const importSensorModules = async (extensionRoot: string, cacheBustToken?: strin
   }
   return candidates;
 };
+
+const isCanonicalUserSensorFile = (extensionRoot: string, filePath: string): boolean => (
+  filePath.endsWith(".ts") && dirname(resolve(filePath)) === resolve(extensionRoot, "src", "sensors")
+);
 
 const validateSensorSpec = (candidate: Record<string, unknown>): { ok: true; spec: SensorSpec } | { ok: false; kind: SensorLoadErrorKind; message: string } => {
   if (typeof candidate.key !== "string" || !SENSOR_KEY_RE.test(candidate.key)) {
