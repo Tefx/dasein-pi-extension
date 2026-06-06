@@ -6779,7 +6779,7 @@ phases:
       All 10 pi-runtime-extension-wiring checklist items proven.'
   - id: pi-runtime-tui-surfaces
     name: Complete status, widget, and SettingsList runtime surfaces
-    status: pending
+    status: claimed
     description: 'step_type: implementation
 
       tags: [integration, client-surface]
@@ -6994,6 +6994,8 @@ phases:
     - pi-runtime-tests
     - pi-runtime-extension-wiring
     agent: frontend-engineer
+    claimed_by: frontend-engineer
+    claimed_at: '2026-06-06T07:11:07.622562+00:00'
   - id: pi-runtime-client-proof
     name: Verify fake-host client/runtime liveness for Pi surfaces
     status: pending
