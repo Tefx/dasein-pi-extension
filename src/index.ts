@@ -30,6 +30,7 @@ import { createExternalStateBridge } from "./core/external-events.ts";
 import { injectAmbientContextMessage } from "./core/injector.ts";
 import { createDaseinLifecycle, reloadDaseinRuntime, type DaseinReloadResult } from "./core/lifecycle.ts";
 import { renderDaseinContext } from "./core/renderer.ts";
+import { cancelRuntimeTimer, scheduleRuntimeTimer, type RuntimeTimer } from "./core/runtime-timers.ts";
 import { createSensorRuntime, normalizeSensorRefreshResult, type SensorRuntimeHarness } from "./core/sensor-runtime.ts";
 import {
   inspectSensorMetadata,
@@ -270,10 +271,22 @@ const piMechanismName = (mechanism: DaseinPiMechanism): string => {
   return mechanism;
 };
 
+const LIVE_SMOKE_VERIFICATION_DATE = "2026-06-06" as const;
+
 const evidenceStatusesFor = (mechanism: DaseinPiMechanism): PiMechanismEvidenceStatus[] =>
   mechanism === "custom" || mechanism === "SettingsList"
-    ? ["API_VERIFIED", "LIVE_SMOKE_PENDING"]
-    : ["SOURCE_VERIFIED", "LIVE_SMOKE_PENDING"];
+    ? ["API_VERIFIED", "LIVE_SMOKE_VERIFIED"]
+    : ["SOURCE_VERIFIED", "LIVE_SMOKE_VERIFIED"];
+
+const observedBehaviorFor = (mechanism: DaseinPiMechanism): string => {
+  if (mechanism === "registerCommand") return "live Pi smoke ledger pi.registerCommand./dasein=PROVEN";
+  if (mechanism === "registerFlag") return "live Pi smoke ledger pi.registerFlag.--dasein=PROVEN";
+  if (mechanism === "context") return "live Pi smoke ledger pi.context.hidden-custom-message=PROVEN";
+  if (mechanism === "events") return "live Pi smoke ledger pi.events.set-clear-live=PROVEN";
+  if (mechanism === "setStatus" || mechanism === "setWidget") return "live Pi smoke ledger tui.status-widget-render-clear=PROVEN";
+  if (mechanism === "custom") return "live Pi smoke ledger ctx.ui.custom.no-api-key-render-path=PROVEN";
+  return "live Pi smoke ledger settingslist controls/metadata/persistence rows=PROVEN";
+};
 
 const mechanismError = (mechanism: DaseinPiMechanism, detail = "unavailable"): PiMechanismError => ({
   kind: "pi_mechanism",
@@ -290,8 +303,8 @@ const mechanismEvidence = (mechanisms: readonly DaseinPiMechanism[]): Array<{
 }> => mechanisms.map((mechanism) => ({
   mechanism: piMechanismName(mechanism),
   evidenceStatuses: evidenceStatusesFor(mechanism),
-  observedBehavior: "fake/API wiring verified; live smoke remains a release gate",
-  verificationDate: null,
+  observedBehavior: observedBehaviorFor(mechanism),
+  verificationDate: LIVE_SMOKE_VERIFICATION_DATE,
 }));
 
 const defaultCoreConfig = (entries: readonly SensorRegistryEntry[]): DaseinConfig["core"] => {
@@ -417,6 +430,18 @@ const durableError = (message: string, code: "load-failed" | "write-failed" | "s
   path: STATE_PATH,
 });
 
+const sensorActionNamespaceErrors = (sensorKey: SensorKey, proposal: ConfigMutationProposal): ConfigValidationError[] => {
+  const prefix = `sensors.${sensorKey}.`;
+  const proposedPaths = [...Object.keys(proposal.assignments ?? {}), ...(proposal.deletePaths ?? [])];
+  return proposedPaths
+    .filter((path) => !path.startsWith(prefix))
+    .map((path) => ({
+      kind: "invalid-path" as const,
+      path,
+      message: `sensor action proposals for ${sensorKey} may only mutate ${prefix}*`,
+    }));
+};
+
 const permissionForSensor = (entry: SensorRegistryEntry, snapshot: SensorSnapshot | null, now: number): StatusPermissionData => {
   const permissionKind = entry.spec.manifest.permissions.find((permission) => permission.required)?.kind ?? "none";
   const permission = permissionKind === "macos_location"
@@ -449,6 +474,9 @@ class DaseinAmbientContextBroker {
   private diskConfigLoaded = false;
   private durableStateFileLoaded = false;
   private durableLapse: LapsePersistedState | null = null;
+  private pendingLapsePersist: LapsePersistedState | null = null;
+  private lapsePersistTimer: RuntimeTimer | null = null;
+  private lapsePersistInFlight: Promise<void> | null = null;
 
   constructor(private readonly pi: DaseinPiExtensionApi) {}
 
@@ -475,7 +503,7 @@ class DaseinAmbientContextBroker {
     const observation: SensorObservationEvent = { kind, observedAt, turnId: turnIdFromEvent(event, observedAt) };
     const runtime = this.sensorRuntimes.get("lapse");
     await runtime?.observeEvent(observation);
-    await this.persistLapseAfterObservation();
+    this.scheduleLapsePersistenceAfterObservation();
     this.renderAndPublish(context);
   }
 
@@ -530,7 +558,8 @@ class DaseinAmbientContextBroker {
     for (const error of result.errors) {
       this.statusErrors.push({ kind: "unknown", message: error instanceof Error ? error.message : String(error) });
     }
-    await this.persistLapseAfterObservation();
+    await this.flushLapsePersistenceQueue();
+    await this.persistCurrentLapseSnapshotNow();
     context.ui?.setStatus?.("dasein", undefined);
     context.ui?.setWidget?.("dasein", undefined);
   }
@@ -640,22 +669,96 @@ class DaseinAmbientContextBroker {
     this.sensorRuntimes.get("lapse")?.commitSnapshot(snapshot);
   }
 
-  private async persistLapseAfterObservation(): Promise<void> {
+  private captureCurrentLapsePersistedState(): LapsePersistedState | null {
     const lapseConfig = this.config.sensors.lapse;
-    if (lapseConfig?.persist !== true) return;
+    if (lapseConfig?.persist !== true) return null;
     const snapshot = this.stateStore.getSensorSnapshot("lapse");
     const persisted: LapsePersistedState = {
       previous_human_input_at: this.numberField(snapshot, "lapse.previous_human_input_at"),
       previous_agent_end_at: this.numberField(snapshot, "lapse.previous_agent_end_at"),
     };
+    this.durableLapse = persisted;
+    return persisted;
+  }
+
+  private scheduleLapsePersistenceAfterObservation(): void {
+    const persisted = this.captureCurrentLapsePersistedState();
+    if (persisted === null) return;
+    this.pendingLapsePersist = persisted;
+    this.scheduleLapsePersistenceTimer();
+  }
+
+  private scheduleLapsePersistenceTimer(): void {
+    if (this.lapsePersistTimer !== null || this.lapsePersistInFlight !== null) return;
+    this.lapsePersistTimer = scheduleRuntimeTimer(() => {
+      this.lapsePersistTimer = null;
+      void this.drainLapsePersistenceQueue();
+    }, 0);
+  }
+
+  private async writeLapsePersistedState(persisted: LapsePersistedState): Promise<void> {
     const durable = createDurableStateStore({ statePath: STATE_PATH, lapsePersistEnabled: true });
-    const result = await durable.writeLapse(persisted);
-    if (!result.ok) this.statusErrors.push(durableError(result.error.message, "write-failed"));
+    try {
+      const result = await durable.writeLapse(persisted);
+      if (!result.ok) {
+        this.statusErrors.push(durableError(result.error.message, "write-failed"));
+        return;
+      }
+      this.durableStateFileLoaded = true;
+    } catch (caught) {
+      const message = caught instanceof Error ? caught.message : String(caught);
+      this.statusErrors.push(durableError(message, "write-failed"));
+    }
+  }
+
+  private async drainLapsePersistenceQueue(): Promise<void> {
+    if (this.lapsePersistInFlight !== null) {
+      await this.lapsePersistInFlight;
+      return;
+    }
+    const persisted = this.pendingLapsePersist;
+    if (persisted === null) return;
+    this.pendingLapsePersist = null;
+    const write = this.writeLapsePersistedState(persisted);
+    this.lapsePersistInFlight = write;
+    try {
+      await write;
+    } finally {
+      this.lapsePersistInFlight = null;
+      if (this.pendingLapsePersist !== null) this.scheduleLapsePersistenceTimer();
+    }
+  }
+
+  private async flushLapsePersistenceQueue(): Promise<void> {
+    if (this.lapsePersistTimer !== null) {
+      cancelRuntimeTimer(this.lapsePersistTimer);
+      this.lapsePersistTimer = null;
+    }
+    while (this.pendingLapsePersist !== null || this.lapsePersistInFlight !== null) {
+      if (this.lapsePersistInFlight !== null) await this.lapsePersistInFlight;
+      else await this.drainLapsePersistenceQueue();
+    }
+  }
+
+  private async discardQueuedLapsePersistence(): Promise<void> {
+    if (this.lapsePersistTimer !== null) {
+      cancelRuntimeTimer(this.lapsePersistTimer);
+      this.lapsePersistTimer = null;
+    }
+    this.pendingLapsePersist = null;
+    if (this.lapsePersistInFlight !== null) await this.lapsePersistInFlight;
+  }
+
+  private async persistCurrentLapseSnapshotNow(): Promise<void> {
+    const persisted = this.captureCurrentLapsePersistedState();
+    if (persisted === null) return;
+    await this.writeLapsePersistedState(persisted);
   }
 
   private async resetLapseTimestamps(context: DaseinPiExtensionContext): Promise<SensorActionResult> {
     const entry = this.entries.find((candidate) => candidate.spec.key === "lapse");
     if (entry === undefined) return { ok: false, message: "lapse reset failed: lapse sensor unavailable" };
+    await this.discardQueuedLapsePersistence();
     const emptyPersisted: LapsePersistedState = { previous_human_input_at: null, previous_agent_end_at: null };
     const emptyState = {
       userIdleMs: null,
@@ -716,13 +819,19 @@ class DaseinAmbientContextBroker {
     return lightweightToConfigMutation(result, this.config);
   }
 
-  private async applyProposal(proposal: ConfigMutationProposal): Promise<ConfigMutationResult> {
+  private async applyProposal(proposal: ConfigMutationProposal, options: { sensorKey?: SensorKey } = {}): Promise<ConfigMutationResult> {
+    if (options.sensorKey !== undefined) {
+      const namespaceErrors = sensorActionNamespaceErrors(options.sensorKey, proposal);
+      if (namespaceErrors.length > 0) return { ok: false, errors: namespaceErrors, config: this.config };
+    }
     const manager = this.requireConfigManager();
     const result = await manager.applyRuntimeProposal(proposal);
-    this.config = manager.getEffectiveConfig();
-    this.syncRuntimeConfigs();
-    this.renderOnly();
-    return lightweightToConfigMutation(result, this.config);
+    if (result.ok) {
+      this.config = manager.getEffectiveConfig();
+      this.syncRuntimeConfigs();
+      this.renderOnly();
+    }
+    return lightweightToConfigMutation(result, manager.getEffectiveConfig());
   }
 
   private async runSensorAction(sensorKey: string, action: string, args: readonly string[], context: DaseinPiExtensionContext): Promise<SensorActionResult> {
@@ -741,9 +850,15 @@ class DaseinAmbientContextBroker {
     };
     const result = await handler([...args], actionContext);
     if (result.ok && result.mutation !== undefined) {
-      await this.applyProposal(result.mutation);
+      const mutation = await this.applyProposal(result.mutation, { sensorKey });
       this.renderAndPublish(context);
-      return { ...result, data: { mutationApplied: true, actionPayload: result.data } };
+      if (!mutation.ok) {
+        return {
+          ok: false,
+          message: `${sensorKey} ${action} mutation rejected: ${mutation.errors.map((item) => `${item.path}: ${item.message}`).join("; ")}`,
+        };
+      }
+      return { ...result, data: { mutationApplied: true, mutation, actionPayload: result.data } };
     }
     this.renderAndPublish(context);
     return result;

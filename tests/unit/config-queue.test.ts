@@ -46,3 +46,22 @@ test("ConfigMutationProposal assignments and deletePaths commit in one all-or-no
     persistedTombstones: false,
   });
 });
+
+test("ConfigMutationProposal rejects core and other-sensor namespace escapes", async () => {
+  const api = await loadDaseinApi();
+  const applyRuntimeProposal = requireExportedFunction(api, "applyRuntimeProposal", "docs/TECHNICAL_DESIGN.md#sensor-spec sensor actions may only mutate sensors.<sensorKey>.*");
+
+  const result = await applyRuntimeProposal({
+    sensorKey: "geo",
+    proposal: {
+      assignments: { "core.agentInjectionEnabled": false, "sensors.lapse.agent": false },
+      deletePaths: ["sensors.clock.precision"],
+    },
+  }) as { ok: boolean; errors?: Array<{ path: string; message: string }>; updatedPaths: string[]; deletedPaths: string[] };
+
+  assert.equal(result.ok, false);
+  assert.deepEqual(result.updatedPaths, []);
+  assert.deepEqual(result.deletedPaths, []);
+  assert.deepEqual(result.errors?.map((item) => item.path).sort(), ["core.agentInjectionEnabled", "sensors.clock.precision", "sensors.lapse.agent"]);
+  assert.match(JSON.stringify(result.errors), /own namespace|sensor proposals may only mutate/u);
+});

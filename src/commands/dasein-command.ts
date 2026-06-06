@@ -846,9 +846,9 @@ export const buildStatusCommandResult = (options: BuildStatusCommandResultOption
     piMechanisms: options.piMechanisms ?? [
       {
         mechanism: "pi.registerCommand",
-        evidenceStatuses: ["SOURCE_VERIFIED", "LIVE_SMOKE_PENDING"],
-        observedBehavior: "source/API candidate verified; live smoke remains release-gate evidence",
-        verificationDate: null,
+        evidenceStatuses: ["SOURCE_VERIFIED", "LIVE_SMOKE_VERIFIED"],
+        observedBehavior: "live Pi smoke ledger pi.registerCommand./dasein=PROVEN",
+        verificationDate: "2026-06-06",
       },
     ],
     configPath: options.configPath ?? "~/.pi/dasein/config.json",

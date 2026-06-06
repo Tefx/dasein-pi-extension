@@ -27,6 +27,7 @@ const stripBlockAndLineComments = (source: string): string =>
 const listSourceFiles = (dir: string): readonly string[] => {
   const absoluteDir = resolve(repoRoot, dir);
   const entries = readdirSync(absoluteDir).flatMap((entry) => {
+    if (entry.startsWith(".dasein-reload-")) return [];
     const absolutePath = join(absoluteDir, entry);
     const relativePath = join(dir, entry);
     if (statSync(absolutePath).isDirectory()) return listSourceFiles(relativePath);

@@ -259,8 +259,8 @@ export const expectedStatusData = (configPath = "~/.pi/dasein/config.json", stat
   piMechanisms: [
     {
       mechanism: "pi.registerCommand",
-      evidenceStatuses: ["SOURCE_VERIFIED", "LIVE_SMOKE_PENDING"],
-      observedBehavior: "docs/examples verified; live command registration pending",
+      evidenceStatuses: ["SOURCE_VERIFIED", "LIVE_SMOKE_VERIFIED"],
+      observedBehavior: "live Pi smoke ledger pi.registerCommand./dasein=PROVEN",
       verificationDate: "2026-06-06",
     },
   ],

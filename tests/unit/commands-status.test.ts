@@ -26,6 +26,19 @@ test("/dasein status returns Pi version support, mechanism evidence statuses, co
   }
 });
 
+test("/dasein status uses LIVE_SMOKE_VERIFIED for PROVEN release-ledger Pi mechanism evidence", async () => {
+  const api = await loadDaseinApi();
+  const buildStatusCommandResult = requireExportedFunction(api, "buildStatusCommandResult", "Testing Gate Matrix row: Status and sensors command payloads");
+  const result = buildStatusCommandResult({ piVersion: "0.78.1" }) as { data: ReturnType<typeof expectedStatusData> };
+
+  assert.ok(result.data.piMechanisms.length > 0);
+  for (const mechanism of result.data.piMechanisms) {
+    assert.equal(mechanism.evidenceStatuses.includes("LIVE_SMOKE_PENDING"), false, `${mechanism.mechanism} must not underclaim proven live-smoke evidence`);
+    assert.equal(mechanism.evidenceStatuses.includes("LIVE_SMOKE_VERIFIED"), true, `${mechanism.mechanism} must carry live-smoke verification`);
+    assert.match(mechanism.observedBehavior, /PROVEN/u);
+  }
+});
+
 test("/dasein status classifies unavailable and below-minimum Pi versions without claiming support", async () => {
   const api = await loadDaseinApi();
   const classifyPiSupport = requireExportedFunction(api, "classifyPiSupport", "Testing Gate Matrix row: Status and sensors command payloads");

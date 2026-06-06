@@ -30,11 +30,20 @@ const discoverPiBinary = (): string => {
 const writeJson = (path: string, value: unknown): void => writeFileSync(path, `${JSON.stringify(value, null, 2)}\n`);
 
 const probeExtensionSource = (repo: string, home: string): string => `
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import createDaseinExtension from ${JSON.stringify(join(repo, "src", "index.ts"))};
 const statePath = join(${JSON.stringify(home)}, '.pi', 'dasein', 'state.json');
 const refs = ${JSON.stringify(refs)};
+const sleep = (durationMs) => new Promise((resolve) => setTimeout(resolve, durationMs));
+const waitForState = async () => {
+  const deadline = Date.now() + 1000;
+  while (Date.now() < deadline) {
+    if (existsSync(statePath)) return;
+    await sleep(10);
+  }
+  throw new Error('timed out waiting for async lapse state write');
+};
 export default function(pi) {
   let daseinHandler = null;
   const eventHandlers = new Map();
@@ -58,6 +67,7 @@ export default function(pi) {
       await eventHandlers.get('session_start')?.({ reason: 'lapse-reset-smoke' }, smokeCtx);
       await eventHandlers.get('input')?.({ timestamp: 1000, turnId: 'turn-1' }, smokeCtx);
       await eventHandlers.get('agent_end')?.({ timestamp: 2000, turnId: 'turn-1' }, smokeCtx);
+      await waitForState();
       const before = JSON.parse(readFileSync(statePath, 'utf8')).lapse;
       const persistOff = await daseinHandler('set sensors.lapse.persist false', smokeCtx);
       const reset = await daseinHandler('lapse reset', smokeCtx);

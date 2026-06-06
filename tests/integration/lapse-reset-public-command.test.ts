@@ -10,10 +10,20 @@ const repoRoot = resolve(import.meta.dirname, "..", "..");
 
 const writeProbe = (probePath: string, home: string): void => writeFileSync(probePath, `
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import createDaseinExtension from ${JSON.stringify(pathToFileURL(join(repoRoot, "src", "index.ts")).href)};
 import { createFakePiHost, invokeFakeCommand, invokeFakeLifecycle } from ${JSON.stringify(pathToFileURL(join(repoRoot, "tests", "integration", "fixtures", "fake-pi-host.ts")).href)};
+
+const sleep = (durationMs) => new Promise((resolve) => setTimeout(resolve, durationMs));
+const waitForState = async (statePath) => {
+  const deadline = Date.now() + 1000;
+  while (Date.now() < deadline) {
+    if (existsSync(statePath)) return;
+    await sleep(10);
+  }
+  throw new Error('timed out waiting for async lapse state write');
+};
 
 const main = async () => {
   const statePath = join(${JSON.stringify(home)}, '.pi', 'dasein', 'state.json');
@@ -22,6 +32,7 @@ const main = async () => {
   await invokeFakeLifecycle(host, 'session_start');
   await invokeFakeLifecycle(host, 'input', { timestamp: 1000, turnId: 'turn-1' });
   await invokeFakeLifecycle(host, 'agent_end', { timestamp: 2000, turnId: 'turn-1' });
+  await waitForState(statePath);
   const before = JSON.parse(readFileSync(statePath, 'utf8'));
   assert.equal(before.lapse.previous_human_input_at, 1000);
   assert.equal(before.lapse.previous_agent_end_at, 2000);
