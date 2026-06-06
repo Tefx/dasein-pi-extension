@@ -11720,7 +11720,7 @@ phases:
     agent: spec-verifier
   - id: finalization-architecture-concurrency-review
     name: Architecture, lifecycle, and concurrency review
-    status: pending
+    status: claimed
     description: 'step_type: audit
 
       verification_scope: full-plan-check
@@ -11813,6 +11813,8 @@ phases:
     - finalization-doc-sync
     - finalization-full-wiring-audit
     agent: software-architect
+    claimed_by: software-architect
+    claimed_at: '2026-06-06T12:42:35.298989+00:00'
   - id: finalization-black-box-verification
     name: Black-box public interface verification
     status: done
