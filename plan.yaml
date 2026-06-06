@@ -8530,7 +8530,7 @@ phases:
       All four native discovery checklist items proven."
 - id: release_smoke
   name: Live Pi and Native Release Smoke
-  status: in_progress
+  status: done
   gate: Live smoke evidence exists or reports exact environment blockers; release
     support claims are not made from fake-host tests alone.
   context: Separate live Pi/native release evidence from ordinary CI by probing real
@@ -9493,7 +9493,7 @@ phases:
       All ten support-claim ledger checklist items proven; blockers none.'
   - id: release-smoke-gate
     name: Gate live Pi and native release smoke
-    status: claimed
+    status: done
     description: 'step_type: gate
 
       verification_scope: full-plan-check
@@ -9729,6 +9729,69 @@ phases:
     agent: gate-reviewer
     claimed_by: gate-reviewer
     claimed_at: '2026-06-06T10:01:28.741693+00:00'
+    done_at: '2026-06-06T10:07:31.612132+00:00'
+    evidence: '## refs Read Confirmation
+
+      - `CONSTITUTION.md#testing-and-gates` — mocks are not integration proof; live
+      Pi smoke verifies mechanisms before support claims.
+
+      - `CONSTITUTION.md#ux-and-pi-interaction-red-lines` — UI/Pi mechanisms need
+      live real Pi extension/binary evidence with mechanism/version/path/artifacts.
+
+      - `docs/TECHNICAL_DESIGN.md#verified-pi-mechanisms` — SOURCE/API is not live
+      proof; LIVE_SMOKE_VERIFIED means observed live Pi process.
+
+      - `docs/TECHNICAL_DESIGN.md#testing-gate-matrix` — `npm run test:smoke` requires
+      live Pi TUI/process and gates support claims/TUI/dynamic reload.
+
+      - `docs/TECHNICAL_DESIGN.md#builtin-sensors` — geo exact coordinates require
+      agent=true, precision=exact, exactCoordinates=true and degrade on permission/unavailable.
+
+      - `docs/TECHNICAL_DESIGN.md#data-flow` — SettingsList/TUI status/widget and
+      shutdown cleanup follow Pi UI/lifecycle paths.
+
+
+      final_gate_verdict: OPEN
+
+      gate_open_allowed: true
+
+      blockers: []
+
+
+      ## Commands
+
+      - `npm run test:smoke` exit 0; live Pi TUI + dynamic reload smoke passed.
+
+      - `npm run test:native` exit 0; helper source/typecheck/runtime policy passed;
+      1 explicit contract skip.
+
+      - Targeted commands-status/geo and pi-runtime integration suites passed.
+
+      - git diff/status clean except ignored `.dasein/` and `node_modules/` artifacts.
+
+
+      ## Gate decision basis
+
+      - live Pi TUI mechanisms: PROVEN via `.dasein/live-pi-smoke/latest/checklist_receipt.json`
+      and supporting artifacts.
+
+      - dynamic reload: PROVEN via `.dasein/dynamic-reload-smoke/latest/checklist_receipt.json`.
+
+      - native helper: PROVEN for typecheck/runtime policy/error mapping/no false
+      coordinate claim; authorized CoreLocation coordinate success remains permission-dependent
+      and not overclaimed.
+
+      - support-claim ledger/fake-host separation: PROVEN; no fake-host/API/source-only
+      evidence upgraded to live support.
+
+      - launch flag, events, lifecycle, hidden context conversion, ctx.ui.custom,
+      session cleanup, version classification, and bare `/dasein`: PROVEN via cited
+      live/support artifacts.
+
+
+      ## checklist_receipt
+
+      All 13 release-smoke-gate checklist items proven. Gate OPEN.'
   - id: release-smoke-fix-live-pi-tui-smoke
     name: Fix live Pi TUI smoke runner and proof artifacts
     status: done
@@ -10823,7 +10886,7 @@ phases:
       All six dynamic reload fix checklist items proven; blockers none.'
 - id: finalization
   name: Documentation Sync and Final Deep Review
-  status: locked
+  status: pending
   gate: Final gate opens only with doc sync, full conformance, wiring, architecture,
     black-box, and evidence-ledger closure.
   context: Synchronize docs with implementation evidence and run independent final
