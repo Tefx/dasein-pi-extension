@@ -8914,23 +8914,23 @@ phases:
       or corrupting disposable runtime resources.
 
       '
-    verification: '- [ ] `npm run test:smoke -- tests/smoke/pi-dynamic-reload.test.ts`
+    verification: '- [x] `npm run test:smoke -- tests/smoke/pi-dynamic-reload.test.ts`
       or documented live Pi equivalent is run with raw stdout/stderr and Pi process
       details.
 
-      - [ ] Evidence shows user-added sensor discovery from `<extension_root>/src/sensors/*.ts`
+      - [x] Evidence shows user-added sensor discovery from `<extension_root>/src/sensors/*.ts`
       in directory/package mode and `/dasein reload` cache-busting of changed module.
 
-      - [ ] Evidence shows load failure keeps old registry/rendered context and reports
+      - [x] Evidence shows load failure keeps old registry/rendered context and reports
       load errors.
 
-      - [ ] If blocked, exact missing environment/permission/path/command is reported
+      - [x] If blocked, exact missing environment/permission/path/command is reported
       without treating fake-host reload proof as live support.
 
-      - [ ] Evidence explicitly distinguishes allowed disposable sensor fixture mutation
+      - [x] Evidence explicitly distinguishes allowed disposable sensor fixture mutation
       from forbidden repo/product code/docs/config mutation and includes cleanup proof.
 
-      - [ ] Evidence records serialized execution assumptions and confirms disposable
+      - [x] Evidence records serialized execution assumptions and confirms disposable
       runtime/config/extension/native resources are cleaned up before the next release-smoke
       step consumes them.
 
