@@ -16733,7 +16733,7 @@ phases:
       with total=11 proven=11 blocked=0; git diff --check produced no output.'
 - id: minimal_ui
   name: Minimal UI Simplification
-  status: in_progress
+  status: done
   gate: Widget product surface removed; agent inspect command added; idle null suppressed
     and documented; tests pass.
   depends_on:
@@ -16741,7 +16741,7 @@ phases:
   steps:
   - id: minimal-ui.remove-widget-add-agent-inspect
     name: Remove widget surface and add agent inspect command
-    status: claimed
+    status: done
     description: 'Implement KISS UI simplification: remove Dasein widget config/runtime/docs/tests,
       add /dasein inspect agent to show the exact pre-rendered agent system prompt
       block, and suppress meaningless idle null output from lapse rendering.'
@@ -16750,3 +16750,21 @@ phases:
     agent: general
     claimed_by: general
     claimed_at: '2026-06-06T19:36:55.392916+00:00'
+    done_at: '2026-06-06T19:58:58.827857+00:00'
+    evidence: 'Implemented KISS UI simplification. Removed Dasein widget product surface
+      from runtime config/types/state/renderer/index/settings/docs/tests: no core.widgetEnabled/core.widgetMaxLines,
+      no RenderedContext.widgetLines, no createDaseinWidget export/file, and runtime
+      no longer calls ctx.ui.setWidget for Dasein. Added /dasein inspect agent command
+      with command parser/result support and runtime wiring; it returns source=pre-rendered-memory,
+      renderedAgent, exact systemPromptBlock via the same formatAmbientSystemPromptBlock
+      path as injection, omittedKeys, and truncated. Suppressed meaningless lapse
+      null output by making renderer omit null-valued normal fields; added renderer
+      test proving lapse.user_idle=null produces no agent/status text and records
+      omittedKeys. Updated PRD/Technical Design/Constitution to state no persistent
+      widget; status is the only persistent UI, explicit diagnostics include /dasein
+      inspect agent. Verification: npm run typecheck passed; focused tests (renderer,
+      command-parser, command-result, config, settings-list, core-contracts, pi-runtime-red,
+      static package tests) 67/67 passed; npm test 167/167 passed; npm run test:native
+      3 passed/1 skipped; npm run package:check passed with 34 packed files; npm run
+      test:smoke 3/3 passed and regenerated .dasein/live-pi-smoke/latest/checklist_receipt.json
+      with total=11 proven=11 blocked=0; git diff --check produced no output.'
