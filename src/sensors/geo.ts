@@ -27,6 +27,16 @@ export interface GeoConfig extends SensorConfig {
   exactCoordinates: boolean;
 }
 
+export interface GeoTagListPayload {
+  exactCoordinates: boolean;
+  tags: Array<{
+    name: string;
+    radius_m: number;
+    label: string | null;
+    coordinates: { visible: true; lat: number; lon: number } | { visible: false; redacted: true };
+  }>;
+}
+
 const STALE_AFTER_MS = 1_800_000;
 const TAG_NAME_RE = /^[A-Za-z0-9_-]{1,64}$/u;
 const geoOutputFields = [
@@ -115,10 +125,10 @@ const makeField = (
 const renderAgent = (snapshot: SensorSnapshot, config: Readonly<GeoConfig>): SensorViewFragment | readonly SensorViewFragment[] | null => {
   if (!config.agent) return null;
   const placemark = getPlacemark(snapshot);
-  const nearestTag = getString(snapshot, "geo.nearestTag");
-  const suffix = nearestTag === null ? "" : `/${nearestTag}`;
   const lat = getNumber(snapshot, "geo.lat");
   const lon = getNumber(snapshot, "geo.lon");
+  const nearestTag = findNearestTagName(lat, lon, config.tags);
+  const suffix = nearestTag === null ? "" : `/${compact(nearestTag)}`;
   const accuracy = getNumber(snapshot, "geo.accuracy_m");
   const formattedAddress = placemark?.formattedAddress ?? placemark?.name ?? null;
 
@@ -155,11 +165,15 @@ const tagAction: SensorAction<GeoConfig> = async (args, context): Promise<Sensor
     if (name === undefined || radiusText === undefined || !TAG_NAME_RE.test(name)) return { ok: false, message: "usage: geo tag add <name> <radius_m>" };
     const radius = Number(radiusText);
     if (!Number.isInteger(radius) || radius < 1 || radius > 100_000) return { ok: false, message: "radius_m must be an integer from 1 to 100000" };
-    const snapshot = context.snapshot ?? (await context.refreshNow({ bypassBackoff: true, reason: "geo_tag_add" })).snapshot;
-    const lat = snapshot === null ? null : getNumber(snapshot, "geo.lat");
-    const lon = snapshot === null ? null : getNumber(snapshot, "geo.lon");
-    if (snapshot === null || snapshot.status !== "enabled" || lat === null || lon === null) return { ok: false, message: "cannot add geo tag without a fresh coordinate" };
-    return { ok: true, message: `geo tag ${name} proposed`, mutation: { assignments: { [`sensors.geo.tags.${name}`]: { lat, lon, radius_m: radius, label: name } } } };
+    const currentCoordinate = freshCoordinateFromSnapshot(context.snapshot);
+    if (currentCoordinate !== null) {
+      return { ok: true, message: `geo tag ${name} proposed`, mutation: { assignments: { [`sensors.geo.tags.${name}`]: { ...currentCoordinate, radius_m: radius, label: name } } } };
+    }
+    const refreshResult = await context.refreshNow({ bypassBackoff: true, reason: "geo_tag_add" });
+    if (!refreshResult.ok || !refreshResult.fresh) return { ok: false, message: refreshResult.ok ? "cannot add geo tag without a fresh coordinate" : refreshResult.error.message };
+    const refreshedCoordinate = coordinateFromEnabledSnapshot(refreshResult.snapshot);
+    if (refreshedCoordinate === null) return { ok: false, message: "cannot add geo tag without a fresh coordinate" };
+    return { ok: true, message: `geo tag ${name} proposed`, mutation: { assignments: { [`sensors.geo.tags.${name}`]: { ...refreshedCoordinate, radius_m: radius, label: name } } } };
   }
   if (subcommand === "remove") {
     if (name === undefined || !Object.prototype.hasOwnProperty.call(context.config.tags, name)) return { ok: false, message: "tag not found" };
@@ -175,7 +189,7 @@ const refreshAction: SensorAction<GeoConfig> = async (_args, context): Promise<S
 
 const tagList = (config: Readonly<GeoConfig>): SensorActionResult => {
   const exactCoordinates = config.agent === true && config.precision === "exact" && config.exactCoordinates === true;
-  const tags = Object.entries(config.tags)
+  const tags: GeoTagListPayload["tags"] = Object.entries(config.tags)
     .sort(([left], [right]) => left.localeCompare(right))
     .map(([name, tag]) => ({
       name,
@@ -183,7 +197,8 @@ const tagList = (config: Readonly<GeoConfig>): SensorActionResult => {
       label: tag.label ?? null,
       coordinates: exactCoordinates ? { visible: true as const, lat: tag.lat, lon: tag.lon } : { visible: false as const, redacted: true as const },
     }));
-  return { ok: true, message: `geo tags: ${tags.map((tag) => tag.name).join(", ") || "none"}`, data: { exactCoordinates, tags } };
+  const payload: GeoTagListPayload = { exactCoordinates, tags };
+  return { ok: true, message: `geo tags: ${tags.map((tag) => tag.name).join(", ") || "none"}`, data: payload };
 };
 
 let supervisor: ReturnType<typeof createMacOSLocationHelperSupervisor> | null = null;
@@ -228,11 +243,15 @@ const geoSpec: SensorSpec<GeoState, GeoConfig> = {
   },
   validateConfig: validateGeoConfig,
   normalizeState: (value, context) => normalizeGeoState(value, context),
-  refresh: async (_context) => {
-    const result = await getSupervisor().refresh({ reason: "geo_refresh" });
-    if (result.status === "enabled" && result.state !== undefined) return { value: result.state, metadata: { status: "enabled", collectedAt: result.state.timestamp === null ? Date.now() : result.state.timestamp * 1000, staleAfterMs: STALE_AFTER_MS } };
+  refresh: async (context) => {
+    const supervisor = getSupervisor();
+    const result = await supervisor.refresh({ reason: "geo_refresh", manual: false });
+    if (result.status === "enabled" && result.state !== undefined) {
+      const state = withCurrentTag({ ...result.state, helperBackoffUntil: supervisor.getBackoffUntil() }, context.config.tags);
+      return { value: state, metadata: { status: "enabled", collectedAt: state.timestamp === null ? context.now() : state.timestamp * 1000, staleAfterMs: STALE_AFTER_MS } };
+    }
     const error = result.error ?? { kind: "unknown" as const, message: "macOS location helper failed" };
-    return { value: errorGeoState(error.kind), metadata: { status: "error", error, collectedAt: Date.now(), staleAfterMs: STALE_AFTER_MS } };
+    return { value: { ...errorGeoState(error.kind), helperBackoffUntil: supervisor.getBackoffUntil() }, metadata: { status: "error", error, collectedAt: context.now(), staleAfterMs: STALE_AFTER_MS } };
   },
   renderAgent,
   renderUI,
@@ -250,6 +269,47 @@ const errorGeoState = (kind: string): GeoState => ({
   helperBackoffUntil: null,
 });
 
+const coordinateFromEnabledSnapshot = (snapshot: SensorSnapshot): { lat: number; lon: number } | null => {
+  if (snapshot.status !== "enabled") return null;
+  const lat = getNumber(snapshot, "geo.lat");
+  const lon = getNumber(snapshot, "geo.lon");
+  return lat === null || lon === null ? null : { lat, lon };
+};
+
+const freshCoordinateFromSnapshot = (snapshot: SensorSnapshot | null): { lat: number; lon: number } | null => {
+  if (snapshot === null || !isFresh(snapshot, Date.now())) return null;
+  return coordinateFromEnabledSnapshot(snapshot);
+};
+
+const isFresh = (snapshot: SensorSnapshot, now: number): boolean => snapshot.status === "enabled" && now - snapshot.collected_at <= snapshot.stale_after_ms;
+
+const withCurrentTag = (state: GeoState, tags: Readonly<Record<string, GeoTag>>): GeoState => ({
+  ...state,
+  nearestTag: findNearestTagName(state.lat, state.lon, tags),
+});
+
+const findNearestTagName = (lat: number | null, lon: number | null, tags: Readonly<Record<string, GeoTag>>): string | null => {
+  if (lat === null || lon === null) return null;
+  const matches = Object.entries(tags)
+    .map(([name, tag]) => ({ name, label: tag.label, distance_m: distanceMeters(lat, lon, tag.lat, tag.lon), radius_m: tag.radius_m }))
+    .filter((match) => match.distance_m <= match.radius_m)
+    .sort((left, right) => left.distance_m - right.distance_m || left.name.localeCompare(right.name));
+  const nearest = matches[0];
+  return nearest === undefined ? null : nearest.label ?? nearest.name;
+};
+
+const distanceMeters = (leftLat: number, leftLon: number, rightLat: number, rightLon: number): number => {
+  const earthRadiusMeters = 6_371_000;
+  const leftLatRad = degreesToRadians(leftLat);
+  const rightLatRad = degreesToRadians(rightLat);
+  const deltaLat = degreesToRadians(rightLat - leftLat);
+  const deltaLon = degreesToRadians(rightLon - leftLon);
+  const a = Math.sin(deltaLat / 2) ** 2 + Math.cos(leftLatRad) * Math.cos(rightLatRad) * Math.sin(deltaLon / 2) ** 2;
+  return 2 * earthRadiusMeters * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+};
+
+const degreesToRadians = (value: number): number => (value * Math.PI) / 180;
+
 const selectPlacemarkPrecision = (placemark: GeoPlacemark | null, precision: GeoPrecision): string | null => {
   if (placemark === null) return null;
   if (precision === "city") return placemark.city ?? placemark.district ?? placemark.street ?? null;
@@ -262,10 +322,6 @@ const getField = (snapshot: SensorSnapshot, key: string): SensorStateField | und
 const getNumber = (snapshot: SensorSnapshot, key: string): number | null => {
   const value = getField(snapshot, key)?.value;
   return typeof value === "number" && Number.isFinite(value) ? value : null;
-};
-const getString = (snapshot: SensorSnapshot, key: string): string | null => {
-  const value = getField(snapshot, key)?.value;
-  return typeof value === "string" && value.length > 0 ? value : null;
 };
 const getPlacemark = (snapshot: SensorSnapshot): GeoPlacemark | null => {
   const value = getField(snapshot, "geo.placemark")?.value;
