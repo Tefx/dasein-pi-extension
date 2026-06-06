@@ -9244,7 +9244,7 @@ phases:
       without false support claim.'
   - id: release-smoke-support-claim-ledger
     name: Verify support-claim ledger and live/fake evidence separation
-    status: pending
+    status: claimed
     description: 'step_type: verification
 
       verification_scope: full-plan-check
@@ -9415,6 +9415,8 @@ phases:
     - release-smoke-dynamic-reload
     - release-smoke-native-helper
     agent: spec-verifier
+    claimed_by: spec-verifier
+    claimed_at: '2026-06-06T09:54:08.971263+00:00'
   - id: release-smoke-gate
     name: Gate live Pi and native release smoke
     status: pending
