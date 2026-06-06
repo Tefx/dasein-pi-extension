@@ -12930,6 +12930,7 @@ phases:
     - finalization-full-wiring-audit
     - finalization-arch-spec-blockers-retest
     - finalization-sensor-action-lapse-durable-blockers-retest
+    - finalization-status-output-contract-blocker-retest
     agent: gate-reviewer
   - id: finalization-audit-blockers-fix
     name: Fix concurrent finalization audit blockers
