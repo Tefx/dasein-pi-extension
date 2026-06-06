@@ -790,7 +790,7 @@ phases:
       import resolution: PROVEN.'
 - id: core
   name: Core Broker Contracts and Implementation
-  status: pending
+  status: in_progress
   gate: Core broker behavior is contract-defined, tested, implemented, and independently
     verified against request-path and config/state invariants.
   context: Build the functional core contracts and executable core modules for config,
@@ -800,7 +800,7 @@ phases:
   steps:
   - id: core-contracts
     name: Define core broker contracts
-    status: pending
+    status: claimed
     description: 'step_type: contract
 
       contract_purity: ENFORCED
@@ -915,6 +915,8 @@ phases:
     - docs/TECHNICAL_DESIGN.md#command-design
     - docs/PRD.md#7-functional-requirements
     agent: frontend-engineer
+    claimed_by: frontend-engineer
+    claimed_at: '2026-06-06T03:59:24.773665+00:00'
   - id: core-tests
     name: Define expected-red core proof suite
     status: pending
