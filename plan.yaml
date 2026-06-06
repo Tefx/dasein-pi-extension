@@ -8301,7 +8301,7 @@ phases:
       All four system-wiring-ordinary-ci checklist items proven.'
   - id: system-wiring-gate
     name: Gate system wiring and ordinary CI
-    status: pending
+    status: claimed
     description: 'step_type: gate
 
       verification_scope: full-plan-check
@@ -8375,6 +8375,8 @@ phases:
     - system-wiring-ordinary-ci
     - system-wiring-stub-replacement
     agent: gate-reviewer
+    claimed_by: gate-reviewer
+    claimed_at: '2026-06-06T08:03:27.674282+00:00'
   - id: system-wiring-native-test-discovery-fix
     name: Make native test discovery include root native tests
     status: done
