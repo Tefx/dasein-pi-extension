@@ -11815,7 +11815,7 @@ phases:
     agent: software-architect
   - id: finalization-black-box-verification
     name: Black-box public interface verification
-    status: claimed
+    status: done
     description: 'step_type: verification
 
       verification_scope: full-plan-check
@@ -12178,6 +12178,109 @@ phases:
     agent: blind-tester
     claimed_by: blind-tester
     claimed_at: '2026-06-06T12:32:50.173547+00:00'
+    done_at: '2026-06-06T12:42:22.390620+00:00'
+    evidence: '## refs Read Confirmation
+
+      - docs/PRD.md#9-acceptance-criteria — acceptance criteria cover config precedence,
+      slash/status/reload/set/apply, TUI SettingsList, builtin sensors, external hidden-by-default,
+      reload keep-old.
+
+      - docs/PRD.md#9-6-external-state — set/clear accepted only for valid payloads;
+      malformed/unknown rejected; unconfigured keys UI-visible and agent-hidden.
+
+      - docs/TECHNICAL_DESIGN.md#verified-pi-mechanisms — release support requires
+      LIVE_SMOKE_VERIFIED artifacts, not fake/API proof alone.
+
+      - docs/TECHNICAL_DESIGN.md#command-design — public slash commands and invalid
+      structured errors are required.
+
+      - docs/TECHNICAL_DESIGN.md#command-result-and-output-contract — status exposes
+      version/config fields; reload exposes launchReappliedPaths/runtimeOverriddenPaths.
+
+      - docs/TECHNICAL_DESIGN.md#configuration-files — config/state schemas and atomic
+      writes preserve prior files on failure.
+
+      - docs/TECHNICAL_DESIGN.md#human-ui-rendering — TUI status/widget and SettingsList
+      controls with invalid external omissions.
+
+      - docs/TECHNICAL_DESIGN.md#builtin-sensors — geo privacy/tag/helper and lapse
+      reset behavior.
+
+      - docs/TECHNICAL_DESIGN.md#core-contracts — defaults, validation ranges, external
+      event schema, launch precedence.
+
+      - docs/TECHNICAL_DESIGN.md#data-flow — request-path injection reads only pre-rendered
+      in-memory context.
+
+      - CONSTITUTION.md#testing-and-gates — Pi boundary requires live runtime evidence.
+
+
+      ## Black-box Verdict
+
+      Headline: PASS_WITH_DEBT; verdict: PASS; blockers: none; proof_gap_status: NON_BLOCKING.
+      Nonblocking debt: native helper 16KiB caps proven via native runtime policy/native
+      gate rather than live over-cap helper emission; literal `/dasein` TUI proof
+      split across live TUI artifacts and focused literal routing.
+
+
+      ## Commands
+
+      - `npm run typecheck` exit 0.
+
+      - `npm test` exit 0; 145 pass.
+
+      - `npm run test:native` exit 0; 2 pass, 1 skipped.
+
+      - `npm run test:smoke` exit 0; 3 pass.
+
+      - Focused matrix exit 0; 46 pass.
+
+      - Unicode U+2028/U+2029 matrix exit 0; allRejectedNonMutating=true.
+
+      - `/opt/homebrew/bin/pi --version` exit 0; 0.78.1.
+
+
+      ## Artifacts
+
+      - `.dasein/live-pi-smoke/latest/checklist_receipt.json`, `environment.json`,
+      `event-bus-proof.json`, `context-injection-proof.json`, `bare-dasein-outside-tui-proof.json`,
+      `settingslist-persistence-proof.json`, `custom-no-api-key-proof.json`.
+
+      - `.dasein/dynamic-reload-smoke/latest/dynamic-reload-proof.json`.
+
+      - `.dasein/lapse-reset-smoke/latest/lapse-reset-proof.json`.
+
+
+      ## Per-checklist Proof
+
+      All 21 checklist obligations PROVEN: public package scripts/slash/launch/config/events,
+      spec fixtures, invalid input non-mutation, live blockers separated, Pi 0.78.1,
+      bare `/dasein`, SettingsList controls, status/reload fields, external invalid
+      omissions and valid render, geo exact privacy, core config boundaries, geo tags,
+      risky sensor fields, hidden CustomMessage conversion, atomic writes, U+2028/U+2029
+      rejection, native 16KiB policy, geo cwd independence, duplicate sensors, reload
+      launchReappliedPaths, lapse reset fake/live.
+
+
+      ## Behavioral Proof Register
+
+      - external_hidden_default_then_visible: PROVEN via event-bus phases after-set-hidden-default
+      and after-configured-visible.
+
+      - bare_dasein_non_tui and TUI SettingsList/status/widget: PROVEN.
+
+      - invalid_inputs_non_mutating: PROVEN.
+
+      - reload_keep_old_and_metadata: PROVEN.
+
+      - lapse_reset: PROVEN.
+
+      - B1/B2/W retests: PROVEN.
+
+
+      ## checklist_receipt
+
+      All 21 checklist items proven and toggled. Blockers: none.'
   - id: finalization-gate
     name: Final deep review gate
     status: pending
