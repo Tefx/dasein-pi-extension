@@ -3811,7 +3811,7 @@ phases:
       visible, sibling search clear.'
   - id: core-gate-b4-external-default-retest
     name: Retest B4 external default agent visibility
-    status: pending
+    status: claimed
     description: 'step_type: verification
 
       step_intent: retest_green
@@ -3978,6 +3978,8 @@ phases:
     depends_on:
     - core-gate-b4-external-default-fix
     agent: integration-verifier
+    claimed_by: integration-verifier
+    claimed_at: '2026-06-06T05:32:52.895103+00:00'
 - id: sensors
   name: Builtin Sensors and Native Helper
   status: locked
