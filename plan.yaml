@@ -2322,7 +2322,7 @@ phases:
     agent: integration-verifier
   - id: core-behavior-guardrails
     name: Define behavioral ambient-context guardrails
-    status: pending
+    status: claimed
     description: 'step_type: test
 
       step_intent: test_define_red
@@ -2401,6 +2401,8 @@ phases:
     depends_on:
     - core-tests
     agent: frontend-engineer
+    claimed_by: frontend-engineer
+    claimed_at: '2026-06-06T04:23:03.617077+00:00'
   - id: core-gate
     name: Gate core broker phase
     status: pending
