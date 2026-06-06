@@ -8376,17 +8376,17 @@ phases:
       messages identify platform gating explicitly and are not reused on macOS. 3.
       Ordinary CI remains broad enough to catch native-helper regressions without
       claiming live Pi/native release smoke.</risk_probes>'
-    verification: '- [ ] `npm run test:native` raw stdout/stderr on macOS shows both
+    verification: '- [x] `npm run test:native` raw stdout/stderr on macOS shows both
       `tests/native/contracts/native-gate-contract.test.ts` and `tests/native/macos-location-helper.test.ts`
       were discovered/executed.
 
-      - [ ] If run off macOS, native helper tests skip only with an explicit non-macOS
+      - [x] If run off macOS, native helper tests skip only with an explicit non-macOS
       reason and the evidence does not claim macOS pass.
 
-      - [ ] Ordinary CI commands remain passing with raw stdout/stderr, including
+      - [x] Ordinary CI commands remain passing with raw stdout/stderr, including
       at minimum `npm run typecheck`, `npm test`, and `npm run test:native`.
 
-      - [ ] No live Pi smoke/release-smoke tests are added to ordinary native CI.'
+      - [x] No live Pi smoke/release-smoke tests are added to ordinary native CI.'
     evidence_template: "## refs Read Confirmation (MANDATORY)\nFor each ref in this\
       \ step:\n- `docs/TECHNICAL_DESIGN.md#testing-gate-matrix` — <key passage or\
       \ NOT READ: reason>\n- `CONSTITUTION.md#testing-and-gates` — <key passage or\
