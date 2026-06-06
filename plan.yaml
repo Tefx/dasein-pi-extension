@@ -12929,6 +12929,7 @@ phases:
     - finalization-doc-sync
     - finalization-full-wiring-audit
     - finalization-arch-spec-blockers-retest
+    - finalization-sensor-action-lapse-durable-blockers-retest
     agent: gate-reviewer
     claimed_by: gate-reviewer
     claimed_at: '2026-06-06T13:31:23.868579+00:00'
