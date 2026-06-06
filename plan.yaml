@@ -1414,7 +1414,7 @@ phases:
       assertions, and adversarial render hook purity coverage.'
   - id: core-config-state
     name: Complete config manager and state store logic
-    status: claimed
+    status: done
     description: 'step_type: implementation
 
       Fill in stub bodies in src/core/config.ts and src/core/state.ts per core-contracts
@@ -1548,6 +1548,47 @@ phases:
     agent: frontend-engineer
     claimed_by: frontend-engineer
     claimed_at: '2026-06-06T04:28:37.970857+00:00'
+    done_at: '2026-06-06T04:41:12.785788+00:00'
+    evidence: '## refs Read Confirmation
+
+      - `CONSTITUTION.md#architectural-dogmas` — global config only under `~/.pi/dasein/`;
+      precedence `defaults < disk < launch < runtime`; no implicit/project-local reads
+      or cwd walkups.
+
+      - `CONSTITUTION.md#testing-and-gates` — unit/static checks verify precedence
+      and no project-local config source.
+
+      - `docs/PRD.md#7-5` / `#7-6` — config/state paths, versioned schema, runtime
+      changes persist canonical patches atomically and commit memory only after success;
+      reload preserves runtime overrides.
+
+      - `docs/TECHNICAL_DESIGN.md#core-contracts` — canonical paths, validation boundaries,
+      single FIFO queue, malformed fallback/keep-old reload, state schema, same-dir
+      temp/fsync/rename atomic writes.
+
+
+      ## artifacts/commit
+
+      - 621dcda `[vectl] step-core-config-state completed`
+
+      - Changed `src/core/config.ts`, `src/core/state.ts`, `src/index.ts`.
+
+
+      ## mainline final-state verification
+
+      - `npm run typecheck` → exit 0.
+
+      - `npm run test:file -- tests/unit/config.test.ts tests/unit/config-atomicity.test.ts
+      tests/unit/config-queue.test.ts tests/unit/state-file.test.ts` → exit 0; 9 tests,
+      9 pass.
+
+
+      ## checklist_receipt
+
+      All config/state checklist items proven: precedence/canonical patch persistence,
+      malformed fallback/all-or-nothing/failed-write/reload-preservation, no cwd/project-local
+      reads, exact `core.maxAgentChars` and `core.injectedLabel` validation, atomic
+      temp/fsync/rename no-change behavior.'
   - id: core-sensor-runtime-loader
     name: Complete sensor loader, runtime, and lifecycle core
     status: claimed
