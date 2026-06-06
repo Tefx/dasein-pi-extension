@@ -13338,3 +13338,270 @@ phases:
       ## checklist_receipt
 
       All six retest checklist items proven and toggled. Blockers: none.'
+  - id: finalization-external-state-sensor-runtime-blockers-fix
+    name: Fix external state visibility and sensor runtime blockers
+    status: pending
+    description: 'step_type: implementation
+
+      agent_source: project
+
+      work_type: defect_repair
+
+      TARGET STATE: Close the two HIGH finalization wiring blockers in one batched
+      TypeScript repair. External `dasein:state:set` events update only validated
+      ephemeral external state, preserve the external default `{ ui: true, agent:
+      false }`, reject malformed payloads without any state/config/render mutation,
+      and never persist external state to `state.json`. Core sensor runtime consumes
+      `SensorConfig.timeoutMs` for refresh timeout behavior and gives `intervalMs`
+      a real recurring refresh mechanism or an explicitly supported bounded mechanism
+      required by the spec; the schedule path must not be hollow.
+
+
+      BOUNDING BOX:
+
+      - B1 external event/config path: `src/core/external-events.ts`, `src/index.ts`
+      `pi.events.on(''dasein:state:set'')` / `broker.setExternal`, external bridge/state
+      store wiring, renderer visibility for external candidates, state-file persistence
+      exclusion, and focused tests in `tests/unit/external-events.test.ts`, `tests/unit/renderer.test.ts`,
+      `tests/unit/state-file.test.ts`, or the nearest fake-host integration harness.
+
+      - B2 sensor runtime path: `src/core/sensor-runtime.ts`, `src/core/runtime-timers.ts`,
+      `src/core/types.ts`, `src/index.ts` runtime action wiring, effective sensor
+      config from loader/config, and focused tests in `tests/unit/sensor-runtime.test.ts`
+      plus any necessary integration/fake-host harness.
+
+
+      REQUIREMENT-TO-CHECKLIST TRACEABILITY MATRIX:
+
+      | requirement_id | source_ref + key passage | obligation | owning_step_id |
+      checklist_item | evidence_field | status | non_intersection_or_escalation |
+
+      | --- | --- | --- | --- | --- | --- | --- | --- |
+
+      | ES-DEFAULT-1 | docs/PRD.md#9-6-external-state + reported B1 evidence | External
+      state from events is UI-visible and agent-hidden by default; `payload.agent`
+      text must not flip agent visibility to true unless explicit config enables `external.<key>.agent`.
+      | finalization-external-state-sensor-runtime-blockers-fix | Focused external
+      default test proves agent-hidden behavior without direct config mutation. |
+      external_default_visibility | OWNED | Blocks final wiring/black-box rerun. |
+
+      | ES-NOMUT-2 | CONSTITUTION.md#architectural-dogmas + CONSTITUTION.md#privacy-and-safety-laws
+      + reported B1 call chain | Runtime external events must not mutate config outside
+      ConfigManager/canonical config paths, and malformed events must reject without
+      state/config/render mutation. | finalization-external-state-sensor-runtime-blockers-fix
+      | Focused malformed-event rejection test proves no external state, config, state.json,
+      or rendered output mutation. | external_reject_no_mutation | OWNED | Blocks
+      final wiring/black-box rerun. |
+
+      | SR-TIMEOUT-1 | docs/TECHNICAL_DESIGN.md#builtin-sensors + CONSTITUTION.md#performance-laws
+      + reported B2 evidence | Sensor refresh must consume effective `timeoutMs`,
+      abort/error slow refreshes, and prevent slow/failing sensors from blocking runtime
+      paths. | finalization-external-state-sensor-runtime-blockers-fix | Focused sensor-runtime
+      timeout test proves slow refresh abort/error under configured `timeoutMs`. |
+      sensor_timeout_abort | OWNED | Blocks final wiring/black-box rerun. |
+
+      | SR-INTERVAL-2 | docs/TECHNICAL_DESIGN.md#builtin-sensors + CONSTITUTION.md#non-goals
+      + reported B2 evidence | `intervalMs` recurring scheduler semantics must be
+      real, visible/configurable/disableable, and cleanup-safe; the schedule path
+      must not be hollow. | finalization-external-state-sensor-runtime-blockers-fix
+      | Focused interval scheduling test proves actual refresh or explicit supported
+      bounded mechanism per spec, including disabled/null/cleanup boundaries. | sensor_interval_scheduler
+      | OWNED | Blocks final wiring/black-box rerun. |
+
+
+      REPAIR CONTRACT:
+
+      - Fix ALL blocker details together; do not land a B1-only or B2-only partial
+      repair.
+
+      - External event handling must route validation through the existing external-event
+      contract and reject invalid/dotted/malformed/control-character payloads without
+      mutating external state, config, disk, or rendered output.
+
+      - Do not directly write `this.config.external[...]` or any equivalent active
+      config object from event handling. Slash/UI/human config changes must use canonical
+      config mutation paths only.
+
+      - External state remains runtime/ephemeral: no `state.json` external persistence
+      and no durable ambient history.
+
+      - `payload.agent` presence is content, not permission. It may be stored as external
+      state content only after validation; it must not imply `agent:true` visibility.
+
+      - Sensor refresh must use the effective `timeoutMs` for manual, initial, action-triggered,
+      and scheduled refreshes where the runtime path invokes refresh.
+
+      - Recurring `intervalMs` behavior must either perform real scheduled refreshes
+      or implement an explicitly supported bounded mechanism required by the spec;
+      in either case evidence must show no hollow `pendingReason` write/clear path.
+
+      - Scheduler behavior must be disableable/cleanup-safe: disabled sensors, `intervalMs:null`,
+      cleanup/shutdown, and config changes must not leave orphan timers or hidden
+      recurring work.
+
+      - Do not introduce new runtime npm dependencies or weaken existing SettingsList/status/config
+      validation behavior.
+
+
+      ## Completion Criteria (stub exclusion)
+
+      This is an IMPLEMENTATION step. Stub-only completion is NOT acceptable. The
+      repair must contain substantive TypeScript behavior that processes real external-event
+      and sensor-runtime inputs and produces outputs that vary based on those inputs.
+
+
+      <side_effect_budget>Allowed: targeted TypeScript repairs and focused tests for
+      the reported external-state/config and sensor-runtime scheduler seams. Forbidden:
+      direct `plan.yaml` edits, docs/constitution edits, runtime npm dependency additions,
+      direct active-config mutation from event handling, external state persistence
+      to `state.json`, hidden/undeclared recurring work, or replacing behavioral proof
+      with mock-only assertions.</side_effect_budget>
+
+      <risk_probes>1. An external event with valid `agent` text but no config entry
+      remains omitted from agent context while visible in UI. 2. Malformed external
+      events leave external bridge/state store/config/render snapshots byte-for-byte
+      or structurally unchanged. 3. Sensor runtime timeout and interval paths are
+      exercised by real async timing behavior, not only by validating config fields
+      or setting an unread `pendingReason`.</risk_probes>
+
+
+      KNOWN RISK / Gate Preview:
+
+      - Finalization gates will reject any repair that hides the B1 issue by setting
+      default external `agent:true`, by mutating config directly, or by persisting
+      external state.
+
+      - Finalization gates will reject hollow scheduling evidence: exposing `intervalMs`/`timeoutMs`
+      in config/UI is insufficient unless refresh timeout and recurring scheduler
+      behavior are consumed by runtime code and tested.'
+    verification: '- [ ] refs confirmation includes key passages for external-state
+      defaults, config mutation boundaries, sensor timeout/scheduler semantics, and
+      Constitution no-hidden-mutation/no-hidden-recurring-work rules.
+
+      - [ ] `npm run typecheck` exits 0 after the repair.
+
+      - [ ] Focused external-state test proves valid event payloads with `payload.agent`
+      remain agent-hidden by default when no explicit `external.<key>.agent=true`
+      config exists, while UI visibility remains true.
+
+      - [ ] Focused external-state test proves malformed event rejection causes no
+      mutation to external bridge/list state, active config, `state.json`, or rendered
+      output.
+
+      - [ ] Focused sensor-runtime test proves configured `timeoutMs` aborts/errors
+      a slow refresh and reports the failure without blocking runtime paths.
+
+      - [ ] Focused sensor-runtime test proves `intervalMs` scheduling triggers an
+      actual refresh or an explicit supported bounded mechanism per spec, including
+      disabled/null interval and cleanup/shutdown boundaries.
+
+      - [ ] `npm test` exits 0 after the repair, or any residual failure has explicit
+      blocker/non-intersection disposition for finalization.
+
+      - [ ] Evidence includes sibling-search notes for direct `config.external` mutation,
+      external `state.json` persistence, hollow `pendingReason` usage, and scheduler/timeout
+      call paths.'
+    evidence_template: '## refs Read Confirmation (MANDATORY)
+
+      For each ref in this step:
+
+      - docs/PRD.md#9-6-external-state — <key passage>
+
+      - docs/TECHNICAL_DESIGN.md#configuration-files — <key passage>
+
+      - docs/TECHNICAL_DESIGN.md#builtin-sensors — <key passage>
+
+      - docs/TECHNICAL_DESIGN.md#human-ui-rendering — <key passage>
+
+      - CONSTITUTION.md#architectural-dogmas — <key passage>
+
+      - CONSTITUTION.md#non-goals — <key passage>
+
+      - CONSTITUTION.md#performance-laws — <key passage>
+
+      - CONSTITUTION.md#privacy-and-safety-laws — <key passage>
+
+
+      ## Fix Receipt
+
+      - files_changed: <paths>
+
+      - blocker_B1_external_state_fix_summary: <what changed>
+
+      - blocker_B2_sensor_runtime_fix_summary: <what changed>
+
+      - direct_config_external_mutation_sibling_search: <grep/output>
+
+      - state_json_external_persistence_sibling_search: <grep/output>
+
+      - scheduler_timeout_sibling_search: <grep/output>
+
+      - pendingReason_disposition: <now consumed/read, removed, or justified with
+      proof>
+
+
+      ## Commands
+
+      - typecheck_command: `npm run typecheck`
+
+      - typecheck_exit_code: <code>
+
+      - focused_external_tests_command: <command(s)>
+
+      - focused_external_tests_raw_output: <stdout/stderr>
+
+      - focused_sensor_runtime_tests_command: <command(s)>
+
+      - focused_sensor_runtime_tests_raw_output: <stdout/stderr>
+
+      - full_test_command: `npm test`
+
+      - full_test_exit_code: <code>
+
+      - full_test_raw_output: <stdout/stderr>
+
+
+      ## Behavioral Proof Register
+
+      | requirement_ref | behavior_claim | runtime_proof_expected | evidence_ref |
+      status | closure_path | gate_decision_basis |
+
+      | --- | --- | --- | --- | --- | --- | --- |
+
+      | ES-DEFAULT-1 | External event payload agent content does not enable agent
+      visibility by default. | Focused test/probe. | <evidence_ref> | PROVEN/UNPROVEN/BLOCKED
+      | <path> | Blocks final audits if not PROVEN. |
+
+      | ES-NOMUT-2 | Malformed external event rejection mutates nothing. | Focused
+      before/after snapshot test. | <evidence_ref> | PROVEN/UNPROVEN/BLOCKED | <path>
+      | Blocks final audits if not PROVEN. |
+
+      | SR-TIMEOUT-1 | `timeoutMs` is consumed and slow refresh aborts/errors. | Focused
+      async timeout test. | <evidence_ref> | PROVEN/UNPROVEN/BLOCKED | <path> | Blocks
+      final audits if not PROVEN. |
+
+      | SR-INTERVAL-2 | `intervalMs` scheduling is real or explicitly bounded per
+      spec and cleanup-safe. | Focused timer/scheduler test. | <evidence_ref> | PROVEN/UNPROVEN/BLOCKED
+      | <path> | Blocks final audits if not PROVEN. |
+
+
+      ## checklist_receipt
+
+      - refs confirmation: satisfied/failed/blocked/unobserved
+
+      - typecheck: satisfied/failed/blocked/unobserved
+
+      - external default agent-hidden without config mutation: satisfied/failed/blocked/unobserved
+
+      - malformed rejection no mutation: satisfied/failed/blocked/unobserved
+
+      - timeoutMs abort/error: satisfied/failed/blocked/unobserved
+
+      - intervalMs scheduling/bounded mechanism: satisfied/failed/blocked/unobserved
+
+      - npm test: satisfied/failed/blocked/unobserved
+
+      - sibling searches: satisfied/failed/blocked/unobserved'
+    depends_on:
+    - finalization-reload-launch-path-failure-branches-retest
+    agent: frontend-engineer
