@@ -7926,17 +7926,17 @@ phases:
       not separate demo implementations.</risk_probes>
 
       '
-    verification: '- [ ] Grep output for `_Runtime`, `_Stub`, `_Placeholder`, `NotImplementedError`,
+    verification: '- [x] Grep output for `_Runtime`, `_Stub`, `_Placeholder`, `NotImplementedError`,
       `TODO stub`, and parameter-discard-only handlers is included, with zero production-wired
       blockers or explicit non-production justification.
 
-      - [ ] Import trace evidence shows root index.ts -> src/index.ts -> real core/sensor/command/UI
+      - [x] Import trace evidence shows root index.ts -> src/index.ts -> real core/sensor/command/UI
       modules.
 
-      - [ ] No contract/interface signatures from upstream phases are changed without
+      - [x] No contract/interface signatures from upstream phases are changed without
       a deviation record.
 
-      - [ ] Existing phase-level focused tests still pass for touched integration
+      - [x] Existing phase-level focused tests still pass for touched integration
       seams with raw output.
 
       '
