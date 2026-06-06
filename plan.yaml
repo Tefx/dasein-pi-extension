@@ -11061,7 +11061,7 @@ phases:
       All five finalization-doc-sync checklist items proven.'
   - id: finalization-full-wiring-audit
     name: Full wiring and reachability audit
-    status: pending
+    status: claimed
     description: 'step_type: audit
 
       verification_scope: full-plan-check
@@ -11187,6 +11187,8 @@ phases:
     - finalization-audit-blockers-fix
     - finalization-reload-launch-path-failure-branches-retest
     agent: wiring-auditor
+    claimed_by: wiring-auditor
+    claimed_at: '2026-06-06T11:13:09.454230+00:00'
   - id: finalization-full-spec-conformance
     name: Full spec conformance audit
     status: pending
