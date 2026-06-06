@@ -5,7 +5,6 @@ import test from "node:test";
 import createDaseinExtension from "../../src/index.ts";
 import {
   classifyFakePiSupport,
-  convertFakeCustomMessageToLlmUserMessage,
   createFakePiHost,
   invokeFakeCommand,
   invokeFakeLifecycle,
@@ -16,8 +15,11 @@ import {
 
 const FAKE_EVIDENCE_BOUNDARY = "fake-host-api-shape-only";
 
-type MutableContextEvent = {
-  readonly messages: unknown[];
+type MutableBeforeAgentStartEvent = {
+  systemPrompt?: string;
+  messages?: unknown[];
+  timestamp?: number;
+  turnId?: string;
 };
 
 const registerInFakeHost = async (
@@ -37,15 +39,13 @@ const objectRecord = (value: unknown): Record<string, unknown> => {
   return value as Record<string, unknown>;
 };
 
-const messageContent = (value: unknown): string => {
-  const record = objectRecord(value);
-  assert.equal(record.role, "custom");
-  assert.equal(record.customType, "dasein");
-  assert.equal(record.display, false);
-  assert.equal(typeof record.timestamp, "number");
-  const converted = convertFakeCustomMessageToLlmUserMessage(value);
-  assert.equal(converted.role, "user");
-  return converted.content;
+const ambientSystemPromptContent = async (host: FakePiHostFixture, event: MutableBeforeAgentStartEvent = {}): Promise<string> => {
+  event.systemPrompt ??= "BASE SYSTEM";
+  event.messages ??= [];
+  await invokeFakeLifecycle(host, "before_agent_start", event);
+  assert.equal(event.messages.length, 0, "Dasein ambient context must not append user/custom messages");
+  assert.equal(typeof event.systemPrompt, "string");
+  return event.systemPrompt;
 };
 
 test("[expected-red] fake-host evidence remains fake and never records a live Pi support claim", async () => {
@@ -95,7 +95,7 @@ test("[expected-red] startup probes Pi APIs and fail-closes status for unavailab
     [
       ["registerCommand", true],
       ["registerFlag", true],
-      ["context", true],
+      ["before_agent_start", true],
       ["events", true],
       ["setStatus", true],
       ["setWidget", false],
@@ -122,14 +122,13 @@ test("[expected-red] Pi version status captures minimum/current/classification i
   assert.equal(host.ledger.featureProbes.length, 0, "version capture must not be collapsed into API probe evidence");
 });
 
-test("[expected-red] Pi lifecycle wiring registers startup, shutdown, request, input, before-agent-start, and agent-end hooks", async () => {
+test("[expected-red] Pi lifecycle wiring registers startup, shutdown, input, before-agent-start, and agent-end hooks", async () => {
   const host = await registerInFakeHost();
   const eventNames = host.ledger.lifecycleHandlers.map((handler) => handler.eventName).sort();
 
   assert.deepEqual(eventNames, [
     "agent_end",
     "before_agent_start",
-    "context",
     "input",
     "session_shutdown",
     "session_start",
@@ -166,18 +165,18 @@ test("[expected-red] /dasein slash command and --dasein flag drive runtime behav
   assert.deepEqual(host.ledger.uiWidgetCalls.at(-1), { slot: "dasein", value: undefined });
 });
 
-test("[expected-red] context hook appends a hidden Dasein CustomMessage converted from rendered memory only", async () => {
+test("[expected-red] before_agent_start appends Dasein ambient context to system prompt only", async () => {
   const host = await registerInFakeHost();
   await invokeFakeLifecycle(host, "session_start");
 
-  const contextEvent: MutableContextEvent = { messages: [] };
-  await invokeFakeLifecycle(host, "context", contextEvent);
+  const event: MutableBeforeAgentStartEvent = { systemPrompt: "BASE SYSTEM", messages: [], timestamp: 1_001, turnId: "turn-1" };
+  const results = await invokeFakeLifecycle(host, "before_agent_start", event);
 
-  assert.equal(contextEvent.messages.length, 1);
-  const content = messageContent(contextEvent.messages[0]);
-  assert.match(content, /^Silent local context for relevance only\./u);
-  assert.match(content, /time=/u);
-  assert.doesNotMatch(content, /^\[ambient_ctx:/u);
+  assert.equal(event.messages?.length, 0);
+  assert.equal(objectRecord(results[0]).systemPrompt, event.systemPrompt);
+  assert.match(event.systemPrompt ?? "", /^BASE SYSTEM\n\n<DaseinAmbientContext>/u);
+  assert.match(event.systemPrompt ?? "", /time=/u);
+  assert.doesNotMatch(event.systemPrompt ?? "", /^\[ambient_ctx:/u);
 });
 
 test("pi.events external state keeps unconfigured agent payload hidden until ConfigManager-owned visibility enables it", async () => {
@@ -192,11 +191,9 @@ test("pi.events external state keeps unconfigured agent payload hidden until Con
     ttlMs: 60_000,
   });
 
-  const hiddenContextEvent: MutableContextEvent = { messages: [] };
-  await invokeFakeLifecycle(defaultHiddenHost, "context", hiddenContextEvent);
+  const hiddenContext = await ambientSystemPromptContent(defaultHiddenHost);
 
-  assert.equal(hiddenContextEvent.messages.length, 1);
-  assert.doesNotMatch(messageContent(hiddenContextEvent.messages[0]), /weather|rain/u);
+  assert.doesNotMatch(hiddenContext, /weather|rain/u);
 
   const launchVisibleHost = await registerInFakeHost({ dasein: "external.weather.agent=true" });
   await invokeFakeLifecycle(launchVisibleHost, "session_start");
@@ -208,11 +205,9 @@ test("pi.events external state keeps unconfigured agent payload hidden until Con
     ttlMs: 60_000,
   });
 
-  const visibleContextEvent: MutableContextEvent = { messages: [] };
-  await invokeFakeLifecycle(launchVisibleHost, "context", visibleContextEvent);
+  const visibleContext = await ambientSystemPromptContent(launchVisibleHost);
 
-  assert.equal(visibleContextEvent.messages.length, 1);
-  assert.match(messageContent(visibleContextEvent.messages[0]), /weather=rain soon/u);
+  assert.match(visibleContext, /weather=rain soon/u);
 });
 
 test("pi.events malformed Unicode-separator external updates preserve previous state without mutation", async () => {
@@ -237,11 +232,7 @@ test("pi.events malformed Unicode-separator external updates preserve previous s
     });
   }
 
-  const contextEvent: MutableContextEvent = { messages: [] };
-  await invokeFakeLifecycle(host, "context", contextEvent);
-
-  assert.equal(contextEvent.messages.length, 1);
-  const content = messageContent(contextEvent.messages[0]);
+  const content = await ambientSystemPromptContent(host);
   assert.match(content, /weather=safe rain/u);
   assert.doesNotMatch(content, /bad|weather=bad/u);
 });
@@ -298,7 +289,8 @@ test("[expected-red] builtin clock/geo/lapse wiring starts sensors while default
 
   await invokeFakeLifecycle(host, "session_start");
   await invokeFakeLifecycle(host, "input", { text: "hello", timestamp: 1_000, turnId: "turn-1" });
-  await invokeFakeLifecycle(host, "before_agent_start", { timestamp: 1_001, turnId: "turn-1" });
+  const beforeAgentEvent: MutableBeforeAgentStartEvent = { systemPrompt: "BASE SYSTEM", messages: [], timestamp: 1_001, turnId: "turn-1" };
+  await invokeFakeLifecycle(host, "before_agent_start", beforeAgentEvent);
   await invokeFakeLifecycle(host, "agent_end", { timestamp: 4_000, turnId: "turn-1" });
   await invokeFakeLifecycle(host, "input", { text: "again", timestamp: 10_000, turnId: "turn-2" });
 
@@ -309,11 +301,10 @@ test("[expected-red] builtin clock/geo/lapse wiring starts sensors while default
   assert.match(renderedStatus, /Dasein · Ready/u, "default visible TUI status should be a quiet summary");
   assert.doesNotMatch(renderedTui, /\[ambient_ctx:|epoch_ms|clock\.iso|agent_id|manifest digest|user_idle=|loc=/u, "default visible TUI must not expose raw ambient/debug context");
 
-  const contextEvent: MutableContextEvent = { messages: [] };
-  await invokeFakeLifecycle(host, "context", contextEvent);
-  const hiddenContext = messageContent(contextEvent.messages[0]);
-  assert.match(hiddenContext, /^Silent local context for relevance only\./u, "agent-facing hidden ambient context must remain available as quiet context");
-  assert.doesNotMatch(hiddenContext, /^\[ambient_ctx:/u, "agent-facing hidden ambient context must not use the raw visible ambient_ctx wrapper");
+  const hiddenContext = beforeAgentEvent.systemPrompt ?? "";
+  assert.equal(beforeAgentEvent.messages?.length, 0, "agent-facing ambient context must not append user/custom messages");
+  assert.match(hiddenContext, /<DaseinAmbientContext>\nLocal ambient context for relevance only\./u, "agent-facing ambient context must remain available through system prompt context");
+  assert.doesNotMatch(hiddenContext, /^\[ambient_ctx:/u, "agent-facing ambient context must not use the raw visible ambient_ctx wrapper");
 });
 
 test("[expected-red] session_shutdown routes bounded cleanup with 1000ms per-sensor timeout", async () => {

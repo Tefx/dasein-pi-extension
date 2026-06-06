@@ -269,20 +269,6 @@ export const createFakePiHost = (
   };
 };
 
-export const convertFakeCustomMessageToLlmUserMessage = (message: unknown): { readonly role: "user"; readonly content: string } => {
-  if (typeof message !== "object" || message === null || Array.isArray(message)) {
-    throw new TypeError("CustomMessage must be an object");
-  }
-  const record = message as Record<string, unknown>;
-  if (record.role !== "custom" || record.customType !== "dasein" || record.display !== false) {
-    throw new TypeError("CustomMessage must be hidden dasein custom content");
-  }
-  if (typeof record.content !== "string" || typeof record.timestamp !== "number") {
-    throw new TypeError("CustomMessage must include string content and numeric timestamp");
-  }
-  return { role: "user", content: record.content };
-};
-
 export const invokeFakeCommand = async (
   host: FakePiHostFixture,
   name: string,

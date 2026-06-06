@@ -115,17 +115,23 @@ export default function(pi) {
       if (daseinHandler === null) throw new Error('dasein handler was not registered');
       const smokeCtx = { ...ctx, mode: ctx.mode ?? 'print', ui: ctx.ui ?? {} };
       await eventHandlers.get('session_start')?.({ reason: 'dynamic-smoke' }, smokeCtx);
+      const ambientPromptText = async () => {
+        const event = { systemPrompt: 'BASE SYSTEM', messages: [] };
+        const result = await eventHandlers.get('before_agent_start')?.(event, smokeCtx);
+        if (event.messages.length !== 0) throw new Error('Dasein ambient injection appended a user/custom message');
+        if (typeof result?.systemPrompt === 'string' && result.systemPrompt !== event.systemPrompt) throw new Error('Dasein returned mismatched systemPrompt');
+        return String(event.systemPrompt ?? '');
+      };
       const initialSensors = await daseinHandler('sensors', smokeCtx);
       const initialDynamic = initialSensors.data.sensors.find((item) => item.key === 'dynamic_smoke');
       proof.initialManifestV1 = initialDynamic?.manifest?.description === 'dynamic reload manifest v1';
-      proof.initialRenderedHasV1 = String((eventHandlers.get('context')?.({ messages: [] })?.messages?.[0]?.content) ?? '').includes('manifest-v1');
+      proof.initialRenderedHasV1 = (await ambientPromptText()).includes('manifest-v1');
 
       writeFileSync(sensorPath, sensorV2);
       const validReload = await daseinHandler('reload', smokeCtx);
       const sensorsAfterValid = await daseinHandler('sensors', smokeCtx);
       const dynamicAfterValid = sensorsAfterValid.data.sensors.find((item) => item.key === 'dynamic_smoke');
-      const contextAfterValid = eventHandlers.get('context')?.({ messages: [] });
-      const renderedAfterValid = String(contextAfterValid?.messages?.[0]?.content ?? '');
+      const renderedAfterValid = await ambientPromptText();
       proof.validReloadResult = validReload.message;
       proof.validReloadOk = validReload.ok === true;
       proof.cacheBustManifestV2 = dynamicAfterValid?.manifest?.description === 'dynamic reload manifest v2';
@@ -135,8 +141,7 @@ export default function(pi) {
       const invalidReload = await daseinHandler('reload', smokeCtx);
       const sensorsAfterInvalid = await daseinHandler('sensors', smokeCtx);
       const statusAfterInvalid = await daseinHandler('status', smokeCtx);
-      const contextAfterInvalid = eventHandlers.get('context')?.({ messages: [] });
-      const renderedAfterInvalid = String(contextAfterInvalid?.messages?.[0]?.content ?? '');
+      const renderedAfterInvalid = await ambientPromptText();
       proof.invalidReloadResult = invalidReload.message;
       proof.invalidReloadFails = invalidReload.ok === false;
       proof.invalidReloadErrorKinds = (invalidReload.errors ?? []).map((error) => error.kind);

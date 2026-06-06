@@ -55,9 +55,9 @@ test("symlinked entrypoint registers required APIs against the fake Pi host reco
     "fake_host must record /dasein command registration",
   );
   assert.equal(
-    ledger.lifecycleHandlers.some((handler) => handler.eventName === "context"),
+    ledger.lifecycleHandlers.some((handler) => handler.eventName === "before_agent_start"),
     true,
-    "fake_host must record context lifecycle registration for request-path injection",
+    "fake_host must record before_agent_start lifecycle registration for system-prompt injection",
   );
   assert.equal(
     ledger.lifecycleHandlers.some((handler) => handler.eventName === "session_start"),

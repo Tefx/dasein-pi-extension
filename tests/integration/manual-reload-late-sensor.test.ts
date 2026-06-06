@@ -17,7 +17,7 @@ const scratchRoot = join(repoRoot, ".dasein", "manual-reload-late-sensor-tests")
 
 type DaseinFactory = (pi: FakePiHostFixture["pi"]) => void | Promise<void>;
 
-type MutableContextEvent = { messages: unknown[] };
+type MutableBeforeAgentStartEvent = { systemPrompt: string; messages: unknown[] };
 
 interface IsolatedExtensionFixture {
   readonly root: string;
@@ -86,13 +86,13 @@ export default spec;
 `;
 
 const contextContent = async (host: FakePiHostFixture): Promise<string> => {
-  const contextEvent: MutableContextEvent = { messages: [] };
-  await invokeFakeLifecycle(host, "context", contextEvent);
-  const first = objectRecord(contextEvent.messages[0]);
-  assert.equal(first.role, "custom");
-  assert.equal(first.customType, "dasein");
-  assert.equal(typeof first.content, "string");
-  return first.content as string;
+  const event: MutableBeforeAgentStartEvent = { systemPrompt: "BASE SYSTEM", messages: [] };
+  const result = await invokeFakeLifecycle(host, "before_agent_start", event);
+  const returned = objectRecord(result[0]);
+  assert.equal(event.messages.length, 0, "Dasein must not append CustomMessage/user messages for agent context");
+  assert.equal(returned.systemPrompt, event.systemPrompt);
+  assert.equal(typeof event.systemPrompt, "string");
+  return event.systemPrompt;
 };
 
 test("manual reload rebuilds effective defaults so a sensor added after startup renders after reload", async () => {

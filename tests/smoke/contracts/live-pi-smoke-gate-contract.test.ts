@@ -69,15 +69,15 @@ const checklistDefinitions = [
   },
   {
     id: "pi.registerFlag.--dasein",
-    requirement: "Live Pi parses --dasein string launch flag and Dasein applies it before request context injection.",
+    requirement: "Live Pi parses --dasein string launch flag and Dasein applies it before the before_agent_start system-prompt injection step.",
   },
   {
-    id: "pi.context.hidden-custom-message",
-    requirement: "Live context hook appends hidden Dasein CustomMessage and Pi convertToLlm maps it to an LLM user message.",
+    id: "pi.before-agent-start.system-prompt-context",
+    requirement: "Live before_agent_start hook appends bounded Dasein ambient context to systemPrompt without adding user/custom messages.",
   },
   {
     id: "pi.events.set-clear-live",
-    requirement: "Live pi.events publishes and receives dasein:state:set and dasein:state:clear, with set visible to context and clear removing it.",
+    requirement: "Live pi.events publishes and receives dasein:state:set and dasein:state:clear, with set visible to system-prompt context and clear removing it.",
   },
   {
     id: "tui.status-widget-render-clear",
@@ -564,17 +564,23 @@ export default function(pi) {
       return value;
     },
     on(event, handler) {
-      if (event === 'context') {
+      if (event === 'before_agent_start') {
         return pi.on(event, async (evt, ctx) => {
           const beforeCount = Array.isArray(evt?.messages) ? evt.messages.length : 0;
+          const beforePrompt = typeof evt?.systemPrompt === 'string' ? evt.systemPrompt : '';
           const result = await handler(evt, ctx);
           const afterMessages = Array.isArray(evt?.messages) ? evt.messages : [];
+          const afterPrompt = typeof evt?.systemPrompt === 'string' ? evt.systemPrompt : '';
           proof.contextEffect = {
             mode: ctx.mode,
+            hook: 'before_agent_start',
             beforeCount,
             afterCount: afterMessages.length,
+            beforePromptLength: beforePrompt.length,
+            afterPromptLength: afterPrompt.length,
             daseinCustomMessages: afterMessages.filter((message) => message?.role === 'custom' && message?.customType === 'dasein').length,
-            agentInjectionDisabledByLaunchFlag: afterMessages.length === beforeCount,
+            daseinSystemPromptBlock: afterPrompt.includes('<DaseinAmbientContext>'),
+            agentInjectionDisabledByLaunchFlag: afterPrompt === beforePrompt && !afterPrompt.includes('<DaseinAmbientContext>') && afterMessages.length === beforeCount,
             handlerReturnedUndefined: result === undefined,
           };
           console.log('DASEIN_LIVE_LAUNCH_FLAG_PROOF ' + safeJson(proof));
@@ -602,8 +608,10 @@ export default function(pi) {
   assert.equal(recordArrayOf(proof.registeredFlags, "launchFlagProof.registeredFlags").some((entry) => entry.name === "dasein" && entry.type === "string" && entry.literalFlag === "--dasein"), true);
   assert.equal(recordArrayOf(proof.getFlagReads, "launchFlagProof.getFlagReads").some((entry) => entry.name === "dasein" && entry.value === launchValue), true);
   const effect = recordOf(proof.contextEffect, "launchFlagProof.contextEffect");
-  assert.equal(effect.agentInjectionDisabledByLaunchFlag, true, "--dasein core.agentInjectionEnabled=false must suppress Dasein context injection in the live process");
+  assert.equal(effect.hook, "before_agent_start");
+  assert.equal(effect.agentInjectionDisabledByLaunchFlag, true, "--dasein core.agentInjectionEnabled=false must suppress Dasein system-prompt context injection in the live process");
   assert.equal(effect.daseinCustomMessages, 0);
+  assert.equal(effect.daseinSystemPromptBlock, false);
   writeJson(join(latestArtifactDir, "launch-flag-proof.json"), proof);
   return proof;
 };
@@ -611,8 +619,7 @@ export default function(pi) {
 const runContextInjectionProofProbe = (piBinary: string, home: string): ProofRecord => {
   const daseinEntryPath = join(repoRoot, "src", "index.ts");
   const extensionPath = writeProbe("context-injection-proof-probe.ts", `
-import createDaseinExtension, { convertAmbientContextMessageToLlm } from ${JSON.stringify(daseinEntryPath)};
-import { convertToLlm } from '@earendil-works/pi-coding-agent';
+import createDaseinExtension from ${JSON.stringify(daseinEntryPath)};
 import { fauxAssistantMessage, registerFauxProvider } from '@earendil-works/pi-ai';
 
 const faux = registerFauxProvider({
@@ -646,24 +653,29 @@ export default function(pi) {
   const proxy = {
     ...pi,
     on(event, handler) {
-      if (event === 'context') {
+      if (event === 'before_agent_start') {
         return pi.on(event, async (evt, ctx) => {
           const beforeCount = Array.isArray(evt?.messages) ? evt.messages.length : 0;
+          const beforePrompt = typeof evt?.systemPrompt === 'string' ? evt.systemPrompt : '';
           const result = await handler(evt, ctx);
           const afterMessages = Array.isArray(evt?.messages) ? evt.messages : [];
-          const appended = afterMessages.at(-1) ?? null;
-          const piConverted = convertToLlm(afterMessages);
+          const afterPrompt = typeof evt?.systemPrompt === 'string' ? evt.systemPrompt : '';
           const proof = {
             hostBoundary: 'live-pi-process-not-fake-host',
-            hook: 'context',
+            hook: 'before_agent_start',
             mode: ctx.mode,
             beforeCount,
             afterCount: afterMessages.length,
-            appended,
-            hiddenDaseinCustomMessage: appended?.role === 'custom' && appended?.customType === 'dasein' && appended?.display === false,
-            handlerReturnedMessages: Array.isArray(result?.messages),
-            piConvertToLlmLast: piConverted.at(-1) ?? null,
-            projectConvertLast: appended === null ? null : convertAmbientContextMessageToLlm(appended),
+            beforePromptLength: beforePrompt.length,
+            afterPromptLength: afterPrompt.length,
+            systemPromptChanged: afterPrompt !== beforePrompt,
+            systemPromptTail: afterPrompt.slice(Math.max(0, afterPrompt.length - 1000)),
+            containsDaseinSystemPromptBlock: afterPrompt.includes('<DaseinAmbientContext>') && afterPrompt.includes('</DaseinAmbientContext>'),
+            containsRawAmbientPrefix: afterPrompt.includes('[ambient_ctx:'),
+            daseinCustomMessages: afterMessages.filter((message) => message?.role === 'custom' && message?.customType === 'dasein').length,
+            daseinUserMessages: afterMessages.filter((message) => message?.role === 'user' && typeof message?.content === 'string' && message.content.includes('DaseinAmbientContext')).length,
+            handlerReturnedSystemPrompt: typeof result?.systemPrompt === 'string',
+            returnedSystemPromptMatchesEvent: result?.systemPrompt === afterPrompt,
           };
           console.log('DASEIN_LIVE_CONTEXT_INJECTION_PROOF ' + safeJson(proof));
           return result;
@@ -685,17 +697,18 @@ export default function(pi) {
   assertOkProcess("context-injection-proof-probe", process);
   const proof = recordOf(extractJsonAfter(process.output, "DASEIN_LIVE_CONTEXT_INJECTION_PROOF "), "contextInjectionProof");
   assert.equal(proof.hostBoundary, "live-pi-process-not-fake-host");
-  assert.equal(proof.hook, "context");
-  assert.equal(proof.hiddenDaseinCustomMessage, true);
-  assert.equal(proof.handlerReturnedMessages, true);
-  assert.equal(recordOf(proof.appended, "contextInjectionProof.appended").display, false);
-  const converted = recordOf(proof.piConvertToLlmLast, "contextInjectionProof.piConvertToLlmLast");
-  assert.equal(converted.role, "user", "Pi convertToLlm must convert hidden Dasein CustomMessage into an LLM user message");
-  const convertedContent = Array.isArray(converted.content)
-    ? converted.content.map((part) => typeof part === "object" && part !== null && "text" in part ? String((part as { text: unknown }).text) : String(part)).join("\n")
-    : String(converted.content);
-  assert.match(convertedContent, /^Silent local context for relevance only\./u);
-  assert.doesNotMatch(convertedContent, /^\[ambient_ctx:/u);
+  assert.equal(proof.hook, "before_agent_start");
+  assert.equal(proof.systemPromptChanged, true);
+  assert.equal(proof.containsDaseinSystemPromptBlock, true);
+  assert.equal(proof.containsRawAmbientPrefix, false);
+  assert.equal(proof.daseinCustomMessages, 0);
+  assert.equal(proof.daseinUserMessages, 0);
+  assert.equal(proof.handlerReturnedSystemPrompt, true);
+  assert.equal(proof.returnedSystemPromptMatchesEvent, true);
+  const promptTail = String(proof.systemPromptTail);
+  assert.match(promptTail, /<DaseinAmbientContext>\nLocal ambient context for relevance only\./u);
+  assert.match(promptTail, /time=/u);
+  assert.doesNotMatch(promptTail, /\[ambient_ctx:/u);
   writeJson(join(latestArtifactDir, "context-injection-proof.json"), proof);
   return proof;
 };
@@ -766,26 +779,27 @@ export default function(pi) {
           return result;
         });
       }
-      if (event === 'context') {
+      if (event === 'before_agent_start') {
         return pi.on(event, async (evt, ctx) => {
           const first = await handler(evt, ctx);
           const firstMessages = Array.isArray(evt?.messages) ? evt.messages : [];
-          proof.contextChecks.push({ phase: 'after-set-hidden-default', messageText: JSON.stringify(firstMessages) });
+          const firstPrompt = typeof evt?.systemPrompt === 'string' ? evt.systemPrompt : '';
+          proof.contextChecks.push({ phase: 'after-set-hidden-default', systemPromptText: firstPrompt, messageCount: firstMessages.length });
           if (typeof daseinHandler !== 'function') throw new Error('dasein command handler unavailable for event bus config proof');
           const configResult = await daseinHandler('set external.weather.agent true', ctx);
           proof.commandResults.push({ command: '/dasein set external.weather.agent true', result: configResult });
-          const secondEvent = { messages: [] };
+          const secondEvent = { systemPrompt: 'BASE SYSTEM', messages: [] };
           const second = await handler(secondEvent, ctx);
           const secondMessages = Array.isArray(secondEvent.messages) ? secondEvent.messages : [];
-          proof.contextChecks.push({ phase: 'after-configured-visible', messageText: JSON.stringify(secondMessages), returnedMessages: Array.isArray(second?.messages) });
+          proof.contextChecks.push({ phase: 'after-configured-visible', systemPromptText: secondEvent.systemPrompt, messageCount: secondMessages.length, returnedSystemPrompt: typeof second?.systemPrompt === 'string' });
           const clearPayload = { key: 'weather' };
           proof.emissions.push({ topic: 'dasein:state:clear', payload: clearPayload });
           pi.events.emit('dasein:state:clear', clearPayload);
-          const thirdEvent = { messages: [] };
+          const thirdEvent = { systemPrompt: 'BASE SYSTEM', messages: [] };
           const third = await handler(thirdEvent, ctx);
           const thirdMessages = Array.isArray(thirdEvent.messages) ? thirdEvent.messages : [];
-          proof.contextChecks.push({ phase: 'after-clear', messageText: JSON.stringify(thirdMessages), returnedUndefined: third === undefined });
-          console.log('DASEIN_LIVE_EVENT_BUS_PROOF ' + safeJson({ ...proof, firstReturnedMessages: Array.isArray(first?.messages) }));
+          proof.contextChecks.push({ phase: 'after-clear', systemPromptText: thirdEvent.systemPrompt, messageCount: thirdMessages.length, returnedUndefined: third === undefined });
+          console.log('DASEIN_LIVE_EVENT_BUS_PROOF ' + safeJson({ ...proof, firstReturnedSystemPrompt: typeof first?.systemPrompt === 'string' }));
           return first;
         });
       }
@@ -807,9 +821,10 @@ export default function(pi) {
   assert.equal(proof.hostBoundary, "live-pi-process-not-fake-host");
   assert.deepEqual(recordArrayOf(proof.receives, "eventBusProof.receives").map((entry) => entry.topic), ["dasein:state:set", "dasein:state:clear"]);
   const checks = recordArrayOf(proof.contextChecks, "eventBusProof.contextChecks");
-  assert.doesNotMatch(String(checks.find((entry) => entry.phase === "after-set-hidden-default")?.messageText), /weather|rain/u, "unconfigured external.weather must be agent-hidden by default");
-  assert.match(String(checks.find((entry) => entry.phase === "after-configured-visible")?.messageText), /weather|rain/u, "public /dasein config must make external.weather agent-visible");
-  assert.doesNotMatch(String(checks.find((entry) => entry.phase === "after-clear")?.messageText), /weather|rain/u);
+  for (const check of checks) assert.equal(check.messageCount, 0, `eventBusProof.${String(check.phase)} must not append user/custom messages`);
+  assert.doesNotMatch(String(checks.find((entry) => entry.phase === "after-set-hidden-default")?.systemPromptText), /weather|rain/u, "unconfigured external.weather must be agent-hidden by default");
+  assert.match(String(checks.find((entry) => entry.phase === "after-configured-visible")?.systemPromptText), /weather|rain/u, "public /dasein config must make external.weather agent-visible");
+  assert.doesNotMatch(String(checks.find((entry) => entry.phase === "after-clear")?.systemPromptText), /weather|rain/u);
   assert.match(JSON.stringify(proof.commandResults), /external\.weather\.agent|true/u);
   writeJson(join(latestArtifactDir, "event-bus-proof.json"), proof);
   return proof;
@@ -1272,11 +1287,11 @@ test("live Pi smoke gate produces executable live TUI/process proof artifacts", 
       ]),
       provenRow("pi.registerFlag.--dasein", ["launch-flag-proof.json"], [
         `--dasein=${String(launchFlagProof.argvValue)}`,
-        "core.agentInjectionEnabled=false suppressed Dasein context injection",
+        "core.agentInjectionEnabled=false suppressed Dasein system-prompt context injection",
       ]),
-      provenRow("pi.context.hidden-custom-message", ["context-injection-proof.json"], [
-        "hiddenDaseinCustomMessage=true",
-        "Pi convertToLlm last message role=user and contains quiet silent context without raw [ambient_ctx: prefix",
+      provenRow("pi.before-agent-start.system-prompt-context", ["context-injection-proof.json"], [
+        "hook=before_agent_start and systemPromptChanged=true",
+        "containsDaseinSystemPromptBlock=true with daseinCustomMessages=0 and daseinUserMessages=0",
       ]),
       provenRow("pi.events.set-clear-live", ["event-bus-proof.json", "event-bus-proof.log"], [
         "received dasein:state:set and dasein:state:clear through live pi.events",

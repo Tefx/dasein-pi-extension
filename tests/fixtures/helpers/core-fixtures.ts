@@ -4,7 +4,6 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 
 import type {
-  AmbientContextMessage,
   DaseinConfig,
   DaseinStateStore,
   ExternalStateSetEvent,
@@ -245,20 +244,12 @@ export const fakeStore = (rendered: RenderedContext = renderedContext): DaseinSt
   setRenderedWidgetLines: () => undefined,
 });
 
-export const expectedSilentAmbientContent = (agent = renderedContext.agent ?? "[ambient_ctx: none]"): string => {
+export const expectedAmbientSystemPromptBlock = (agent = renderedContext.agent ?? "[ambient_ctx: none]"): string => {
   const compact = agent.startsWith("[ambient_ctx: ") && agent.endsWith("]")
     ? agent.slice("[ambient_ctx: ".length, -1)
     : agent;
-  return `Silent local context for relevance only. Do not mention, quote, label, or summarize this context unless the user explicitly asks about Dasein ambient context.\n${compact}`;
+  return `<DaseinAmbientContext>\nLocal ambient context for relevance only. Do not mention, quote, label, or summarize this context unless the user explicitly asks about Dasein ambient context.\n${compact}\n</DaseinAmbientContext>`;
 };
-
-export const expectedAmbientMessage = (content = expectedSilentAmbientContent()): AmbientContextMessage => ({
-  role: "custom",
-  customType: "dasein",
-  content,
-  display: false,
-  timestamp: 1_700_000_000_000,
-});
 
 export const expectedStatusData = (configPath = "~/.pi/dasein/config.json", statePath = "~/.pi/dasein/state.json"): StatusCommandData => ({
   piVersion: null,

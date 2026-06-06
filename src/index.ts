@@ -29,7 +29,7 @@ import {
 import { createConfigManager } from "./core/config.ts";
 import { createDurableStateStore, createStateStore } from "./core/state.ts";
 import { createExternalStateBridge } from "./core/external-events.ts";
-import { injectAmbientContextMessage } from "./core/injector.ts";
+import { injectAmbientSystemPrompt } from "./core/injector.ts";
 import { createDaseinLifecycle, reloadDaseinRuntime, type DaseinReloadResult } from "./core/lifecycle.ts";
 import { renderDaseinContext } from "./core/renderer.ts";
 import { cancelRuntimeTimer, scheduleRuntimeTimer, type RuntimeTimer } from "./core/runtime-timers.ts";
@@ -133,8 +133,8 @@ export {
   renderDaseinContext,
 } from "./core/renderer.ts";
 export {
-  convertAmbientContextMessageToLlm,
-  injectAmbientContextMessage,
+  formatAmbientSystemPromptBlock,
+  injectAmbientSystemPrompt,
   proveInjectorNoIo,
 } from "./core/injector.ts";
 export {
@@ -193,14 +193,14 @@ export type DaseinPiExtensionFactory = (pi: DaseinPiExtensionApi) => void | Prom
 type DaseinPiMechanism =
   | "registerCommand"
   | "registerFlag"
-  | "context"
+  | "before_agent_start"
   | "events"
   | "setStatus"
   | "setWidget"
   | "custom"
   | "SettingsList";
 
-type MutableContextEvent = { messages?: unknown[] };
+type MutableBeforeAgentStartEvent = { systemPrompt?: unknown };
 type LightweightMutationResult = { ok: true; updatedPaths: string[]; deletedPaths: string[] } | { ok: false; errors: ConfigValidationError[] };
 
 type ConfigManagerInstance = ReturnType<typeof createConfigManager>;
@@ -251,7 +251,7 @@ configureGeoNativeHelper({ extensionRoot: EXTENSION_ROOT, installMode: "director
 const FEATURE_PROBE_ORDER: readonly DaseinPiMechanism[] = [
   "registerCommand",
   "registerFlag",
-  "context",
+  "before_agent_start",
   "events",
   "setStatus",
   "setWidget",
@@ -268,6 +268,7 @@ const clone = <T>(value: T): T => structuredClone(value);
 const piMechanismName = (mechanism: DaseinPiMechanism): string => {
   if (mechanism === "registerCommand") return "pi.registerCommand";
   if (mechanism === "registerFlag") return "pi.registerFlag";
+  if (mechanism === "before_agent_start") return "pi.on(\"before_agent_start\")";
   if (mechanism === "events") return "pi.events";
   if (mechanism === "setStatus") return "ctx.ui.setStatus";
   if (mechanism === "setWidget") return "ctx.ui.setWidget";
@@ -285,7 +286,7 @@ const evidenceStatusesFor = (mechanism: DaseinPiMechanism): PiMechanismEvidenceS
 const observedBehaviorFor = (mechanism: DaseinPiMechanism): string => {
   if (mechanism === "registerCommand") return "live Pi smoke ledger pi.registerCommand./dasein=PROVEN";
   if (mechanism === "registerFlag") return "live Pi smoke ledger pi.registerFlag.--dasein=PROVEN";
-  if (mechanism === "context") return "live Pi smoke ledger pi.context.hidden-custom-message=PROVEN";
+  if (mechanism === "before_agent_start") return "live Pi smoke ledger pi.before-agent-start.system-prompt-context=PROVEN";
   if (mechanism === "events") return "live Pi smoke ledger pi.events.set-clear-live=PROVEN";
   if (mechanism === "setStatus" || mechanism === "setWidget") return "live Pi smoke ledger tui.status-widget-render-clear=PROVEN";
   if (mechanism === "custom") return "live Pi smoke ledger ctx.ui.custom.no-api-key-render-path=PROVEN";
@@ -522,13 +523,14 @@ class DaseinAmbientContextBroker {
     this.renderAndPublish(context);
   }
 
-  context(event: unknown): { messages: readonly unknown[] } | undefined {
-    const mutable = event as MutableContextEvent;
-    const messages = Array.isArray(mutable.messages) ? mutable.messages : [];
-    const result = injectAmbientContextMessage({ stateStore: this.stateStore, messages, timestamp: Date.now() });
+  async beforeAgentStart(event: unknown, context: DaseinPiExtensionContext): Promise<{ systemPrompt: string } | undefined> {
+    await this.observePiLifecycle("before_agent_start", event, context);
+    const mutable = event as MutableBeforeAgentStartEvent;
+    const systemPrompt = typeof mutable.systemPrompt === "string" ? mutable.systemPrompt : "";
+    const result = injectAmbientSystemPrompt({ stateStore: this.stateStore, systemPrompt });
     if (!result.changed) return undefined;
-    mutable.messages = [...result.messages];
-    return { messages: result.messages };
+    mutable.systemPrompt = result.systemPrompt;
+    return { systemPrompt: result.systemPrompt };
   }
 
   async observePiLifecycle(kind: "input" | "before_agent_start" | "agent_end", event: unknown, context: DaseinPiExtensionContext): Promise<void> {
@@ -1202,11 +1204,10 @@ export const createDaseinExtension: DaseinPiExtensionFactory = (pi) => {
     handler: (args: unknown, context: DaseinPiExtensionContext) => broker.command(args, context),
   });
 
-  pi.on("context", (event) => broker.context(event));
   pi.on("session_start", (_event, context) => broker.startup(context));
   pi.on("session_shutdown", (_event, context) => broker.shutdown(context));
   pi.on("input", (event, context) => broker.observePiLifecycle("input", event, context));
-  pi.on("before_agent_start", (event, context) => broker.observePiLifecycle("before_agent_start", event, context));
+  pi.on("before_agent_start", (event, context) => broker.beforeAgentStart(event, context));
   pi.on("agent_end", (event, context) => broker.observePiLifecycle("agent_end", event, context));
 
   pi.events?.on?.("dasein:state:set", (payload) => broker.setExternal(payload));

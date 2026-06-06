@@ -15,7 +15,6 @@ import {
   SENSOR_STATE_ENVELOPE_KEYS,
 } from "../../../src/index.ts";
 import type {
-  AmbientContextMessage,
   CommandParserContract,
   ConfigManager,
   DaseinConfig,
@@ -193,19 +192,14 @@ test("required contract surfaces are typed at module boundaries", () => {
 
   const setEvent: ExternalStateSetEvent = { key: "weather", agent: "dry", ttlMs: 60000 };
   const clearEvent: ExternalStateClearEvent = { key: "weather" };
-  const ambientMessage: AmbientContextMessage = {
-    role: "custom",
-    customType: "dasein",
-    content: "[ambient_ctx: time=14:32]",
-    display: false,
-    timestamp: 1,
-  };
   const injectorContract: DaseinContextInjectorContract = {
     readSurface: "pre-rendered-in-memory-agent-string",
     inputStore: store,
-    appendedMessage: ambientMessage,
+    appendedSystemPromptBlock: "<DaseinAmbientContext>\ntime=14:32\n</DaseinAmbientContext>",
     mutatesConfig: false,
     triggersSensorWork: false,
+    appendsUserMessage: false,
+    appendsCustomMessage: false,
   };
   const rendererContract: RendererContract = {
     input: "effective-config-current-state-store-and-now",

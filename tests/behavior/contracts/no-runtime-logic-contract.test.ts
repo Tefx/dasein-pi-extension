@@ -20,7 +20,7 @@ test("entrypoint composes real modules while the root shim remains delegate-only
     "loadSensorRegistry",
     "createSensorRuntime",
     "renderDaseinContext",
-    "injectAmbientContextMessage",
+    "injectAmbientSystemPrompt",
     "createExternalStateBridge",
     "createDaseinLifecycle",
   ]) {

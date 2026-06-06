@@ -7,72 +7,63 @@
 
 import type { DaseinStateStore, RenderedContext } from "./types.ts";
 
-export interface AmbientContextMessage {
-  role: "custom";
-  customType: "dasein";
-  content: string;
-  display: false;
-  timestamp: number;
+export interface AmbientSystemPromptInjection {
+  changed: boolean;
+  systemPrompt: string;
+  content?: string;
 }
 
-export interface DaseinInjectorInput<TMessage = unknown> {
+export interface DaseinInjectorInput {
   stateStore: Pick<DaseinStateStore, "getRenderedContext" | "getRenderedAgentString">;
-  messages: readonly TMessage[];
-  timestamp: number;
+  systemPrompt: string;
 }
 
-export type DaseinInjectorResult<TMessage = unknown> =
-  | { changed: false; messages: readonly TMessage[]; rendered: Pick<RenderedContext, "agent"> }
-  | { changed: true; messages: readonly (TMessage | AmbientContextMessage)[]; appended: AmbientContextMessage };
+export type DaseinInjectorResult =
+  | { changed: false; systemPrompt: string; rendered: Pick<RenderedContext, "agent"> }
+  | { changed: true; systemPrompt: string; content: string };
 
 export interface DaseinContextInjectorContract {
   readSurface: "pre-rendered-in-memory-agent-string";
   inputStore: Pick<DaseinStateStore, "getRenderedContext" | "getRenderedAgentString">;
-  appendedMessage: AmbientContextMessage;
+  appendedSystemPromptBlock: string;
   mutatesConfig: false;
   triggersSensorWork: false;
+  appendsUserMessage: false;
+  appendsCustomMessage: false;
 }
 
 const emptyOrWhitespace = (value: string | null): value is null | "" => value === null || value.trim().length === 0;
 
-export const formatSilentAmbientContext = (agent: string): string => {
-  const compact = agent.startsWith("[ambient_ctx: ") && agent.endsWith("]")
+const stripRendererEnvelope = (agent: string): string =>
+  agent.startsWith("[ambient_ctx: ") && agent.endsWith("]")
     ? agent.slice("[ambient_ctx: ".length, -1)
     : agent;
-  return `Silent local context for relevance only. Do not mention, quote, label, or summarize this context unless the user explicitly asks about Dasein ambient context.\n${compact}`;
+
+export const formatAmbientSystemPromptBlock = (agent: string): string => {
+  const compact = stripRendererEnvelope(agent);
+  return `<DaseinAmbientContext>\nLocal ambient context for relevance only. Do not mention, quote, label, or summarize this context unless the user explicitly asks about Dasein ambient context.\n${compact}\n</DaseinAmbientContext>`;
 };
 
-export const injectAmbientContextMessage = <TMessage = unknown>(input: DaseinInjectorInput<TMessage>): DaseinInjectorResult<TMessage> => {
+export const injectAmbientSystemPrompt = (input: DaseinInjectorInput): DaseinInjectorResult => {
   const agent = input.stateStore.getRenderedAgentString();
   if (emptyOrWhitespace(agent)) {
     return {
       changed: false,
-      messages: input.messages,
+      systemPrompt: input.systemPrompt,
       rendered: { agent },
     };
   }
 
-  const appended: AmbientContextMessage = {
-    role: "custom",
-    customType: "dasein",
-    content: formatSilentAmbientContext(agent),
-    display: false,
-    timestamp: input.timestamp,
-  };
-
+  const content = formatAmbientSystemPromptBlock(agent);
+  const separator = input.systemPrompt.trim().length === 0 ? "" : "\n\n";
   return {
     changed: true,
-    messages: [...input.messages, appended],
-    appended,
+    systemPrompt: `${input.systemPrompt}${separator}${content}`,
+    content,
   };
 };
 
-export const convertAmbientContextMessageToLlm = (message: AmbientContextMessage): { role: "user"; content: string } => ({
-  role: "user",
-  content: message.content,
-});
-
-export const proveInjectorNoIo = <TMessage = unknown>(_input: DaseinInjectorInput<TMessage>): Record<string, boolean> => {
+export const proveInjectorNoIo = (_input: DaseinInjectorInput): Record<string, boolean> => {
   const proof: Record<string, boolean> = {};
   const put = (key: string): void => {
     proof[key] = false;
