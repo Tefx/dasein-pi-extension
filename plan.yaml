@@ -14875,37 +14875,37 @@ phases:
       This is an IMPLEMENTATION step. Stub-only completion is NOT acceptable. Each
       deliverable MUST contain substantive logic that processes inputs and produces
       outputs that vary based on those inputs.'
-    verification: '- [ ] refs confirmation cites key passages for the Constitution,
+    verification: '- [x] refs confirmation cites key passages for the Constitution,
       PRD reload, Technical Design reload, core default, rendering, builtin sensor,
       and testing-gate refs.
 
-      - [ ] A1 focused test/probe shows manual reload after adding an enabled late
+      - [x] A1 focused test/probe shows manual reload after adding an enabled late
       sensor reports `reloadOk=true`, lists/enables the late sensor, and renders it
       (`contextHasLate=true`).
 
-      - [ ] A1 failure-path regression proves invalid reload/load/default rebuild
+      - [x] A1 failure-path regression proves invalid reload/load/default rebuild
       preserves previous registry, effective config/defaults, sensor runtimes, rendered
       state, and all-or-keep-old overlay behavior.
 
-      - [ ] A2 lifecycle regression proves shutdown invokes helper `abort`, `terminate`,
+      - [x] A2 lifecycle regression proves shutdown invokes helper `abort`, `terminate`,
       and `kill` hooks in the contracted order/timeout path while preserving cleanup
       error aggregation.
 
-      - [ ] A2 geo/native regression proves `context.signal` reaches the native helper
+      - [x] A2 geo/native regression proves `context.signal` reaches the native helper
       supervisor and aborting the refresh cancels native helper work without a live
       Pi/native overclaim.
 
-      - [ ] S1 default regression proves `src/index.ts` default `core.widgetEnabled`
+      - [x] S1 default regression proves `src/index.ts` default `core.widgetEnabled`
       is false and fake-host startup with no config/launch does not create/set a widget
       unless explicitly enabled.
 
-      - [ ] S2 default regression proves `core.renderOrder` defaults to `["clock","lapse","geo"]`
+      - [x] S2 default regression proves `core.renderOrder` defaults to `["clock","lapse","geo"]`
       and renderer fallback appends remaining enabled sensors deterministically.
 
-      - [ ] Verification commands include raw output for `npm run typecheck`, focused
+      - [x] Verification commands include raw output for `npm run typecheck`, focused
       tests for A1/A2/S1/S2, `npm test`, and `npm run test:smoke`.
 
-      - [ ] Evidence explicitly states no live Pi support claim was made from fake-host/mock/native-supervisor
+      - [x] Evidence explicitly states no live Pi support claim was made from fake-host/mock/native-supervisor
       tests.'
     evidence_template: '## refs Read Confirmation (MANDATORY)
 
