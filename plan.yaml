@@ -13782,29 +13782,29 @@ phases:
       rejection before/after snapshots; validation-only unit tests are insufficient.
       3. Retest must exercise actual async timeout/scheduler behavior; config validation
       and SettingsList control presence alone are insufficient.</risk_probes>'
-    verification: '- [ ] refs confirmation includes key passages for external defaults/no
+    verification: '- [x] refs confirmation includes key passages for external defaults/no
       mutation and sensor timeout/interval semantics.
 
-      - [ ] `npm run typecheck` exits 0 in the independent retest environment.
+      - [x] `npm run typecheck` exits 0 in the independent retest environment.
 
-      - [ ] Focused tests prove external default agent-hidden behavior without active
+      - [x] Focused tests prove external default agent-hidden behavior without active
       config mutation when a valid event contains `payload.agent` but no explicit
       `external.<key>.agent=true` config.
 
-      - [ ] Focused tests prove malformed external event rejection leaves external
+      - [x] Focused tests prove malformed external event rejection leaves external
       bridge/list state, active config, `state.json`, and rendered output unchanged.
 
-      - [ ] Focused tests prove configured `timeoutMs` aborts/errors a slow sensor
+      - [x] Focused tests prove configured `timeoutMs` aborts/errors a slow sensor
       refresh and records the expected failure/result semantics.
 
-      - [ ] Focused tests prove `intervalMs` scheduling performs actual refresh or
+      - [x] Focused tests prove `intervalMs` scheduling performs actual refresh or
       an explicit supported bounded mechanism per spec, including disabled/null interval
       and cleanup/shutdown cases.
 
-      - [ ] `npm test` exits 0 with raw stdout/stderr, or any failure is classified
+      - [x] `npm test` exits 0 with raw stdout/stderr, or any failure is classified
       with exact blocker/non-intersection disposition for finalization.
 
-      - [ ] Retest report states that downstream `finalization-full-wiring-audit`
+      - [x] Retest report states that downstream `finalization-full-wiring-audit`
       and `finalization-black-box-verification` are dependency-ordered after this
       retest in plan state.'
     evidence_template: '## refs Read Confirmation (MANDATORY)
