@@ -4474,17 +4474,17 @@ phases:
       Clock default fragments stay <=240 chars before global truncation.</risk_probes>
 
       '
-    verification: '- [ ] `npm run test:file -- tests/unit/sensors/clock.test.ts tests/unit/sensors/lapse.test.ts`
+    verification: '- [x] `npm run test:file -- tests/unit/sensors/clock.test.ts tests/unit/sensors/lapse.test.ts`
       passes with raw output.
 
-      - [ ] Evidence proves clock precision enum/defaults/manifests and compact render
+      - [x] Evidence proves clock precision enum/defaults/manifests and compact render
       fragments.
 
-      - [ ] Evidence proves lapse observe sampling, persistence gating, reset clear
+      - [x] Evidence proves lapse observe sampling, persistence gating, reset clear
       exception, agentFields validation, no previous-run history storage, and request-path
       I/O avoidance.
 
-      - [ ] Evidence shows both sensors publish only typed-state envelope fields through
+      - [x] Evidence shows both sensors publish only typed-state envelope fields through
       the core runtime.
 
       '
