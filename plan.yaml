@@ -373,7 +373,7 @@ phases:
       - Tests assert SettingsList/getSettingsListTheme approved Pi peer path: PROVEN.'
   - id: scaffold-complete
     name: Complete package scaffold and fake-host harness
-    status: pending
+    status: claimed
     description: 'step_type: implementation
 
       Fill in stub bodies and scaffold files per scaffold-contracts and scaffold-tests.
@@ -454,6 +454,8 @@ phases:
     depends_on:
     - scaffold-tests
     agent: frontend-engineer
+    claimed_by: frontend-engineer
+    claimed_at: '2026-06-06T03:40:53.338807+00:00'
   - id: scaffold-static-proof
     name: Verify scaffold static and fake-host foundation
     status: pending
