@@ -15833,7 +15833,7 @@ phases:
       All twelve checklist items proven and toggled. Blockers: none.'
   - id: finalization-sensor-action-lapse-durable-blockers-retest
     name: Retest sensor action namespace and async lapse persistence blockers
-    status: claimed
+    status: done
     description: 'step_type: test
 
       step_intent: retest_green
@@ -16014,3 +16014,58 @@ phases:
     agent: integration-verifier
     claimed_by: integration-verifier
     claimed_at: '2026-06-06T14:01:27.181025+00:00'
+    done_at: '2026-06-06T14:06:49.644774+00:00'
+    evidence: '## refs Read Confirmation
+
+      - CONSTITUTION.md#architectural-dogmas / #performance-laws / #extension-and-sensor-laws
+      / #testing-and-gates — sensor/config/request path boundaries and live evidence
+      requirements checked.
+
+      - docs/TECHNICAL_DESIGN.md#command-design/sensor-commands — sensor action config
+      proposals scoped to the calling sensor namespace.
+
+      - docs/TECHNICAL_DESIGN.md#core-contracts/sensor-spec — sensor action/proposal
+      contract checked.
+
+      - docs/TECHNICAL_DESIGN.md#builtin-sensors/lapse-continuity — lapse observation
+      persistence and reset contract checked.
+
+      - docs/TECHNICAL_DESIGN.md#verified-pi-mechanisms / #testing-gate-matrix — live
+      evidence vocabulary and gate proof checked.
+
+
+      ## Independent Retest Commands
+
+      - `npm run typecheck` exit 0.
+
+      - Focused B1/B2/W1 command exit 0; 17 pass.
+
+      - `npm test` exit 0; 155 pass.
+
+      - `npm run test:smoke` exit 0; 3 pass.
+
+      - Grep no unscoped sensor proposal path exit 0.
+
+
+      ## Behavioral Proof Register
+
+      - B1: PROVEN. Sensor action namespace route rejects core/other-sensor proposal
+      paths; own namespace proposal allowed; grep found no unscoped proposal path.
+
+      - B2: PROVEN. Lapse handlers return before durable write, coalesce latest async
+      write, surface async write errors in status, and live smoke/lapse reset still
+      passes.
+
+      - W1: PROVEN. Status payload/final artifacts use corrected live evidence vocabulary;
+      typecheck/focused/full/smoke suites pass.
+
+
+      ## no_mutation_proof
+
+      No vectl use; tracked status/diff clean in retest worktree; no tracked artifacts
+      modified.
+
+
+      ## checklist_receipt
+
+      All thirteen checklist items proven and toggled. Blockers: none.'
