@@ -3288,21 +3288,21 @@ phases:
       `npm test` runs? 2. Does SettingsList proof cover the Technical Design matrix
       target rather than only import resolution? 3. Does the remediation preserve
       the closed B1 request-path/static-boundary blocker?</risk_probes>'
-    verification: '- [ ] `npm test` robustly runs the all-platform non-native full
+    verification: '- [x] `npm test` robustly runs the all-platform non-native full
       suite on the target shell without relying on shell globs that miss top-level
       tests.
 
-      - [ ] Evidence includes raw `npm test` output and explicit discovery/count proof
+      - [x] Evidence includes raw `npm test` output and explicit discovery/count proof
       for non-native `.test.ts` files and tests.
 
-      - [ ] `tests/unit/settings-list.test.ts` is added with SettingsList visibility
+      - [x] `tests/unit/settings-list.test.ts` is added with SettingsList visibility
       coverage, OR an authoritative DEFERRED disposition cites the owning downstream
       step and proves non-intersection with the core gate.
 
-      - [ ] SettingsList proof/disposition explicitly addresses the External state
+      - [x] SettingsList proof/disposition explicitly addresses the External state
       intake and SettingsList visibility row in `docs/TECHNICAL_DESIGN.md#testing-gate-matrix`.
 
-      - [ ] No runtime dependencies, live-smoke requirements, native-helper requirements,
+      - [x] No runtime dependencies, live-smoke requirements, native-helper requirements,
       or B1 static-boundary regressions are introduced.'
     evidence_template: "## refs Read Confirmation (MANDATORY)\nFor each ref in this\
       \ step:\n- CONSTITUTION.md#architectural-dogmas — <key passage>\n- CONSTITUTION.md#quality-baselines\
