@@ -1769,31 +1769,31 @@ phases:
       explicit as static/contract/runtime fake proof, not broad injector no-I/O.
 
       '
-    verification: '- [ ] `npm run test:file -- tests/unit/external-events.test.ts
+    verification: '- [x] `npm run test:file -- tests/unit/external-events.test.ts
       tests/unit/renderer.test.ts tests/unit/injector.test.ts tests/static/no-request-io.test.ts`
       passes with raw output.
 
-      - [ ] No-I/O static evidence covers injector transitive dependencies and denylisted
+      - [x] No-I/O static evidence covers injector transitive dependencies and denylisted
       APIs.
 
-      - [ ] Golden rendering evidence covers deterministic order, `external:<key>`
+      - [x] Golden rendering evidence covers deterministic order, `external:<key>`
       fairness, truncation, omittedKeys, disabled/hidden contributors, stale/expired
       values, and neutral `[ambient_ctx: ...]` labeling.
 
-      - [ ] External event evidence covers unknown fields, multiline/control payload
+      - [x] External event evidence covers unknown fields, multiline/control payload
       rejection, TTL bounds/defaults, and clear payload exactness.
 
-      - [ ] Evidence proves injector output uses hidden CustomMessage fields `display:false`,
+      - [x] Evidence proves injector output uses hidden CustomMessage fields `display:false`,
       `customType:"dasein"`, valid timestamp shape, and no request-path I/O.
 
-      - [ ] Evidence proves exactly one render invalidation timer is scheduled at
+      - [x] Evidence proves exactly one render invalidation timer is scheduled at
       the minimum upcoming deadline, cancelled when no deadlines exist, and timer
       fire recomputes stale/expired values from in-memory state only.
 
-      - [ ] Evidence proves external event intake rejects U+2028 and U+2029 in `agent`,
+      - [x] Evidence proves external event intake rejects U+2028 and U+2029 in `agent`,
       `ui`, and `source` without normalization and without mutating state.
 
-      - [ ] Evidence proves `renderAgent`/`renderUI` hook purity: no I/O, refresh/action,
+      - [x] Evidence proves `renderAgent`/`renderUI` hook purity: no I/O, refresh/action,
       config mutation, durable-state access, discovery, helper/native imports, or
       final prompt/UI string ownership.
 
