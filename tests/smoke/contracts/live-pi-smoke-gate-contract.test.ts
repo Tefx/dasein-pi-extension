@@ -35,6 +35,8 @@ type ChecklistReceipt = {
   readonly blockers: readonly string[];
 };
 
+type ProofRecord = Record<string, unknown>;
+
 const refs = [
   "docs/TECHNICAL_DESIGN.md#verified-pi-mechanisms: LIVE_SMOKE_VERIFIED means observed in a live Pi process; source/API evidence alone cannot ship support claims.",
   "docs/TECHNICAL_DESIGN.md#testing-gate-matrix: npm run test:smoke is release smoke only and requires live Pi TUI/process for SettingsList/status/widget behavior.",
@@ -213,6 +215,18 @@ const extractJsonAfter = (output: string, prefix: string): unknown => {
   return JSON.parse(line.slice(jsonStart).trim()) as unknown;
 };
 
+const recordOf = (value: unknown, label: string): ProofRecord => {
+  assert.equal(typeof value, "object", `${label} must be an object`);
+  assert.notEqual(value, null, `${label} must not be null`);
+  assert.equal(Array.isArray(value), false, `${label} must not be an array`);
+  return value as ProofRecord;
+};
+
+const recordArrayOf = (value: unknown, label: string): readonly ProofRecord[] => {
+  assert.equal(Array.isArray(value), true, `${label} must be an array`);
+  return (value as readonly unknown[]).map((item, index) => recordOf(item, `${label}[${index}]`));
+};
+
 const assertOkProcess = (label: string, process: ProbeProcess): void => {
   assert.equal(process.result.signal, null, `${label} must not be killed by signal`);
   assert.equal(process.result.status, 0, `${label} must exit 0; output artifact written under ${latestArtifactDir}`);
@@ -312,6 +326,260 @@ export default function(pi) {
     textArtifact: "tui-render.raw.text",
   });
   return { renderedStatus, renderedWidget };
+};
+
+const runSlashCommandProofProbe = (piBinary: string, home: string): ProofRecord => {
+  const daseinEntryPath = join(repoRoot, "src", "index.ts");
+  const extensionPath = writeProbe("slash-command-proof-probe.ts", `
+import createDaseinExtension from ${JSON.stringify(daseinEntryPath)};
+
+const safeJson = (value) => JSON.stringify(value, (_key, candidate) => {
+  if (typeof candidate === 'bigint') return candidate.toString();
+  if (candidate === undefined) return '__undefined__';
+  return candidate;
+});
+
+export default function(pi) {
+  const proof = {
+    hostBoundary: 'live-pi-process-not-fake-host',
+    literalCommand: '/dasein',
+    literalPrompt: '/dasein status',
+    registrations: [],
+    invocations: [],
+    results: [],
+  };
+  const proxy = {
+    ...pi,
+    registerCommand(name, options) {
+      proof.registrations.push({
+        name,
+        literalRegistered: '/' + name,
+        description: options.description ?? null,
+        rawArgs: options.rawArgs === true,
+        completions: options.completions === true,
+      });
+      return pi.registerCommand(name, {
+        ...options,
+        handler: async (args, ctx) => {
+          proof.invocations.push({ name, literalInvoked: '/' + name, args, mode: ctx.mode });
+          const result = await options.handler(args, ctx);
+          proof.results.push(result);
+          console.log('DASEIN_LIVE_SLASH_COMMAND_PROOF ' + safeJson(proof));
+          return result;
+        },
+      });
+    },
+  };
+  createDaseinExtension(proxy);
+}
+`);
+  const process = spawnPi({
+    piBinary,
+    home,
+    args: [...basePiArgs(extensionPath), "-p", "/dasein status"],
+    timeoutMs: 45_000,
+    artifactName: "slash-command-proof.log",
+  });
+  assertOkProcess("slash-command-proof-probe", process);
+  const proof = recordOf(extractJsonAfter(process.output, "DASEIN_LIVE_SLASH_COMMAND_PROOF "), "slashCommandProof");
+  assert.equal(proof.hostBoundary, "live-pi-process-not-fake-host");
+  assert.equal(proof.literalCommand, "/dasein");
+  assert.equal(proof.literalPrompt, "/dasein status");
+  const registrations = recordArrayOf(proof.registrations, "slashCommandProof.registrations");
+  const invocations = recordArrayOf(proof.invocations, "slashCommandProof.invocations");
+  const results = recordArrayOf(proof.results, "slashCommandProof.results");
+  assert.equal(registrations.some((entry) => entry.name === "dasein" && entry.literalRegistered === "/dasein" && entry.rawArgs === true && entry.completions === true), true);
+  assert.equal(invocations.some((entry) => entry.name === "dasein" && entry.literalInvoked === "/dasein" && entry.args === "status" && entry.mode === "print"), true);
+  assert.equal(results.some((entry) => entry.ok === true && entry.command === "status"), true);
+  writeJson(join(latestArtifactDir, "slash-command-proof.json"), proof);
+  return proof;
+};
+
+const runLaunchFlagProofProbe = (piBinary: string, home: string): ProofRecord => {
+  const daseinEntryPath = join(repoRoot, "src", "index.ts");
+  const launchValue = "core.agentInjectionEnabled=false,core.statusEnabled=false,core.widgetEnabled=false";
+  const extensionPath = writeProbe("launch-flag-proof-probe.ts", `
+import createDaseinExtension from ${JSON.stringify(daseinEntryPath)};
+import { fauxAssistantMessage, registerFauxProvider } from '@earendil-works/pi-ai';
+
+const faux = registerFauxProvider({
+  api: 'dasein-live-launch-faux-api',
+  provider: 'dasein-live-launch-faux',
+  models: [{
+    id: 'dasein-live-launch-faux-model',
+    name: 'Dasein Live Launch Faux Model',
+    reasoning: false,
+    input: ['text'],
+    cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
+    contextWindow: 128000,
+    maxTokens: 1000,
+  }],
+});
+faux.setResponses([fauxAssistantMessage('launch proof ok')]);
+
+const safeJson = (value) => JSON.stringify(value, (_key, candidate) => {
+  if (typeof candidate === 'bigint') return candidate.toString();
+  if (candidate === undefined) return '__undefined__';
+  return candidate;
+});
+
+export default function(pi) {
+  pi.registerProvider('dasein-live-launch-faux', {
+    baseUrl: 'http://localhost:0',
+    apiKey: 'dummy',
+    api: faux.api,
+    models: faux.models,
+  });
+  const proof = {
+    hostBoundary: 'live-pi-process-not-fake-host',
+    argvLiteral: '--dasein',
+    argvValue: ${JSON.stringify(launchValue)},
+    registeredFlags: [],
+    getFlagReads: [],
+    contextEffect: null,
+  };
+  const proxy = {
+    ...pi,
+    registerFlag(name, options) {
+      proof.registeredFlags.push({ name, type: options.type, literalFlag: '--' + name });
+      return pi.registerFlag(name, options);
+    },
+    getFlag(name) {
+      const value = pi.getFlag(name);
+      proof.getFlagReads.push({ name, literalFlag: '--' + name, value });
+      return value;
+    },
+    on(event, handler) {
+      if (event === 'context') {
+        return pi.on(event, async (evt, ctx) => {
+          const beforeCount = Array.isArray(evt?.messages) ? evt.messages.length : 0;
+          const result = await handler(evt, ctx);
+          const afterMessages = Array.isArray(evt?.messages) ? evt.messages : [];
+          proof.contextEffect = {
+            mode: ctx.mode,
+            beforeCount,
+            afterCount: afterMessages.length,
+            daseinCustomMessages: afterMessages.filter((message) => message?.role === 'custom' && message?.customType === 'dasein').length,
+            agentInjectionDisabledByLaunchFlag: afterMessages.length === beforeCount,
+            handlerReturnedUndefined: result === undefined,
+          };
+          console.log('DASEIN_LIVE_LAUNCH_FLAG_PROOF ' + safeJson(proof));
+          return result;
+        });
+      }
+      return pi.on(event, handler);
+    },
+  };
+  createDaseinExtension(proxy);
+}
+`);
+  const process = spawnPi({
+    piBinary,
+    home,
+    args: [...basePiArgs(extensionPath), "--dasein", launchValue, "--model", "dasein-live-launch-faux/dasein-live-launch-faux-model", "-p", "trigger launch flag proof"],
+    timeoutMs: 45_000,
+    artifactName: "launch-flag-proof.log",
+  });
+  assertOkProcess("launch-flag-proof-probe", process);
+  const proof = recordOf(extractJsonAfter(process.output, "DASEIN_LIVE_LAUNCH_FLAG_PROOF "), "launchFlagProof");
+  assert.equal(proof.hostBoundary, "live-pi-process-not-fake-host");
+  assert.equal(proof.argvLiteral, "--dasein");
+  assert.equal(proof.argvValue, launchValue);
+  assert.equal(recordArrayOf(proof.registeredFlags, "launchFlagProof.registeredFlags").some((entry) => entry.name === "dasein" && entry.type === "string" && entry.literalFlag === "--dasein"), true);
+  assert.equal(recordArrayOf(proof.getFlagReads, "launchFlagProof.getFlagReads").some((entry) => entry.name === "dasein" && entry.value === launchValue), true);
+  const effect = recordOf(proof.contextEffect, "launchFlagProof.contextEffect");
+  assert.equal(effect.agentInjectionDisabledByLaunchFlag, true, "--dasein core.agentInjectionEnabled=false must suppress Dasein context injection in the live process");
+  assert.equal(effect.daseinCustomMessages, 0);
+  writeJson(join(latestArtifactDir, "launch-flag-proof.json"), proof);
+  return proof;
+};
+
+const runContextInjectionProofProbe = (piBinary: string, home: string): ProofRecord => {
+  const daseinEntryPath = join(repoRoot, "src", "index.ts");
+  const extensionPath = writeProbe("context-injection-proof-probe.ts", `
+import createDaseinExtension, { convertAmbientContextMessageToLlm } from ${JSON.stringify(daseinEntryPath)};
+import { convertToLlm } from '@earendil-works/pi-coding-agent';
+import { fauxAssistantMessage, registerFauxProvider } from '@earendil-works/pi-ai';
+
+const faux = registerFauxProvider({
+  api: 'dasein-live-context-faux-api',
+  provider: 'dasein-live-context-faux',
+  models: [{
+    id: 'dasein-live-context-faux-model',
+    name: 'Dasein Live Context Faux Model',
+    reasoning: false,
+    input: ['text'],
+    cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
+    contextWindow: 128000,
+    maxTokens: 1000,
+  }],
+});
+faux.setResponses([fauxAssistantMessage('context proof ok')]);
+
+const safeJson = (value) => JSON.stringify(value, (_key, candidate) => {
+  if (typeof candidate === 'bigint') return candidate.toString();
+  if (candidate === undefined) return '__undefined__';
+  return candidate;
+});
+
+export default function(pi) {
+  pi.registerProvider('dasein-live-context-faux', {
+    baseUrl: 'http://localhost:0',
+    apiKey: 'dummy',
+    api: faux.api,
+    models: faux.models,
+  });
+  const proxy = {
+    ...pi,
+    on(event, handler) {
+      if (event === 'context') {
+        return pi.on(event, async (evt, ctx) => {
+          const beforeCount = Array.isArray(evt?.messages) ? evt.messages.length : 0;
+          const result = await handler(evt, ctx);
+          const afterMessages = Array.isArray(evt?.messages) ? evt.messages : [];
+          const appended = afterMessages.at(-1) ?? null;
+          const piConverted = convertToLlm(afterMessages);
+          const proof = {
+            hostBoundary: 'live-pi-process-not-fake-host',
+            hook: 'context',
+            mode: ctx.mode,
+            beforeCount,
+            afterCount: afterMessages.length,
+            appended,
+            hiddenDaseinCustomMessage: appended?.role === 'custom' && appended?.customType === 'dasein' && appended?.display === false,
+            handlerReturnedMessages: Array.isArray(result?.messages),
+            piConvertToLlmLast: piConverted.at(-1) ?? null,
+            projectConvertLast: appended === null ? null : convertAmbientContextMessageToLlm(appended),
+          };
+          console.log('DASEIN_LIVE_CONTEXT_INJECTION_PROOF ' + safeJson(proof));
+          return result;
+        });
+      }
+      return pi.on(event, handler);
+    },
+  };
+  createDaseinExtension(proxy);
+}
+`);
+  const process = spawnPi({
+    piBinary,
+    home,
+    args: [...basePiArgs(extensionPath), "--model", "dasein-live-context-faux/dasein-live-context-faux-model", "-p", "trigger context injection proof"],
+    timeoutMs: 45_000,
+    artifactName: "context-injection-proof.log",
+  });
+  assertOkProcess("context-injection-proof-probe", process);
+  const proof = recordOf(extractJsonAfter(process.output, "DASEIN_LIVE_CONTEXT_INJECTION_PROOF "), "contextInjectionProof");
+  assert.equal(proof.hostBoundary, "live-pi-process-not-fake-host");
+  assert.equal(proof.hook, "context");
+  assert.equal(proof.hiddenDaseinCustomMessage, true);
+  assert.equal(proof.handlerReturnedMessages, true);
+  assert.equal(recordOf(proof.appended, "contextInjectionProof.appended").display, false);
+  const converted = recordOf(proof.piConvertToLlmLast, "contextInjectionProof.piConvertToLlmLast");
+  assert.equal(converted.role, "user", "Pi convertToLlm must convert hidden Dasein CustomMessage into an LLM user message");
+  assert.match(JSON.stringify(converted.content), /\[ambient_ctx:/u);
+  writeJson(join(latestArtifactDir, "context-injection-proof.json"), proof);
+  return proof;
 };
 
 const runSettingsListPersistenceProbe = (piBinary: string, home: string): unknown => {
@@ -449,6 +717,9 @@ test("live Pi smoke gate produces executable live TUI/process proof artifacts", 
     });
 
     const apiProbe = runApiProbe(piBinary, home);
+    const slashCommandProof = runSlashCommandProofProbe(piBinary, home);
+    const launchFlagProof = runLaunchFlagProofProbe(piBinary, home);
+    const contextInjectionProof = runContextInjectionProofProbe(piBinary, home);
     const tuiRender = runTuiRenderProbe(piBinary, home);
     const settingsList = runSettingsListPersistenceProbe(piBinary, home);
 
@@ -464,6 +735,21 @@ test("live Pi smoke gate produces executable live TUI/process proof artifacts", 
     assert.ok(JSON.stringify(session).includes("setWidget"));
     assert.ok(JSON.stringify(session).includes("custom"));
 
+    const noFakeHostConflation = {
+      hostBoundary: "live-pi-process-not-fake-host",
+      fakeHostModulesImported: false,
+      fakeHostCanSatisfyLiveGate: false,
+      ordinaryNpmTestBoundary: "fake-host integration remains ordinary npm test only; live smoke support claims require these real Pi process artifacts",
+      liveArtifacts: [
+        "slash-command-proof.json",
+        "launch-flag-proof.json",
+        "context-injection-proof.json",
+        "tui-render-proof.json",
+        "settingslist-persistence-proof.json",
+      ],
+    };
+    writeJson(join(latestArtifactDir, "no-fake-host-conflation.json"), noFakeHostConflation);
+
     const receipt: ChecklistReceipt = {
       hostBoundary: "live-pi-process-not-fake-host",
       piBinary,
@@ -473,13 +759,12 @@ test("live Pi smoke gate produces executable live TUI/process proof artifacts", 
       refs,
       checks: {
         apiProbe,
+        slashCommandProof,
+        launchFlagProof,
+        contextInjectionProof,
         tuiRender,
         settingsList,
-        noFakeHostLiveConflation: {
-          fakeHostModulesImported: false,
-          fakeHostCanSatisfyLiveGate: false,
-          evidenceBoundary: "live smoke artifacts are generated by spawning the real Pi binary; fake-host integration remains ordinary npm test only",
-        },
+        noFakeHostConflation,
       },
       blockers: [],
     };
