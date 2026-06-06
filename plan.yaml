@@ -3410,7 +3410,7 @@ phases:
       regressions introduced.'
   - id: core-gate-blocker-retest
     name: Retest core gate blockers B2 and B3
-    status: pending
+    status: claimed
     description: 'step_type: verification
 
       step_intent: retest_green
@@ -3520,6 +3520,8 @@ phases:
     depends_on:
     - core-gate-blocker-fix
     agent: integration-verifier
+    claimed_by: integration-verifier
+    claimed_at: '2026-06-06T05:19:30.174182+00:00'
 - id: sensors
   name: Builtin Sensors and Native Helper
   status: locked
