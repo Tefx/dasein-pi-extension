@@ -5872,7 +5872,7 @@ phases:
       declared bounding box.'
   - id: sensors-renderer-geo-privacy-retest
     name: Retest core renderer geo privacy closure
-    status: claimed
+    status: done
     description: 'step_type: test
 
       step_intent: retest_green
@@ -6022,6 +6022,68 @@ phases:
     agent: integration-verifier
     claimed_by: integration-verifier
     claimed_at: '2026-06-06T06:36:57.549824+00:00'
+    done_at: '2026-06-06T06:40:50.681221+00:00'
+    evidence: '## refs Read Confirmation
+
+      - `docs/PRD.md#8-2-privacy` — geo agent injection opt-in; defaults agent=false/precision=city;
+      exact geo requires agent=true and precision=exact.
+
+      - `docs/TECHNICAL_DESIGN.md#builtin-sensors` — exact coordinates require agent=true,
+      precision=exact, exactCoordinates=true; exact address requires agent=true, precision=exact,
+      exactAddress=true.
+
+      - `docs/TECHNICAL_DESIGN.md#testing-gate-matrix` — typecheck/npm test/focused
+      rows validate renderer and builtin sensor geo privacy gates.
+
+      - `CONSTITUTION.md#privacy-and-safety-laws` — no hidden fields; injected fields
+      traceable; privacy controls enforced.
+
+
+      verdict: PASS
+
+      blockers: []
+
+
+      ## Command Matrix
+
+      - `npm run typecheck` exit 0.
+
+      - `npm test` exit 0; 97 pass, 0 fail/skipped.
+
+      - `npm run test:file -- tests/unit/renderer.test.ts tests/unit/sensors/geo.test.ts
+      tests/unit/sensors/clock.test.ts tests/unit/sensors/lapse.test.ts tests/unit/sensor-runtime.test.ts`
+      exit 0; 25 pass, 0 fail/skipped.
+
+
+      ## Repro Closure Register
+
+      - SENSORS-GATE-BLOCKER-001: CLOSED.
+
+      - City precision exact-false repro: `agent="[ambient_ctx: loc=Shanghai; loc=Shanghai]"`,
+      sensitivePresent=false, omittedKeys include `geo.accuracy_m`, `geo.district`,
+      `geo.formattedAddress`, `geo.lat`, `geo.lon`, `geo.nearestTag`, `geo.permission`,
+      `geo.street`.
+
+      - Exact positive: agent includes `lat=31.2304`, `lon=121.4737`, and `address=123
+      Nanjing W Rd, Shanghai`; forbidden raw metadata absent.
+
+
+      ## behavioral_proof_register
+
+      - geo city precision suppresses sensitive agent fields: PROVEN.
+
+      - geo placemark city precision suppresses raw sensitive fields: PROVEN.
+
+      - exact coordinates/address require all gates: PROVEN.
+
+      - tag-list redaction remains proven: PROVEN.
+
+      - clock/lapse/sensor-runtime regressions: none; focused tests green.
+
+
+      ## checklist_receipt
+
+      All six retest checklist items proven.'
 - id: pi_runtime
   name: Pi Runtime, Commands, and TUI Surfaces
   status: locked
