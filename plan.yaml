@@ -9306,35 +9306,35 @@ phases:
       or corrupting disposable runtime resources.
 
       '
-    verification: '- [ ] Ledger includes every mechanism from TECHNICAL_DESIGN > Verified
+    verification: '- [x] Ledger includes every mechanism from TECHNICAL_DESIGN > Verified
       Pi Mechanisms plus native helper and dynamic reload gates.
 
-      - [ ] Each row cites exact evidence artifact refs and status; no row upgrades
+      - [x] Each row cites exact evidence artifact refs and status; no row upgrades
       to LIVE_SMOKE_VERIFIED without observed live behavior.
 
-      - [ ] Fake-host/API/source evidence remains distinguished from live support
+      - [x] Fake-host/API/source evidence remains distinguished from live support
       evidence.
 
-      - [ ] Remaining blockers have explicit closure paths and do not invalidate ordinary
+      - [x] Remaining blockers have explicit closure paths and do not invalidate ordinary
       CI proof unless they intersect release support claims.
 
-      - [ ] Support-claim ledger includes launch flag parsing, event publishing, lifecycle
+      - [x] Support-claim ledger includes launch flag parsing, event publishing, lifecycle
       observation, and hidden context conversion rows with live/fake status separation.
 
-      - [ ] Support-claim ledger includes minimum Pi version, current version, below-minimum/unavailable
+      - [x] Support-claim ledger includes minimum Pi version, current version, below-minimum/unavailable
       classification, and separate feature-probe evidence rows.
 
-      - [ ] Support-claim ledger includes a separate `ctx.ui.custom` row with SOURCE/API/LIVE/BLOCKED
+      - [x] Support-claim ledger includes a separate `ctx.ui.custom` row with SOURCE/API/LIVE/BLOCKED
       status and SettingsList dependency noted.
 
-      - [ ] Support-claim ledger includes hidden CustomMessage field/conversion proof
+      - [x] Support-claim ledger includes hidden CustomMessage field/conversion proof
       rows for `display:false`, `customType:"dasein"`, timestamp shape, and LLM user-message
       conversion.
 
-      - [ ] Support-claim ledger includes `session_start`, `session_shutdown`, and
+      - [x] Support-claim ledger includes `session_start`, `session_shutdown`, and
       `1000ms` cleanup timeout rows with live/fake/source status.
 
-      - [ ] Evidence records serialized execution assumptions and confirms disposable
+      - [x] Evidence records serialized execution assumptions and confirms disposable
       runtime/config/extension/native resources are cleaned up before the next release-smoke
       step consumes them.
 
