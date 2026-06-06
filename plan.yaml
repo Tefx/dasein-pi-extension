@@ -7359,30 +7359,30 @@ phases:
       to an LLM user message. Broad context-hook or hidden-message wording is insufficient.
 
       '
-    verification: '- [ ] Spec conformance report includes a requirements register
+    verification: '- [x] Spec conformance report includes a requirements register
       for touched Pi runtime sections with implementation file:line references.
 
-      - [ ] Each requirement verdict is CONFORMS, DIVERGES, PARTIAL, NEEDS_TEST, NOT_FOUND,
+      - [x] Each requirement verdict is CONFORMS, DIVERGES, PARTIAL, NEEDS_TEST, NOT_FOUND,
       AMBIGUOUS_SPEC, or SPEC_POSSIBLY_STALE.
 
-      - [ ] Any behavioral precedence claim without runtime proof is marked NEEDS_TEST
+      - [x] Any behavioral precedence claim without runtime proof is marked NEEDS_TEST
       with closure path.
 
-      - [ ] Report distinguishes fake-host/API evidence from live Pi support claims.
+      - [x] Report distinguishes fake-host/API evidence from live Pi support claims.
 
-      - [ ] Conformance audit includes startup feature probes and fail-closed PiMechanismError/status
+      - [x] Conformance audit includes startup feature probes and fail-closed PiMechanismError/status
       reporting for unavailable Pi APIs.
 
-      - [ ] Conformance audit includes minimum Pi version/status payload requirements
+      - [x] Conformance audit includes minimum Pi version/status payload requirements
       and verifies version classification is separate from feature probes.
 
-      - [ ] Conformance audit includes bare `/dasein` TUI SettingsList opening, non-TUI
+      - [x] Conformance audit includes bare `/dasein` TUI SettingsList opening, non-TUI
       help/status fallback, and no-mutation requirements.
 
-      - [ ] Conformance audit includes `ctx.ui.custom` feature-probe/status reporting
+      - [x] Conformance audit includes `ctx.ui.custom` feature-probe/status reporting
       and verifies SettingsList is not treated as available when custom UI is unavailable.
 
-      - [ ] Conformance audit includes exact context injection CustomMessage fields
+      - [x] Conformance audit includes exact context injection CustomMessage fields
       and conversion-to-LLM proof.
 
       '
