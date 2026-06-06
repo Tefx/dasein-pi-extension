@@ -9482,7 +9482,7 @@ phases:
     agent: gate-reviewer
   - id: release-smoke-fix-live-pi-tui-smoke
     name: Fix live Pi TUI smoke runner and proof artifacts
-    status: pending
+    status: claimed
     description: 'step_type: implementation
 
       work_type: defect_repair
@@ -9648,6 +9648,8 @@ phases:
       - disposable_config_paths: <paths>\n- cleanup_reset_proof: <evidence>\n- user_config_touched:\
       \ NO (required)"
     agent: frontend-engineer
+    claimed_by: frontend-engineer
+    claimed_at: '2026-06-06T08:21:43.360887+00:00'
 - id: finalization
   name: Documentation Sync and Final Deep Review
   status: locked
