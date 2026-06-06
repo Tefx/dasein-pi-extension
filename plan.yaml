@@ -12611,7 +12611,7 @@ phases:
     agent: gate-reviewer
   - id: finalization-audit-blockers-fix
     name: Fix concurrent finalization audit blockers
-    status: claimed
+    status: done
     description: 'step_type: implementation
 
       TARGET STATE: One batched remediation closes the four concurrent finalization
@@ -12816,3 +12816,68 @@ phases:
     agent: frontend-engineer
     claimed_by: frontend-engineer
     claimed_at: '2026-06-06T10:25:19.699444+00:00'
+    done_at: '2026-06-06T10:38:42.823735+00:00'
+    evidence: '## refs Read Confirmation
+
+      - `docs/TECHNICAL_DESIGN.md#builtin-sensors/geo` — helper path is `<extension_root>/src/native/macos-location-helper.swift`;
+      missing helper fails closed.
+
+      - `docs/TECHNICAL_DESIGN.md#sensor-loading-and-reload/startup-scan` — scan root
+      is `<extension_root>/src/sensors/*.ts` with explicit provenance.
+
+      - `docs/TECHNICAL_DESIGN.md#sensor-loading-and-reload/manual-reload` — reload
+      result includes `launchReappliedPaths`; invalid candidates keep old registry/config/runtime.
+
+      - `docs/TECHNICAL_DESIGN.md#builtin-sensors/lapse-continuity` — `/dasein lapse
+      reset` clears in-memory and persisted timestamps without config changes.
+
+      - `docs/PRD.md#9-5-builtin-sensors` — reset clears persisted timestamps even
+      with `sensors.lapse.persist=false`.
+
+      - `docs/PRD.md#9-7-sensor-loading-and-reload` — invalid candidates are reported
+      without replacing active runtime.
+
+      - `CONSTITUTION.md#testing-and-gates` — live/black-box evidence preferred over
+      mock-only integration claims.
+
+
+      ## Files changed
+
+      - `src/sensors/geo.ts`, `src/index.ts`, `src/core/sensor-loader.ts`, `src/core/lifecycle.ts`,
+      `src/sensors/lapse.ts`.
+
+      - Tests: geo, sensor-loader, reload, lapse reset integration, live lapse reset
+      smoke.
+
+
+      ## Fix proof
+
+      - Geo helper now uses configured extension root, not process.cwd; focused test
+      covers different cwd.
+
+      - Startup duplicate candidates surface duplicate-key loadErrors and are not
+      activated.
+
+      - Reload launchReappliedPaths is propagated to `/dasein reload` result.
+
+      - `/dasein lapse reset` clears in-memory and persisted timestamps in fake-host
+      and live Pi wrapper.
+
+      - Sibling searches covered helper-root, sensor-loader duplicate, reload-result,
+      and lapse-action paths.
+
+
+      ## Commands
+
+      - `npm run typecheck` exit 0.
+
+      - focused blocker suite exit 0; 15 pass.
+
+      - `npm test` exit 0; 137 pass.
+
+      - `npm run test:smoke` exit 0; 3 pass.
+
+
+      ## checklist_receipt
+
+      All eight finalization-audit-blockers-fix checklist items proven; blockers none.'
