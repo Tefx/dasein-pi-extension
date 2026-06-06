@@ -1050,7 +1050,7 @@ const defaults = {
   core: {
     agentInjectionEnabled: true,
     statusEnabled: true,
-    widgetEnabled: true,
+    widgetEnabled: false,
     maxAgentChars: 240,
     injectedLabel: 'ambient_ctx',
     renderOrder: ['clock'],

@@ -27,6 +27,55 @@ test("renderer deterministically orders renderOrder sensors, remaining sensors, 
   });
 });
 
+test("default render order is clock, lapse, geo and renderer appends remaining sensors lexicographically", async () => {
+  const api = await loadDaseinApi();
+  const renderDaseinContext = requireExportedFunction(api, "renderDaseinContext", "docs/TECHNICAL_DESIGN.md#rendering-contract default render order");
+  assert.deepEqual(api.DEFAULT_CORE_RENDER_ORDER, ["clock", "lapse", "geo"]);
+  const field = (sensorId: string, stateKey: string, value: unknown, valueType: string) => ({
+    contract_version: 1,
+    schema_version: 1,
+    sensor_id: sensorId,
+    state_key: stateKey,
+    value,
+    value_type: valueType,
+    collected_at: 1000,
+    stale_after_ms: 120000,
+    status: "enabled",
+    source: { sensor_id: sensorId, source_kind: sensorId === "alpha" ? "local_sensor" : "builtin" },
+  });
+  const snapshot = (sensorId: string, stateKey: string, value: unknown, valueType: string) => ({
+    contract_version: 1,
+    schema_version: 1,
+    sensor_id: sensorId,
+    fields: { [stateKey]: field(sensorId, stateKey, value, valueType) },
+    collected_at: 1000,
+    stale_after_ms: 120000,
+    status: "enabled",
+    source: { sensor_id: sensorId, source_kind: sensorId === "alpha" ? "local_sensor" : "builtin" },
+  });
+
+  const rendered = renderDaseinContext({
+    config: {
+      ...baseConfig,
+      core: { ...baseConfig.core, renderOrder: ["clock", "lapse", "geo"] },
+      sensors: {
+        ...baseConfig.sensors,
+        geo: { ...baseConfig.sensors.geo, enabled: true, agent: true },
+        alpha: { enabled: true, ui: true, agent: true },
+      },
+    },
+    sensorSnapshots: [
+      snapshot("geo", "geo.city", "Shanghai", "string"),
+      snapshot("alpha", "alpha.value", "alpha-after-builtins", "string"),
+      snapshot("lapse", "lapse.user_idle", 25_200_000, "number"),
+      clockSnapshot(),
+    ],
+    now: 1000,
+  }) as { agent: string | null };
+
+  assert.equal(rendered.agent, "[ambient_ctx: time=Fri_14:32+08; user_idle=7h; loc=Shanghai; value=alpha-after-builtins]");
+});
+
 test("unconfigured external keys stay UI-visible but hidden from the agent string", async () => {
   const api = await loadDaseinApi();
   const renderDaseinContext = requireExportedFunction(api, "renderDaseinContext", "Testing Gate Matrix row: Renderer output contract");

@@ -95,6 +95,7 @@ const sensorEnvelopeKeys = new Set([
 
 const externalSnapshotKeys = new Set(["key", "agent", "ui", "source", "updatedAt", "expiresAt"]);
 const externalPrefix = "external:";
+const builtinDefaultRenderOrder = ["clock", "lapse", "geo"] as const;
 
 const compareText = (left: string, right: string): number => left.localeCompare(right);
 
@@ -550,7 +551,7 @@ const defaultConfigFor = (sensorSnapshots: readonly SensorSnapshot[]): DaseinCon
     widgetEnabled: false,
     maxAgentChars: 240,
     injectedLabel: "ambient_ctx",
-    renderOrder: sensorSnapshots.map((snapshot) => snapshot.sensor_id),
+    renderOrder: builtinDefaultRenderOrder.filter((key) => sensorSnapshots.some((snapshot) => snapshot.sensor_id === key)),
   },
   sensors: Object.fromEntries(sensorSnapshots.map((snapshot) => [snapshot.sensor_id, { enabled: true, ui: true, agent: true } satisfies SensorConfig])),
   external: {},

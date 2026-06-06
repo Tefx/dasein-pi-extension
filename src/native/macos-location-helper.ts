@@ -68,10 +68,18 @@ export interface MacOSLocationHelperRuntimePolicy {
   manualRefreshBypassesTimeout: false;
 }
 
+export interface MacOSLocationHelperProcessControls {
+  abort(): void;
+  terminate(): void;
+  kill(): void;
+}
+
 export interface RunMacOSLocationHelperOnceInput extends MacOSLocationHelperRuntimePolicyInput {
   now?: () => number;
   helperExists?: (path: string) => boolean;
   reason?: string;
+  signal?: AbortSignal;
+  onProcessControls?: (controls: MacOSLocationHelperProcessControls | null) => void;
 }
 
 export interface MacOSLocationHelperSupervisorInput extends MacOSLocationHelperRuntimePolicyInput {
@@ -82,12 +90,14 @@ export interface MacOSLocationHelperSupervisorInput extends MacOSLocationHelperR
 export interface MacOSLocationHelperRefreshInput {
   manual?: boolean;
   reason: string;
+  signal?: AbortSignal;
 }
 
-export interface MacOSLocationHelperSupervisor {
+export interface MacOSLocationHelperSupervisor extends MacOSLocationHelperProcessControls {
   refresh(input: MacOSLocationHelperRefreshInput): Promise<MacOSLocationHelperMapping>;
   getBackoffUntil(): number | null;
   getBackoffStep(): number;
+  activeHelperCount(): number;
 }
 
 const TIMEOUT_MS = 3000 as const;
@@ -154,12 +164,16 @@ export const mapMacOSLocationHelperOutput = (input: unknown): MacOSLocationHelpe
 
 export const runMacOSLocationHelperOnce = async (input: RunMacOSLocationHelperOnceInput): Promise<MacOSLocationHelperMapping> => {
   if (input.reason === "request-path") return errorMapping("helper-unavailable", "macOS location helper must not be spawned from request-path injection");
+  if (input.signal?.aborted === true) return errorMapping("timeout", "macOS location helper refresh was aborted before spawn");
   const policy = getMacOSLocationHelperRuntimePolicy(input);
   const helperExists = input.helperExists ?? existsSync;
   if (policy.helperPath === null || policy.spawnCommand === null || !helperExists(policy.helperPath)) {
     return errorMapping("helper-unavailable", "macOS location helper path is unavailable; failing closed without spawn");
   }
-  const result = await runBoundedProcess(policy.spawnCommand, policy);
+  const result = await runBoundedProcess(policy.spawnCommand, policy, {
+    signal: input.signal,
+    onProcessControls: input.onProcessControls,
+  });
   if (!result.ok) return errorMapping(result.kind, result.message);
   try {
     return mapMacOSLocationHelperOutput(JSON.parse(result.stdout) as unknown);
@@ -172,13 +186,21 @@ export const createMacOSLocationHelperSupervisor = (input: MacOSLocationHelperSu
   const now = input.now ?? Date.now;
   let backoffStep = 0;
   let backoffUntil: number | null = null;
+  let activeControls: MacOSLocationHelperProcessControls | null = null;
 
   const refresh = async (refreshInput: MacOSLocationHelperRefreshInput): Promise<MacOSLocationHelperMapping> => {
     const currentTime = now();
     if (backoffUntil !== null && currentTime < backoffUntil && refreshInput.manual !== true) {
       return errorMapping("unavailable", `macOS location helper backoff active until ${backoffUntil}`);
     }
-    const result = await runMacOSLocationHelperOnce({ ...input, reason: refreshInput.reason });
+    const result = await runMacOSLocationHelperOnce({
+      ...input,
+      reason: refreshInput.reason,
+      signal: refreshInput.signal,
+      onProcessControls: (controls) => {
+        activeControls = controls;
+      },
+    });
     if (result.status === "enabled") {
       backoffStep = 0;
       backoffUntil = null;
@@ -194,14 +216,24 @@ export const createMacOSLocationHelperSupervisor = (input: MacOSLocationHelperSu
 
   return {
     refresh,
+    abort: () => activeControls?.abort(),
+    terminate: () => activeControls?.terminate(),
+    kill: () => activeControls?.kill(),
     getBackoffUntil: () => backoffUntil,
     getBackoffStep: () => backoffStep,
+    activeHelperCount: () => activeControls === null ? 0 : 1,
   };
 };
+
+interface RunBoundedProcessOptions {
+  signal?: AbortSignal;
+  onProcessControls?: (controls: MacOSLocationHelperProcessControls | null) => void;
+}
 
 const runBoundedProcess = async (
   command: readonly ["swift", string, "--once"],
   policy: MacOSLocationHelperRuntimePolicy,
+  options: RunBoundedProcessOptions = {},
 ): Promise<{ ok: true; stdout: string } | { ok: false; kind: SensorError["kind"]; message: string }> =>
   await new Promise((resolvePromise) => {
     let child: ReturnType<typeof spawn>;
@@ -216,6 +248,7 @@ const runBoundedProcess = async (
     let stderr: Buffer<ArrayBufferLike> = Buffer.alloc(0);
     let finished = false;
     let timedOut = false;
+    let aborted = false;
     let overflowed = false;
     let forceTimer: NodeJS.Timeout | null = null;
 
@@ -225,18 +258,38 @@ const runBoundedProcess = async (
       return Buffer.concat([existing, chunk.subarray(0, remaining)]);
     };
 
+    const kill = (): void => {
+      if (child.exitCode !== null) return;
+      child.kill("SIGKILL");
+    };
+
     const terminate = (): void => {
-      if (child.exitCode !== null || child.killed) return;
+      if (child.exitCode !== null) return;
       child.kill("SIGTERM");
-      forceTimer = setTimeout(() => {
-        if (child.exitCode === null) child.kill("SIGKILL");
-      }, policy.killGraceMs);
+      forceTimer ??= setTimeout(kill, policy.killGraceMs);
+    };
+
+    const abort = (): void => {
+      if (finished) return;
+      aborted = true;
+      terminate();
+    };
+
+    const cleanupControls = (): void => {
+      clearTimeout(timeout);
+      if (forceTimer !== null) clearTimeout(forceTimer);
+      options.signal?.removeEventListener("abort", abort);
+      options.onProcessControls?.(null);
     };
 
     const timeout = setTimeout(() => {
       timedOut = true;
       terminate();
     }, policy.timeoutMs);
+
+    options.onProcessControls?.({ abort, terminate, kill });
+    if (options.signal?.aborted === true) abort();
+    else options.signal?.addEventListener("abort", abort, { once: true });
 
     child.stdout?.on("data", (chunk: Buffer) => {
       if (stdout.byteLength >= policy.stdoutLimitBytes) return;
@@ -251,17 +304,15 @@ const runBoundedProcess = async (
     child.on("error", (error) => {
       if (finished) return;
       finished = true;
-      clearTimeout(timeout);
-      if (forceTimer !== null) clearTimeout(forceTimer);
+      cleanupControls();
       resolvePromise({ ok: false, kind: "process", message: error.message });
     });
     child.on("close", (code, signal) => {
       if (finished) return;
       finished = true;
-      clearTimeout(timeout);
-      if (forceTimer !== null) clearTimeout(forceTimer);
-      if (timedOut) {
-        resolvePromise({ ok: false, kind: "timeout", message: "macOS location helper timed out after 3000ms" });
+      cleanupControls();
+      if (timedOut || aborted) {
+        resolvePromise({ ok: false, kind: "timeout", message: timedOut ? "macOS location helper timed out after 3000ms" : "macOS location helper aborted" });
         return;
       }
       if (overflowed) {

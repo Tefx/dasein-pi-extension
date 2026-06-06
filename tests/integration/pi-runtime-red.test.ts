@@ -136,6 +136,15 @@ test("[expected-red] Pi lifecycle wiring registers startup, shutdown, request, i
   ]);
 });
 
+test("no-config/no-launch startup keeps core.widgetEnabled default off", async () => {
+  const host = await registerInFakeHost();
+
+  await invokeFakeLifecycle(host, "session_start");
+
+  assert.deepEqual(host.ledger.uiWidgetCalls.at(-1), { slot: "dasein", value: undefined });
+  assert.equal(host.ledger.uiWidgetCalls.some((call) => Array.isArray(call.value) || typeof call.value === "string"), false, "default startup must not emit widget content without an explicit core.widgetEnabled=true config source");
+});
+
 test("[expected-red] /dasein slash command and --dasein flag drive runtime behavior in the fake host", async () => {
   const host = await registerInFakeHost({
     dasein: "core.statusEnabled=false,core.widgetEnabled=false,sensors.clock.precision=hour",

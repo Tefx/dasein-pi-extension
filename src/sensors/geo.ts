@@ -213,6 +213,8 @@ const getSupervisor = (): ReturnType<typeof createMacOSLocationHelperSupervisor>
   return supervisor;
 };
 
+export const getGeoNativeHelperSupervisor = (): ReturnType<typeof createMacOSLocationHelperSupervisor> => getSupervisor();
+
 const geoSpec: SensorSpec<GeoState, GeoConfig> = {
   key: "geo",
   defaults: geoDefaults,
@@ -251,7 +253,7 @@ const geoSpec: SensorSpec<GeoState, GeoConfig> = {
   normalizeState: (value, context) => normalizeGeoState(value, context),
   refresh: async (context) => {
     const supervisor = getSupervisor();
-    const result = await supervisor.refresh({ reason: "geo_refresh", manual: false });
+    const result = await supervisor.refresh({ reason: "geo_refresh", manual: false, signal: context.signal });
     if (result.status === "enabled" && result.state !== undefined) {
       const state = withCurrentTag({ ...result.state, helperBackoffUntil: supervisor.getBackoffUntil() }, context.config.tags);
       return { value: state, metadata: { status: "enabled", collectedAt: state.timestamp === null ? context.now() : state.timestamp * 1000, staleAfterMs: STALE_AFTER_MS } };

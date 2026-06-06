@@ -107,6 +107,11 @@ type LightweightReloadResult =
       launchReappliedPaths: string[];
       runtimeOverriddenPaths: string[];
     };
+type ReloadDiskOptions = {
+  defaults?: DaseinConfig;
+  discoveredSensorKeys?: readonly string[];
+  sensorSpecs?: readonly SensorSpec[];
+};
 
 const KEY_RE = /^[A-Za-z0-9_-]{1,64}$/u;
 const INJECTED_LABEL_RE = /^[A-Za-z0-9_.:-]{1,32}$/u;
@@ -638,11 +643,13 @@ export const createConfigManager = (options: {
   setRuntime(path: string, value: unknown, runtimeOptions?: { failPersistenceAt?: FailPoint }): Promise<LightweightMutationResult>;
   applyRuntime(assignments: Record<string, unknown>, runtimeOptions?: { failPersistenceAt?: FailPoint }): Promise<LightweightMutationResult>;
   applyRuntimeProposal(proposal: ConfigMutationProposal, runtimeOptions?: { failPersistenceAt?: FailPoint }): Promise<LightweightMutationResult>;
-  reloadDisk(): Promise<LightweightReloadResult>;
+  reloadDisk(reloadOptions?: ReloadDiskOptions): Promise<LightweightReloadResult>;
 } => {
-  const defaults = clone(options.defaults);
-  const sensorSpecs = options.sensorSpecs ?? [];
-  const discoveredSensorKeys = options.discoveredSensorKeys ?? [...new Set([...Object.keys(defaults.sensors), ...sensorSpecs.map((spec) => spec.key)])];
+  const sensorKeysFrom = (configDefaults: DaseinConfig, specs: readonly SensorSpec[], explicitKeys?: readonly string[]): string[] =>
+    explicitKeys === undefined ? [...new Set([...Object.keys(configDefaults.sensors), ...specs.map((spec) => spec.key)])] : [...explicitKeys];
+  let defaults = clone(options.defaults);
+  let sensorSpecs = [...(options.sensorSpecs ?? [])];
+  let discoveredSensorKeys = sensorKeysFrom(defaults, sensorSpecs, options.discoveredSensorKeys);
   const validationContext = (config: DaseinConfig): ValidationContext => ({ config, discoveredSensorKeys, sensorSpecs });
   let statusErrors: ConfigValidationError[] = [];
   let disk: DiskDaseinConfig | null = null;
@@ -769,14 +776,27 @@ export const createConfigManager = (options: {
         return commit(normalized.assignments, deletedPaths, runtimeOptions?.failPersistenceAt);
       }) as Promise<LightweightMutationResult>;
     },
-    reloadDisk() {
+    reloadDisk(reloadOptions) {
       return queue.enqueue("reloadDisk", async () => {
-        const loaded = await readDiskFromPath(options.configPath, validationContext(defaults));
+        const candidateDefaults = reloadOptions?.defaults === undefined ? defaults : clone(reloadOptions.defaults);
+        const candidateSensorSpecs = reloadOptions?.sensorSpecs === undefined ? sensorSpecs : [...reloadOptions.sensorSpecs];
+        const candidateDiscoveredSensorKeys = sensorKeysFrom(candidateDefaults, candidateSensorSpecs, reloadOptions?.discoveredSensorKeys);
+        const candidateContext = (config: DaseinConfig): ValidationContext => ({
+          config,
+          discoveredSensorKeys: candidateDiscoveredSensorKeys,
+          sensorSpecs: candidateSensorSpecs,
+        });
+        const loaded = await readDiskFromPath(options.configPath, candidateContext(candidateDefaults));
         if (loaded.errors.length > 0) return { ok: false, errors: loaded.errors, ...currentReloadOverlayMetadata() };
-        disk = loaded.disk;
         const metadata = currentReloadOverlayMetadata();
-        launch = overlayFromAssignments(launchAssignments.filter((assignment) => metadata.launchReappliedPaths.includes(assignment.canonicalPath)));
-        effective = composeEffective(defaults, disk, launch, runtime, runtimeOverriddenPaths);
+        const candidateLaunch = overlayFromAssignments(launchAssignments.filter((assignment) => metadata.launchReappliedPaths.includes(assignment.canonicalPath)));
+        const candidateEffective = composeEffective(candidateDefaults, loaded.disk, candidateLaunch, runtime, runtimeOverriddenPaths);
+        defaults = candidateDefaults;
+        sensorSpecs = candidateSensorSpecs;
+        discoveredSensorKeys = candidateDiscoveredSensorKeys;
+        disk = loaded.disk;
+        launch = candidateLaunch;
+        effective = candidateEffective;
         return { ok: true, ...metadata };
       }) as Promise<LightweightReloadResult>;
     },

@@ -60,7 +60,7 @@ import type {
   SensorValueType,
 } from "./core/types.ts";
 import clockSpec from "./sensors/clock.ts";
-import geoSpec, { configureGeoNativeHelper } from "./sensors/geo.ts";
+import geoSpec, { configureGeoNativeHelper, getGeoNativeHelperSupervisor } from "./sensors/geo.ts";
 import lapseSpec from "./sensors/lapse.ts";
 import {
   buildSettingsListVisibilityModel,
@@ -156,7 +156,7 @@ export {
   mapMacOSLocationHelperOutput,
   runMacOSLocationHelperOnce,
 } from "./native/macos-location-helper.ts";
-export { configureGeoNativeHelper, getGeoNativeHelperRuntimePolicy } from "./sensors/geo.ts";
+export { configureGeoNativeHelper, getGeoNativeHelperRuntimePolicy, getGeoNativeHelperSupervisor } from "./sensors/geo.ts";
 
 export interface DaseinPiUiApi {
   readonly setStatus?: (slot: string, value?: string) => void;
@@ -241,6 +241,7 @@ const STATE_PATH = join(homedir(), ".pi", "dasein", "state.json");
 const BUILTIN_SPECS = [clockSpec, geoSpec, lapseSpec] as const;
 const BUILTIN_ENTRIES: readonly SensorRegistryEntry[] = BUILTIN_SPECS.map((spec) => ({ spec: spec as unknown as SensorSpec, provenance: { kind: "builtin" as const } }));
 const BUILTIN_KEYS = new Set<string>(BUILTIN_SPECS.map((spec) => spec.key));
+export const DEFAULT_CORE_RENDER_ORDER = ["clock", "lapse", "geo"] as const;
 configureGeoNativeHelper({ extensionRoot: EXTENSION_ROOT, installMode: "directory" });
 const FEATURE_PROBE_ORDER: readonly DaseinPiMechanism[] = [
   "registerCommand",
@@ -293,14 +294,17 @@ const mechanismEvidence = (mechanisms: readonly DaseinPiMechanism[]): Array<{
   verificationDate: null,
 }));
 
-const defaultCoreConfig = (entries: readonly SensorRegistryEntry[]): DaseinConfig["core"] => ({
-  agentInjectionEnabled: true,
-  statusEnabled: true,
-  widgetEnabled: true,
-  maxAgentChars: 240,
-  injectedLabel: "ambient_ctx",
-  renderOrder: entries.map((entry) => entry.spec.key),
-});
+const defaultCoreConfig = (entries: readonly SensorRegistryEntry[]): DaseinConfig["core"] => {
+  const availableKeys = new Set(entries.map((entry) => entry.spec.key));
+  return {
+    agentInjectionEnabled: true,
+    statusEnabled: true,
+    widgetEnabled: false,
+    maxAgentChars: 240,
+    injectedLabel: "ambient_ctx",
+    renderOrder: DEFAULT_CORE_RENDER_ORDER.filter((key) => availableKeys.has(key)),
+  };
+};
 
 const buildDefaultConfig = (entries: readonly SensorRegistryEntry[]): DaseinConfig => ({
   version: 1,
@@ -519,6 +523,7 @@ class DaseinAmbientContextBroker {
     const lifecycle = createDaseinLifecycle({
       cleanupTimeoutMs: 1000,
       runtimes: [...this.sensorRuntimes.values()],
+      helpers: [getGeoNativeHelperSupervisor()],
       cleanupHandlers: this.entries.map((entry) => entry.spec.cleanup).filter((cleanup): cleanup is NonNullable<SensorSpec["cleanup"]> => cleanup !== undefined),
     });
     const result = await lifecycle.shutdown();
@@ -946,15 +951,20 @@ class DaseinAmbientContextBroker {
     const previousConfig = this.config;
     const previousRendered = this.stateStore.getRenderedContext();
     const registry = await loadSensorRegistry({ extensionRoot: EXTENSION_ROOT, builtinEntries: BUILTIN_ENTRIES, cacheBustToken: Date.now() });
+    const candidateEntries = registry.entries.map(coerceEntryProvenance).sort((left, right) => left.spec.key.localeCompare(right.spec.key));
     const configReload = registry.ok
-      ? await manager.reloadDisk()
+      ? await manager.reloadDisk({
+          defaults: buildDefaultConfig(candidateEntries),
+          discoveredSensorKeys: candidateEntries.map((entry) => entry.spec.key),
+          sensorSpecs: candidateEntries.map((entry) => entry.spec),
+        })
       : {
           ok: true as const,
           launchReappliedPaths: manager.getLaunchReappliedPaths(),
           runtimeOverriddenPaths: manager.getRuntimeOverriddenPaths(),
         };
     if (configReload.ok && registry.ok) {
-      this.entries = registry.entries.map(coerceEntryProvenance).sort((left, right) => left.spec.key.localeCompare(right.spec.key));
+      this.entries = candidateEntries;
       this.loadErrors = [];
       this.attemptedFiles = registry.attemptedFiles;
       this.config = manager.getEffectiveConfig();
@@ -972,7 +982,7 @@ class DaseinAmbientContextBroker {
       candidateSensorsOk: registry.ok,
       candidateSensorErrors: registry.loadErrors,
       attemptedFiles: registry.attemptedFiles,
-      activeKeys: (configReload.ok && registry.ok ? registry.entries : previousEntries).map((entry) => entry.spec.key),
+      activeKeys: (configReload.ok && registry.ok ? candidateEntries : previousEntries).map((entry) => entry.spec.key),
       launchReappliedPaths: configReload.launchReappliedPaths,
       runtimeOverriddenPaths: configReload.runtimeOverriddenPaths,
     });

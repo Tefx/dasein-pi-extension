@@ -6,7 +6,7 @@
  * active refresh/helper work before bounded concurrent cleanup.
  */
 
-import { withTimeout } from "./runtime-timers.ts";
+import { delay, withTimeout } from "./runtime-timers.ts";
 
 import type {
   ConfigValidationError,
@@ -119,6 +119,7 @@ export interface DaseinReloadCommandResult {
 
 export interface CreateDaseinLifecycleInput {
   cleanupTimeoutMs?: number;
+  helperKillGraceMs?: number;
   runtimes?: readonly { abortActiveRefreshes?: () => number; stopRecurringRefreshes?: () => void }[];
   helpers?: readonly { abort?: () => void; terminate?: () => void; kill?: () => void }[];
   cleanupHandlers?: readonly (() => Promise<void> | void)[];
@@ -212,8 +213,11 @@ export const reloadDaseinRuntime = async (input: ReloadDaseinRuntimeInput): Prom
   };
 };
 
+const DEFAULT_HELPER_KILL_GRACE_MS = 250;
+
 export const createDaseinLifecycle = (input: CreateDaseinLifecycleInput = {}): DaseinLifecycleHarness => {
   const cleanupTimeoutMs = input.cleanupTimeoutMs ?? 1000;
+  const helperKillGraceMs = input.helperKillGraceMs ?? DEFAULT_HELPER_KILL_GRACE_MS;
   return {
     shutdown: async () => {
       const errors: unknown[] = [];
@@ -225,9 +229,25 @@ export const createDaseinLifecycle = (input: CreateDaseinLifecycleInput = {}): D
           errors.push(error);
         }
       }
-      for (const helper of input.helpers ?? []) {
+      const helpers = [...(input.helpers ?? [])];
+      for (const helper of helpers) {
         try {
           helper.abort?.();
+        } catch (error) {
+          errors.push(error);
+        }
+      }
+      for (const helper of helpers) {
+        try {
+          helper.terminate?.();
+        } catch (error) {
+          errors.push(error);
+        }
+      }
+      if (helpers.some((helper) => helper.kill !== undefined)) await delay(helperKillGraceMs);
+      for (const helper of helpers) {
+        try {
+          helper.kill?.();
         } catch (error) {
           errors.push(error);
         }

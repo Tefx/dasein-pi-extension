@@ -233,9 +233,10 @@ test("geo tag list returns GeoTagListPayload, sorts names, avoids refresh/helper
   assert.equal(positivePayload.exactCoordinates, true);
 });
 
-test("geo native helper runtime is configured from extension root instead of process cwd", async () => {
+test("geo native helper runtime is configured from extension root instead of process cwd and receives refresh abort signal", async () => {
   const source = readFileSync(expectedGeoFile, "utf8");
   assert.doesNotMatch(source, /process\.cwd\s*\(/u, "geo helper path must not depend on the launch cwd");
+  assert.match(source, /supervisor\.refresh\(\{\s*reason:\s*"geo_refresh",\s*manual:\s*false,\s*signal:\s*context\.signal\s*\}\)/su, "geo refresh must pass SensorContext.signal into the native helper supervisor");
   const moduleValue = (await import(`${expectedGeoFile.href}?configured-root=${Date.now()}`)) as {
     configureGeoNativeHelper?: (input: { extensionRoot: string; installMode?: "directory" }) => void;
     getGeoNativeHelperRuntimePolicy?: () => { helperPathForDirectoryInstall: string; spawnCommand: readonly [string, string, string] };
