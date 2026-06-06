@@ -57,14 +57,17 @@ test("root index.ts is a symlink-load Pi auto-discovery shim delegating to ./src
   assert.doesNotMatch(shim, /registerCommand|registerFlag|setStatus|setWidget|SettingsList|fs|child_process|fetch/);
 });
 
-test("SettingsList/getSettingsListTheme resolve only through approved Pi peer dependency path", () => {
+test("SettingsList/getSettingsListTheme resolve only through approved Pi peer dependency paths", () => {
   const settingsContract = readText("src/ui/settings-import-contract.ts");
+  assert.match(settingsContract, /import \{ SettingsList \} from "@earendil-works\/pi-tui";/);
   assert.match(
     settingsContract,
-    /import \{ SettingsList, getSettingsListTheme \} from "@earendil-works\/pi-tui";/,
+    /const piCodingAgentPackageName = "@earendil-works\/pi-coding-agent";/,
   );
   assert.equal(packageJson.peerDependencies?.["@earendil-works/pi-tui"], "*");
+  assert.equal(packageJson.peerDependencies?.["@earendil-works/pi-coding-agent"], "*");
   assert.equal(packageJson.dependencies?.["@earendil-works/pi-tui"], undefined);
+  assert.equal(packageJson.dependencies?.["@earendil-works/pi-coding-agent"], undefined);
 });
 
 test("fake Pi host API shape is contract-only and does not claim live support", () => {

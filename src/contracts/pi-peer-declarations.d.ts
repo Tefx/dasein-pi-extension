@@ -21,4 +21,6 @@ declare module "@earendil-works/pi-coding-agent" {
   export interface PiExtensionContractMarker {
     readonly packageName?: string;
   }
+
+  export function getSettingsListTheme(...args: never[]): unknown;
 }

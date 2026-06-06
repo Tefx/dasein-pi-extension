@@ -34,7 +34,8 @@ export interface DaseinEntrypointContract {
 }
 
 export interface DaseinSettingsImportContract {
-  readonly packageName: "@earendil-works/pi-tui";
+  readonly settingsListPackageName: "@earendil-works/pi-tui";
+  readonly settingsThemePackageName: "@earendil-works/pi-coding-agent";
   readonly requiredRuntimeImports: readonly ["SettingsList", "getSettingsListTheme"];
   readonly packagePlacement: "peerDependencies";
   readonly bundledRuntimeDependency: false;

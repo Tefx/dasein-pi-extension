@@ -1,7 +1,8 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import daseinExtensionContract, { daseinExtensionContract as namedContract } from "../../../src/index.ts";
+import createDaseinExtension, { daseinExtensionContract as namedContract } from "../../../src/index.ts";
+import type { DaseinPiExtensionFactory } from "../../../src/index.ts";
 import type { DaseinTopLevelContracts } from "../../../src/contracts/dasein.ts";
 
 const topLevelContract: DaseinTopLevelContracts = {
@@ -20,7 +21,8 @@ const topLevelContract: DaseinTopLevelContracts = {
     shimAllowedBehavior: "delegate-only",
   },
   settingsImports: {
-    packageName: "@earendil-works/pi-tui",
+    settingsListPackageName: "@earendil-works/pi-tui",
+    settingsThemePackageName: "@earendil-works/pi-coding-agent",
     requiredRuntimeImports: ["SettingsList", "getSettingsListTheme"],
     packagePlacement: "peerDependencies",
     bundledRuntimeDependency: false,
@@ -39,8 +41,10 @@ const topLevelContract: DaseinTopLevelContracts = {
   },
 };
 
-test("src/index.ts exposes only the scaffold contract descriptor", () => {
-  assert.equal(daseinExtensionContract, namedContract);
+test("src/index.ts exposes the scaffold contract descriptor and a Pi extension factory", () => {
+  const extensionFactory: DaseinPiExtensionFactory = createDaseinExtension;
+
+  assert.equal(typeof extensionFactory, "function");
   assert.deepEqual(namedContract, {
     packageName: "dasein-pi-extension",
     installPath: "~/.pi/agent/extensions/dasein",
