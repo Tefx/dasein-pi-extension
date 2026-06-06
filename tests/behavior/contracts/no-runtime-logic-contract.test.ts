@@ -7,21 +7,25 @@ import test from "node:test";
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "../../..");
 const readText = (path: string): string => readFileSync(resolve(repoRoot, path), "utf8");
 
-test("scaffold source stays contract-only and avoids runtime sensor implementation hooks", () => {
-  const sourceFiles = [
-    "src/index.ts",
-    "src/contracts/dasein.ts",
-    "src/contracts/pi-host.ts",
-    "src/contracts/fake-pi-host.ts",
-    "src/ui/settings-import-contract.ts",
-  ];
+test("entrypoint composes real modules while the root shim remains delegate-only", () => {
+  const shim = readText("index.ts");
+  const entrypoint = readText("src/index.ts");
 
-  for (const sourceFile of sourceFiles) {
-    const text = readText(sourceFile);
-    assert.doesNotMatch(
-      text,
-      /setTimeout|setInterval|readFile|writeFile|registerCommand\(|registerFlag\(|setStatus\(|setWidget\(|fetch\(|child_process|CoreLocation|state\.json|config\.json/,
-      `${sourceFile} must not contain runtime implementation logic in the scaffold phase`,
-    );
+  assert.match(shim, /export \{ default \} from "\.\/src\/index\.ts";/u);
+  assert.doesNotMatch(shim, /registerCommand\(|registerFlag\(|setStatus\(|setWidget\(|loadSensorRegistry|createSensorRuntime/u);
+
+  for (const requiredModule of [
+    "createConfigManager",
+    "createStateStore",
+    "loadSensorRegistry",
+    "createSensorRuntime",
+    "renderDaseinContext",
+    "injectAmbientContextMessage",
+    "createExternalStateBridge",
+    "createDaseinLifecycle",
+  ]) {
+    assert.match(entrypoint, new RegExp(requiredModule, "u"), `src/index.ts must wire ${requiredModule}`);
   }
+
+  assert.doesNotMatch(entrypoint, /NotImplementedError|_Stub|_Placeholder|TODO/u);
 });

@@ -41,7 +41,7 @@ const topLevelContract: DaseinTopLevelContracts = {
   },
 };
 
-test("src/index.ts exposes the scaffold contract descriptor and a Pi extension factory", () => {
+test("src/index.ts exposes the runtime composition contract descriptor and a Pi extension factory", () => {
   const extensionFactory: DaseinPiExtensionFactory = createDaseinExtension;
 
   assert.equal(typeof extensionFactory, "function");
@@ -50,7 +50,7 @@ test("src/index.ts exposes the scaffold contract descriptor and a Pi extension f
     installPath: "~/.pi/agent/extensions/dasein",
     rootShim: "index.ts",
     delegatedEntrypoint: "./src/index.ts",
-    contractPurity: "stubs-types-docstrings-only",
+    contractPurity: "real-module-composition",
   });
 });
 

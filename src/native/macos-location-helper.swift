@@ -192,8 +192,8 @@ private func emit<T: Encodable>(_ value: T) {
         FileHandle.standardOutput.write(data)
         FileHandle.standardOutput.write(Data("\n".utf8))
     } catch {
-        let fallback = "{\"ok\":false,\"error\":\"unknown\",\"message\":\"failed to encode helper output\"}\n"
-        FileHandle.standardOutput.write(Data(fallback.utf8))
+        let encodedError = "{\"ok\":false,\"error\":\"unknown\",\"message\":\"failed to encode helper output\"}\n"
+        FileHandle.standardOutput.write(Data(encodedError.utf8))
     }
 }
 

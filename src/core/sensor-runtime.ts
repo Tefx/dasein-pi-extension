@@ -100,16 +100,23 @@ export interface NormalizeSensorRefreshInput<TState = unknown> {
 
 export interface CreateSensorRuntimeInput {
   sensorKey: string;
+  config?: SensorConfig;
   staleAfterMs?: number;
   source?: SensorStateSource;
   refresh?: SensorRefresh<unknown, SensorConfig>;
+  observe?: SensorObserve<unknown, SensorConfig>;
+  normalizeState?: SensorStateNormalizer<unknown>;
   outputFields?: readonly { state_key: string; value_type: SensorValueType }[];
   now?: () => number;
+  onCommit?: (snapshot: SensorSnapshot) => void;
 }
 
 export interface SensorRuntimeHarness {
   refreshNow(options: { reason: string; durationMs?: number; generation?: number; bypassBackoff?: boolean }): Promise<SensorActionRefreshResult>;
+  observeEvent(event: SensorObservationEvent): Promise<SensorActionRefreshResult | null>;
   scheduleRefresh(reason: string): void;
+  setConfig(config: SensorConfig): void;
+  commitSnapshot(snapshot: SensorSnapshot): void;
   activeRefreshCount(): number;
   commitAttemptCount(): number;
   read(now: number): { status: "enabled" | "disabled" | "stale" | "error"; mutatedStore: false };
@@ -171,7 +178,8 @@ export const createSensorRuntime = (input: CreateSensorRuntimeInput): SensorRunt
   let snapshot: SensorSnapshot | null = null;
   let pendingReason: string | null = null;
   const now = input.now ?? (() => 1_000);
-  const staleAfterMs = input.staleAfterMs ?? DEFAULT_STALE_AFTER_MS;
+  let config: SensorConfig = input.config ?? { enabled: true, ui: true, agent: true, staleAfterMs: input.staleAfterMs ?? DEFAULT_STALE_AFTER_MS };
+  const staleAfterMs = input.staleAfterMs ?? config.staleAfterMs ?? DEFAULT_STALE_AFTER_MS;
   const source = input.source ?? { sensor_id: input.sensorKey, source_kind: "builtin" as const };
   const outputFields = input.outputFields ?? [{ state_key: `${input.sensorKey}.value`, value_type: "string" as const }];
 
@@ -196,9 +204,10 @@ export const createSensorRuntime = (input: CreateSensorRuntimeInput): SensorRunt
       if (!controller.signal.aborted && refreshGeneration === generation) {
         const refreshReturn = input.refresh === undefined
           ? { value: "Fri_14:32+08" }
-          : await input.refresh({ config: { enabled: true, ui: true, agent: true, staleAfterMs }, signal: controller.signal, now }, snapshot);
-        const normalizedInput = refreshReturnToNormalizeInput(input.sensorKey, refreshReturn, outputFields, collectedAtForTest(startedAt), staleAfterMs, source, startedAt, finishedAt, refreshGeneration);
+          : await input.refresh({ config, signal: controller.signal, now }, snapshot);
+        const normalizedInput = refreshReturnToNormalizeInput(input.sensorKey, refreshReturn, outputFields, collectedAtForTest(startedAt), staleAfterMs, source, startedAt, finishedAt, refreshGeneration, input.normalizeState);
         snapshot = normalizeSensorRefreshResult(normalizedInput);
+        input.onCommit?.(snapshot);
         commitAttempts += 1;
       }
       return snapshot === null
@@ -214,10 +223,33 @@ export const createSensorRuntime = (input: CreateSensorRuntimeInput): SensorRunt
     }
   };
 
+  const observeEvent = async (event: SensorObservationEvent): Promise<SensorActionRefreshResult | null> => {
+    if (input.observe === undefined) return null;
+    const controller = new AbortController();
+    const startedAt = now();
+    const observed = await input.observe(event, { config, signal: controller.signal, now }, snapshot);
+    if (observed === null) return null;
+    const finishedAt = now();
+    generation += 1;
+    const normalizedInput = refreshReturnToNormalizeInput(input.sensorKey, observed, outputFields, collectedAtForTest(startedAt), staleAfterMs, source, startedAt, finishedAt, generation, input.normalizeState);
+    snapshot = normalizeSensorRefreshResult(normalizedInput);
+    input.onCommit?.(snapshot);
+    commitAttempts += 1;
+    return { ok: true, snapshot, fresh: true };
+  };
+
   return {
     refreshNow,
+    observeEvent,
     scheduleRefresh: (reason: string): void => {
       pendingReason = reason;
+    },
+    setConfig: (nextConfig: SensorConfig): void => {
+      config = nextConfig;
+    },
+    commitSnapshot: (nextSnapshot: SensorSnapshot): void => {
+      snapshot = nextSnapshot;
+      input.onCommit?.(nextSnapshot);
     },
     activeRefreshCount: () => activeRefreshes,
     commitAttemptCount: () => commitAttempts,
@@ -297,11 +329,12 @@ const refreshReturnToNormalizeInput = (
   startedAt: number,
   finishedAt: number,
   generation: number,
+  normalizeState?: SensorStateNormalizer<unknown>,
 ): NormalizeSensorRefreshInput => {
   if (isRefreshResult(refreshReturn)) {
-    return { sensorKey, value: refreshReturn.value, fields: refreshReturn.fields, metadata: refreshReturn.metadata, outputFields, collectedAt, staleAfterMs, source, startedAt, finishedAt, generation };
+    return { sensorKey, value: refreshReturn.value, fields: refreshReturn.fields, metadata: refreshReturn.metadata, outputFields, collectedAt, staleAfterMs, source, startedAt, finishedAt, generation, normalizeState };
   }
-  return { sensorKey, value: refreshReturn, outputFields, collectedAt, staleAfterMs, source, startedAt, finishedAt, generation };
+  return { sensorKey, value: refreshReturn, outputFields, collectedAt, staleAfterMs, source, startedAt, finishedAt, generation, normalizeState };
 };
 
 const convertRawValueToFields = <TState>(
@@ -410,4 +443,4 @@ const isCanonicalField = (sensorKey: string, mapKey: string, field: SensorStateF
 
 const isRefreshResult = (value: unknown): value is SensorRefreshResult<unknown> => isRecord(value) && ("value" in value || "fields" in value || "metadata" in value);
 const isRecord = (value: unknown): value is Record<string, unknown> => typeof value === "object" && value !== null && !Array.isArray(value);
-const collectedAtForTest = (fallback: number): number => fallback === 0 ? Date.now() : fallback;
+const collectedAtForTest = (collectedAtDefault: number): number => collectedAtDefault === 0 ? Date.now() : collectedAtDefault;

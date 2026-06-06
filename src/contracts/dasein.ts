@@ -1,12 +1,9 @@
 /**
- * Top-level Dasein TypeScript contracts for the scaffold phase.
- *
- * These interfaces pin package/tooling, entrypoint, SettingsList import, and
- * fake-host obligations without implementing runtime sensor, persistence, or
- * Pi UI behavior.
+ * Top-level Dasein TypeScript contracts for package, entrypoint, SettingsList
+ * import, fake-host obligations, and real module composition.
  */
 
-export type ContractPurity = "stubs-types-docstrings-only";
+export type ContractPurity = "real-module-composition";
 
 export interface DaseinPackageContract {
   readonly packageManager: "npm";

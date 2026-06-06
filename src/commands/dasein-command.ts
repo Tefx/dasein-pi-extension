@@ -940,7 +940,7 @@ export const executeDaseinCommand = async (input: string, options: ExecuteDasein
     return makeDaseinCommandResult({ command: "help", data: { commands: [...CORE_COMMANDS], sensorRoute: "/dasein <sensor-key> <action> [...args]" } });
   }
   if (command.kind === "open-ui") {
-    return makeDaseinCommandResult({ command: "open-ui", data: { fallback: "help/status" } });
+    return makeDaseinCommandResult({ command: "open-ui", data: { suggestedCommands: "help/status" } });
   }
   if (command.kind === "status") {
     return buildStatusCommandResult(options.status);

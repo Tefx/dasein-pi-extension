@@ -273,7 +273,16 @@ const formatGeoAgentPart = (field: SensorStateField, sensorConfig: Readonly<Sens
 };
 
 const formatSensorAgentPart = (field: SensorStateField, sensorConfig: Readonly<SensorConfig>, label: string): string | null => {
-  if (!sensorConfig.agent) {
+  if (!sensorConfig.agent || field.value === null) {
+    return null;
+  }
+  if (field.sensor_id === "clock" && field.state_key !== "clock.local_time") {
+    return null;
+  }
+  if (field.sensor_id === "lapse") {
+    const agentFields = Array.isArray(sensorConfig.agentFields) ? sensorConfig.agentFields : ["user_idle"];
+    if (field.state_key === "lapse.user_idle" && agentFields.includes("user_idle")) return `${label}=${formatAgentValue(field.value)}`;
+    if (field.state_key === "lapse.agent_idle" && agentFields.includes("agent_idle")) return `${label}=${formatAgentValue(field.value)}`;
     return null;
   }
   if (field.sensor_id === "geo") {

@@ -165,7 +165,7 @@ const persistedFromSnapshot = (snapshot: SensorSnapshot | null): LapsePersistedS
   previous_agent_end_at: readNumberField(snapshot, "lapse.previous_agent_end_at"),
 });
 
-const observedAt = (event: SensorObservationEvent, fallback: number): number => Number.isFinite(event.observedAt) ? event.observedAt : fallback;
+const observedAt = (event: SensorObservationEvent, defaultObservedAt: number): number => Number.isFinite(event.observedAt) ? event.observedAt : defaultObservedAt;
 
 const sampleHumanInput = (at: number, previous: LapsePersistedState): LapseState => ({
   userIdleMs: previous.previous_human_input_at === null ? null : Math.max(0, at - previous.previous_human_input_at),

@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
-  "description": "Contract-only scaffold for the Dasein Pi ambient context broker extension.",
+  "description": "Dasein Pi ambient context broker extension.",
   "dependencies": {},
   "peerDependencies": {
     "@earendil-works/pi-coding-agent": "*",

@@ -1,11 +1,14 @@
 /**
  * Real Dasein extension composition entrypoint.
  *
- * This entrypoint wires the Pi API surfaces required by the package/runtime
- * contract while keeping live Pi support claims separate from fake-host API
- * evidence. SettingsList is wired for fake-host/API-shape verification only;
- * live TUI smoke remains the support-claim gate.
+ * Pi-facing registration remains in this file; config, sensor admission,
+ * refresh normalization, state storage, rendering, injection, external events,
+ * settings visibility, and shutdown sequencing are delegated to core modules.
  */
+import { homedir } from "node:os";
+import { dirname, join, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
+
 import type { DaseinExtensionContract } from "./contracts/dasein.ts";
 import {
   buildReloadCommandResult,
@@ -16,23 +19,44 @@ import {
   makeDaseinCommandResult,
   parseLaunchAssignments,
   type DaseinCommandResult,
+  type DaseinStatusError,
   type PiMechanismError,
   type PiMechanismEvidenceStatus,
+  type StatusPermissionData,
 } from "./commands/dasein-command.ts";
 import { createConfigManager } from "./core/config.ts";
+import { createDurableStateStore, createStateStore } from "./core/state.ts";
 import { createExternalStateBridge } from "./core/external-events.ts";
 import { injectAmbientContextMessage } from "./core/injector.ts";
+import { createDaseinLifecycle, reloadDaseinRuntime, type DaseinReloadResult } from "./core/lifecycle.ts";
 import { renderDaseinContext } from "./core/renderer.ts";
-import { inspectSensorMetadata } from "./core/sensor-loader.ts";
-import { createStateStore } from "./core/state.ts";
+import { createSensorRuntime, normalizeSensorRefreshResult, type SensorRuntimeHarness } from "./core/sensor-runtime.ts";
+import {
+  inspectSensorMetadata,
+  loadSensorRegistry,
+  type SensorInspectabilityMetadata,
+} from "./core/sensor-loader.ts";
 import type {
+  ConfigMutationProposal,
+  ConfigMutationResult,
+  ConfigValidationError,
   DaseinConfig,
   DaseinStateStore,
+  DiskDaseinConfig,
+  ExternalStateSnapshot,
+  LapsePersistedState,
   RenderedContext,
+  SensorActionContext,
+  SensorActionResult,
+  SensorConfig,
+  SensorKey,
+  SensorLoadError,
+  SensorObservationEvent,
+  SensorRegistryEntry,
   SensorSnapshot,
   SensorSpec,
   SensorStateField,
-  SensorStatus,
+  SensorStateSource,
   SensorValueType,
 } from "./core/types.ts";
 import clockSpec from "./sensors/clock.ts";
@@ -171,95 +195,9 @@ type DaseinPiMechanism =
   | "SettingsList";
 
 type MutableContextEvent = { messages?: unknown[] };
+type LightweightMutationResult = { ok: true; updatedPaths: string[]; deletedPaths: string[] } | { ok: false; errors: ConfigValidationError[] };
 
-export const daseinExtensionContract: DaseinExtensionContract = {
-  packageName: "dasein-pi-extension",
-  installPath: "~/.pi/agent/extensions/dasein",
-  rootShim: "index.ts",
-  delegatedEntrypoint: "./src/index.ts",
-  contractPurity: "stubs-types-docstrings-only",
-};
-
-const BUILTIN_SENSOR_KEYS = ["clock", "geo", "lapse"] as const;
-const BUILTIN_SENSOR_SPECS = [clockSpec, geoSpec, lapseSpec] as const;
-const FEATURE_PROBE_ORDER: readonly DaseinPiMechanism[] = [
-  "registerCommand",
-  "registerFlag",
-  "context",
-  "events",
-  "setStatus",
-  "setWidget",
-  "custom",
-  "SettingsList",
-];
-
-const piMechanismName = (mechanism: DaseinPiMechanism): string => {
-  if (mechanism === "registerCommand") return "pi.registerCommand";
-  if (mechanism === "registerFlag") return "pi.registerFlag";
-  if (mechanism === "events") return "pi.events";
-  if (mechanism === "setStatus") return "ctx.ui.setStatus";
-  if (mechanism === "setWidget") return "ctx.ui.setWidget";
-  if (mechanism === "custom") return "ctx.ui.custom";
-  return mechanism;
-};
-
-const defaultDaseinConfig = (): DaseinConfig => ({
-  version: 1,
-  core: {
-    agentInjectionEnabled: true,
-    statusEnabled: true,
-    widgetEnabled: true,
-    maxAgentChars: 240,
-    injectedLabel: "ambient_ctx",
-    renderOrder: ["clock", "geo", "lapse"],
-  },
-  sensors: {
-    clock: {
-      enabled: true,
-      ui: true,
-      agent: true,
-      intervalMs: 60000,
-      timeoutMs: 2000,
-      staleAfterMs: 120000,
-      initialRefresh: true,
-      precision: "minute",
-    },
-    geo: {
-      enabled: false,
-      ui: true,
-      agent: false,
-      intervalMs: 60000,
-      timeoutMs: 3000,
-      staleAfterMs: 1800000,
-      initialRefresh: true,
-      precision: "city",
-      tags: {},
-      exactAddress: false,
-      exactCoordinates: false,
-    },
-    lapse: {
-      enabled: true,
-      ui: true,
-      agent: true,
-      intervalMs: 60000,
-      timeoutMs: 2000,
-      staleAfterMs: 120000,
-      initialRefresh: true,
-      persist: true,
-      agentFields: ["user_idle"],
-    },
-  },
-  external: {},
-});
-
-const isRecord = (value: unknown): value is Record<string, unknown> =>
-  typeof value === "object" && value !== null && !Array.isArray(value);
-
-const requestTuiRender = (candidate: unknown): void => {
-  if (isRecord(candidate) && typeof candidate.requestRender === "function") {
-    (candidate.requestRender as () => void)();
-  }
-};
+type ConfigManagerInstance = ReturnType<typeof createConfigManager>;
 
 interface DaseinSettingItem {
   id: string;
@@ -287,7 +225,136 @@ interface SettingsListConstructor {
   ): SettingsListComponent;
 }
 
+export const daseinExtensionContract: DaseinExtensionContract = {
+  packageName: "dasein-pi-extension",
+  installPath: "~/.pi/agent/extensions/dasein",
+  rootShim: "index.ts",
+  delegatedEntrypoint: "./src/index.ts",
+  contractPurity: "real-module-composition",
+};
+
+const SOURCE_FILE = fileURLToPath(import.meta.url);
+const EXTENSION_ROOT = resolve(dirname(SOURCE_FILE), "..");
+const CONFIG_PATH = join(homedir(), ".pi", "dasein", "config.json");
+const STATE_PATH = join(homedir(), ".pi", "dasein", "state.json");
+const BUILTIN_SPECS = [clockSpec, geoSpec, lapseSpec] as const;
+const BUILTIN_KEYS = new Set<string>(BUILTIN_SPECS.map((spec) => spec.key));
+const FEATURE_PROBE_ORDER: readonly DaseinPiMechanism[] = [
+  "registerCommand",
+  "registerFlag",
+  "context",
+  "events",
+  "setStatus",
+  "setWidget",
+  "custom",
+  "SettingsList",
+];
 const SettingsListCtor = SettingsList as unknown as SettingsListConstructor;
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === "object" && value !== null && !Array.isArray(value);
+
+const clone = <T>(value: T): T => structuredClone(value);
+
+const piMechanismName = (mechanism: DaseinPiMechanism): string => {
+  if (mechanism === "registerCommand") return "pi.registerCommand";
+  if (mechanism === "registerFlag") return "pi.registerFlag";
+  if (mechanism === "events") return "pi.events";
+  if (mechanism === "setStatus") return "ctx.ui.setStatus";
+  if (mechanism === "setWidget") return "ctx.ui.setWidget";
+  if (mechanism === "custom") return "ctx.ui.custom";
+  return mechanism;
+};
+
+const evidenceStatusesFor = (mechanism: DaseinPiMechanism): PiMechanismEvidenceStatus[] =>
+  mechanism === "custom" || mechanism === "SettingsList"
+    ? ["API_VERIFIED", "LIVE_SMOKE_PENDING"]
+    : ["SOURCE_VERIFIED", "LIVE_SMOKE_PENDING"];
+
+const mechanismError = (mechanism: DaseinPiMechanism, detail = "unavailable"): PiMechanismError => ({
+  kind: "pi_mechanism",
+  mechanism: piMechanismName(mechanism),
+  evidenceStatuses: evidenceStatusesFor(mechanism),
+  message: `PiMechanismError: ${piMechanismName(mechanism)} ${detail}`,
+});
+
+const mechanismEvidence = (mechanisms: readonly DaseinPiMechanism[]): Array<{
+  mechanism: string;
+  evidenceStatuses: PiMechanismEvidenceStatus[];
+  observedBehavior: string;
+  verificationDate: string | null;
+}> => mechanisms.map((mechanism) => ({
+  mechanism: piMechanismName(mechanism),
+  evidenceStatuses: evidenceStatusesFor(mechanism),
+  observedBehavior: "fake/API wiring verified; live smoke remains a release gate",
+  verificationDate: null,
+}));
+
+const defaultCoreConfig = (entries: readonly SensorRegistryEntry[]): DaseinConfig["core"] => ({
+  agentInjectionEnabled: true,
+  statusEnabled: true,
+  widgetEnabled: true,
+  maxAgentChars: 240,
+  injectedLabel: "ambient_ctx",
+  renderOrder: entries.map((entry) => entry.spec.key),
+});
+
+const buildDefaultConfig = (entries: readonly SensorRegistryEntry[]): DaseinConfig => ({
+  version: 1,
+  core: defaultCoreConfig(entries),
+  sensors: Object.fromEntries(entries.map((entry) => [entry.spec.key, clone(entry.spec.defaults)])),
+  external: {},
+});
+
+const sourceFor = (entry: SensorRegistryEntry): SensorStateSource => ({
+  sensor_id: entry.spec.key,
+  source_kind: entry.provenance.kind === "builtin" ? "builtin" : "local_sensor",
+  ...(entry.provenance.kind === "user_added_local_file" ? { local_file_path: entry.provenance.filePath } : {}),
+});
+
+const coerceEntryProvenance = (entry: SensorRegistryEntry): SensorRegistryEntry => {
+  if (!BUILTIN_KEYS.has(entry.spec.key)) return entry;
+  return { spec: entry.spec, provenance: { kind: "builtin" } };
+};
+
+const valueTypeForDisabled = (_declared: SensorValueType): SensorValueType => "null";
+
+const disabledSnapshotFor = (entry: SensorRegistryEntry, now: number): SensorSnapshot => {
+  const fields = Object.fromEntries(entry.spec.manifest.outputFields.map((outputField): [string, SensorStateField] => [
+    outputField.state_key,
+    {
+      contract_version: 1,
+      schema_version: 1,
+      sensor_id: entry.spec.key,
+      state_key: outputField.state_key,
+      value: null,
+      value_type: valueTypeForDisabled(outputField.value_type),
+      collected_at: now,
+      stale_after_ms: 120000,
+      status: "disabled",
+      source: sourceFor(entry),
+    },
+  ]));
+  return {
+    contract_version: 1,
+    schema_version: 1,
+    sensor_id: entry.spec.key,
+    fields,
+    collected_at: now,
+    stale_after_ms: 120000,
+    status: "disabled",
+    source: sourceFor(entry),
+  };
+};
+
+const effectiveStaleAfterMs = (config: Readonly<SensorConfig>): number => {
+  if (typeof config.staleAfterMs === "number" && Number.isInteger(config.staleAfterMs) && config.staleAfterMs > 0) return config.staleAfterMs;
+  if (typeof config.intervalMs === "number" && Number.isInteger(config.intervalMs) && config.intervalMs > 0) return config.intervalMs * 2;
+  return 120000;
+};
+
+const effectiveIntervalMs = (config: Readonly<SensorConfig>): number | null =>
+  typeof config.intervalMs === "number" && Number.isInteger(config.intervalMs) && config.intervalMs > 0 ? config.intervalMs : null;
 
 const settingsValueLabel = (value: unknown): string => {
   if (Array.isArray(value)) return value.join(", ");
@@ -305,174 +372,84 @@ const parseSettingsValue = (control: SettingsListControlItem, value: string): Se
   return value;
 };
 
-const nowFromEvent = (event: unknown): number => {
+const requestTuiRender = (candidate: unknown): void => {
+  if (isRecord(candidate) && typeof candidate.requestRender === "function") {
+    (candidate.requestRender as () => void)();
+  }
+};
+
+const observedAtFromEvent = (event: unknown): number => {
   if (isRecord(event) && typeof event.timestamp === "number") return event.timestamp;
   if (isRecord(event) && typeof event.observedAt === "number") return event.observedAt;
   return Date.now();
 };
 
-const field = (
-  sensorKey: string,
-  stateKey: string,
-  value: unknown,
-  valueType: SensorValueType,
-  collectedAt: number,
-  staleAfterMs: number,
-  status: SensorStatus = "enabled",
-): SensorStateField => ({
-  contract_version: 1,
-  schema_version: 1,
-  sensor_id: sensorKey,
-  state_key: stateKey,
-  value,
-  value_type: valueType,
-  collected_at: collectedAt,
-  stale_after_ms: staleAfterMs,
-  status,
-  source: { sensor_id: sensorKey, source_kind: "builtin" },
+const turnIdFromEvent = (event: unknown, observedAt: number): string => {
+  if (isRecord(event) && typeof event.turnId === "string" && event.turnId.length > 0) return event.turnId;
+  return `turn-${observedAt}`;
+};
+
+const lightweightToConfigMutation = (
+  result: LightweightMutationResult,
+  config: DaseinConfig,
+): ConfigMutationResult => {
+  if (!result.ok) return { ok: false, errors: result.errors, config };
+  return {
+    ok: true,
+    config,
+    updatedPaths: result.updatedPaths,
+    deletedPaths: result.deletedPaths,
+    persistedPath: CONFIG_PATH,
+  };
+};
+
+const durableError = (message: string): DaseinStatusError => ({
+  kind: "durable_state",
+  code: "load-failed",
+  message,
+  path: STATE_PATH,
 });
 
-const snapshot = (
-  sensorKey: string,
-  fields: Record<string, SensorStateField>,
-  collectedAt: number,
-  staleAfterMs: number,
-  status: SensorStatus = "enabled",
-): SensorSnapshot => ({
-  contract_version: 1,
-  schema_version: 1,
-  sensor_id: sensorKey,
-  fields,
-  collected_at: collectedAt,
-  stale_after_ms: staleAfterMs,
-  status,
-  source: { sensor_id: sensorKey, source_kind: "builtin" },
-});
-
-const pad2 = (value: number): string => String(value).padStart(2, "0");
-
-const localClockText = (date: Date): string => {
-  const weekday = new Intl.DateTimeFormat(undefined, { weekday: "short" }).format(date);
-  return `${weekday}_${pad2(date.getHours())}:${pad2(date.getMinutes())}`;
+const permissionForSensor = (entry: SensorRegistryEntry, snapshot: SensorSnapshot | null, now: number): StatusPermissionData => {
+  const permissionKind = entry.spec.manifest.permissions.find((permission) => permission.required)?.kind ?? "none";
+  const permission = permissionKind === "macos_location"
+    ? String(snapshot?.fields["geo.permission"]?.value ?? "unknown")
+    : "not_applicable";
+  const freshness = snapshot === null ? "missing" : now - snapshot.collected_at > snapshot.stale_after_ms ? "stale" : "fresh";
+  const health = snapshot?.status === "error" ? "error" : snapshot?.status === "disabled" ? "disabled" : freshness === "stale" ? "degraded" : "ok";
+  return {
+    key: entry.spec.key,
+    permission: permission === "authorized" || permission === "denied" || permission === "restricted" || permission === "not_determined" ? permission : permission === "not_applicable" ? "not_applicable" : "unknown",
+    freshness,
+    health,
+    checkedAt: snapshot?.collected_at ?? null,
+    ...(snapshot?.error === undefined ? {} : { error: snapshot.error }),
+  };
 };
 
-const makeClockSnapshot = (collectedAt: number): SensorSnapshot => {
-  const date = new Date(collectedAt);
-  return snapshot(
-    "clock",
-    {
-      "clock.local_time": field("clock", "clock.local_time", localClockText(date), "string", collectedAt, 120000),
-    },
-    collectedAt,
-    120000,
-  );
-};
-
-const makeGeoSnapshot = (collectedAt: number): SensorSnapshot =>
-  snapshot(
-    "geo",
-    {
-      "geo.permission": field("geo", "geo.permission", "unavailable", "enum", collectedAt, 1800000, "enabled"),
-    },
-    collectedAt,
-    1800000,
-    "enabled",
-  );
-
-const makeLapseSnapshot = (
-  collectedAt: number,
-  previousHumanInputAt: number | null,
-  previousAgentEndAt: number | null,
-): SensorSnapshot => {
-  const userIdleMs = previousHumanInputAt === null ? null : Math.max(0, collectedAt - previousHumanInputAt);
-  const agentIdleMs = previousAgentEndAt === null ? null : Math.max(0, collectedAt - previousAgentEndAt);
-  return snapshot(
-    "lapse",
-    {
-      "lapse.user_idle": field("lapse", "lapse.user_idle", userIdleMs, userIdleMs === null ? "null" : "number", collectedAt, 120000),
-      "lapse.agent_idle": field("lapse", "lapse.agent_idle", agentIdleMs, agentIdleMs === null ? "null" : "number", collectedAt, 120000),
-      "lapse.previous_human_input_at": field(
-        "lapse",
-        "lapse.previous_human_input_at",
-        previousHumanInputAt,
-        previousHumanInputAt === null ? "null" : "number",
-        collectedAt,
-        120000,
-      ),
-      "lapse.previous_agent_end_at": field(
-        "lapse",
-        "lapse.previous_agent_end_at",
-        previousAgentEndAt,
-        previousAgentEndAt === null ? "null" : "number",
-        collectedAt,
-        120000,
-      ),
-    },
-    collectedAt,
-    120000,
-  );
-};
-
-const applyAssignment = (config: DaseinConfig, canonicalPath: string, value: unknown): void => {
-  const [scope, key, ...rest] = canonicalPath.split(".");
-  if (scope === "core" && key !== undefined && rest.length === 0) {
-    (config.core as unknown as Record<string, unknown>)[key] = value;
-    return;
-  }
-  if (scope === "sensors" && key !== undefined && rest.length > 0) {
-    config.sensors[key] ??= { enabled: true, ui: true, agent: true };
-    let target: Record<string, unknown> = config.sensors[key] as Record<string, unknown>;
-    for (const segment of rest.slice(0, -1)) {
-      const next = target[segment];
-      if (!isRecord(next)) target[segment] = {};
-      target = target[segment] as Record<string, unknown>;
-    }
-    target[rest.at(-1) ?? ""] = value;
-    return;
-  }
-  if (scope === "external" && key !== undefined && rest.length === 1) {
-    config.external[key] ??= { ui: true, agent: false };
-    (config.external[key] as unknown as Record<string, unknown>)[rest[0] ?? ""] = value;
-  }
-};
-
-const mechanismEvidence = (mechanisms: readonly DaseinPiMechanism[]): Array<{
-  mechanism: string;
-  evidenceStatuses: PiMechanismEvidenceStatus[];
-  observedBehavior: string;
-  verificationDate: string | null;
-}> => mechanisms.map((mechanism) => ({
-  mechanism: piMechanismName(mechanism),
-  evidenceStatuses: [mechanism === "custom" || mechanism === "SettingsList" ? "API_VERIFIED" : "SOURCE_VERIFIED", "LIVE_SMOKE_PENDING"],
-  observedBehavior: "fake/API wiring only; live smoke remains a release gate",
-  verificationDate: null,
-}));
-
-const mechanismError = (mechanism: DaseinPiMechanism, detail = "unavailable"): PiMechanismError => ({
-  kind: "pi_mechanism",
-  mechanism: piMechanismName(mechanism),
-  evidenceStatuses: [mechanism === "custom" || mechanism === "SettingsList" ? "API_VERIFIED" : "SOURCE_VERIFIED", "LIVE_SMOKE_PENDING"],
-  message: `PiMechanismError: ${piMechanismName(mechanism)} ${detail}`,
-});
-
-class DaseinRuntimeWiring {
+class DaseinAmbientContextBroker {
   private readonly stateStore: DaseinStateStore = createStateStore();
   private readonly externalBridge = createExternalStateBridge({ now: () => Date.now() });
-  private config: DaseinConfig = defaultDaseinConfig();
-  private readonly statusErrors: PiMechanismError[] = [];
+  private readonly statusErrors: DaseinStatusError[] = [];
+  private readonly sensorRuntimes = new Map<SensorKey, SensorRuntimeHarness>();
+  private entries: SensorRegistryEntry[] = [];
+  private configManager: ConfigManagerInstance | null = null;
+  private config: DaseinConfig = buildDefaultConfig(BUILTIN_SPECS.map((spec) => ({ spec: spec as unknown as SensorSpec, provenance: { kind: "builtin" as const } })));
+  private loadErrors: SensorLoadError[] = [];
+  private attemptedFiles: string[] = [];
+  private initialized: Promise<void> | null = null;
   private launchArgsApplied = false;
-  private previousHumanInputAt: number | null = null;
-  private previousAgentEndAt: number | null = null;
+  private diskConfigLoaded = false;
+  private durableStateFileLoaded = false;
+  private durableLapse: LapsePersistedState | null = null;
 
   constructor(private readonly pi: DaseinPiExtensionApi) {}
 
-  startup(context: DaseinPiExtensionContext): void {
+  async startup(context: DaseinPiExtensionContext): Promise<void> {
     this.probeStartupFeatures();
-    this.applyLaunchFlag();
-    const now = Date.now();
-    this.stateStore.setSensorSnapshot(makeClockSnapshot(now));
-    this.stateStore.setSensorSnapshot(makeGeoSnapshot(now));
-    this.stateStore.setSensorSnapshot(makeLapseSnapshot(now, this.previousHumanInputAt, this.previousAgentEndAt));
+    await this.initialize();
+    await this.loadDurableLapseState();
+    await this.startInitialRefreshes();
     this.renderAndPublish(context);
   }
 
@@ -485,17 +462,13 @@ class DaseinRuntimeWiring {
     return { messages: result.messages };
   }
 
-  observeInput(event: unknown, context: DaseinPiExtensionContext): void {
-    const observedAt = nowFromEvent(event);
-    this.previousHumanInputAt = observedAt;
-    this.stateStore.setSensorSnapshot(makeLapseSnapshot(observedAt, this.previousHumanInputAt, this.previousAgentEndAt));
-    this.renderAndPublish(context);
-  }
-
-  observeAgentEnd(event: unknown, context: DaseinPiExtensionContext): void {
-    const observedAt = nowFromEvent(event);
-    this.previousAgentEndAt = observedAt;
-    this.stateStore.setSensorSnapshot(makeLapseSnapshot(observedAt, this.previousHumanInputAt, this.previousAgentEndAt));
+  async observePiLifecycle(kind: "input" | "agent_end", event: unknown, context: DaseinPiExtensionContext): Promise<void> {
+    await this.initialize();
+    const observedAt = observedAtFromEvent(event);
+    const observation: SensorObservationEvent = { kind, observedAt, turnId: turnIdFromEvent(event, observedAt) };
+    const runtime = this.sensorRuntimes.get("lapse");
+    await runtime?.observeEvent(observation);
+    await this.persistLapseAfterObservation();
     this.renderAndPublish(context);
   }
 
@@ -519,20 +492,8 @@ class DaseinRuntimeWiring {
     this.renderOnly();
   }
 
-  async applySettingsControlMutation(control: SettingsListControlItem, rawValue: string, context: DaseinPiExtensionContext): Promise<void> {
-    const proposal = control.mutationForValue(parseSettingsValue(control, rawValue));
-    const manager = createConfigManager({
-      defaults: this.config,
-      diskConfig: { version: 1 },
-      discoveredSensorKeys: BUILTIN_SENSOR_KEYS,
-    });
-    const result = await manager.applyRuntimeProposal(proposal);
-    if (!result.ok) return;
-    this.config = manager.getEffectiveConfig();
-    this.renderAndPublish(context);
-  }
-
   async command(rawArgs: unknown, context: DaseinPiExtensionContext): Promise<DaseinCommandResult> {
+    await this.initialize();
     const args = typeof rawArgs === "string" ? rawArgs.trim() : "";
     if (args.length === 0) {
       if (context.mode === "tui") {
@@ -541,33 +502,211 @@ class DaseinRuntimeWiring {
       }
       return makeDaseinCommandResult({ command: "help", message: "dasein: status | reload | sensors | set | apply" });
     }
-
     if (args === "status") return this.statusResult();
-    if (args === "sensors") return buildSensorsCommandResult({ sensors: BUILTIN_SENSOR_KEYS.map((key) => ({
-      key,
-      loaded: true,
-      enabled: this.config.sensors[key]?.enabled === true,
-      status: this.config.sensors[key]?.enabled === true ? "enabled" : "disabled",
-      collectedAt: this.stateStore.getSensorSnapshot(key)?.collected_at ?? null,
-      stale: false,
-      actions: key === "geo" ? ["tag", "refresh"] : key === "lapse" ? ["reset"] : [],
-      effectiveIntervalMs: typeof this.config.sensors[key]?.intervalMs === "number" ? this.config.sensors[key].intervalMs : null,
-    })) });
-    if (args === "reload") return buildReloadCommandResult();
+    if (args === "sensors") return this.sensorsResult();
+    if (args === "reload") return this.reloadResult();
 
-    const result = await executeDaseinCommand(`/dasein ${args}`, {
-      discoveredSensorKeys: BUILTIN_SENSOR_KEYS,
-      sensorActions: { geo: ["tag", "refresh"], lapse: ["reset"] },
+    return executeDaseinCommand(`/dasein ${args}`, {
+      discoveredSensorKeys: this.sensorKeys(),
+      sensorActions: this.sensorActions(),
+      mutateConfig: async (command) => this.mutateFromCommand(command.assignments ?? []),
+      runSensorAction: async (command) => this.runSensorAction(command.sensorKey ?? "", command.action ?? "", command.actionArgs ?? [], context),
     });
+  }
+
+  async shutdown(context: DaseinPiExtensionContext): Promise<void> {
+    await this.initialize();
+    for (const entry of this.entries) {
+      this.pi.recordCleanup?.(entry.spec.key, 1000);
+    }
+    const lifecycle = createDaseinLifecycle({
+      cleanupTimeoutMs: 1000,
+      runtimes: [...this.sensorRuntimes.values()],
+      cleanupHandlers: this.entries.map((entry) => entry.spec.cleanup).filter((cleanup): cleanup is NonNullable<SensorSpec["cleanup"]> => cleanup !== undefined),
+    });
+    const result = await lifecycle.shutdown();
+    for (const error of result.errors) {
+      this.statusErrors.push({ kind: "unknown", message: error instanceof Error ? error.message : String(error) });
+    }
+    await this.persistLapseAfterObservation();
+    context.ui?.setStatus?.("dasein", undefined);
+    context.ui?.setWidget?.("dasein", undefined);
+  }
+
+  private async initialize(): Promise<void> {
+    this.initialized ??= this.initializeOnce();
+    await this.initialized;
+  }
+
+  private async initializeOnce(): Promise<void> {
+    const registry = await loadSensorRegistry({ extensionRoot: EXTENSION_ROOT, cacheBustToken: Date.now() });
+    this.entries = registry.entries.map(coerceEntryProvenance).sort((left, right) => left.spec.key.localeCompare(right.spec.key));
+    this.loadErrors = registry.loadErrors;
+    this.attemptedFiles = registry.attemptedFiles;
+    const defaults = buildDefaultConfig(this.entries);
+    const launch = this.pi.getFlag?.("dasein") ?? null;
+    if (launch !== null && launch.trim().length > 0) {
+      const parsed = parseLaunchAssignments(launch, { discoveredSensorKeys: this.entries.map((entry) => entry.spec.key) });
+      this.launchArgsApplied = parsed.ok;
+    }
+    this.configManager = createConfigManager({
+      configPath: CONFIG_PATH,
+      defaults,
+      launch,
+      discoveredSensorKeys: this.entries.map((entry) => entry.spec.key),
+    });
+    this.statusErrors.push(...this.configManager.getStatusErrors());
+    this.config = this.configManager.getEffectiveConfig();
+    this.diskConfigLoaded = this.configManager.getStatusErrors().length === 0;
+    this.rebuildSensorRuntimes();
+    this.renderOnly();
+  }
+
+  private rebuildSensorRuntimes(): void {
+    this.sensorRuntimes.clear();
+    for (const entry of this.entries) {
+      const config = this.config.sensors[entry.spec.key] ?? entry.spec.defaults;
+      const runtime = createSensorRuntime({
+        sensorKey: entry.spec.key,
+        config,
+        staleAfterMs: effectiveStaleAfterMs(config),
+        source: sourceFor(entry),
+        refresh: entry.spec.refresh as SensorSpec["refresh"],
+        observe: entry.spec.observe as SensorSpec["observe"],
+        normalizeState: entry.spec.normalizeState,
+        outputFields: entry.spec.manifest.outputFields,
+        now: () => Date.now(),
+        onCommit: (snapshot) => this.stateStore.setSensorSnapshot(snapshot),
+      });
+      this.sensorRuntimes.set(entry.spec.key, runtime);
+    }
+  }
+
+  private syncRuntimeConfigs(): void {
+    for (const entry of this.entries) {
+      const config = this.config.sensors[entry.spec.key] ?? entry.spec.defaults;
+      this.sensorRuntimes.get(entry.spec.key)?.setConfig(config);
+    }
+  }
+
+  private async startInitialRefreshes(): Promise<void> {
+    const now = Date.now();
+    for (const entry of this.entries) {
+      const config = this.config.sensors[entry.spec.key] ?? entry.spec.defaults;
+      const runtime = this.sensorRuntimes.get(entry.spec.key);
+      if (config.enabled === true && config.initialRefresh !== false && entry.spec.refresh !== undefined) {
+        await runtime?.refreshNow({ reason: "initial" });
+      } else {
+        runtime?.commitSnapshot(disabledSnapshotFor(entry, now));
+      }
+    }
+    this.commitDurableLapseSnapshot(now);
+  }
+
+  private async loadDurableLapseState(): Promise<void> {
+    const lapseConfig = this.config.sensors.lapse;
+    const durable = createDurableStateStore({ statePath: STATE_PATH, lapsePersistEnabled: lapseConfig?.persist === true });
+    const loaded = await durable.load();
+    this.durableStateFileLoaded = loaded.ok && loaded.lapse !== null;
+    if (loaded.ok) {
+      this.durableLapse = loaded.lapse;
+      return;
+    }
+    if (loaded.error !== undefined) this.statusErrors.push(durableError(loaded.error.message));
+  }
+
+  private commitDurableLapseSnapshot(now: number): void {
+    if (this.durableLapse === null) return;
+    const state = {
+      userIdleMs: this.durableLapse.previous_human_input_at === null ? null : Math.max(0, now - this.durableLapse.previous_human_input_at),
+      agentIdleMs: this.durableLapse.previous_agent_end_at === null ? null : Math.max(0, now - this.durableLapse.previous_agent_end_at),
+      previousHumanInputAt: this.durableLapse.previous_human_input_at,
+      previousAgentEndAt: this.durableLapse.previous_agent_end_at,
+    };
+    const entry = this.entries.find((candidate) => candidate.spec.key === "lapse");
+    if (entry === undefined) return;
+    const snapshot = normalizeSensorRefreshResult({
+      sensorKey: "lapse",
+      value: state,
+      outputFields: entry.spec.manifest.outputFields,
+      collectedAt: now,
+      staleAfterMs: effectiveStaleAfterMs(this.config.sensors.lapse ?? entry.spec.defaults),
+      source: sourceFor(entry),
+      normalizeState: entry.spec.normalizeState,
+    });
+    this.sensorRuntimes.get("lapse")?.commitSnapshot(snapshot);
+  }
+
+  private async persistLapseAfterObservation(): Promise<void> {
+    const lapseConfig = this.config.sensors.lapse;
+    if (lapseConfig?.persist !== true) return;
+    const snapshot = this.stateStore.getSensorSnapshot("lapse");
+    const persisted: LapsePersistedState = {
+      previous_human_input_at: this.numberField(snapshot, "lapse.previous_human_input_at"),
+      previous_agent_end_at: this.numberField(snapshot, "lapse.previous_agent_end_at"),
+    };
+    const durable = createDurableStateStore({ statePath: STATE_PATH, lapsePersistEnabled: true });
+    const result = await durable.writeLapse(persisted);
+    if (!result.ok) this.statusErrors.push(durableError(result.error.message));
+  }
+
+  private numberField(snapshot: SensorSnapshot | null, field: string): number | null {
+    const value = snapshot?.fields[field]?.value;
+    return typeof value === "number" && Number.isFinite(value) ? value : null;
+  }
+
+  private sensorKeys(): string[] {
+    return this.entries.map((entry) => entry.spec.key);
+  }
+
+  private sensorActions(): Record<string, readonly string[]> {
+    return Object.fromEntries(this.entries.map((entry) => [entry.spec.key, Object.keys(entry.spec.actions ?? {})]));
+  }
+
+  private async mutateFromCommand(assignments: readonly { canonicalPath: string; value: unknown }[]): Promise<ConfigMutationResult> {
+    const manager = this.requireConfigManager();
+    const result = await manager.applyRuntime(Object.fromEntries(assignments.map((assignment) => [assignment.canonicalPath, assignment.value])));
+    this.config = manager.getEffectiveConfig();
+    this.syncRuntimeConfigs();
+    this.renderOnly();
+    return lightweightToConfigMutation(result, this.config);
+  }
+
+  private async applyProposal(proposal: ConfigMutationProposal): Promise<ConfigMutationResult> {
+    const manager = this.requireConfigManager();
+    const result = await manager.applyRuntimeProposal(proposal);
+    this.config = manager.getEffectiveConfig();
+    this.syncRuntimeConfigs();
+    this.renderOnly();
+    return lightweightToConfigMutation(result, this.config);
+  }
+
+  private async runSensorAction(sensorKey: string, action: string, args: readonly string[], context: DaseinPiExtensionContext): Promise<SensorActionResult> {
+    const entry = this.entries.find((candidate) => candidate.spec.key === sensorKey);
+    const handler = entry?.spec.actions?.[action];
+    if (entry === undefined || handler === undefined) return { ok: false, message: `unknown ${sensorKey} action ${action}` };
+    const runtime = this.sensorRuntimes.get(sensorKey);
+    const config = this.config.sensors[sensorKey] ?? entry.spec.defaults;
+    const actionContext: SensorActionContext<SensorConfig> = {
+      sensorKey,
+      config,
+      snapshot: this.stateStore.getSensorSnapshot(sensorKey),
+      refreshNow: (options) => runtime?.refreshNow({ reason: options.reason, bypassBackoff: options.bypassBackoff }) ?? Promise.resolve({ ok: false, snapshot: null, error: { kind: "unknown", message: "sensor runtime unavailable" } }),
+      scheduleRefresh: (reason) => runtime?.scheduleRefresh(reason),
+    };
+    const result = await handler([...args], actionContext);
+    if (result.ok && result.mutation !== undefined) {
+      await this.applyProposal(result.mutation);
+      this.renderAndPublish(context);
+      return { ...result, data: { mutationApplied: true, actionPayload: result.data } };
+    }
+    this.renderAndPublish(context);
     return result;
   }
 
-  shutdown(context: DaseinPiExtensionContext): void {
-    for (const sensorKey of BUILTIN_SENSOR_KEYS) {
-      this.pi.recordCleanup?.(sensorKey, 1000);
-    }
-    context.ui?.setStatus?.("dasein", undefined);
-    context.ui?.setWidget?.("dasein", undefined);
+  private requireConfigManager(): ConfigManagerInstance {
+    if (this.configManager === null) throw new Error("Dasein config manager unavailable before initialization");
+    return this.configManager;
   }
 
   private probeStartupFeatures(): void {
@@ -575,29 +714,6 @@ class DaseinRuntimeWiring {
       const available = this.pi.probeFeature?.(mechanism) ?? true;
       if (!available) this.statusErrors.push(mechanismError(mechanism));
     }
-  }
-
-  private applyLaunchFlag(): void {
-    const launch = this.pi.getFlag?.("dasein");
-    if (launch === undefined || launch.trim().length === 0) return;
-    const parsed = parseLaunchAssignments(launch, { discoveredSensorKeys: BUILTIN_SENSOR_KEYS });
-    if (!parsed.ok) {
-      this.statusErrors.push({
-        kind: "pi_mechanism",
-        mechanism: "--dasein",
-        evidenceStatuses: ["SOURCE_VERIFIED", "LIVE_SMOKE_PENDING"],
-        message: `PiMechanismError: invalid --dasein launch assignments: ${parsed.errors.map((error) => error.message).join("; ")}`,
-      });
-      return;
-    }
-    for (const assignment of parsed.assignments) {
-      applyAssignment(this.config, assignment.canonicalPath, assignment.value);
-    }
-    this.launchArgsApplied = true;
-  }
-
-  private rendered(): RenderedContext {
-    return this.stateStore.getRenderedContext();
   }
 
   private renderOnly(): RenderedContext {
@@ -620,7 +736,7 @@ class DaseinRuntimeWiring {
   }
 
   private async openSettingsSurface(context: DaseinPiExtensionContext): Promise<void> {
-    if (this.statusErrors.some((error) => error.mechanism === "ctx.ui.custom")) return;
+    if (this.statusErrors.some((error) => error.kind === "pi_mechanism" && error.mechanism === "ctx.ui.custom")) return;
     const visibilityItems = this.settingsVisibilityItems();
     const controlsById = new Map(
       visibilityItems
@@ -666,19 +782,16 @@ class DaseinRuntimeWiring {
     }
   }
 
+  private async applySettingsControlMutation(control: SettingsListControlItem, rawValue: string, context: DaseinPiExtensionContext): Promise<void> {
+    await this.applyProposal(control.mutationForValue(parseSettingsValue(control, rawValue)));
+    this.renderAndPublish(context);
+  }
+
   private settingsVisibilityItems(): readonly SettingsListVisibilityItem[] {
-    const sensorMetadata = BUILTIN_SENSOR_SPECS.map((spec) => {
-      const genericSpec = spec as unknown as SensorSpec;
-      return inspectSensorMetadata({
-        spec: genericSpec,
-        provenance: { kind: "builtin" },
-        effectiveConfig: this.config.sensors[genericSpec.key] ?? genericSpec.defaults,
-      });
-    });
     return buildSettingsListVisibilityModel({
       config: this.config,
-      sensorMetadata,
-      sensorSpecs: BUILTIN_SENSOR_SPECS.map((spec) => spec as unknown as SensorSpec),
+      sensorMetadata: this.sensorMetadata(),
+      sensorSpecs: this.entries.map((entry) => entry.spec),
       externalStates: this.stateStore.listExternalStates(),
       now: () => Date.now(),
     });
@@ -710,17 +823,36 @@ class DaseinRuntimeWiring {
     });
   }
 
+  private sensorMetadata(): SensorInspectabilityMetadata[] {
+    return this.entries.map((entry) => inspectSensorMetadata({
+      spec: entry.spec,
+      provenance: entry.provenance,
+      effectiveConfig: this.config.sensors[entry.spec.key] ?? entry.spec.defaults,
+    }));
+  }
+
   private statusResult(): DaseinCommandResult {
     const support = classifyPiSupport(this.pi.version ?? null);
-    const rendered = this.rendered();
+    const rendered = this.stateStore.getRenderedContext();
     const result = buildStatusCommandResult({
       piVersion: this.pi.version ?? null,
-      activeSensors: BUILTIN_SENSOR_KEYS.filter((key) => this.config.sensors[key]?.enabled === true),
-      disabledSensors: BUILTIN_SENSOR_KEYS.filter((key) => this.config.sensors[key]?.enabled !== true),
+      configPath: CONFIG_PATH,
+      statePath: STATE_PATH,
+      activeSensors: this.entries.filter((entry) => this.config.sensors[entry.spec.key]?.enabled === true).map((entry) => entry.spec.key),
+      disabledSensors: this.entries.filter((entry) => this.config.sensors[entry.spec.key]?.enabled !== true).map((entry) => entry.spec.key),
       rendered: { omittedKeys: rendered.omittedKeys, truncated: rendered.truncated },
-      launchArgsApplied: this.launchArgsApplied,
-      piMechanisms: mechanismEvidence(FEATURE_PROBE_ORDER),
+      permissions: this.entries.map((entry) => permissionForSensor(entry, this.stateStore.getSensorSnapshot(entry.spec.key), Date.now())),
+      sensorMetadata: this.sensorMetadata(),
+      loadErrors: this.loadErrors,
       statusErrors: this.statusErrors,
+      launchArgsApplied: this.launchArgsApplied,
+      diskConfigLoaded: this.diskConfigLoaded,
+      durableState: {
+        statePath: STATE_PATH,
+        stateFileLoaded: this.durableStateFileLoaded,
+        lapse: this.durableLapse,
+      },
+      piMechanisms: mechanismEvidence(FEATURE_PROBE_ORDER),
     });
     if (!result.ok || !isRecord(result.data)) return result;
     return {
@@ -734,30 +866,89 @@ class DaseinRuntimeWiring {
       },
     };
   }
+
+  private sensorsResult(): DaseinCommandResult {
+    const metadata = new Map(this.sensorMetadata().map((item) => [item.key, item]));
+    return buildSensorsCommandResult({
+      sensors: this.entries.map((entry) => {
+        const config = this.config.sensors[entry.spec.key] ?? entry.spec.defaults;
+        const snapshot = this.stateStore.getSensorSnapshot(entry.spec.key);
+        const item = metadata.get(entry.spec.key);
+        return {
+          key: entry.spec.key,
+          loaded: true,
+          enabled: config.enabled === true,
+          status: snapshot?.status ?? (config.enabled === true ? "enabled" : "disabled"),
+          collectedAt: snapshot?.collected_at ?? null,
+          stale: snapshot === null ? false : Date.now() - snapshot.collected_at > snapshot.stale_after_ms,
+          actions: Object.keys(entry.spec.actions ?? {}),
+          provenance: entry.provenance,
+          manifest: entry.spec.manifest,
+          backgroundWork: entry.spec.manifest.backgroundWork,
+          effectiveIntervalMs: effectiveIntervalMs(config),
+          manifestDigest: item?.manifestDigest,
+          acknowledgedManifestDigest: item?.acknowledgedManifestDigest,
+          acknowledgementRequired: item?.acknowledgementRequired,
+          acknowledgementSatisfied: item?.acknowledgementSatisfied,
+          defaultEnabled: item?.defaultEnabled,
+          effectiveEnabled: item?.effectiveEnabled,
+          forcedDisabledReason: item?.forcedDisabledReason,
+          ...(snapshot?.error === undefined ? {} : { healthError: snapshot.error }),
+        };
+      }),
+      loadErrors: this.loadErrors,
+    });
+  }
+
+  private async reloadResult(): Promise<DaseinCommandResult> {
+    const manager = this.requireConfigManager();
+    const configReload = await manager.reloadDisk();
+    const registry = await loadSensorRegistry({ extensionRoot: EXTENSION_ROOT, cacheBustToken: Date.now() });
+    const previousEntries = this.entries;
+    const previousConfig = this.config;
+    if (configReload.ok && registry.ok) {
+      this.entries = registry.entries.map(coerceEntryProvenance).sort((left, right) => left.spec.key.localeCompare(right.spec.key));
+      this.loadErrors = registry.loadErrors;
+      this.attemptedFiles = registry.attemptedFiles;
+      this.config = manager.getEffectiveConfig();
+      this.rebuildSensorRuntimes();
+      this.renderOnly();
+    }
+    const reloadCommand = await reloadDaseinRuntime({
+      previousConfig,
+      previousRendered: this.stateStore.getRenderedContext(),
+      diskConfig: configReload.ok ? { version: 1 } satisfies DiskDaseinConfig : { version: 0 },
+      candidateSensorsOk: registry.ok,
+      attemptedFiles: registry.attemptedFiles,
+      activeKeys: (registry.ok ? registry.entries : previousEntries).map((entry) => entry.spec.key),
+      runtimeOverriddenPaths: manager.getRuntimeOverriddenPaths(),
+    });
+    return buildReloadCommandResult({ reload: reloadCommand.data.reload as DaseinReloadResult, configPath: CONFIG_PATH });
+  }
 }
 
 export const createDaseinExtension: DaseinPiExtensionFactory = (pi) => {
-  const runtime = new DaseinRuntimeWiring(pi);
+  const broker = new DaseinAmbientContextBroker(pi);
 
-  pi["registerFlag"]("dasein", { type: "string" });
-  pi["registerCommand"]("dasein", {
+  pi.registerFlag("dasein", { type: "string" });
+  pi.registerCommand("dasein", {
     description: "Inspect and configure Dasein ambient context",
     rawArgs: true,
     completions: true,
     getArgumentCompletions: (prefix: string) => ["status", "reload", "sensors", "set", "apply", "help"]
       .filter((item) => item.startsWith(prefix.trim()))
       .map((item) => ({ value: item, label: item })),
-    handler: (args: unknown, context: DaseinPiExtensionContext) => runtime.command(args, context),
+    handler: (args: unknown, context: DaseinPiExtensionContext) => broker.command(args, context),
   });
 
-  pi.on("context", (event) => runtime.context(event));
-  pi.on("session_start", (_event, context) => runtime.startup(context));
-  pi.on("session_shutdown", (_event, context) => runtime.shutdown(context));
-  pi.on("input", (event, context) => runtime.observeInput(event, context));
-  pi.on("agent_end", (event, context) => runtime.observeAgentEnd(event, context));
+  pi.on("context", (event) => broker.context(event));
+  pi.on("session_start", (_event, context) => broker.startup(context));
+  pi.on("session_shutdown", (_event, context) => broker.shutdown(context));
+  pi.on("input", (event, context) => broker.observePiLifecycle("input", event, context));
+  pi.on("agent_end", (event, context) => broker.observePiLifecycle("agent_end", event, context));
 
-  pi.events?.on?.("dasein:state:set", (payload) => runtime.setExternal(payload));
-  pi.events?.on?.("dasein:state:clear", (payload) => runtime.clearExternal(payload));
+  pi.events?.on?.("dasein:state:set", (payload) => broker.setExternal(payload));
+  pi.events?.on?.("dasein:state:clear", (payload) => broker.clearExternal(payload));
 };
 
 export default createDaseinExtension;
