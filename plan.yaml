@@ -16072,7 +16072,7 @@ phases:
       All thirteen checklist items proven and toggled. Blockers: none.'
   - id: finalization-status-output-contract-blocker-fix
     name: Fix final status output contract blocker
-    status: pending
+    status: claimed
     description: 'step_type: implementation
 
       Fix final gate blocker B-FINAL-001: production `/dasein status` output currently
@@ -16147,6 +16147,8 @@ phases:
     depends_on:
     - finalization-sensor-action-lapse-durable-blockers-retest
     agent: frontend-engineer
+    claimed_by: frontend-engineer
+    claimed_at: '2026-06-06T14:25:52.845567+00:00'
   - id: finalization-status-output-contract-blocker-retest
     name: Retest final status output contract blocker
     status: pending
