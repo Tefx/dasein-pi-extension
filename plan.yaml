@@ -3596,7 +3596,7 @@ phases:
       release-scope gate and does not intersect this ordinary non-native retest.'
   - id: core-gate-b4-external-default-fix
     name: Fix B4 external default agent visibility
-    status: pending
+    status: claimed
     description: 'step_type: implementation
 
       agent_source: project
@@ -3749,6 +3749,8 @@ phases:
     depends_on:
     - core-gate-blocker-retest
     agent: frontend-engineer
+    claimed_by: frontend-engineer
+    claimed_at: '2026-06-06T05:29:19.417297+00:00'
   - id: core-gate-b4-external-default-retest
     name: Retest B4 external default agent visibility
     status: pending
