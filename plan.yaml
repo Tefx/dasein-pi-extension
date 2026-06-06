@@ -11940,7 +11940,18 @@ phases:
       - [ ] Black-box verification observes native helper stdout/stderr `16KiB` cap
       behavior or exact blocker.
 
-      '
+      - [ ] Post-fix black-box verification launches from a cwd different from the
+      extension root and observes geo helper behavior does not resolve from cwd.
+
+      - [ ] Post-fix black-box verification exercises duplicate user sensor candidates
+      and observes load errors without duplicate active sensors.
+
+      - [ ] Post-fix black-box verification observes `/dasein reload` reports non-empty/exact
+      `launchReappliedPaths` when launch overlays are reapplied.
+
+      - [ ] Post-fix black-box verification invokes public `/dasein lapse reset` through
+      fake-host and live Pi wrapper path where available, observing persisted and
+      in-memory lapse timestamp clearing instead of `unknown-sensor-action`.'
     evidence_template: "## refs Read Confirmation (MANDATORY)\nFor each exact refs\
       \ entry listed on this step, provide a key passage or `NOT READ: <reason>`.\n\
       Machine-checkable refs inventory generated from this step refs:\n- `docs/PRD.md#9-acceptance-criteria`\
@@ -12099,7 +12110,7 @@ phases:
     - docs/TECHNICAL_DESIGN.md#data-flow
     - docs/PRD.md#9-6-external-state
     depends_on:
-    - finalization-doc-sync
+    - finalization-audit-blockers-fix
     agent: blind-tester
   - id: finalization-gate
     name: Final deep review gate
