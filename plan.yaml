@@ -11249,7 +11249,7 @@ phases:
       All ten wiring checklist items proven and toggled. Blockers: none.'
   - id: finalization-full-spec-conformance
     name: Full spec conformance audit
-    status: claimed
+    status: done
     description: 'step_type: audit
 
       verification_scope: full-plan-check
@@ -11721,6 +11721,92 @@ phases:
     agent: spec-verifier
     claimed_by: spec-verifier
     claimed_at: '2026-06-06T13:19:28.134211+00:00'
+    done_at: '2026-06-06T13:31:10.710486+00:00'
+    evidence: '## refs Read Confirmation
+
+      - CONSTITUTION.md — architecture, privacy, performance, testing, doc requirements
+      checked.
+
+      - docs/PRD.md — acceptance criteria and requirement families checked.
+
+      - docs/TECHNICAL_DESIGN.md — core contracts, command result/output, human UI,
+      builtin sensors, reload, testing matrix, verified Pi mechanisms checked.
+
+
+      ## Spec Conformance Verdict
+
+      status: SUCCESS; headline: PASS; verdict: PASS; blockers: none.
+
+
+      ## Required Gates
+
+      - `npm run typecheck` exit 0.
+
+      - `npm test` exit 0; 150 pass.
+
+      - `npm run test:native` exit 0; 2 pass, 1 skipped (coordinate availability excluded,
+      no coordinate claim).
+
+      - `npm run test:smoke` exit 0; 3 pass.
+
+      - Focused S1/S2/A1/A2/conformance recheck exit 0; 42 pass.
+
+
+      ## Conformance Summary
+
+      Material requirements checked: 18 families; proven 17, excluded by spec 1, blocked
+      0. PASS (not PASS_WITH_DEBT).
+
+      - Package/scripts/dependencies: PROVEN.
+
+      - Config defaults/precedence/global-only: PROVEN, including widget default false
+      and renderOrder [clock,lapse,geo].
+
+      - A1 reload late sensor/default rebuild and invalid reload keep-old: PROVEN.
+
+      - A2 helper abort/terminate/kill and geo signal propagation: PROVEN.
+
+      - Command parser/result contract: PROVEN.
+
+      - Request path no IO/injection: PROVEN.
+
+      - Rendering order/truncation/core ownership: PROVEN.
+
+      - Human UI/status/widget/SettingsList: PROVEN.
+
+      - Builtin clock/geo/lapse, geo privacy/tags/helper, lapse reset: PROVEN.
+
+      - External bridge validation/default hidden/U+2028/U+2029: PROVEN.
+
+      - User-added sensor loading/acknowledgement/negative directory: PROVEN.
+
+      - Live Pi mechanisms/dynamic reload: PROVEN via live artifacts; fake-host not
+      conflated.
+
+      - Native live coordinates: EXCLUDED by spec; native helper policy/fail-closed/caps/backoff
+      proven without coordinate claim.
+
+
+      ## Supplementary Checklist Matrix
+
+      All 23 checklist items mapped to PROVEN with exact citations in the spec-verifier
+      supplement: minimum/current/below/unavailable/version-probe rows; SettingsList
+      common controls; status/reload fields; negative external controls; geo exact
+      privacy; core bounds; geo tags; ctx.ui.custom; risky sensor five fields; native
+      timeout/kill/backoff and 16KiB caps; CustomMessage fields; lifecycle rows; render
+      invalidation rows; atomic fsync; U+2028/U+2029; Constitution change check; sensor
+      directory rule; renderer hook purity.
+
+
+      ## no_mutation_proof
+
+      No vectl tools, no source edits, no plan mutations in worktree; tracked diff/cached
+      diff empty. Smoke generated ignored `.dasein` artifacts only.
+
+
+      ## checklist_receipt
+
+      All 23 spec conformance checklist items proven and toggled. Blockers: none.'
   - id: finalization-architecture-concurrency-review
     name: Architecture, lifecycle, and concurrency review
     status: done
