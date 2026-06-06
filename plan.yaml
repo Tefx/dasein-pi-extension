@@ -16223,7 +16223,7 @@ phases:
       All ten checklist items proven and toggled. Blockers: none.'
   - id: finalization-status-output-contract-blocker-retest
     name: Retest final status output contract blocker
-    status: pending
+    status: claimed
     description: 'step_type: verification
 
       Independently retest B-FINAL-001 status output contract blocker and W-FINAL-001
@@ -16271,3 +16271,5 @@ phases:
     depends_on:
     - finalization-status-output-contract-blocker-fix
     agent: integration-verifier
+    claimed_by: integration-verifier
+    claimed_at: '2026-06-06T14:45:37.567445+00:00'
