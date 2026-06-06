@@ -1703,7 +1703,7 @@ phases:
     claimed_at: '2026-06-06T04:28:48.452153+00:00'
   - id: core-renderer-injector-external
     name: Complete renderer, injector, and external event intake
-    status: claimed
+    status: done
     description: 'step_type: implementation
 
       Fill in stub bodies in src/core/renderer.ts, src/core/injector.ts, and src/core/external-events.ts
@@ -1880,6 +1880,48 @@ phases:
     agent: frontend-engineer
     claimed_by: frontend-engineer
     claimed_at: '2026-06-06T04:28:44.784484+00:00'
+    done_at: '2026-06-06T04:41:58.740410+00:00'
+    evidence: '## refs Read Confirmation
+
+      - Constitution/testing refs — golden rendering and static import checks must
+      prove deterministic ordering, truncation/omitted/disabled visibility, compact
+      formatting, and request-path no I/O.
+
+      - `docs/TECHNICAL_DESIGN.md#rendering-contract` — renderOrder first incl. external
+      keys, remaining sensors/external lexicographic; core owns final strings/truncation;
+      one invalidation timer at minimum deadline.
+
+      - `docs/PRD.md#7-4` / `#9-6-external-state` — external key grammar, TTL/defaults,
+      exact clear, unknown/multiline/control rejection without mutation.
+
+      - `docs/PRD.md#7-9` / data-flow — injector uses pre-rendered in-memory string
+      and hidden CustomMessage with `display:false`, `customType:"dasein"`, timestamp.
+
+
+      ## artifacts/commit
+
+      - e4c45d9 `[vectl] step-core-renderer-injector-external completed`
+
+      - Changed `src/core/external-events.ts`, `src/core/injector.ts`, `src/core/renderer.ts`,
+      `src/index.ts`.
+
+
+      ## mainline final-state verification
+
+      - `npm run typecheck` → exit 0.
+
+      - `npm run test:file -- tests/unit/external-events.test.ts tests/unit/renderer.test.ts
+      tests/unit/injector.test.ts tests/static/no-request-io.test.ts tests/behavior/ambient-context.test.ts`
+      → exit 0; 18 tests, 18 pass.
+
+
+      ## checklist_receipt
+
+      All renderer/injector/external checklist items proven: transitive no-I/O, deterministic
+      order/external fairness, truncation/omitted/disabled/hidden/stale/expired, external
+      rejection/TTL/clear behavior incl. U+2028/U+2029 no mutation, hidden CustomMessage
+      fields, one timer/min deadline/no timer/timer fire from memory, and render hook
+      purity.'
   - id: core-command-layer
     name: Complete command parser and core command execution layer
     status: done
