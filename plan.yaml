@@ -6176,7 +6176,7 @@ phases:
       All six retest checklist items proven.'
 - id: pi_runtime
   name: Pi Runtime, Commands, and TUI Surfaces
-  status: in_progress
+  status: done
   gate: Pi-facing runtime surfaces are wired, fake-host verified, and client/runtime
     observable without claiming live release support.
   context: Wire Dasein into Pi extension lifecycle, slash commands, flags, context
@@ -7555,7 +7555,7 @@ phases:
       explicitly distinguished from live Pi support.'
   - id: pi-runtime-gate
     name: Gate Pi runtime and fake-host surfaces
-    status: claimed
+    status: done
     description: 'step_type: gate
 
       verification_scope: phase-check
@@ -7803,9 +7803,88 @@ phases:
     agent: gate-reviewer
     claimed_by: gate-reviewer
     claimed_at: '2026-06-06T07:28:15.623087+00:00'
+    done_at: '2026-06-06T07:31:54.034778+00:00'
+    evidence: '## refs Read Confirmation
+
+      - `CONSTITUTION.md#ux-and-pi-interaction-red-lines` — live Pi evidence required
+      before release support claims; fake/API candidates are not live support.
+
+      - `CONSTITUTION.md#testing-and-gates` — fake tests are not integration proof;
+      live smoke required before release support; no-request-I/O static checks required.
+
+      - `docs/TECHNICAL_DESIGN.md#testing-gate-matrix` — ordinary npm test excludes
+      live Pi smoke; fake Pi API proves registration shape only.
+
+      - `docs/PRD.md#9-acceptance-criteria` — slash commands, injection, TUI, sensors,
+      external state, reload behavior covered.
+
+      - `docs/TECHNICAL_DESIGN.md#human-ui-rendering` — status/widget/SettingsList
+      and canonical config mutation path.
+
+      - `docs/TECHNICAL_DESIGN.md#builtin-sensors` — clock/geo/lapse defaults and
+      privacy gates.
+
+      - `docs/TECHNICAL_DESIGN.md#verified-pi-mechanisms` — SOURCE/API are not live
+      proof; LIVE_SMOKE_PENDING remains.
+
+      - `docs/TECHNICAL_DESIGN.md#data-flow` — startup flag/command/hooks/events;
+      hidden CustomMessage; TUI-guarded UI; shutdown cleanup.
+
+
+      headline: PASS
+
+      verdict: OPEN
+
+      gate_open_allowed: true
+
+      blockers: []
+
+
+      ## Commands
+
+      - `npm run typecheck` exit 0.
+
+      - `npm test` exit 0; 131 pass, 0 fail/skipped.
+
+      - focused `pi-extension/settings-list/no-request-io` exit 0; 23 pass.
+
+      - `npm run test:native` exit 0 with explicit skip.
+
+      - `npm run test:smoke` exit 0 with explicit live Pi release-gate skip.
+
+
+      ## behavioral_proof_register
+
+      - Fake/API evidence separation: PROVEN; no LIVE_SMOKE_VERIFIED.
+
+      - Slash/flag/context/events/lifecycle/status/widget/ctx.ui.custom/SettingsList:
+      PROVEN by fake-host runtime/client proof.
+
+      - Minimum Pi version 0.78.1/current/below/unavailable and feature-probe separation:
+      PROVEN.
+
+      - Bare `/dasein` TUI and non-TUI: PROVEN.
+
+      - SettingsList common fields, external negative cases, geo exact controls: PROVEN.
+
+      - CustomMessage exact fields and LLM conversion: PROVEN.
+
+      - session_start/session_shutdown/1000ms cleanup: PROVEN.
+
+      - Live Pi/TUI/native support: DEFERRED_TO_RELEASE_SMOKE and not claimed.
+
+
+      ## blocker_ledger
+
+      open blockers: none.
+
+
+      ## checklist_receipt
+
+      All 12 pi-runtime-gate checklist items proven.'
 - id: system_wiring
   name: System Wiring and Ordinary CI Closure
-  status: locked
+  status: pending
   gate: No production stubs remain in entrypoints, ordinary CI gates pass, and fake-host
     end-to-end path reaches real modules.
   context: Connect module implementations through the real entrypoint and prove end-to-end
