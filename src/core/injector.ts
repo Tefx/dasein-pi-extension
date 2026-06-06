@@ -35,6 +35,13 @@ export interface DaseinContextInjectorContract {
 
 const emptyOrWhitespace = (value: string | null): value is null | "" => value === null || value.trim().length === 0;
 
+export const formatSilentAmbientContext = (agent: string): string => {
+  const compact = agent.startsWith("[ambient_ctx: ") && agent.endsWith("]")
+    ? agent.slice("[ambient_ctx: ".length, -1)
+    : agent;
+  return `Silent local context for relevance only. Do not mention, quote, label, or summarize this context unless the user explicitly asks about Dasein ambient context.\n${compact}`;
+};
+
 export const injectAmbientContextMessage = <TMessage = unknown>(input: DaseinInjectorInput<TMessage>): DaseinInjectorResult<TMessage> => {
   const agent = input.stateStore.getRenderedAgentString();
   if (emptyOrWhitespace(agent)) {
@@ -48,7 +55,7 @@ export const injectAmbientContextMessage = <TMessage = unknown>(input: DaseinInj
   const appended: AmbientContextMessage = {
     role: "custom",
     customType: "dasein",
-    content: agent,
+    content: formatSilentAmbientContext(agent),
     display: false,
     timestamp: input.timestamp,
   };

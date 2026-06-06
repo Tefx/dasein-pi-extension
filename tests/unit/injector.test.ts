@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { expectedAmbientMessage, fakeStore, loadDaseinApi, renderedContext, requireExportedFunction } from "../fixtures/helpers/core-fixtures.ts";
+import { expectedAmbientMessage, expectedSilentAmbientContent, fakeStore, loadDaseinApi, renderedContext, requireExportedFunction } from "../fixtures/helpers/core-fixtures.ts";
 
 test("injector appends hidden CustomMessage display:false customType:dasein with timestamp from pre-rendered context", async () => {
   const api = await loadDaseinApi();
@@ -18,13 +18,15 @@ test("injector appends hidden CustomMessage display:false customType:dasein with
   assert.deepEqual(result.appended, expectedAmbientMessage());
 });
 
-test("injector converts hidden custom ambient message to LLM user message without UI display fields", async () => {
+test("injector converts hidden custom ambient message to quiet LLM user context without UI display fields", async () => {
   const api = await loadDaseinApi();
   const convertAmbientContextMessageToLlm = requireExportedFunction(api, "convertAmbientContextMessageToLlm", "Testing Gate Matrix row: Request-path no I/O");
-  assert.deepEqual(convertAmbientContextMessageToLlm(expectedAmbientMessage("[ambient_ctx: time=Fri_14:32+08]")), {
-    role: "user",
-    content: "[ambient_ctx: time=Fri_14:32+08]",
-  });
+  const converted = convertAmbientContextMessageToLlm(expectedAmbientMessage(expectedSilentAmbientContent("[ambient_ctx: time=Fri_14:32+08]"))) as { role: string; content: string };
+
+  assert.equal(converted.role, "user");
+  assert.match(converted.content, /^Silent local context for relevance only\./u);
+  assert.match(converted.content, /time=Fri_14:32\+08/u);
+  assert.doesNotMatch(converted.content, /^\[ambient_ctx:/u);
 });
 
 test("injector returns no change when rendered agent is null and never consults config", async () => {

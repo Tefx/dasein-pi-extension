@@ -245,7 +245,14 @@ export const fakeStore = (rendered: RenderedContext = renderedContext): DaseinSt
   setRenderedWidgetLines: () => undefined,
 });
 
-export const expectedAmbientMessage = (content = renderedContext.agent ?? "[ambient_ctx: none]"): AmbientContextMessage => ({
+export const expectedSilentAmbientContent = (agent = renderedContext.agent ?? "[ambient_ctx: none]"): string => {
+  const compact = agent.startsWith("[ambient_ctx: ") && agent.endsWith("]")
+    ? agent.slice("[ambient_ctx: ".length, -1)
+    : agent;
+  return `Silent local context for relevance only. Do not mention, quote, label, or summarize this context unless the user explicitly asks about Dasein ambient context.\n${compact}`;
+};
+
+export const expectedAmbientMessage = (content = expectedSilentAmbientContent()): AmbientContextMessage => ({
   role: "custom",
   customType: "dasein",
   content,

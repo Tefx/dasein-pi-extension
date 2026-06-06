@@ -175,7 +175,9 @@ test("[expected-red] context hook appends a hidden Dasein CustomMessage converte
 
   assert.equal(contextEvent.messages.length, 1);
   const content = messageContent(contextEvent.messages[0]);
-  assert.match(content, /^\[ambient_ctx:/u);
+  assert.match(content, /^Silent local context for relevance only\./u);
+  assert.match(content, /time=/u);
+  assert.doesNotMatch(content, /^\[ambient_ctx:/u);
 });
 
 test("pi.events external state keeps unconfigured agent payload hidden until ConfigManager-owned visibility enables it", async () => {
@@ -309,7 +311,9 @@ test("[expected-red] builtin clock/geo/lapse wiring starts sensors while default
 
   const contextEvent: MutableContextEvent = { messages: [] };
   await invokeFakeLifecycle(host, "context", contextEvent);
-  assert.match(messageContent(contextEvent.messages[0]), /^\[ambient_ctx:/u, "agent-facing hidden ambient context must remain available");
+  const hiddenContext = messageContent(contextEvent.messages[0]);
+  assert.match(hiddenContext, /^Silent local context for relevance only\./u, "agent-facing hidden ambient context must remain available as quiet context");
+  assert.doesNotMatch(hiddenContext, /^\[ambient_ctx:/u, "agent-facing hidden ambient context must not use the raw visible ambient_ctx wrapper");
 });
 
 test("[expected-red] session_shutdown routes bounded cleanup with 1000ms per-sensor timeout", async () => {

@@ -691,7 +691,11 @@ export default function(pi) {
   assert.equal(recordOf(proof.appended, "contextInjectionProof.appended").display, false);
   const converted = recordOf(proof.piConvertToLlmLast, "contextInjectionProof.piConvertToLlmLast");
   assert.equal(converted.role, "user", "Pi convertToLlm must convert hidden Dasein CustomMessage into an LLM user message");
-  assert.match(JSON.stringify(converted.content), /\[ambient_ctx:/u);
+  const convertedContent = Array.isArray(converted.content)
+    ? converted.content.map((part) => typeof part === "object" && part !== null && "text" in part ? String((part as { text: unknown }).text) : String(part)).join("\n")
+    : String(converted.content);
+  assert.match(convertedContent, /^Silent local context for relevance only\./u);
+  assert.doesNotMatch(convertedContent, /^\[ambient_ctx:/u);
   writeJson(join(latestArtifactDir, "context-injection-proof.json"), proof);
   return proof;
 };
@@ -1272,7 +1276,7 @@ test("live Pi smoke gate produces executable live TUI/process proof artifacts", 
       ]),
       provenRow("pi.context.hidden-custom-message", ["context-injection-proof.json"], [
         "hiddenDaseinCustomMessage=true",
-        "Pi convertToLlm last message role=user and contains [ambient_ctx:",
+        "Pi convertToLlm last message role=user and contains quiet silent context without raw [ambient_ctx: prefix",
       ]),
       provenRow("pi.events.set-clear-live", ["event-bus-proof.json", "event-bus-proof.log"], [
         "received dasein:state:set and dasein:state:clear through live pi.events",

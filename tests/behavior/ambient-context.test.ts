@@ -3,7 +3,7 @@ import test from "node:test";
 
 import { EXTERNAL_STATE_TEXT_MAX_CHARS } from "../../src/index.ts";
 import type { DaseinConfig, DaseinStateStore, ExternalStateSnapshot, RenderedContext, SensorSnapshot } from "../../src/index.ts";
-import { baseConfig, clockSnapshot, fakeStore, loadDaseinApi, requireExportedFunction } from "../fixtures/helpers/core-fixtures.ts";
+import { baseConfig, clockSnapshot, expectedSilentAmbientContent, fakeStore, loadDaseinApi, requireExportedFunction } from "../fixtures/helpers/core-fixtures.ts";
 
 const BEHAVIORAL_GATE_MATRIX_ROW =
   "docs/TECHNICAL_DESIGN.md#testing-gate-matrix — Behavioral guardrails row: tests/behavior/ambient-context.test.ts; ordinary coding prompt does not require model to mention ambient context; relevant prompt can use enabled fields; disabled fields never appear in agent string; UI shows whether sensitive fields are agent-visible; malformed publishers cannot inject multiline or overlong strings.";
@@ -137,7 +137,8 @@ test("ordinary coding prompt receives hidden ambient data without a mandate to m
   assert.equal(result.changed, true);
   assert.equal(result.appended?.display, false);
   assert.equal(result.appended?.customType, "dasein");
-  assert.equal(result.appended?.content, rendered.agent);
+  assert.equal(result.appended?.content, expectedSilentAmbientContent(rendered.agent ?? ""));
+  assert.doesNotMatch(result.appended?.content ?? "", /^\[ambient_ctx:/u);
   assert.doesNotMatch(result.appended?.content ?? "", noPromptMandatePattern);
   assert.deepEqual(result.messages[0], messages[0], "ordinary user coding prompt must remain unrewritten");
 });
