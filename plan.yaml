@@ -2194,7 +2194,7 @@ phases:
       inspectability fields.'
   - id: core-static-proof
     name: Verify core local behavior and request-path safety
-    status: pending
+    status: claimed
     description: 'step_type: verification
 
       verification_scope: local-check
@@ -2497,6 +2497,8 @@ phases:
     - core-command-layer
     - core-behavior-guardrails
     agent: integration-verifier
+    claimed_by: integration-verifier
+    claimed_at: '2026-06-06T04:42:57.604119+00:00'
   - id: core-behavior-guardrails
     name: Define behavioral ambient-context guardrails
     status: done
