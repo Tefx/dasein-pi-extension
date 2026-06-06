@@ -96,6 +96,7 @@ export interface ReloadDaseinRuntimeInput {
   previousRendered?: unknown;
   diskConfig?: unknown;
   launchAssignments?: readonly ReloadAssignment[];
+  launchReappliedPaths?: readonly string[];
   runtimeOverriddenPaths?: readonly string[];
   candidateSensorsOk?: boolean;
   candidateSensorErrors?: readonly SensorLoadError[];
@@ -134,10 +135,12 @@ export interface DaseinLifecycleHarness {
 
 export const reloadDaseinRuntime = async (input: ReloadDaseinRuntimeInput): Promise<DaseinReloadCommandResult> => {
   const runtimeOverriddenPaths = [...(input.runtimeOverriddenPaths ?? [])].sort();
-  const launchReappliedPaths = (input.launchAssignments ?? [])
-    .map((assignment) => assignment.canonicalPath)
-    .filter((path) => !runtimeOverriddenPaths.includes(path))
-    .sort();
+  const launchReappliedPaths = input.launchReappliedPaths === undefined
+    ? (input.launchAssignments ?? [])
+      .map((assignment) => assignment.canonicalPath)
+      .filter((path) => !runtimeOverriddenPaths.includes(path))
+      .sort()
+    : [...input.launchReappliedPaths].sort();
   const activeKeys = [...(input.activeKeys ?? Object.keys(input.previousConfig.sensors))].sort();
   const configFailure = validateReloadDiskConfig(input.diskConfig);
   const sensorsOk = input.candidateSensorsOk !== false;

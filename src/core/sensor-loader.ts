@@ -7,7 +7,7 @@
  */
 
 import { createHash } from "node:crypto";
-import { dirname, join, resolve } from "node:path";
+import { basename, dirname, join, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 
 import { CORE_RESERVED_COMMAND_WORDS } from "./config.ts";
@@ -166,7 +166,8 @@ export const loadSensorRegistry = async (input: LoadSensorRegistryInput): Promis
   const modules = input.modules ?? (await importSensorModules(input.extensionRoot, input.cacheBustToken));
   const loadErrors: SensorLoadError[] = [];
   const entries: SensorRegistryEntry[] = [...staticEntries];
-  const keyFiles = new Map<SensorKey, string[]>();
+  const staticKeys = new Set<SensorKey>(staticEntries.map((entry) => entry.spec.key));
+  const keyCandidates = new Map<SensorKey, Array<{ file: string; entry: SensorRegistryEntry }>>();
 
   for (const moduleCandidate of modules) {
     const file = moduleCandidate.filePath;
@@ -193,18 +194,24 @@ export const loadSensorRegistry = async (input: LoadSensorRegistryInput): Promis
       loadErrors.push({ file, key: validation.spec.key, kind: "reserved-key", message: `sensor key ${validation.spec.key} is reserved by Dasein core` });
       continue;
     }
-    const seen = keyFiles.get(validation.spec.key) ?? [];
-    seen.push(file);
-    keyFiles.set(validation.spec.key, seen);
-    entries.push({ spec: validation.spec, provenance: { kind: "user_added_local_file", filePath: file } });
+    if (staticKeys.has(validation.spec.key) && isSourceBuiltinMirror(input.extensionRoot, file, validation.spec.key)) {
+      continue;
+    }
+    const seen = keyCandidates.get(validation.spec.key) ?? [];
+    seen.push({ file, entry: { spec: validation.spec, provenance: { kind: "user_added_local_file", filePath: file } } });
+    keyCandidates.set(validation.spec.key, seen);
   }
 
-  for (const [key, files] of keyFiles.entries()) {
-    if (files.length > 1) {
-      for (const file of files) {
-        loadErrors.push({ file, key, kind: "duplicate-key", message: `duplicate sensor key ${key}` });
+  for (const [key, candidates] of keyCandidates.entries()) {
+    const duplicateWithStatic = staticKeys.has(key);
+    if (duplicateWithStatic || candidates.length > 1) {
+      for (const candidate of candidates) {
+        loadErrors.push({ file: candidate.file, key, kind: "duplicate-key", message: `duplicate sensor key ${key}` });
       }
+      continue;
     }
+    const [candidate] = candidates;
+    if (candidate !== undefined) entries.push(candidate.entry);
   }
 
   return {
@@ -286,6 +293,10 @@ const errorMessage = (error: unknown): string => {
 
 const isCanonicalUserSensorFile = (extensionRoot: string, filePath: string): boolean => (
   filePath.endsWith(".ts") && dirname(resolve(filePath)) === resolve(extensionRoot, "src", "sensors")
+);
+
+const isSourceBuiltinMirror = (extensionRoot: string, filePath: string, key: SensorKey): boolean => (
+  isCanonicalUserSensorFile(extensionRoot, filePath) && basename(filePath) === `${key}.ts`
 );
 
 const validateSensorSpec = (candidate: Record<string, unknown>): { ok: true; spec: SensorSpec } | { ok: false; kind: SensorLoadErrorKind; message: string } => {

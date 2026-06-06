@@ -1,5 +1,6 @@
 import type {
   ConfigValidationError,
+  SensorAction,
   SensorConfig,
   SensorFieldSpec,
   SensorManifest,
@@ -260,6 +261,12 @@ const renderUI = (snapshot: SensorSnapshot, config: Readonly<LapseConfig>): read
   return fragments.length === 0 ? null : fragments;
 };
 
+const resetAction: SensorAction<LapseConfig> = () => ({
+  ok: true,
+  message: "lapse reset requested",
+  data: { reset: true },
+});
+
 const readPersistedState = (state: unknown): LapsePersistedState | null => {
   if (typeof state !== "object" || state === null || Array.isArray(state)) return null;
   const record = state as Record<string, unknown>;
@@ -341,6 +348,7 @@ const lapse: SensorSpec<LapseState, LapseConfig> = {
   normalizeState,
   renderAgent,
   renderUI,
+  actions: { reset: resetAction },
 };
 
 export default lapse;

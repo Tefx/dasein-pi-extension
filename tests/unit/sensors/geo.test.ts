@@ -1,4 +1,6 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+import { tmpdir } from "node:os";
 import test from "node:test";
 
 import type { SensorActionContext, SensorActionResult, SensorConfig, SensorSnapshot, SensorSpec, SensorStateField, SensorViewFragment } from "../../../src/index.ts";
@@ -221,6 +223,28 @@ test("geo tag list returns GeoTagListPayload, sorts names, avoids refresh/helper
   assertGeoTagListPayload(positivePayload);
   assert.deepEqual(positivePayload.tags[0]?.coordinates, { visible: true, lat: 31.2304, lon: 121.4737 });
   assert.equal(positivePayload.exactCoordinates, true);
+});
+
+test("geo native helper runtime is configured from extension root instead of process cwd", async () => {
+  const source = readFileSync(expectedGeoFile, "utf8");
+  assert.doesNotMatch(source, /process\.cwd\s*\(/u, "geo helper path must not depend on the launch cwd");
+  const moduleValue = (await import(`${expectedGeoFile.href}?configured-root=${Date.now()}`)) as {
+    configureGeoNativeHelper?: (input: { extensionRoot: string; installMode?: "directory" }) => void;
+    getGeoNativeHelperRuntimePolicy?: () => { helperPathForDirectoryInstall: string; spawnCommand: readonly [string, string, string] };
+  };
+  assert.equal(typeof moduleValue.configureGeoNativeHelper, "function");
+  assert.equal(typeof moduleValue.getGeoNativeHelperRuntimePolicy, "function");
+
+  const previousCwd = process.cwd();
+  try {
+    process.chdir(tmpdir());
+    moduleValue.configureGeoNativeHelper?.({ extensionRoot: "/real-extension-root", installMode: "directory" });
+    const policy = moduleValue.getGeoNativeHelperRuntimePolicy?.();
+    assert.equal(policy?.helperPathForDirectoryInstall, "/real-extension-root/src/native/macos-location-helper.swift");
+    assert.deepEqual(policy?.spawnCommand, ["swift", "/real-extension-root/src/native/macos-location-helper.swift", "--once"]);
+  } finally {
+    process.chdir(previousCwd);
+  }
 });
 
 test("geo native helper stdout/error mapping preserves permission, timeout, parse, unavailable, and helper-unavailable SensorError kinds", async () => {

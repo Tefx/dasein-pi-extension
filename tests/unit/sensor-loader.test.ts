@@ -26,6 +26,39 @@ test("sensor loader validates default export SensorSpec, manifest metadata, dupl
   ]);
 });
 
+test("startup loader surfaces duplicate-key errors without activating failed duplicate candidates", async () => {
+  const api = await loadDaseinApi();
+  const loadSensorRegistry = requireExportedFunction(api, "loadSensorRegistry", "docs/TECHNICAL_DESIGN.md#sensor-loading-and-reload/startup-scan duplicate-key safe admission");
+  const builtinEntry = {
+    spec: { key: "clock", defaults: { enabled: true, ui: true, agent: true }, manifest: builtinClockManifest },
+    provenance: { kind: "builtin" },
+  };
+  const result = await loadSensorRegistry({
+    extensionRoot: "/extension",
+    installMode: "directory",
+    builtinEntries: [builtinEntry],
+    modules: [
+      { filePath: "/extension/src/sensors/clock.ts", defaultExport: { key: "clock", defaults: { enabled: true, ui: true, agent: true }, manifest: builtinClockManifest } },
+      { filePath: "/extension/src/sensors/clock-copy.ts", defaultExport: { key: "clock", defaults: { enabled: true, ui: true, agent: true }, manifest: builtinClockManifest } },
+      { filePath: "/extension/src/sensors/dup-a.ts", defaultExport: { key: "dup", defaults: { enabled: true, ui: true, agent: true }, manifest: builtinClockManifest } },
+      { filePath: "/extension/src/sensors/dup-b.ts", defaultExport: { key: "dup", defaults: { enabled: false, ui: true, agent: false }, manifest: builtinClockManifest } },
+      { filePath: "/extension/src/sensors/weather.ts", defaultExport: { key: "weather", defaults: { enabled: false, ui: true, agent: false, intervalMs: null }, manifest: riskyWeatherManifest } },
+    ],
+  }) as { ok: boolean; entries: Array<{ spec: { key: string }; provenance: unknown }>; activeKeys: string[]; loadErrors: Array<{ file: string; kind: string; key?: string }> };
+
+  assert.equal(result.ok, false);
+  assert.deepEqual(result.entries.map((entry) => entry.spec.key).sort(), ["clock", "weather"]);
+  assert.deepEqual(result.activeKeys.sort(), ["clock", "weather"]);
+  assert.deepEqual(
+    result.loadErrors.map((error) => [error.file, error.kind, error.key]).sort(),
+    [
+      ["/extension/src/sensors/clock-copy.ts", "duplicate-key", "clock"],
+      ["/extension/src/sensors/dup-a.ts", "duplicate-key", "dup"],
+      ["/extension/src/sensors/dup-b.ts", "duplicate-key", "dup"],
+    ],
+  );
+});
+
 test("dynamic filesystem imports cache-bust changed local sensor modules and surface import errors", async () => {
   const api = await loadDaseinApi();
   const loadSensorRegistry = requireExportedFunction(api, "loadSensorRegistry", "Testing Gate Matrix row: Sensor export, install modes, provenance, and reload all-or-keep-old");

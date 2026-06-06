@@ -21,6 +21,24 @@ test("successful reload reapplies launch overlays except runtime overridden path
   assert.equal(result.message, "dasein reload: ok (3 sensors)");
 });
 
+test("reload result preserves ConfigManager launchReappliedPaths metadata", async () => {
+  const api = await loadDaseinApi();
+  const reloadDaseinRuntime = requireExportedFunction(api, "reloadDaseinRuntime", "docs/TECHNICAL_DESIGN.md#sensor-loading-and-reload/manual-reload launchReappliedPaths binding");
+  const result = await reloadDaseinRuntime({
+    previousConfig: baseConfig,
+    diskConfig: { version: 1 },
+    launchAssignments: [{ canonicalPath: "sensors.clock.precision", value: "hour" }],
+    launchReappliedPaths: ["sensors.geo.agent"],
+    runtimeOverriddenPaths: ["sensors.clock.precision"],
+    candidateSensorsOk: true,
+  }) as { data: { launchReappliedPaths: string[]; reload: { ok: boolean; launchReappliedPaths: string[]; config: { updatedPaths: string[] } } } };
+
+  assert.equal(result.data.reload.ok, true);
+  assert.deepEqual(result.data.launchReappliedPaths, ["sensors.geo.agent"]);
+  assert.deepEqual(result.data.reload.launchReappliedPaths, ["sensors.geo.agent"]);
+  assert.deepEqual(result.data.reload.config.updatedPaths, ["sensors.geo.agent"]);
+});
+
 test("failed reload keeps old config, registry, runtime overrides, rendered context, and exposes keep-old fields", async () => {
   const api = await loadDaseinApi();
   const reloadDaseinRuntime = requireExportedFunction(api, "reloadDaseinRuntime", "Testing Gate Matrix row: Sensor export, install modes, provenance, and reload all-or-keep-old");

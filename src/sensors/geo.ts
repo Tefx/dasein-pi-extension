@@ -1,3 +1,6 @@
+import { dirname, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
+
 import type {
   ConfigValidationError,
   SensorAction,
@@ -9,7 +12,13 @@ import type {
   SensorValueType,
   SensorViewFragment,
 } from "../core/types.ts";
-import { createMacOSLocationHelperSupervisor, type GeoPlacemark, type GeoState } from "../native/macos-location-helper.ts";
+import {
+  createMacOSLocationHelperSupervisor,
+  getMacOSLocationHelperRuntimePolicy,
+  type GeoPlacemark,
+  type GeoState,
+  type MacOSLocationHelperRuntimePolicy,
+} from "../native/macos-location-helper.ts";
 
 export type GeoPrecision = "city" | "district" | "street" | "exact";
 
@@ -201,9 +210,44 @@ const tagList = (config: Readonly<GeoConfig>): SensorActionResult => {
   return { ok: true, message: `geo tags: ${tags.map((tag) => tag.name).join(", ") || "none"}`, data: payload };
 };
 
+interface GeoNativeHelperConfiguration {
+  extensionRoot: string;
+  installMode: "directory" | "single-file";
+  packagedHelperPath: string | null;
+}
+
+const DEFAULT_EXTENSION_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..", "..");
+let helperConfiguration: GeoNativeHelperConfiguration = {
+  extensionRoot: DEFAULT_EXTENSION_ROOT,
+  installMode: "directory",
+  packagedHelperPath: null,
+};
 let supervisor: ReturnType<typeof createMacOSLocationHelperSupervisor> | null = null;
+
+export const configureGeoNativeHelper = (input: {
+  extensionRoot: string;
+  installMode?: "directory" | "single-file";
+  packagedHelperPath?: string | null;
+}): void => {
+  const next: GeoNativeHelperConfiguration = {
+    extensionRoot: resolve(input.extensionRoot),
+    installMode: input.installMode ?? "directory",
+    packagedHelperPath: input.packagedHelperPath ?? null,
+  };
+  if (
+    helperConfiguration.extensionRoot !== next.extensionRoot ||
+    helperConfiguration.installMode !== next.installMode ||
+    helperConfiguration.packagedHelperPath !== next.packagedHelperPath
+  ) {
+    supervisor = null;
+  }
+  helperConfiguration = next;
+};
+
+export const getGeoNativeHelperRuntimePolicy = (): MacOSLocationHelperRuntimePolicy => getMacOSLocationHelperRuntimePolicy(helperConfiguration);
+
 const getSupervisor = (): ReturnType<typeof createMacOSLocationHelperSupervisor> => {
-  supervisor ??= createMacOSLocationHelperSupervisor({ extensionRoot: process.cwd(), installMode: "directory" });
+  supervisor ??= createMacOSLocationHelperSupervisor(helperConfiguration);
   return supervisor;
 };
 

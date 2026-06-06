@@ -60,7 +60,7 @@ import type {
   SensorValueType,
 } from "./core/types.ts";
 import clockSpec from "./sensors/clock.ts";
-import geoSpec from "./sensors/geo.ts";
+import geoSpec, { configureGeoNativeHelper } from "./sensors/geo.ts";
 import lapseSpec from "./sensors/lapse.ts";
 import {
   buildSettingsListVisibilityModel,
@@ -156,6 +156,7 @@ export {
   mapMacOSLocationHelperOutput,
   runMacOSLocationHelperOnce,
 } from "./native/macos-location-helper.ts";
+export { configureGeoNativeHelper, getGeoNativeHelperRuntimePolicy } from "./sensors/geo.ts";
 
 export interface DaseinPiUiApi {
   readonly setStatus?: (slot: string, value?: string) => void;
@@ -238,7 +239,9 @@ const EXTENSION_ROOT = resolve(dirname(SOURCE_FILE), "..");
 const CONFIG_PATH = join(homedir(), ".pi", "dasein", "config.json");
 const STATE_PATH = join(homedir(), ".pi", "dasein", "state.json");
 const BUILTIN_SPECS = [clockSpec, geoSpec, lapseSpec] as const;
+const BUILTIN_ENTRIES: readonly SensorRegistryEntry[] = BUILTIN_SPECS.map((spec) => ({ spec: spec as unknown as SensorSpec, provenance: { kind: "builtin" as const } }));
 const BUILTIN_KEYS = new Set<string>(BUILTIN_SPECS.map((spec) => spec.key));
+configureGeoNativeHelper({ extensionRoot: EXTENSION_ROOT, installMode: "directory" });
 const FEATURE_PROBE_ORDER: readonly DaseinPiMechanism[] = [
   "registerCommand",
   "registerFlag",
@@ -403,9 +406,9 @@ const lightweightToConfigMutation = (
   };
 };
 
-const durableError = (message: string): DaseinStatusError => ({
+const durableError = (message: string, code: "load-failed" | "write-failed" | "schema-invalid" = "load-failed"): DaseinStatusError => ({
   kind: "durable_state",
-  code: "load-failed",
+  code,
   message,
   path: STATE_PATH,
 });
@@ -434,7 +437,7 @@ class DaseinAmbientContextBroker {
   private readonly sensorRuntimes = new Map<SensorKey, SensorRuntimeHarness>();
   private entries: SensorRegistryEntry[] = [];
   private configManager: ConfigManagerInstance | null = null;
-  private config: DaseinConfig = buildDefaultConfig(BUILTIN_SPECS.map((spec) => ({ spec: spec as unknown as SensorSpec, provenance: { kind: "builtin" as const } })));
+  private config: DaseinConfig = buildDefaultConfig(BUILTIN_ENTRIES);
   private loadErrors: SensorLoadError[] = [];
   private attemptedFiles: string[] = [];
   private initialized: Promise<void> | null = null;
@@ -539,7 +542,7 @@ class DaseinAmbientContextBroker {
   }
 
   private async initializeOnce(): Promise<void> {
-    const registry = await loadSensorRegistry({ extensionRoot: EXTENSION_ROOT, cacheBustToken: Date.now() });
+    const registry = await loadSensorRegistry({ extensionRoot: EXTENSION_ROOT, builtinEntries: BUILTIN_ENTRIES, cacheBustToken: Date.now() });
     this.entries = registry.entries.map(coerceEntryProvenance).sort((left, right) => left.spec.key.localeCompare(right.spec.key));
     this.loadErrors = registry.loadErrors;
     this.attemptedFiles = registry.attemptedFiles;
@@ -647,7 +650,48 @@ class DaseinAmbientContextBroker {
     };
     const durable = createDurableStateStore({ statePath: STATE_PATH, lapsePersistEnabled: true });
     const result = await durable.writeLapse(persisted);
-    if (!result.ok) this.statusErrors.push(durableError(result.error.message));
+    if (!result.ok) this.statusErrors.push(durableError(result.error.message, "write-failed"));
+  }
+
+  private async resetLapseTimestamps(context: DaseinPiExtensionContext): Promise<SensorActionResult> {
+    const entry = this.entries.find((candidate) => candidate.spec.key === "lapse");
+    if (entry === undefined) return { ok: false, message: "lapse reset failed: lapse sensor unavailable" };
+    const emptyPersisted: LapsePersistedState = { previous_human_input_at: null, previous_agent_end_at: null };
+    const emptyState = {
+      userIdleMs: null,
+      agentIdleMs: null,
+      previousHumanInputAt: null,
+      previousAgentEndAt: null,
+    };
+    const now = Date.now();
+    const snapshot = normalizeSensorRefreshResult({
+      sensorKey: "lapse",
+      value: emptyState,
+      outputFields: entry.spec.manifest.outputFields,
+      collectedAt: now,
+      staleAfterMs: effectiveStaleAfterMs(this.config.sensors.lapse ?? entry.spec.defaults),
+      source: sourceFor(entry),
+      normalizeState: entry.spec.normalizeState,
+    });
+    const runtime = this.sensorRuntimes.get("lapse");
+    if (runtime === undefined) this.stateStore.setSensorSnapshot(snapshot);
+    else runtime.commitSnapshot(snapshot);
+
+    this.durableLapse = emptyPersisted;
+    this.durableStateFileLoaded = true;
+    const durable = createDurableStateStore({ statePath: STATE_PATH, lapsePersistEnabled: true });
+    const persisted = await durable.writeLapse(emptyPersisted);
+    this.renderAndPublish(context);
+    if (!persisted.ok) {
+      const error = durableError(persisted.error.message, "write-failed");
+      this.statusErrors.push(error);
+      return { ok: false, message: `lapse reset failed: ${persisted.error.message}` };
+    }
+    return {
+      ok: true,
+      message: "lapse reset: ok",
+      data: { memoryCleared: true, persistedCleared: true, actionPayload: emptyPersisted },
+    };
   }
 
   private numberField(snapshot: SensorSnapshot | null, field: string): number | null {
@@ -682,6 +726,7 @@ class DaseinAmbientContextBroker {
   }
 
   private async runSensorAction(sensorKey: string, action: string, args: readonly string[], context: DaseinPiExtensionContext): Promise<SensorActionResult> {
+    if (sensorKey === "lapse" && action === "reset") return this.resetLapseTimestamps(context);
     const entry = this.entries.find((candidate) => candidate.spec.key === sensorKey);
     const handler = entry?.spec.actions?.[action];
     if (entry === undefined || handler === undefined) return { ok: false, message: `unknown ${sensorKey} action ${action}` };
@@ -905,7 +950,7 @@ class DaseinAmbientContextBroker {
     const previousEntries = this.entries;
     const previousConfig = this.config;
     const previousRendered = this.stateStore.getRenderedContext();
-    const registry = await loadSensorRegistry({ extensionRoot: EXTENSION_ROOT, cacheBustToken: Date.now() });
+    const registry = await loadSensorRegistry({ extensionRoot: EXTENSION_ROOT, builtinEntries: BUILTIN_ENTRIES, cacheBustToken: Date.now() });
     const configReload = registry.ok
       ? await manager.reloadDisk()
       : { ok: true, launchReappliedPaths: [], runtimeOverriddenPaths: manager.getRuntimeOverriddenPaths() };
@@ -929,6 +974,7 @@ class DaseinAmbientContextBroker {
       candidateSensorErrors: registry.loadErrors,
       attemptedFiles: registry.attemptedFiles,
       activeKeys: (configReload.ok && registry.ok ? registry.entries : previousEntries).map((entry) => entry.spec.key),
+      launchReappliedPaths: configReload.ok ? configReload.launchReappliedPaths : [],
       runtimeOverriddenPaths: manager.getRuntimeOverriddenPaths(),
     });
     return buildReloadCommandResult({ reload: reloadCommand.data.reload as DaseinReloadResult, configPath: CONFIG_PATH });
