@@ -3039,7 +3039,7 @@ phases:
       behavior preserved, ordinary npm test green.'
   - id: core-static-boundary-retest
     name: Retest core static boundary and ordinary CI
-    status: claimed
+    status: done
     description: 'step_type: test
 
       step_intent: retest_green
@@ -3131,6 +3131,53 @@ phases:
     agent: integration-verifier
     claimed_by: integration-verifier
     claimed_at: '2026-06-06T04:58:33.772947+00:00'
+    done_at: '2026-06-06T05:01:42.315865+00:00'
+    evidence: '## refs Read Confirmation
+
+      - `tests/unit/contracts/core-contracts.test.ts` — includes `src/core/config.ts`
+      in bounded contract files and asserts forbidden runtime imports/calls with no
+      skip/todo/only.
+
+      - `src/core/config.ts` — no direct `node:fs`, `node:fs/promises`, or `node:path`
+      imports; imports IO via `./config-io.ts`.
+
+      - `docs/TECHNICAL_DESIGN.md#core-contracts` — config precedence and canonical
+      persistence/FIFO mutation requirements remain relevant.
+
+      - `CONSTITUTION.md#testing-and-gates` — static/unit checks enforce config precedence,
+      no project-local sources, and no request-path I/O/mutation.
+
+
+      verdict: PASS
+
+      blockers: []
+
+
+      ## independent retest receipts
+
+      - `npm run typecheck` → exit 0.
+
+      - ordinary `npm test` → exit 0; 21 pass, 0 fail, 0 skipped.
+
+      - focused core matrix incl core-contracts → exit 0; 53 pass, 0 fail, 0 skipped.
+
+      - static proof → grep found no forbidden node fs/path imports in `src/core/config.ts`.
+
+      - contract test meaningfulness → 4 tests, 23 assert calls, 0 skip/todo/only,
+      still includes `src/core/config.ts`, forbidden import/call patterns, doesNotMatch
+      loop.
+
+
+      ## behavioral_proof_register
+
+      - B1_core_static_boundary_after_fix: PROVEN.
+
+
+      ## checklist_receipt
+
+      All retest checklist items proven: typecheck green, ordinary npm test green,
+      focused core matrix green, config static boundary restored, contract test not
+      weakened, B1 closed.'
 - id: sensors
   name: Builtin Sensors and Native Helper
   status: locked
