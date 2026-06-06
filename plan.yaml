@@ -6779,7 +6779,7 @@ phases:
       All 10 pi-runtime-extension-wiring checklist items proven.'
   - id: pi-runtime-tui-surfaces
     name: Complete status, widget, and SettingsList runtime surfaces
-    status: claimed
+    status: done
     description: 'step_type: implementation
 
       tags: [integration, client-surface]
@@ -6996,6 +6996,73 @@ phases:
     agent: frontend-engineer
     claimed_by: frontend-engineer
     claimed_at: '2026-06-06T07:11:07.622562+00:00'
+    done_at: '2026-06-06T07:23:16.858953+00:00'
+    evidence: '## refs Read Confirmation
+
+      - `docs/TECHNICAL_DESIGN.md#testing-gate-matrix` — SettingsList/TUI focused
+      coverage; fake-host API proof separate from live smoke.
+
+      - `docs/PRD.md#7-10-human-tui-surfaces` — status footer, widget, SettingsList
+      with core/sensor/external controls.
+
+      - `docs/PRD.md#9-4-tui` — respect status/widget enablement and omit ui-hidden/expired
+      contributors while preserving privacy-sensitive inspectability.
+
+      - `CONSTITUTION.md#ux-and-pi-interaction-red-lines` — no live support claim
+      without live verification.
+
+      - `docs/TECHNICAL_DESIGN.md#data-flow` — TUI rendering guarded by mode; SettingsList
+      changes enter validated FIFO config path.
+
+      - `docs/TECHNICAL_DESIGN.md#human-ui-rendering` — common controls enabled/ui/agent/intervalMs/timeoutMs/staleAfterMs/initialRefresh,
+      valid external ui/agent, inspectability before risky controls.
+
+      - `docs/TECHNICAL_DESIGN.md#builtin-sensors` — geo exactCoordinates/exactAddress
+      boolean privacy controls.
+
+      - `docs/TECHNICAL_DESIGN.md#core-contracts` — canonical config paths and key
+      grammar; SettingsList/slash mutations share ConfigManager/FIFO validation.
+
+      - `docs/TECHNICAL_DESIGN.md#command-result-and-output-contract` — status/sensors
+      payloads expose evidence statuses and inspectable metadata without live support
+      claim.
+
+
+      ## Files changed / commit
+
+      - Mainline squash commit: `2e9e9df` (worker commit `ca9f20e594d64eae80487dd8bbb9ca1726a5c461`).
+
+      - Changed: `src/core/types.ts`, `src/index.ts`, `src/ui/settings-import-contract.ts`.
+
+
+      ## Verification
+
+      - `npm run typecheck` exit 0.
+
+      - `npm run test:file -- tests/unit/settings-list.test.ts tests/integration/pi-extension.test.ts`
+      exit 0; 21 pass, 0 fail/skipped.
+
+      - `npm test` exit 0 in worker evidence; 131 pass, 0 fail.
+
+
+      ## Proof
+
+      - Fake-host TUI evidence covers status text, widget lines, SettingsList controls/content,
+      bare `/dasein` real wiring path.
+
+      - SettingsList exposes core toggles, sensor common/simple fields, recurring
+      interval controls, valid external `ui`/`agent`, geo `exactCoordinates`/`exactAddress`,
+      and user-added inspectability fields before risky controls.
+
+      - Invalid/dotted/expired/malformed external state omitted; SettingsList changes
+      route through ConfigManager/FIFO canonical path.
+
+      - No live support claim made; evidence remains fake/API verified.
+
+
+      ## checklist_receipt
+
+      All 12 pi-runtime-tui-surfaces checklist items proven.'
   - id: pi-runtime-client-proof
     name: Verify fake-host client/runtime liveness for Pi surfaces
     status: pending
