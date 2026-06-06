@@ -4146,7 +4146,7 @@ phases:
       and non-intersecting with this ordinary core retest.'
 - id: sensors
   name: Builtin Sensors and Native Helper
-  status: pending
+  status: in_progress
   gate: Builtin sensors publish typed state, geo helper is bounded/fail-closed, and
     sensor actions obey config mutation and privacy contracts.
   context: Deliver clock, lapse, geo, and macOS helper behavior while preserving the
@@ -4156,7 +4156,7 @@ phases:
   steps:
   - id: sensors-tests
     name: Define expected-red builtin sensor and native helper tests
-    status: pending
+    status: claimed
     description: 'step_type: test
 
       step_intent: test_define_red
@@ -4370,6 +4370,8 @@ phases:
     - docs/PRD.md#7-2-sensor-model
     - docs/PRD.md#9-7-sensor-loading-and-reload
     agent: frontend-engineer
+    claimed_by: frontend-engineer
+    claimed_at: '2026-06-06T05:42:30.172087+00:00'
   - id: sensors-clock-lapse
     name: Complete clock and lapse sensors
     status: pending
