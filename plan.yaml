@@ -11424,81 +11424,81 @@ phases:
       explicit as static/contract/runtime fake proof, not broad injector no-I/O.
 
       '
-    verification: '- [ ] Requirements register covers every material requirement family
+    verification: '- [x] Requirements register covers every material requirement family
       from Constitution, PRD, and Technical Design touched by the implementation.
 
-      - [ ] Evidence table uses verdicts CONFORMS, DIVERGES, PARTIAL, NEEDS_TEST,
+      - [x] Evidence table uses verdicts CONFORMS, DIVERGES, PARTIAL, NEEDS_TEST,
       NOT_FOUND, AMBIGUOUS_SPEC, or SPEC_POSSIBLY_STALE with source refs and implementation/evidence
       refs.
 
-      - [ ] All DIVERGES/PARTIAL/NOT_FOUND/NEEDS_TEST rows include severity and closure
+      - [x] All DIVERGES/PARTIAL/NOT_FOUND/NEEDS_TEST rows include severity and closure
       path; blocker-class rows cannot be bypassed by final gate.
 
-      - [ ] Support-claim and doc-sync conformance rows distinguish fake-host/API/source/live
+      - [x] Support-claim and doc-sync conformance rows distinguish fake-host/API/source/live
       evidence correctly.
 
-      - [ ] Full conformance audit verifies `minimumPiVersion: "0.78.1"`, current
+      - [x] Full conformance audit verifies `minimumPiVersion: "0.78.1"`, current
       version capture, below-minimum/unavailable classification, and separate feature-probe
       evidence.
 
-      - [ ] Full conformance audit includes SettingsList common sensor controls `enabled`,
+      - [x] Full conformance audit includes SettingsList common sensor controls `enabled`,
       `ui`, `agent`, `intervalMs`, `timeoutMs`, `staleAfterMs`, `initialRefresh` and
       visible recurring interval controls.
 
-      - [ ] Full conformance audit includes exact status fields `effectiveConfigVersion`,
+      - [x] Full conformance audit includes exact status fields `effectiveConfigVersion`,
       `launchArgsApplied`, `diskConfigLoaded` and reload fields `launchReappliedPaths`,
       `runtimeOverriddenPaths` as separate requirement rows.
 
-      - [ ] Full conformance audit includes SettingsList negative external-key proof
+      - [x] Full conformance audit includes SettingsList negative external-key proof
       rows for invalid keys, dotted keys, expired external state, and malformed external
       events.
 
-      - [ ] Full conformance audit includes separate requirement rows for `sensors.geo.exactCoordinates`
+      - [x] Full conformance audit includes separate requirement rows for `sensors.geo.exactCoordinates`
       and `sensors.geo.exactAddress`.
 
-      - [ ] Full conformance audit includes separate rows for `core.maxAgentChars`
+      - [x] Full conformance audit includes separate rows for `core.maxAgentChars`
       integer range `40..2000` and `core.injectedLabel` regex `[A-Za-z0-9_.:-]{1,32}`.
 
-      - [ ] Full conformance audit includes geo tag `radius_m` bounds, `GeoTagListPayload`,
+      - [x] Full conformance audit includes geo tag `radius_m` bounds, `GeoTagListPayload`,
       and `exactCoordinates` redaction as separate requirement rows.
 
-      - [ ] Full conformance audit includes `ctx.ui.custom` feature-probe/status reporting
+      - [x] Full conformance audit includes `ctx.ui.custom` feature-probe/status reporting
       as a separate mechanism requirement.
 
-      - [ ] Full conformance audit includes separate rows for `acknowledgedManifestDigest`,
+      - [x] Full conformance audit includes separate rows for `acknowledgedManifestDigest`,
       `acknowledgementRequired`, `acknowledgementSatisfied`, `defaultEnabled`, and
       `effectiveEnabled`.
 
-      - [ ] Full conformance audit includes native helper timeout `3000ms`, kill grace
+      - [x] Full conformance audit includes native helper timeout `3000ms`, kill grace
       `250ms`, and backoff `1m -> 5m -> 15m` as separate requirement rows.
 
-      - [ ] Full conformance audit includes context injection `display:false`, `customType:"dasein"`,
+      - [x] Full conformance audit includes context injection `display:false`, `customType:"dasein"`,
       timestamp shape, and conversion-to-LLM user-message rows.
 
-      - [ ] Full conformance audit includes `session_start`, `session_shutdown`, and
+      - [x] Full conformance audit includes `session_start`, `session_shutdown`, and
       `1000ms` per-sensor cleanup timeout as separate lifecycle rows.
 
-      - [ ] Full conformance audit includes render invalidation scheduler rows for
+      - [x] Full conformance audit includes render invalidation scheduler rows for
       exactly-one timer, minimum deadline, no-deadline cancellation, timer-fire recompute,
       and no request-path scheduling/I/O.
 
-      - [ ] Full conformance audit includes atomic write fsync-when-available behavior
+      - [x] Full conformance audit includes atomic write fsync-when-available behavior
       for config/state persistence as a separate requirement row.
 
-      - [ ] Full conformance audit includes U+2028 and U+2029 external event string
+      - [x] Full conformance audit includes U+2028 and U+2029 external event string
       rejection as separate requirement rows.
 
-      - [ ] Conformance audit checks whether CONSTITUTION.md changed and verifies
+      - [x] Conformance audit checks whether CONSTITUTION.md changed and verifies
       explicit human approval/amendment evidence if it did.
 
-      - [ ] Full conformance audit includes negative sensor-directory rule: `~/.pi/dasein/sensors`
+      - [x] Full conformance audit includes negative sensor-directory rule: `~/.pi/dasein/sensors`
       is not scanned and `<extension_root>/src/sensors/*.ts` is the only user-added
       directory/package sensor path.
 
-      - [ ] Full conformance audit includes native helper stdout/stderr `16KiB` caps
+      - [x] Full conformance audit includes native helper stdout/stderr `16KiB` caps
       as separate requirement rows.
 
-      - [ ] Full conformance audit includes renderer hook purity rows for I/O, refresh/action,
+      - [x] Full conformance audit includes renderer hook purity rows for I/O, refresh/action,
       config mutation, durable-state, discovery, helper/native imports, and final
       string ownership.
 
