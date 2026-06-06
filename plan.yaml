@@ -10889,7 +10889,7 @@ phases:
       All six dynamic reload fix checklist items proven; blockers none.'
 - id: finalization
   name: Documentation Sync and Final Deep Review
-  status: in_progress
+  status: done
   gate: Final gate opens only with doc sync, full conformance, wiring, architecture,
     black-box, and evidence-ledger closure.
   context: Synchronize docs with implementation evidence and run independent final
@@ -12434,7 +12434,7 @@ phases:
       All 21 checklist items proven and toggled. Blockers: none.'
   - id: finalization-gate
     name: Final deep review gate
-    status: claimed
+    status: done
     description: 'step_type: gate
 
       verification_scope: full-plan-check
@@ -12934,6 +12934,103 @@ phases:
     agent: gate-reviewer
     claimed_by: gate-reviewer
     claimed_at: '2026-06-06T14:54:34.983730+00:00'
+    done_at: '2026-06-06T15:02:15.558629+00:00'
+    evidence: '## refs Read Confirmation
+
+      - CONSTITUTION.md — READ; architectural dogmas, extension/sensor laws, request-path
+      safety, and testing/gate rules reviewed.
+
+      - docs/PRD.md — READ; status, command, sensor, reload, live support, and acceptance
+      requirements reviewed.
+
+      - docs/TECHNICAL_DESIGN.md — READ; command-result/output contract, human UI
+      rendering, builtin sensors, core contracts, testing gate matrix, verified Pi
+      mechanisms, data flow, rendering contract, external state, sensor model, sensor
+      loading/reload reviewed.
+
+
+      ## Final Gate Decision
+
+      - status: SUCCESS
+
+      - verdict: PASS
+
+      - gate_decision: OPEN
+
+      - blocking_status: CLOSED
+
+      - blockers: []
+
+      - warnings: []
+
+
+      ## Commands
+
+      - `npm run typecheck` exit 0.
+
+      - `npm test` exit 0; 156 pass, 0 fail.
+
+      - `npm run test:native` exit 0; 2 pass, 1 skipped accepted native future gate.
+
+      - `npm run test:smoke` exit 0; 3 pass.
+
+      - Focused final status/lapse command exit 0; 4 pass.
+
+
+      ## Behavioral Proof Register
+
+      - B1 static boundary: PROVEN_CLOSED.
+
+      - Ordinary non-native full suite: PROVEN_CLOSED; discovery found 39 files and
+      156 pass.
+
+      - Orphan lapse export: PROVEN_CLOSED.
+
+      - B-FINAL-001 status contract: PROVEN_CLOSED; production path test passes and
+      live artifact includes hiddenContributors/effectiveLapseControls.
+
+      - W-FINAL-001 fixture flake: PROVEN_CLOSED; focused/full/smoke all pass after
+      fixture isolation helper.
+
+      - Release smoke gate vocabulary: PROVEN; no forbidden OPEN_WITH_DEBT/PASS_WITH_DEBT
+      verdict; final gate uses OPEN.
+
+      - Live Pi smoke: PROVEN with `.dasein/live-pi-smoke/latest/checklist_receipt.json`
+      11/11 proven, 0 blocked, piBinary `/opt/homebrew/bin/pi`, piVersion `0.78.1`.
+
+      - Dynamic reload smoke: PROVEN.
+
+      - Lapse reset smoke: PROVEN.
+
+      - Worktree purity: PROVEN; only ignored `.dasein/` and node_modules artifacts.
+
+
+      ## Final Checklist Receipt
+
+      All 24 final-gate checklist items were positively proven and toggled. No orphan
+      authoritative requirement, production wiring gap, request-path I/O blocker,
+      false live-support claim, or unowned broad verifier failure remains.
+
+
+      ## Artifacts inspected
+
+      - `.dasein/live-pi-smoke/latest/checklist_receipt.json`
+
+      - `.dasein/live-pi-smoke/latest/slash-command-proof.json`
+
+      - `.dasein/live-pi-smoke/latest/context-injection-proof.json`
+
+      - `.dasein/live-pi-smoke/latest/lifecycle-cleanup-proof.json`
+
+      - `.dasein/live-pi-smoke/latest/settingslist-persistence-proof.json`
+
+      - `.dasein/dynamic-reload-smoke/latest/checklist_receipt.json`
+
+      - `.dasein/dynamic-reload-smoke/latest/dynamic-reload-proof.json`
+
+      - `.dasein/lapse-reset-smoke/latest/checklist_receipt.json`
+
+      - `.dasein/lapse-reset-smoke/latest/lapse-reset-proof.json`'
   - id: finalization-audit-blockers-fix
     name: Fix concurrent finalization audit blockers
     status: done
