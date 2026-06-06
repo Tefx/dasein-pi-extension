@@ -16444,14 +16444,14 @@ phases:
       bar, common-first SettingsList, diagnostics/debug disclosure, and command feedback
       behavior. Clarify that `[ambient_ctx: ...]` is injected agent context, not user-facing
       status chrome, and should not be visually noisy by default.'
-    verification: '- [ ] docs explain default ambient context visibility and debug
+    verification: '- [x] docs explain default ambient context visibility and debug
       disclosure.
 
-      - [ ] docs explain status bar minimal/standard/debug behavior.
+      - [x] docs explain status bar minimal/standard/debug behavior.
 
-      - [ ] docs explain SettingsList common-first vs diagnostics split.
+      - [x] docs explain SettingsList common-first vs diagnostics split.
 
-      - [ ] docs preserve inspectability and local Pi privacy constraints.'
+      - [x] docs preserve inspectability and local Pi privacy constraints.'
     agent: general
     claimed_by: general
     claimed_at: '2026-06-06T15:30:15.647198+00:00'
