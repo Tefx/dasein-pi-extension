@@ -4661,7 +4661,7 @@ phases:
     agent: frontend-engineer
   - id: sensors-native-helper
     name: Complete macOS CoreLocation helper supervision
-    status: pending
+    status: claimed
     description: 'step_type: implementation
 
       TARGET STATE: src/native/macos-location-helper.swift and the TypeScript helper
@@ -4755,6 +4755,8 @@ phases:
     depends_on:
     - sensors-tests
     agent: ios-developer
+    claimed_by: ios-developer
+    claimed_at: '2026-06-06T05:54:00.916858+00:00'
   - id: sensors-manifest-risk
     name: Complete user-added sensor manifest and risk loading behavior
     status: claimed
