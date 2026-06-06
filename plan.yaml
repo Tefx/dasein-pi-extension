@@ -8647,65 +8647,65 @@ phases:
       test-controlled path was modified.
 
       '
-    verification: '- [ ] `npm run test:smoke -- tests/smoke/pi-settings-list.test.ts`
+    verification: '- [x] `npm run test:smoke -- tests/smoke/pi-settings-list.test.ts`
       or the documented live Pi equivalent is run with raw stdout/stderr, Pi version,
       and binary path.
 
-      - [ ] Evidence shows literal bare `/dasein` output plus separately named `/dasein
+      - [x] Evidence shows literal bare `/dasein` output plus separately named `/dasein
       status` and `/dasein sensors` slash output, context hook injection behavior,
       status/widget rendering/clearing, SettingsList visible content, and one safe
       setting interaction.
 
-      - [ ] If blocked, evidence states the exact missing Pi binary, version, TUI
+      - [x] If blocked, evidence states the exact missing Pi binary, version, TUI
       target, permissions, extension load path, or command needed; fake-host evidence
       is not counted as live proof.
 
-      - [ ] Mechanism evidenceStatuses are updated/assessed only for observed live
+      - [x] Mechanism evidenceStatuses are updated/assessed only for observed live
       behaviors and remain LIVE_SMOKE_PENDING for unobserved mechanisms.
 
-      - [ ] Live smoke evidence explicitly covers `--dasein` launch flag parsing or
+      - [x] Live smoke evidence explicitly covers `--dasein` launch flag parsing or
       records an exact blocker.
 
-      - [ ] Live smoke evidence explicitly covers `pi.events` publish/receive for
+      - [x] Live smoke evidence explicitly covers `pi.events` publish/receive for
       `dasein:state:set` and `dasein:state:clear` or records an exact blocker.
 
-      - [ ] Live smoke evidence explicitly covers lifecycle observation (`input` or
+      - [x] Live smoke evidence explicitly covers lifecycle observation (`input` or
       `before_agent_start`, plus `agent_end`) or records an exact blocker.
 
-      - [ ] Live smoke evidence explicitly covers hidden custom-message context conversion
+      - [x] Live smoke evidence explicitly covers hidden custom-message context conversion
       to LLM input or records an exact blocker.
 
-      - [ ] Live smoke captures current Pi version and binary path, compares against
+      - [x] Live smoke captures current Pi version and binary path, compares against
       `minimumPiVersion: "0.78.1"`, and records below-minimum/unavailable classification
       without false support claims.
 
-      - [ ] Live smoke invokes literal bare `/dasein` in a live TUI and captures SettingsList/configuration
+      - [x] Live smoke invokes literal bare `/dasein` in a live TUI and captures SettingsList/configuration
       UI opening or an exact blocker.
 
-      - [ ] Live smoke invokes literal bare `/dasein` outside TUI mode when feasible
+      - [x] Live smoke invokes literal bare `/dasein` outside TUI mode when feasible
       and captures deterministic help/status fallback or exact blocker.
 
-      - [ ] Live TUI smoke captures SettingsList common sensor controls `enabled`,
+      - [x] Live TUI smoke captures SettingsList common sensor controls `enabled`,
       `ui`, `agent`, `intervalMs`, `timeoutMs`, `staleAfterMs`, and `initialRefresh`,
       or exact blockers per field family.
 
-      - [ ] Live TUI smoke toggles or changes one visible recurring interval/common
+      - [x] Live TUI smoke toggles or changes one visible recurring interval/common
       control safely and verifies ConfigManager mutation behavior or exact blocker.
 
-      - [ ] Live smoke explicitly observes `ctx.ui.custom`/custom UI path for SettingsList
+      - [x] Live smoke explicitly observes `ctx.ui.custom`/custom UI path for SettingsList
       or records an exact blocker separate from SettingsList content assertions.
 
-      - [ ] Live smoke observes hidden CustomMessage `display:false`, `customType:"dasein"`,
+      - [x] Live smoke observes hidden CustomMessage `display:false`, `customType:"dasein"`,
       timestamp shape, and conversion-to-LLM user message or records exact blockers.
 
-      - [ ] Live smoke observes `session_start` and `session_shutdown` lifecycle behavior
+      - [x] Live smoke observes `session_start` and `session_shutdown` lifecycle behavior
       with cleanup evidence or records exact blockers.
 
-      - [ ] Evidence records serialized execution assumptions and confirms disposable
+      - [x] Evidence records serialized execution assumptions and confirms disposable
       runtime/config/extension/native resources are cleaned up before the next release-smoke
       step consumes them.
 
-      - [ ] Evidence distinguishes allowed disposable runtime/config mutation from
+      - [x] Evidence distinguishes allowed disposable runtime/config mutation from
       forbidden repository/product/docs/code mutation and includes cleanup/reset proof.
 
       '
