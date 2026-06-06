@@ -13978,3 +13978,286 @@ phases:
       ## checklist_receipt
 
       All eight retest checklist items proven and toggled. Blockers: none.'
+  - id: finalization-wiring-blackbox-blockers-fix
+    name: Fix wiring and live-smoke finalization blockers
+    status: pending
+    description: 'step_type: implementation
+
+      work_type: defect_repair
+
+      agent_source: project
+
+      closure_step: true
+
+
+      TARGET STATE:
+
+      One batched TypeScript remediation closes the final audit rerun blockers W1,
+      W6, W12, W2, and LIVE_PI_SMOKE_EVENT_BUS_CONTEXT_RENDER before the final wiring
+      and black-box audits rerun.
+
+
+      BOUNDING BOX:
+
+      Main workspace paths only: `src/sensors/lapse.ts`, `src/sensors/clock.ts`, `src/sensors/geo.ts`,
+      `src/core/types.ts`, `src/core/config.ts`, `src/commands/dasein-command.ts`,
+      `src/ui/settings-import-contract.ts`, `src/core/renderer.ts`, `src/index.ts`,
+      `tests/unit/config.test.ts`, `tests/unit/settings-list.test.ts`, `tests/unit/renderer.test.ts`,
+      `tests/unit/sensors/*.test.ts`, `tests/integration/*.test.ts`, `tests/smoke/contracts/live-pi-smoke-gate-contract.test.ts`,
+      and package scripts in `package.json`. This bounding box does not authorize
+      editing `.vectl/worktrees/**`.
+
+
+      AUTHORITATIVE CONSTRAINTS:
+
+      - Dasein core owns final injection formatting, deterministic ordering, truncation,
+      renderable view models, and Pi context injection.
+
+      - Sensors publish typed state only; sensors MUST NOT own final prompt text,
+      injection order, priority, or config mutation.
+
+      - External state publishers do not gain special privileges. Unconfigured external
+      keys remain agent-hidden by default.
+
+      - Mock tests are not integration proof; live Pi smoke must either pass with
+      real evidence or report exact environment blockers without support overclaim.
+
+
+      REQUIREMENT-TO-CHECKLIST TRACEABILITY MATRIX:
+
+      | requirement_id | source_ref + key passage | obligation | owning_step_id |
+      checklist_item | evidence_field | status | non_intersection_or_escalation |
+
+      | --- | --- | --- | --- | --- | --- | --- | --- |
+
+      | W1 | final wiring audit rerun: `src/sensors/lapse.ts` exports `createLapsePersistenceController`
+      with only test references | Remove orphan export or connect it to a non-test
+      production caller; do not leave test-only public reachability | finalization-wiring-blackbox-blockers-fix
+      | W1 checklist item | W1_orphan_export_resolution | OWNED | Blocks finalization-full-wiring-audit
+      |
+
+      | W6 | final wiring audit rerun: builtin `SensorSpec.validateConfig` assignments
+      are not consumed by ConfigManager/loader/runtime | Either consume sensor config
+      validators in public ConfigManager/assignment validation or remove the dead
+      contract and enforce equivalent validation in the public config path | finalization-wiring-blackbox-blockers-fix
+      | W6 checklist item | W6_config_validation_resolution | OWNED | Blocks finalization-full-wiring-audit
+      and finalization-black-box-verification |
+
+      | W12 | final wiring audit rerun: SettingsList emits simple user sensor field
+      controls, but ConfigManager rejects their mutation paths | Ensure simple user
+      sensor field mutations emitted by SettingsList are accepted and validated by
+      ConfigManager, or stop emitting unreachable controls | finalization-wiring-blackbox-blockers-fix
+      | W12 checklist item | W12_settingslist_user_field_resolution | OWNED | Blocks
+      finalization-full-wiring-audit and user-visible SettingsList proof |
+
+      | W2 | final wiring audit rerun: builtin `SensorSpec.renderAgent`/`renderUI`
+      are populated but production render path does not pass hooks | Preserve Dasein
+      principle by removing write-only sensor render hook fields/contracts/tests unless
+      a production consumer exists without sensor-owned final strings | finalization-wiring-blackbox-blockers-fix
+      | W2 checklist item | W2_render_hook_resolution | OWNED | Blocks finalization-full-wiring-audit
+      and Constitution conformance |
+
+      | LIVE_PI_SMOKE_EVENT_BUS_CONTEXT_RENDER | live smoke rerun: `npm run test:smoke`
+      expected weather/rain in agent context after unconfigured external weather event
+      | Repair smoke/spec assertion: prove hidden-by-default for unconfigured external
+      weather and separately prove configured `external.weather.agent=true` through
+      public config/launch before expecting agent context | finalization-wiring-blackbox-blockers-fix
+      | LIVE checklist item | live_pi_smoke_event_bus_resolution | OWNED | Blocks
+      finalization-black-box-verification; default hidden behavior must not regress
+      |
+
+
+      BLOCKERS TO FIX (ALL of these, not just the first):
+
+      - W1 orphan export: `src/sensors/lapse.ts` exports `createLapsePersistenceController`
+      with only test references. Need non-test caller or remove/export-gate test seam.
+
+      - W6 config contract dead-end: `SensorSpec.validateConfig` is assigned by builtin
+      sensors (`clock`, `geo`, `lapse`) but not consumed by ConfigManager/loader/runtime;
+      core config only checks precision is string, so invalid enum strings can pass.
+
+      - W12 SettingsList simple user sensor field dead-end: SettingsList emits simple
+      user sensor field controls via `specFieldControls`, but ConfigManager only allows
+      builtin-specific fields and `geo.tags` children.
+
+      - W2 write-only render hooks: builtin `SensorSpec.renderAgent`/`renderUI` are
+      populated but production render path does not pass spec hooks to `renderDaseinContext`.
+      Preferred disposition is removal of write-only hook fields/contracts/tests rather
+      than making sensors own final strings.
+
+      - LIVE_PI_SMOKE_EVENT_BUS_CONTEXT_RENDER: smoke expected unconfigured external
+      weather event payload in agent context. After B1, unconfigured external keys
+      are agent-hidden by default; do not regress this default.
+
+
+      GREP HINTS / SIBLING SEARCH:
+
+      - `grep -rn "createLapsePersistenceController" src tests --include=''*.ts''`
+
+      - `grep -rn "validateConfig" src tests --include=''*.ts''`
+
+      - `grep -rn "renderAgent\|renderUI" src tests --include=''*.ts''`
+
+      - `grep -rn "specFieldControls" src tests --include=''*.ts''`
+
+      - `grep -rn "weather\|external.weather\|dasein:state:set" tests/smoke src tests
+      --include=''*.ts''`
+
+
+      ## Gate Preview (what the final audits WILL reject)
+
+      1. Test-only public exports with no production caller or accepted test-seam
+      exclusion.
+
+      2. Sensor config contracts that are assigned but never consumed by public ConfigManager/loader/runtime
+      paths.
+
+      3. SettingsList controls whose public mutation paths are rejected by ConfigManager.
+
+      4. Sensor-owned render hooks/final prompt fragments that violate the Constitution''s
+      core-owned rendering principle or remain write-only.
+
+      5. Smoke evidence that claims unconfigured external weather is agent-visible,
+      or hides a live Pi blocker as support proof.
+
+
+      <side_effect_budget>Allowed: modify TypeScript source/tests/docs only as needed
+      to close these five blockers and align tests with constitutional behavior. Forbidden:
+      editing `.vectl/worktrees/**`, weakening external default agent-hidden behavior,
+      adding arbitrary runtime npm dependencies, making sensors own final prompt text,
+      reading project-local config, or claiming live Pi support without live evidence/environment-blocker
+      classification.</side_effect_budget>
+
+      <risk_probes>1. Does the chosen W2 repair preserve the sensor typed-state-only
+      boundary instead of routing final strings through sensors? 2. Does W6 enforce
+      invalid enum rejection through the same public ConfigManager/assignment path
+      used by SettingsList/slash/runtime changes? 3. Does the live smoke repair distinguish
+      hidden-by-default from configured-agent-visible without support overclaim?</risk_probes>
+
+
+      ## Completion Criteria (stub exclusion)
+
+      This is an IMPLEMENTATION step. Stub-only completion is NOT acceptable. Each
+      deliverable MUST contain substantive logic or contract deletion that removes
+      the dead path and proves observable behavior through public/production paths.'
+    verification: '- [ ] W1: `createLapsePersistenceController` is either reachable
+      from a non-test production caller or is no longer a public orphan/export-gate
+      seam; grep/import-trace evidence is recorded.
+
+      - [ ] W6: invalid builtin sensor enum/config values, including at least `sensors.clock.precision`,
+      are rejected through the public ConfigManager/assignment path, not only by spec-local
+      unit calls.
+
+      - [ ] W12: a user-added sensor simple enum field emitted by SettingsList can
+      be applied through ConfigManager successfully, or SettingsList no longer emits
+      unreachable controls; evidence includes the user sensor enum control and mutation
+      result.
+
+      - [ ] W2: `SensorSpec.renderAgent`/`renderUI` are no longer write-only production
+      contracts; if removed, associated builtin/tests/contracts are updated and core-owned
+      final rendering remains intact.
+
+      - [ ] LIVE_PI_SMOKE_EVENT_BUS_CONTEXT_RENDER: smoke/spec proof asserts unconfigured
+      external weather is agent-hidden by default and separately proves configured
+      `external.weather.agent=true` makes weather/rain agent-visible through a public
+      config/launch path.
+
+      - [ ] `npm run typecheck` exits 0 with raw stdout/stderr captured.
+
+      - [ ] Focused tests covering all five blockers exit 0 with raw stdout/stderr
+      captured.
+
+      - [ ] `npm test` exits 0 with raw stdout/stderr captured.
+
+      - [ ] `npm run test:smoke` exits 0 or emits an exact environment-blocker artifact
+      without false live support overclaim.
+
+      - [ ] Sibling grep/search evidence shows no remaining write-only render hooks,
+      unconsumed config validators, unreachable SettingsList user-field controls,
+      or unconfigured external agent-visible smoke assertions.'
+    evidence_template: '## refs Read Confirmation (MANDATORY)
+
+      For each ref in this step:
+
+      - CONSTITUTION.md#architectural-dogmas — <key passage>
+
+      - CONSTITUTION.md#testing-and-gates — <key passage>
+
+      - docs/TECHNICAL_DESIGN.md#configuration-files — <key passage>
+
+      - docs/TECHNICAL_DESIGN.md#builtin-sensors — <key passage>
+
+      - docs/TECHNICAL_DESIGN.md#human-ui-rendering — <key passage>
+
+      - docs/TECHNICAL_DESIGN.md#data-flow — <key passage>
+
+      - docs/PRD.md#9-6-external-state — <key passage>
+
+      - package.json — <key script passage>
+
+      - tests/smoke/contracts/live-pi-smoke-gate-contract.test.ts — <key passage>
+
+
+      ## Blocker Resolution Report
+
+      - W1_orphan_export_resolution: <non-test caller or removal/exclusion proof +
+      grep/import trace>
+
+      - W6_config_validation_resolution: <public ConfigManager/assignment validation
+      proof for invalid enum rejection>
+
+      - W12_settingslist_user_field_resolution: <user sensor enum control + ConfigManager
+      mutation success, or controls-not-emitted proof>
+
+      - W2_render_hook_resolution: <removed/consumed hook contract proof preserving
+      core-owned final rendering>
+
+      - live_pi_smoke_event_bus_resolution: <hidden-default proof + configured-agent-visible
+      proof>
+
+
+      ## Commands / Receipts
+
+      - typecheck_command: `npm run typecheck`
+
+      - typecheck_raw_stdout_stderr: <paste>
+
+      - focused_test_commands: <paste exact focused commands for all five blockers>
+
+      - focused_test_raw_stdout_stderr: <paste>
+
+      - npm_test_command: `npm test`
+
+      - npm_test_raw_stdout_stderr: <paste>
+
+      - smoke_command: `npm run test:smoke`
+
+      - smoke_raw_stdout_stderr_or_environment_blocker: <paste>
+
+
+      ## Sibling Search Evidence
+
+      - createLapsePersistenceController grep: <paste>
+
+      - validateConfig grep: <paste>
+
+      - renderAgent/renderUI grep: <paste>
+
+      - specFieldControls/user-field mutation trace: <paste>
+
+      - weather/external smoke assertion grep: <paste>
+
+
+      ## No False Live Support Overclaim
+
+      - live_pi_support_claim_status: <LIVE_SMOKE_VERIFIED | ENVIRONMENT_BLOCKED with
+      exact blocker>
+
+      - external_default_agent_hidden_preserved: <evidence>
+
+      - configured_external_agent_visible_path: <public config/launch evidence>'
+    depends_on:
+    - finalization-audit-blockers-fix
+    - finalization-reload-launch-path-failure-branches-retest
+    - finalization-external-state-sensor-runtime-blockers-retest
+    agent: frontend-engineer
