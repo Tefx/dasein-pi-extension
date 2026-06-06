@@ -16429,7 +16429,7 @@ phases:
       PASS.'
 - id: ux_polish
   name: Default UX Polish
-  status: in_progress
+  status: done
   gate: 'Default Dasein UI is quiet by default: status bar is summarized, SettingsList
     starts with common controls, diagnostics remain available on demand, and slash
     command feedback is visible in TUI.'
@@ -16482,7 +16482,7 @@ phases:
       Commit: 2da6032 `[ux-polish] quiet default visible Dasein UI`.'
   - id: ux-polish-implementation
     name: Implement quiet default UX
-    status: claimed
+    status: done
     description: 'Implement quiet default UX: make command feedback visible in TUI,
       summarize visible status output, avoid raw ambient context/debug fields in default
       visible chrome, and reduce SettingsList default surface to common controls while
@@ -16508,3 +16508,23 @@ phases:
     agent: general
     claimed_by: general
     claimed_at: '2026-06-06T15:41:43.466215+00:00'
+    done_at: '2026-06-06T15:51:02.734533+00:00'
+    evidence: "## Implementation\n- Commit `2da6032`: quiet default visible Dasein\
+      \ UI.\n  - TUI status now publishes a short summary (`Dasein · Ready` / degraded\
+      \ count) instead of raw rendered ambient context.\n  - Default SettingsList\
+      \ uses common-first filtering and hides diagnostic metadata from the first surface.\n\
+      \  - TUI slash command results now use `ctx.ui.notify` so `/dasein status` and\
+      \ `/dasein sensors` visibly respond.\n- Commit `48b143c`: quiet ambient context\
+      \ injection.\n  - Hidden agent context is still injected as `display:false`\
+      \ custom message.\n  - LLM-facing content now uses a quiet instruction wrapper\
+      \ and no longer starts with raw `[ambient_ctx:`.\n  - Tests prove the hidden\
+      \ context remains available but default visible TUI and converted LLM content\
+      \ do not use the raw visible wrapper.\n\n## Verification\n- `npm run typecheck`\
+      \ exit 0.\n- Focused UX tests exit 0: `npm run test:file -- tests/integration/pi-runtime-red.test.ts\
+      \ tests/unit/settings-list.test.ts tests/unit/renderer.test.ts` (35 pass).\n\
+      - Focused injection/live tests exit 0: `npm run test:file -- tests/unit/injector.test.ts\
+      \ tests/behavior/ambient-context.test.ts tests/integration/pi-runtime-red.test.ts\
+      \ tests/smoke/contracts/live-pi-smoke-gate-contract.test.ts` (26 pass).\n- `npm\
+      \ test` exit 0; 157 pass.\n\n## Checklist receipt\nAll seven implementation\
+      \ checklist items proven and toggled. Diagnostics remain available via `/dasein\
+      \ status` and `/dasein sensors`; default visible UI is quiet."
