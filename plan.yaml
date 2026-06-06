@@ -13338,7 +13338,7 @@ phases:
       All six retest checklist items proven and toggled. Blockers: none.'
   - id: finalization-external-state-sensor-runtime-blockers-fix
     name: Fix external state visibility and sensor runtime blockers
-    status: claimed
+    status: done
     description: 'step_type: implementation
 
       agent_source: project
@@ -13605,6 +13605,105 @@ phases:
     agent: frontend-engineer
     claimed_by: frontend-engineer
     claimed_at: '2026-06-06T11:26:47.013266+00:00'
+    done_at: '2026-06-06T11:42:37.117239+00:00'
+    evidence: '## refs Read Confirmation
+
+      - docs/PRD.md#9-6-external-state — malformed keys/TTLs/missing strings/oversized/multiline/control
+      strings reject; external publishers cannot force agent injection; unconfigured
+      keys are UI-visible and agent-hidden by default.
+
+      - docs/TECHNICAL_DESIGN.md#configuration-files — runtime mutations patch canonical
+      config paths only; runtime mutations must not serialize full effective config;
+      state.json schema is bounded and external state remains in-memory.
+
+      - docs/TECHNICAL_DESIGN.md#builtin-sensors — builtin sensors declare recurring
+      interval background work with defaultIntervalMs.
+
+      - docs/TECHNICAL_DESIGN.md#human-ui-rendering — renderer computes RenderedContext
+      from effective config plus state; external visibility controls are exposed for
+      configured/live external keys; UI setting changes enter validated FIFO config
+      mutation queue.
+
+      - CONSTITUTION.md#architectural-dogmas — sensors must not mutate Dasein config;
+      only launch/slash/UI controls may mutate config.
+
+      - CONSTITUTION.md#non-goals — no autonomous config mutation; recurring work
+      must be documented, visible, configurable, disableable, cleanup-safe.
+
+      - CONSTITUTION.md#performance-laws — request path consumes in-memory typed state
+      only; no I/O or refresh.
+
+      - CONSTITUTION.md#privacy-and-safety-laws — external state visible to human
+      when enabled; injected fields traceable; no durable ambient history by default.
+
+
+      ## Fix Receipt
+
+      - Worker commits: 770fdd3038112f36b04cfde930a034053907b29e, 9b972083ced04ce6b064a41b43fe52bd83273e6f.
+      Main commits: 01cf60d and a2a29fa.
+
+      - Files changed: `src/index.ts`, `src/core/sensor-runtime.ts`, `src/core/runtime-timers.ts`,
+      `src/core/lifecycle.ts`, `tests/integration/pi-runtime-red.test.ts`, `tests/unit/sensor-runtime.test.ts`,
+      `tests/integration/reload-launch-metadata.test.ts`.
+
+      - B1: removed broker-side `config.external` mutation in external set path; valid
+      events store only in-memory external state. Renderer keeps default ui:true/agent:false
+      unless ConfigManager-owned visibility enables agent.
+
+      - B2: sensor runtime now consumes timeoutMs with abort/error boundary and consumes
+      intervalMs with cleanup-safe recurring refresh scheduling; lifecycle stops recurring
+      refreshes on shutdown.
+
+      - Mainline test cleanup fix: reload metadata fixture no longer deletes shared
+      scratch root per test, preventing parallel full-suite ENOENT.
+
+
+      ## Commands
+
+      - `npm run typecheck` exit 0.
+
+      - `npm run test:file -- tests/unit/external-events.test.ts tests/unit/renderer.test.ts
+      tests/integration/pi-runtime-red.test.ts` exit 0; 28 pass.
+
+      - `npm run test:file -- tests/unit/sensor-runtime.test.ts tests/unit/lifecycle.test.ts
+      tests/unit/contracts/core-contracts.test.ts` exit 0; 10 pass.
+
+      - `npm run test:file -- tests/integration/reload-launch-metadata.test.ts` exit
+      0; 2 pass.
+
+      - `npm test` exit 0; 143 pass.
+
+
+      ## Behavioral Proof
+
+      - External valid event with payload.agent remains omitted from agent context
+      by default while UI visibility remains; explicit ConfigManager-owned config
+      can enable it.
+
+      - Malformed Unicode separator external events reject without state mutation.
+
+      - timeoutMs aborts slow refresh and commits timeout SensorError; late resolution
+      cannot overwrite timeout state.
+
+      - intervalMs schedules recurring real refresh and cleanup/shutdown stops scheduler.
+
+
+      ## sibling_searches
+
+      - Direct `config.external[...] =` mutation in `src`: no matches.
+
+      - state.json external persistence: bounded state schema remains lapse-only;
+      external state appears only in in-memory Map/setExternalState.
+
+      - scheduler/timeout uses: bounded timer helpers, timeout consumption, interval
+      scheduling, and lifecycle cleanup found.
+
+      - pendingReason: consumed into queued follow-up and cleared on abort/stop.
+
+
+      ## checklist_receipt
+
+      All eight checklist items proven and toggled. Blockers: none.'
   - id: finalization-external-state-sensor-runtime-blockers-retest
     name: Retest external state visibility and sensor runtime blockers
     status: pending
