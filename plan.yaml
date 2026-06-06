@@ -11755,7 +11755,7 @@ phases:
     agent: software-architect
   - id: finalization-black-box-verification
     name: Black-box public interface verification
-    status: pending
+    status: claimed
     description: 'step_type: verification
 
       verification_scope: full-plan-check
@@ -12114,6 +12114,8 @@ phases:
     - finalization-audit-blockers-fix
     - finalization-reload-launch-path-failure-branches-retest
     agent: blind-tester
+    claimed_by: blind-tester
+    claimed_at: '2026-06-06T11:12:58.937638+00:00'
   - id: finalization-gate
     name: Final deep review gate
     status: pending
