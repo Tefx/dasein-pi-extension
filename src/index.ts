@@ -50,6 +50,7 @@ export {
   SENSOR_AND_EXTERNAL_KEY_PATTERN,
 } from "./core/config.ts";
 export {
+  createExternalStateBridge,
   EXTERNAL_STATE_CLEAR_EVENT_KEYS,
   EXTERNAL_STATE_DEFAULT_TTL_MS,
   EXTERNAL_STATE_EVENT_TOPICS,
@@ -58,6 +59,16 @@ export {
   EXTERNAL_STATE_TEXT_MAX_CHARS,
   EXTERNAL_STATE_TTL_MS_CONSTRAINT,
 } from "./core/external-events.ts";
+export {
+  assertNoRequestPathRendering,
+  createRenderInvalidationScheduler,
+  renderDaseinContext,
+} from "./core/renderer.ts";
+export {
+  convertAmbientContextMessageToLlm,
+  injectAmbientContextMessage,
+  proveInjectorNoIo,
+} from "./core/injector.ts";
 export {
   EXTERNAL_STATE_SNAPSHOT_KEYS,
   RENDERED_CONTEXT_KEYS,
