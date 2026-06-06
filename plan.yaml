@@ -8322,7 +8322,7 @@ phases:
     agent: gate-reviewer
   - id: system-wiring-native-test-discovery-fix
     name: Make native test discovery include root native tests
-    status: pending
+    status: claimed
     description: 'step_type: implementation
 
       tags: [ci, native-test-discovery]
@@ -8405,6 +8405,8 @@ phases:
     depends_on:
     - system-wiring-stub-replacement
     agent: frontend-engineer
+    claimed_by: frontend-engineer
+    claimed_at: '2026-06-06T07:55:50.315010+00:00'
 - id: release_smoke
   name: Live Pi and Native Release Smoke
   status: locked
