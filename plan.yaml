@@ -14261,3 +14261,143 @@ phases:
     - finalization-reload-launch-path-failure-branches-retest
     - finalization-external-state-sensor-runtime-blockers-retest
     agent: frontend-engineer
+  - id: finalization-wiring-blackbox-blockers-retest
+    name: Retest wiring and live-smoke finalization blockers
+    status: pending
+    description: 'step_type: test
+
+      step_intent: retest_green
+
+      expected_result: green
+
+      verification_scope: phase-check
+
+      agent_source: project
+
+
+      PROOF ARTIFACT:
+
+      As an independent tester, retest the batched W1/W6/W12/W2/LIVE_PI_SMOKE_EVENT_BUS_CONTEXT_RENDER
+      repair from `finalization-wiring-blackbox-blockers-fix` before the final wiring
+      and black-box audits rerun. This step protects `finalization-full-wiring-audit`,
+      `finalization-black-box-verification`, and `finalization-gate`.
+
+
+      SCOPE:
+
+      Use the main workspace public/source/test surfaces only. Do not modify code,
+      docs, config, or plan state. Do not use `.vectl/worktrees/**` as evidence.
+
+
+      BEHAVIORAL PROOF REGISTER REQUIRED:
+
+      | requirement_ref | behavior_claim | runtime_proof_expected | evidence_ref |
+      status | closure_path | gate_decision_basis |
+
+      | --- | --- | --- | --- | --- | --- | --- |
+
+      | W1 | `createLapsePersistenceController` is not a test-only public orphan |
+      grep/import trace or production caller/removal proof | <artifact> | PROVEN/UNPROVEN/BLOCKED
+      | unresolved blocks wiring audit | finalization-full-wiring-audit |
+
+      | W6 | public ConfigManager/assignment validation rejects invalid builtin sensor
+      config enums | focused public-path test output | <artifact> | PROVEN/UNPROVEN/BLOCKED
+      | unresolved blocks wiring and black-box audits | finalization-full-wiring-audit
+      + finalization-black-box-verification |
+
+      | W12 | SettingsList user sensor simple enum controls are mutably reachable
+      or not emitted | focused SettingsList + ConfigManager mutation test output |
+      <artifact> | PROVEN/UNPROVEN/BLOCKED | unresolved blocks wiring audit | finalization-full-wiring-audit
+      |
+
+      | W2 | sensor render hooks are not write-only and core retains final prompt/render
+      ownership | grep/static test/golden render output | <artifact> | PROVEN/UNPROVEN/BLOCKED
+      | unresolved blocks wiring and Constitution conformance | finalization-full-wiring-audit
+      |
+
+      | LIVE_PI_SMOKE_EVENT_BUS_CONTEXT_RENDER | unconfigured external weather remains
+      agent-hidden; configured `external.weather.agent=true` becomes agent-visible
+      through public config/launch | `npm run test:smoke` output or precise environment
+      blocker | <artifact> | PROVEN/UNPROVEN/BLOCKED | unresolved blocks black-box
+      audit; environment blocker must not be support proof | finalization-black-box-verification
+      |
+
+
+      <side_effect_budget>Allowed: read-only verification commands, grep/import traces,
+      and report artifacts. Forbidden: source/test edits, live support overclaim,
+      relying on mocks as live proof, or accepting hidden default external-agent visibility.</side_effect_budget>
+
+      <risk_probes>1. Does the proof show public/runtime reachability rather than
+      test-only references? 2. Does smoke evidence prove both external hidden-by-default
+      and configured-agent-visible paths? 3. Does any remaining render hook/config
+      validator have a production consumer or an explicit accepted removal rationale?</risk_probes>'
+    verification: '- [ ] refs confirmation includes key passages for every listed
+      ref or an explicit `NOT READ` reason.
+
+      - [ ] W1 retest evidence proves no test-only public orphan remains for `createLapsePersistenceController`.
+
+      - [ ] W6 retest evidence proves public ConfigManager/assignment validation rejects
+      invalid builtin sensor enum strings, including an invalid clock precision case.
+
+      - [ ] W12 retest evidence builds a user sensor enum SettingsList control and
+      applies the mutation through ConfigManager successfully, or proves such unreachable
+      controls are no longer emitted.
+
+      - [ ] W2 retest evidence proves `SensorSpec.renderAgent`/`renderUI` are not
+      write-only production contracts and that final prompt/render strings remain
+      core-owned.
+
+      - [ ] LIVE retest evidence proves unconfigured external weather is agent-hidden
+      by default and configured `external.weather.agent=true` is agent-visible through
+      public config/launch before expecting weather/rain in context.
+
+      - [ ] `npm run typecheck` exits 0 with raw stdout/stderr captured.
+
+      - [ ] Focused tests for W1, W6, W12, W2, and LIVE_PI_SMOKE_EVENT_BUS_CONTEXT_RENDER
+      exit 0 with raw stdout/stderr captured.
+
+      - [ ] `npm test` exits 0 with raw stdout/stderr captured.
+
+      - [ ] `npm run test:smoke` exits 0 or reports exact environment blockers without
+      false live support overclaim.
+
+      - [ ] Behavioral proof register marks each blocker `PROVEN`, or marks `BLOCKED`
+      with a concrete closure path that blocks the relevant final audit rather than
+      being waived.'
+    evidence_template: "## Verification Report\n**Tester**: integration-verifier (independent\
+      \ of frontend-engineer implementation)\n**Scope**: W1/W6/W12/W2/LIVE finalization\
+      \ blocker retest\n**Independence Level**: L2 semi-blind, public/source/test\
+      \ evidence without implementation-process assumptions\n\n### refs Read Confirmation\
+      \ (MANDATORY)\nFor each ref in this step:\n- CONSTITUTION.md#architectural-dogmas\
+      \ — <key passage or NOT READ: reason>\n- CONSTITUTION.md#testing-and-gates —\
+      \ <key passage or NOT READ: reason>\n- docs/TECHNICAL_DESIGN.md#configuration-files\
+      \ — <key passage or NOT READ: reason>\n- docs/TECHNICAL_DESIGN.md#builtin-sensors\
+      \ — <key passage or NOT READ: reason>\n- docs/TECHNICAL_DESIGN.md#human-ui-rendering\
+      \ — <key passage or NOT READ: reason>\n- docs/TECHNICAL_DESIGN.md#data-flow\
+      \ — <key passage or NOT READ: reason>\n- docs/PRD.md#9-6-external-state — <key\
+      \ passage or NOT READ: reason>\n- package.json — <key script passage or NOT\
+      \ READ: reason>\n- tests/smoke/contracts/live-pi-smoke-gate-contract.test.ts\
+      \ — <key passage or NOT READ: reason>\n\n## Behavioral Proof Register\n| requirement_ref\
+      \ | behavior_claim | runtime_proof_expected | evidence_ref | status | closure_path\
+      \ | gate_decision_basis |\n| --- | --- | --- | --- | --- | --- | --- |\n| W1\
+      \ | <claim> | <proof expected> | <artifact/log> | PROVEN/UNPROVEN/BLOCKED |\
+      \ <path> | <audit> |\n| W6 | <claim> | <proof expected> | <artifact/log> | PROVEN/UNPROVEN/BLOCKED\
+      \ | <path> | <audit> |\n| W12 | <claim> | <proof expected> | <artifact/log>\
+      \ | PROVEN/UNPROVEN/BLOCKED | <path> | <audit> |\n| W2 | <claim> | <proof expected>\
+      \ | <artifact/log> | PROVEN/UNPROVEN/BLOCKED | <path> | <audit> |\n| LIVE_PI_SMOKE_EVENT_BUS_CONTEXT_RENDER\
+      \ | <claim> | <proof expected> | <artifact/log> | PROVEN/UNPROVEN/BLOCKED |\
+      \ <path> | <audit> |\n\n## Commands Executed\n- `npm run typecheck`\n  - raw_stdout_stderr:\
+      \ <paste>\n  - exit_code: <code>\n- Focused tests for all five blockers:\n \
+      \ - commands: <paste exact commands>\n  - raw_stdout_stderr: <paste>\n  - exit_code:\
+      \ <code>\n- `npm test`\n  - raw_stdout_stderr: <paste>\n  - exit_code: <code>\n\
+      - `npm run test:smoke`\n  - raw_stdout_stderr_or_environment_blocker_artifact:\
+      \ <paste>\n  - exit_code: <code>\n\n## Independent Findings\n| Severity | Description\
+      \ | Location | Reproduction |\n| --- | --- | --- | --- |\n| blocker | <issue\
+      \ or none> | <file:line/surface> | <steps> |\n| should_fix | <issue or none>\
+      \ | <file:line/surface> | <steps> |\n\n## Headline\n- [ ] PASS: all five blocker\
+      \ obligations are PROVEN and commands pass.\n- [ ] PASS_WITH_DEBT: only explicit\
+      \ non-blocking debt remains with non-intersection evidence.\n- [ ] FAIL: any\
+      \ blocker obligation is UNPROVEN/BLOCKED without an acceptable closure path."
+    depends_on:
+    - finalization-wiring-blackbox-blockers-fix
+    agent: integration-verifier
