@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import type { SensorConfig, SensorObservationEvent, SensorSnapshot, SensorSpec, SensorStateField } from "../../../src/index.ts";
+import type { SensorConfig, SensorSnapshot, SensorSpec, SensorStateField } from "../../../src/index.ts";
 
 type LapseConfig = SensorConfig & { persist: boolean; agentFields: Array<"user_idle" | "agent_idle"> };
 type LapseState = {
@@ -10,16 +10,6 @@ type LapseState = {
   previousHumanInputAt: number | null;
   previousAgentEndAt: number | null;
 };
-type LapsePersistedState = {
-  previous_human_input_at: number | null;
-  previous_agent_end_at: number | null;
-};
-type LapsePersistenceController = {
-  load(input: { persist: boolean; state: unknown }): LapsePersistedState | null;
-  observe(input: { persist: boolean; event: SensorObservationEvent; previous: LapsePersistedState | null }): { inMemory: LapsePersistedState; durableWriteEnqueuedAfterRequest: boolean; requestPathIo: false };
-  reset(input: { config: LapseConfig; persisted: LapsePersistedState | null }): { config: LapseConfig; persisted: LapsePersistedState; memory: LapsePersistedState; deletedHistoryKeys: string[] };
-};
-
 const expectedLapseFile = new URL("../../../src/sensors/lapse.ts", import.meta.url);
 
 const loadLapseSpec = async (): Promise<SensorSpec<LapseState, LapseConfig>> => {
@@ -27,16 +17,6 @@ const loadLapseSpec = async (): Promise<SensorSpec<LapseState, LapseConfig>> => 
   assert.equal(typeof moduleValue.default, "object", "src/sensors/lapse.ts must default-export one SensorSpec");
   assert.notEqual(moduleValue.default, null, "src/sensors/lapse.ts default export must not be null");
   return moduleValue.default as SensorSpec<LapseState, LapseConfig>;
-};
-
-const loadLapsePersistenceControllerFactory = async (): Promise<() => LapsePersistenceController> => {
-  const moduleValue = (await import(expectedLapseFile.href)) as { createLapsePersistenceController?: unknown };
-  assert.equal(
-    typeof moduleValue.createLapsePersistenceController,
-    "function",
-    "src/sensors/lapse.ts must export createLapsePersistenceController for lapse persistence/reset contracts",
-  );
-  return moduleValue.createLapsePersistenceController as () => LapsePersistenceController;
 };
 
 const field = (stateKey: string, value: unknown, valueType: SensorStateField["value_type"]): SensorStateField => ({
@@ -92,6 +72,8 @@ test("lapse SensorSpec defaults, manifest, and agentFields enum match continuity
     intervalRelationship: "default_interval_sets_effective_interval_unless_overridden",
     description: "local lapse refresh and Pi lifecycle observation",
   });
+  assert.equal("renderAgent" in lapse, false, "lapse SensorSpec publishes typed state only; core owns agent rendering");
+  assert.equal("renderUI" in lapse, false, "lapse SensorSpec publishes typed state only; core owns UI rendering");
 });
 
 test("lapse observe samples input, suppresses duplicate before_agent_start for the same turn, and updates latest timestamps only", async () => {
@@ -124,35 +106,9 @@ test("lapse observe samples input, suppresses duplicate before_agent_start for t
   assert.match(JSON.stringify(agentEndResult), /25000|previousAgentEndAt|previous_agent_end_at/u, "agent_end updates only latest previous_agent_end_at");
 });
 
-test("lapse persistence gates startup load and observation durable writes independently from collection and agent visibility", async () => {
-  const createLapsePersistenceController = await loadLapsePersistenceControllerFactory();
-  const persistence = createLapsePersistenceController();
-  const state: LapsePersistedState = { previous_human_input_at: 10_000, previous_agent_end_at: 18_000 };
+test("lapse persistence controller seam is not a public export; product reset uses /dasein lapse reset", async () => {
+  const moduleValue = (await import(expectedLapseFile.href)) as Record<string, unknown>;
 
-  assert.equal(persistence.load({ persist: false, state }), null, "persist=false ignores startup durable timestamps");
-  assert.deepEqual(persistence.load({ persist: true, state }), state, "persist=true imports only latest two timestamps");
-
-  assert.deepEqual(persistence.observe({ persist: false, previous: state, event: { kind: "input", observedAt: 20_000, turnId: "a" } }), {
-    inMemory: { previous_human_input_at: 20_000, previous_agent_end_at: 18_000 },
-    durableWriteEnqueuedAfterRequest: false,
-    requestPathIo: false,
-  });
-  assert.deepEqual(persistence.observe({ persist: true, previous: state, event: { kind: "agent_end", observedAt: 25_000, turnId: "a" } }), {
-    inMemory: { previous_human_input_at: 10_000, previous_agent_end_at: 25_000 },
-    durableWriteEnqueuedAfterRequest: true,
-    requestPathIo: false,
-  });
-});
-
-test("/dasein lapse reset clears memory and persisted timestamps without changing enabled/persist/agent config", async () => {
-  const createLapsePersistenceController = await loadLapsePersistenceControllerFactory();
-  const persistence = createLapsePersistenceController();
-  const config: LapseConfig = { enabled: true, ui: true, agent: false, intervalMs: 60000, timeoutMs: 2000, staleAfterMs: 120000, initialRefresh: true, persist: false, agentFields: ["user_idle"] };
-
-  assert.deepEqual(persistence.reset({ config, persisted: { previous_human_input_at: 10_000, previous_agent_end_at: 18_000 } }), {
-    config,
-    persisted: { previous_human_input_at: null, previous_agent_end_at: null },
-    memory: { previous_human_input_at: null, previous_agent_end_at: null },
-    deletedHistoryKeys: [],
-  });
+  assert.equal(moduleValue.createLapsePersistenceController, undefined);
+  assert.equal("createLapsePersistenceController" in moduleValue, false);
 });

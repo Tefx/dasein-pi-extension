@@ -77,7 +77,7 @@ export interface SensorRuntimeContract {
   refreshOutput: "SensorRefreshReturn";
   commitOutput: "SensorSnapshot";
   actionMutationBoundary: "ConfigMutationProposal-only-through-core-fifo-queue";
-  renderHooks: "pure-SensorViewFragment-proposals-only";
+  renderBoundary: "typed-state-only-no-sensor-render-hooks";
 }
 
 export interface NormalizeSensorRefreshInput<TState = unknown> {

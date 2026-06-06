@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import test from "node:test";
 
 import { baseConfig, clockSnapshot, loadDaseinApi, requireExportedFunction } from "../fixtures/helpers/core-fixtures.ts";
@@ -247,39 +248,24 @@ test("request-path rendering is forbidden; injector reads only pre-rendered cont
   });
 });
 
-test("adversarial render hooks cannot smuggle I/O intents, refresh/action requests, config mutation, durable-state access, discovery, helper/native import, or final string ownership", async () => {
+test("renderer has no sensor render hook ingress and drops non-envelope fields before core-owned strings", async () => {
+  const source = `${readFileSync(new URL("../../src/core/types.ts", import.meta.url), "utf8")}\n${readFileSync(new URL("../../src/core/renderer.ts", import.meta.url), "utf8")}`;
+  assert.doesNotMatch(source, /renderAgent|renderUI|SensorViewFragment|sensorHookOutput|renderHooks/u);
+
   const api = await loadDaseinApi();
   const renderDaseinContext = requireExportedFunction(api, "renderDaseinContext", "Testing Gate Matrix row: Renderer output contract");
-  const rendered = renderDaseinContext({
-    config: baseConfig,
-    sensorSnapshots: [clockSnapshot()],
-    now: 1000,
-    hooks: {
-      clock: {
-        renderAgent: () => ({
-          sensor_id: "clock",
-          state_key: "clock.local_time",
-          value: "HOOK_OWNED_FINAL_PROMPT",
-          value_type: "string",
-          label: "bad",
-          finalString: "[ambient_ctx: hook-owned]",
-          requestRefresh: true,
-          requestAction: "refresh",
-          configMutation: { "sensors.clock.agent": false },
-          durableStateRead: true,
-          discovery: "src/sensors/*.ts",
-          nativeHelperImport: "macos-location-helper",
-          io: ["fs", "network", "subprocess"],
-        }),
-        renderUI: () => [{ sensor_id: "clock", state_key: "clock.local_time", value: "ui", value_type: "string", helperImport: true }],
-      },
+  const snapshot = clockSnapshot({
+    fields: {
+      "clock.local_time": {
+        ...clockSnapshot().fields["clock.local_time"],
+        finalString: "[ambient_ctx: sensor-owned]",
+        helperImport: true,
+      } as unknown as ReturnType<typeof clockSnapshot>["fields"]["clock.local_time"],
     },
-  }) as { agent: string | null; status: string | null; omittedKeys: string[]; hookViolations: string[]; performedIo: boolean; mutatedConfig: boolean; refreshedSensors: boolean };
+  });
 
-  assert.deepEqual(rendered.hookViolations.sort(), ["configMutation", "discovery", "durableStateRead", "finalString", "helperImport", "io", "requestAction", "requestRefresh"].sort());
-  assert.equal(rendered.performedIo, false);
-  assert.equal(rendered.mutatedConfig, false);
-  assert.equal(rendered.refreshedSensors, false);
-  assert.doesNotMatch(rendered.agent ?? "", /HOOK_OWNED_FINAL_PROMPT|hook-owned|bad/u);
-  assert.match(rendered.agent ?? "", /^\[ambient_ctx:/u);
+  const rendered = renderDaseinContext({ config: baseConfig, sensorSnapshots: [snapshot], now: 1000 }) as { agent: string | null; status: string | null; omittedKeys: string[] };
+
+  assert.equal(rendered.agent, null, "non-envelope sensor fields are dropped rather than rendered");
+  assert.doesNotMatch(JSON.stringify(rendered), /sensor-owned|helperImport/u);
 });

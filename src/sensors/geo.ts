@@ -10,12 +10,10 @@ import type {
   SensorSpec,
   SensorStateField,
   SensorValueType,
-  SensorViewFragment,
 } from "../core/types.ts";
 import {
   createMacOSLocationHelperSupervisor,
   getMacOSLocationHelperRuntimePolicy,
-  type GeoPlacemark,
   type GeoState,
   type MacOSLocationHelperRuntimePolicy,
 } from "../native/macos-location-helper.ts";
@@ -129,42 +127,6 @@ const makeField = (
   status: context.status,
   source: { sensor_id: "geo", source_kind: "builtin" },
   ...(context.error === undefined ? {} : { error: context.error as SensorStateField["error"] }),
-});
-
-const renderAgent = (snapshot: SensorSnapshot, config: Readonly<GeoConfig>): SensorViewFragment | readonly SensorViewFragment[] | null => {
-  if (!config.agent) return null;
-  const placemark = getPlacemark(snapshot);
-  const lat = getNumber(snapshot, "geo.lat");
-  const lon = getNumber(snapshot, "geo.lon");
-  const nearestTag = findNearestTagName(lat, lon, config.tags);
-  const suffix = nearestTag === null ? "" : `/${compact(nearestTag)}`;
-  const accuracy = getNumber(snapshot, "geo.accuracy_m");
-  const formattedAddress = placemark?.formattedAddress ?? placemark?.name ?? null;
-
-  if (snapshot.status === "error") return fragment(`loc=unavailable(${snapshot.error?.kind ?? "unknown"})`);
-  if (config.precision === "exact") {
-    const parts: string[] = [];
-    if (config.exactCoordinates && lat !== null && lon !== null) parts.push(`${lat},${lon}${accuracy === null ? "" : `±${accuracy}m`}`);
-    if (config.exactAddress && formattedAddress !== null) parts.push(formattedAddress);
-    return parts.length === 0 ? fragment(`loc=unavailable(exact)${suffix}`) : fragment(`loc=${parts.join(";")}${suffix}`);
-  }
-  const place = selectPlacemarkPrecision(placemark, config.precision);
-  return place === null ? fragment("loc=unavailable(placemark)") : fragment(`loc=${compact(place)}${suffix}`);
-};
-
-const renderUI = (snapshot: SensorSnapshot, config: Readonly<GeoConfig>): SensorViewFragment | readonly SensorViewFragment[] | null => {
-  if (!config.ui) return null;
-  return renderAgent(snapshot, { ...config, agent: true, exactCoordinates: false, exactAddress: false });
-};
-
-const fragment = (value: string): SensorViewFragment => ({
-  sensor_id: "geo",
-  state_key: "geo.summary",
-  value,
-  value_type: "string",
-  label: "Location",
-  status: "enabled",
-  source: { sensor_id: "geo", source_kind: "builtin" },
 });
 
 const tagAction: SensorAction<GeoConfig> = async (args, context): Promise<SensorActionResult> => {
@@ -297,8 +259,6 @@ const geoSpec: SensorSpec<GeoState, GeoConfig> = {
     const error = result.error ?? { kind: "unknown" as const, message: "macOS location helper failed" };
     return { value: { ...errorGeoState(error.kind), helperBackoffUntil: supervisor.getBackoffUntil() }, metadata: { status: "error", error, collectedAt: context.now(), staleAfterMs: STALE_AFTER_MS } };
   },
-  renderAgent,
-  renderUI,
   actions: { tag: tagAction, refresh: refreshAction },
 };
 
@@ -354,24 +314,11 @@ const distanceMeters = (leftLat: number, leftLon: number, rightLat: number, righ
 
 const degreesToRadians = (value: number): number => (value * Math.PI) / 180;
 
-const selectPlacemarkPrecision = (placemark: GeoPlacemark | null, precision: GeoPrecision): string | null => {
-  if (placemark === null) return null;
-  if (precision === "city") return placemark.city ?? placemark.district ?? placemark.street ?? null;
-  if (precision === "district") return placemark.district ?? placemark.city ?? placemark.street ?? null;
-  if (precision === "street") return placemark.street ?? placemark.district ?? placemark.city ?? null;
-  return null;
-};
-
 const getField = (snapshot: SensorSnapshot, key: string): SensorStateField | undefined => snapshot.fields[key];
 const getNumber = (snapshot: SensorSnapshot, key: string): number | null => {
   const value = getField(snapshot, key)?.value;
   return typeof value === "number" && Number.isFinite(value) ? value : null;
 };
-const getPlacemark = (snapshot: SensorSnapshot): GeoPlacemark | null => {
-  const value = getField(snapshot, "geo.placemark")?.value;
-  return isRecord(value) ? value as GeoPlacemark : null;
-};
-const compact = (value: string): string => value.replace(/\s+/gu, "_");
 const isFiniteNumber = (value: unknown): value is number => typeof value === "number" && Number.isFinite(value);
 const isRecord = (value: unknown): value is Record<string, unknown> => typeof value === "object" && value !== null && !Array.isArray(value);
 

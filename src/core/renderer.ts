@@ -2,9 +2,9 @@
  * Rendering boundary contracts.
  *
  * Renderer input is effective config, normalized store snapshots, and caller
- * time. Renderer output is a precomputed RenderedContext owned by core. Sensor
- * render hooks may propose structured fragments only; core owns ordering,
- * labels, visibility, omission, and truncation.
+ * time. Renderer output is a precomputed RenderedContext owned by core. Sensors
+ * publish typed state only; core owns ordering, labels, visibility, omission,
+ * and truncation.
  */
 
 import type {
@@ -16,16 +16,12 @@ import type {
   RenderedContext,
   SensorConfig,
   SensorKey,
-  SensorRender,
   SensorSnapshot,
   SensorStateField,
-  SensorViewFragment,
 } from "./types.ts";
 
 export type {
   RenderedContext,
-  SensorRender,
-  SensorViewFragment,
 } from "./types.ts";
 
 export interface RendererInput {
@@ -52,7 +48,7 @@ export interface RendererContract {
   input: "effective-config-current-state-store-and-now";
   output: RenderedContext;
   agentOrder: readonly ["configured-renderOrder", "remaining-sensors-lexicographic", "remaining-external-lexicographic"];
-  sensorHookOutput: "SensorViewFragment-proposals";
+  sensorInputSurface: "normalized-typed-state-envelope-only";
   coreOwnedFinalText: true;
   coreOwnedTruncation: true;
 }
@@ -63,7 +59,6 @@ interface DirectRendererInput {
   externalStates?: readonly ExternalStateSnapshot[];
   stateStore?: DaseinStateStore;
   now: number;
-  hooks?: Readonly<Record<SensorKey, Partial<Record<"renderAgent" | "renderUI", () => unknown>>>>;
 }
 
 interface RenderCandidate {
@@ -118,7 +113,6 @@ const asDirectInput = (input: DirectRendererInput | RendererInput): DirectRender
       sensorSnapshots: direct.stateStore.listSensorSnapshots(),
       externalStates: direct.stateStore.listExternalStates(),
       now: input.now,
-      hooks: direct.hooks,
     };
   }
   return direct;
@@ -208,6 +202,66 @@ const formatAgentValue = (value: unknown): string => {
 
 const formatHumanValue = (value: unknown): string => formatAgentValue(value).replace(/_/gu, " ").replace(/([+-]\d{2})$/u, " $1");
 
+const clockPrecisions = new Set(["exact", "minute", "hour", "period", "date"]);
+
+const clockPrecisionFor = (sensorConfig: Readonly<SensorConfig>): "exact" | "minute" | "hour" | "period" | "date" =>
+  typeof sensorConfig.precision === "string" && clockPrecisions.has(sensorConfig.precision)
+    ? sensorConfig.precision as "exact" | "minute" | "hour" | "period" | "date"
+    : "minute";
+
+const clockHourFromLocal = (local: string): number | null => {
+  const match = /(?:^|_)(\d{2})(?::\d{2})?(?::\d{2})?/u.exec(local);
+  if (match?.[1] === undefined) return null;
+  const hour = Number.parseInt(match[1], 10);
+  return Number.isInteger(hour) && hour >= 0 && hour <= 23 ? hour : null;
+};
+
+const clockPeriodForHour = (hour: number | null): string => {
+  if (hour === null) return "day";
+  if (hour < 6) return "night";
+  if (hour < 12) return "morning";
+  if (hour < 18) return "afternoon";
+  return "evening";
+};
+
+const formatClockByPrecision = (value: unknown, sensorConfig: Readonly<SensorConfig>): unknown => {
+  if (typeof value !== "string") return value;
+  switch (clockPrecisionFor(sensorConfig)) {
+    case "exact":
+      return value;
+    case "minute":
+      return value.replace(/(\d{2}:\d{2}):\d{2}/u, "$1");
+    case "hour":
+      return value.replace(/(\d{2})(?::\d{2}){1,2}/u, "$1");
+    case "period":
+      return `${value.replace(/_\d{2}(?::\d{2}){0,2}.*$/u, "")}_${clockPeriodForHour(clockHourFromLocal(value))}`;
+    case "date":
+      return value.replace(/_\d{2}(?::\d{2}){0,2}.*$/u, "");
+  }
+};
+
+const compactDuration = (milliseconds: unknown): string | null => {
+  if (typeof milliseconds !== "number" || !Number.isFinite(milliseconds)) return null;
+  const seconds = Math.floor(milliseconds / 1000);
+  if (seconds < 60) return `${seconds}s`;
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `${minutes}m`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 48) return `${hours}h`;
+  const days = Math.floor(hours / 24);
+  return `${days}d`;
+};
+
+const formatHumanFieldValue = (field: SensorStateField, sensorConfig: Readonly<SensorConfig>): string => {
+  if (field.sensor_id === "clock" && field.state_key === "clock.local_time") {
+    return formatHumanValue(formatClockByPrecision(field.value, sensorConfig));
+  }
+  if (field.sensor_id === "lapse" && (field.state_key === "lapse.user_idle" || field.state_key === "lapse.agent_idle")) {
+    return compactDuration(field.value) ?? formatHumanValue(field.value);
+  }
+  return formatHumanValue(field.value);
+};
+
 const isFieldStale = (field: SensorStateField, now: number): boolean => now - field.collected_at > field.stale_after_ms;
 
 const geoPrecisions = new Set(["city", "district", "street", "exact"]);
@@ -276,61 +330,21 @@ const formatSensorAgentPart = (field: SensorStateField, sensorConfig: Readonly<S
   if (!sensorConfig.agent || field.value === null) {
     return null;
   }
-  if (field.sensor_id === "clock" && field.state_key !== "clock.local_time") {
-    return null;
+  if (field.sensor_id === "clock") {
+    return field.state_key === "clock.local_time" ? `${label}=${formatAgentValue(formatClockByPrecision(field.value, sensorConfig))}` : null;
   }
   if (field.sensor_id === "lapse") {
     const agentFields = Array.isArray(sensorConfig.agentFields) ? sensorConfig.agentFields : ["user_idle"];
-    if (field.state_key === "lapse.user_idle" && agentFields.includes("user_idle")) return `${label}=${formatAgentValue(field.value)}`;
-    if (field.state_key === "lapse.agent_idle" && agentFields.includes("agent_idle")) return `${label}=${formatAgentValue(field.value)}`;
+    const duration = compactDuration(field.value);
+    if (duration === null) return null;
+    if (field.state_key === "lapse.user_idle" && agentFields.includes("user_idle")) return `${label}=${duration}`;
+    if (field.state_key === "lapse.agent_idle" && agentFields.includes("agent_idle")) return `${label}=${duration}`;
     return null;
   }
   if (field.sensor_id === "geo") {
     return formatGeoAgentPart(field, sensorConfig, label);
   }
   return `${label}=${formatAgentValue(field.value)}`;
-};
-
-const normalizeHookOutputs = (value: unknown): Record<string, unknown>[] => {
-  if (Array.isArray(value)) {
-    return value.filter(isRecord);
-  }
-  return isRecord(value) ? [value] : [];
-};
-
-const inspectHookOutput = (value: unknown, violations: Set<string>): void => {
-  const forbidden: Record<string, string> = {
-    finalString: "finalString",
-    requestRefresh: "requestRefresh",
-    requestAction: "requestAction",
-    configMutation: "configMutation",
-    durableStateRead: "durableStateRead",
-    discovery: "discovery",
-    nativeHelperImport: "helperImport",
-    helperImport: "helperImport",
-    io: "io",
-  };
-  for (const output of normalizeHookOutputs(value)) {
-    for (const key of Object.keys(forbidden)) {
-      if (Object.hasOwn(output, key)) {
-        violations.add(forbidden[key] ?? key);
-      }
-    }
-  }
-};
-
-const collectHookViolations = (input: DirectRendererInput, sensors: readonly SanitizedSensor[]): string[] => {
-  const violations = new Set<string>();
-  for (const sensor of sensors) {
-    const hooks = input.hooks?.[sensor.sensorId];
-    if (hooks?.renderAgent !== undefined) {
-      inspectHookOutput(hooks.renderAgent(), violations);
-    }
-    if (hooks?.renderUI !== undefined) {
-      inspectHookOutput(hooks.renderUI(), violations);
-    }
-  }
-  return [...violations].sort();
 };
 
 const buildSensorCandidate = (
@@ -340,7 +354,7 @@ const buildSensorCandidate = (
   omittedKeys: Set<string>,
 ): RenderCandidate | null => {
   const label = labelForField(field);
-  const humanValue = formatHumanValue(field.value);
+  const humanValue = formatHumanFieldValue(field, sensorConfig);
   if (!sensorConfig.enabled) {
     omittedKeys.add(field.state_key);
     return sensorConfig.ui ? { key: field.state_key, agentPart: null, statusLine: `${field.sensor_id} disabled`, widgetLine: null } : null;
@@ -481,12 +495,7 @@ const buildAgent = (
   return { agent: parts.length === 0 ? null : `[${core.injectedLabel}: ${parts.join("; ")}]`, truncated };
 };
 
-export const renderDaseinContext = (rawInput: DirectRendererInput | RendererInput): RenderedContext & {
-  hookViolations?: string[];
-  performedIo?: false;
-  mutatedConfig?: false;
-  refreshedSensors?: false;
-} => {
+export const renderDaseinContext = (rawInput: DirectRendererInput | RendererInput): RenderedContext => {
   const input = asDirectInput(rawInput);
   const omittedKeys = new Set<string>();
   const sensors = (input.sensorSnapshots ?? [])
@@ -501,18 +510,12 @@ export const renderDaseinContext = (rawInput: DirectRendererInput | RendererInpu
       return external;
     })
     .filter((external): external is SanitizedExternal => external !== null);
-  const hookViolations = collectHookViolations(input, sensors);
   const candidates = buildOrderedCandidates(input, sensors, externals, omittedKeys);
   const agent = buildAgent(input.config.core, candidates, omittedKeys);
   const statusLines = candidates.map((candidate) => candidate.statusLine).filter((line): line is string => line !== null);
   const widgetLines = candidates.map((candidate) => candidate.widgetLine).filter((line): line is string => line !== null);
 
-  const rendered: RenderedContext & {
-    hookViolations?: string[];
-    performedIo?: false;
-    mutatedConfig?: false;
-    refreshedSensors?: false;
-  } = {
+  const rendered: RenderedContext = {
     agent: agent.agent,
     status: statusLines.length === 0 ? null : statusLines.join("; "),
     widgetLines: widgetLines.length === 0 ? null : widgetLines,
@@ -520,12 +523,6 @@ export const renderDaseinContext = (rawInput: DirectRendererInput | RendererInpu
     truncated: agent.truncated,
   };
 
-  if (hookViolations.length > 0) {
-    rendered.hookViolations = hookViolations;
-    rendered.performedIo = false;
-    rendered.mutatedConfig = false;
-    rendered.refreshedSensors = false;
-  }
   return rendered;
 };
 

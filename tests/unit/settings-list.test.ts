@@ -5,7 +5,9 @@ import {
   baseConfig,
   builtinClockManifest,
   builtinProvenance,
+  loadDaseinApi,
   lowerSha256,
+  requireExportedFunction,
   riskyRemoteBackgroundWork,
   riskyWeatherManifest,
   userLocalProvenance,
@@ -264,6 +266,57 @@ const geoSpec: SensorSpec = {
     exactCoordinates: { label: "Include exact coordinates", type: "boolean" },
   },
 };
+
+test("SettingsList user sensor simple field mutationForValue proposals apply through ConfigManager", async () => {
+  const api = await loadDaseinApi();
+  const createConfigManager = requireExportedFunction(api, "createConfigManager", "W12 SettingsList mutationForValue ConfigManager proof");
+  const config = {
+    ...baseConfig,
+    sensors: {
+      ...baseConfig.sensors,
+      weather: {
+        enabled: false,
+        ui: true,
+        agent: false,
+        intervalMs: 300000,
+        unit: "celsius",
+        nickname: "outside",
+        precision: 2,
+        notify: false,
+        tags: { home: true },
+      },
+    },
+  };
+  const items = buildSettingsListVisibilityModel({
+    config,
+    sensorMetadata: [weatherMetadata],
+    sensorSpecs: [weatherSpec],
+    externalStates: [],
+    now: () => 2000,
+  }) as readonly SettingsListVisibilityItem[];
+  const manager = createConfigManager({ defaults: config, discoveredSensorKeys: ["clock", "geo", "lapse", "weather"], sensorSpecs: [weatherSpec] }) as {
+    applyRuntimeProposal(proposal: ReturnType<SettingsListControlItem["mutationForValue"]>): Promise<{ ok: boolean; errors?: unknown[] }>;
+    getEffectiveConfig(): typeof config;
+  };
+
+  for (const [id, value] of [
+    ["sensors.weather.unit", "fahrenheit"],
+    ["sensors.weather.nickname", "patio"],
+    ["sensors.weather.precision", 3],
+    ["sensors.weather.notify", true],
+  ] as const) {
+    const control = controlById(items, id);
+    assert.equal(control.mutationBackend, "ConfigManager");
+    const result = await manager.applyRuntimeProposal(control.mutationForValue(value));
+    assert.equal(result.ok, true, `${id}=${String(value)} should apply through ConfigManager; errors=${JSON.stringify(result.errors)}`);
+  }
+
+  const effective = manager.getEffectiveConfig();
+  assert.equal(effective.sensors.weather.unit, "fahrenheit");
+  assert.equal(effective.sensors.weather.nickname, "patio");
+  assert.equal(effective.sensors.weather.precision, 3);
+  assert.equal(effective.sensors.weather.notify, true);
+});
 
 test("[expected-red] SettingsList exposes complete common sensor controls and recurring interval controls", () => {
   const items = buildSettingsListVisibilityModel({

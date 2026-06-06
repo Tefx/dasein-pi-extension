@@ -334,21 +334,6 @@ export type SensorRefresh<TState, TConfig extends SensorConfig> = (
   previous: SensorSnapshot | null,
 ) => Promise<SensorRefreshReturn<TState>> | SensorRefreshReturn<TState>;
 
-export interface SensorViewFragment {
-  sensor_id: SensorKey;
-  state_key: string;
-  value: unknown;
-  value_type: SensorValueType;
-  label?: string;
-  status?: SensorStatus;
-  source?: SensorStateSource;
-}
-
-export type SensorRender<TConfig extends SensorConfig> = (
-  snapshot: SensorSnapshot,
-  config: Readonly<TConfig>,
-) => SensorViewFragment | readonly SensorViewFragment[] | null;
-
 export type SensorObservationEvent =
   | { kind: "input"; observedAt: number; turnId: string }
   | { kind: "before_agent_start"; observedAt: number; turnId: string }
@@ -406,8 +391,6 @@ export interface SensorSpec<TState = unknown, TConfig extends SensorConfig = Sen
   validateConfig?: SensorConfigValidator<TConfig>;
   refresh?: SensorRefresh<TState, TConfig>;
   observe?: SensorObserve<TState, TConfig>;
-  renderAgent?: SensorRender<TConfig>;
-  renderUI?: SensorRender<TConfig>;
   actions?: Record<string, SensorAction<TConfig>>;
   cleanup?: SensorCleanup;
 }

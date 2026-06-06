@@ -3,8 +3,8 @@ import { readFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import test from "node:test";
 
-import type { SensorActionContext, SensorActionResult, SensorConfig, SensorSnapshot, SensorSpec, SensorStateField, SensorViewFragment } from "../../../src/index.ts";
-import { loadDaseinApi, requireExportedFunction } from "../../fixtures/helpers/core-fixtures.ts";
+import type { SensorActionContext, SensorActionResult, SensorConfig, SensorSnapshot, SensorSpec, SensorStateField } from "../../../src/index.ts";
+import { baseConfig, loadDaseinApi, requireExportedFunction } from "../../fixtures/helpers/core-fixtures.ts";
 
 type GeoConfig = SensorConfig & {
   precision: "city" | "district" | "street" | "exact";
@@ -87,8 +87,6 @@ const geoSnapshot = (): SensorSnapshot => ({
   source: { sensor_id: "geo", source_kind: "builtin" },
 });
 
-const fragmentsToText = (value: SensorViewFragment | readonly SensorViewFragment[] | null | undefined): string => JSON.stringify(value ?? null);
-
 const makeActionContext = (config: GeoConfig): SensorActionContext<GeoConfig> & { counts: { refreshNow: number; scheduleRefresh: number } } => {
   const counts = { refreshNow: 0, scheduleRefresh: 0 };
   return {
@@ -139,35 +137,45 @@ test("geo SensorSpec defaults, exactCoordinates/exactAddress privacy defaults, m
     { kind: "macos_location", required: true, reason: "CoreLocation user-approved location" },
     { kind: "subprocess", required: true, reason: "supervised Swift helper" },
   ]);
+  assert.equal("renderAgent" in geo, false, "geo SensorSpec publishes typed state only; core owns agent rendering");
+  assert.equal("renderUI" in geo, false, "geo SensorSpec publishes typed state only; core owns UI rendering");
 });
 
-test("geo exactCoordinates and exactAddress positive/negative gates prevent accidental agent disclosure", async () => {
-  const geo = await loadGeoSpec();
-  if (typeof geo.renderAgent !== "function") assert.fail("geo must provide renderAgent privacy gates");
-  const baseConfig: GeoConfig = { ...geo.defaults, tags: { home: { lat: 31.2304, lon: 121.4737, radius_m: 120, label: "home" } } };
+test("core renderer exactCoordinates and exactAddress gates prevent accidental geo agent disclosure", async () => {
+  const api = await loadDaseinApi();
+  const renderDaseinContext = requireExportedFunction(api, "renderDaseinContext", "W2 core-owned geo rendering");
   const snapshot = geoSnapshot();
+  const sensorConfig: GeoConfig = { ...(baseConfig.sensors.geo as GeoConfig), enabled: true, tags: { home: { lat: 31.2304, lon: 121.4737, radius_m: 120, label: "home" } } };
 
   const negativeConfigs: GeoConfig[] = [
-    { ...baseConfig, agent: false, precision: "exact", exactCoordinates: true, exactAddress: true },
-    { ...baseConfig, agent: true, precision: "city", exactCoordinates: true, exactAddress: true },
-    { ...baseConfig, agent: true, precision: "exact", exactCoordinates: false, exactAddress: true },
-    { ...baseConfig, agent: true, precision: "exact", exactCoordinates: true, exactAddress: false },
+    { ...sensorConfig, agent: false, precision: "exact", exactCoordinates: true, exactAddress: true },
+    { ...sensorConfig, agent: true, precision: "city", exactCoordinates: true, exactAddress: true },
+    { ...sensorConfig, agent: true, precision: "exact", exactCoordinates: false, exactAddress: true },
+    { ...sensorConfig, agent: true, precision: "exact", exactCoordinates: true, exactAddress: false },
   ];
 
   for (const config of negativeConfigs) {
-    const rendered = fragmentsToText(geo.renderAgent(snapshot, config));
+    const rendered = renderDaseinContext({
+      config: { ...baseConfig, sensors: { ...baseConfig.sensors, geo: config } },
+      sensorSnapshots: [snapshot],
+      now: snapshot.collected_at,
+    }) as { agent: string | null };
     if (!(config.agent && config.precision === "exact" && config.exactCoordinates)) {
-      assert.doesNotMatch(rendered, /31\.2304|121\.4737/u, `exactCoordinates gate failed for ${JSON.stringify(config)}`);
+      assert.doesNotMatch(rendered.agent ?? "", /31\.2304|121\.4737/u, `exactCoordinates gate failed for ${JSON.stringify(config)}`);
     }
     if (!(config.agent && config.precision === "exact" && config.exactAddress)) {
-      assert.doesNotMatch(rendered, /123 Nanjing W Rd/u, `exactAddress gate failed for ${JSON.stringify(config)}`);
+      assert.doesNotMatch(rendered.agent ?? "", /123_Nanjing_W_Rd|123 Nanjing W Rd/u, `exactAddress gate failed for ${JSON.stringify(config)}`);
     }
   }
 
-  const positive = fragmentsToText(geo.renderAgent(snapshot, { ...baseConfig, agent: true, precision: "exact", exactCoordinates: true, exactAddress: true }));
-  assert.match(positive, /31\.2304/u, "exactCoordinates positive gate includes latitude");
-  assert.match(positive, /121\.4737/u, "exactCoordinates positive gate includes longitude");
-  assert.match(positive, /123 Nanjing W Rd/u, "exactAddress positive gate includes exact helper address");
+  const positive = renderDaseinContext({
+    config: { ...baseConfig, sensors: { ...baseConfig.sensors, geo: { ...sensorConfig, agent: true, precision: "exact", exactCoordinates: true, exactAddress: true } } },
+    sensorSnapshots: [snapshot],
+    now: snapshot.collected_at,
+  }) as { agent: string | null };
+  assert.match(positive.agent ?? "", /31\.2304/u, "exactCoordinates positive gate includes latitude");
+  assert.match(positive.agent ?? "", /121\.4737/u, "exactCoordinates positive gate includes longitude");
+  assert.match(positive.agent ?? "", /123_Nanjing_W_Rd/u, "exactAddress positive gate includes exact helper address");
 });
 
 test("geo tag config validates canonical shape and radius_m integer bounds 1..100000", async () => {

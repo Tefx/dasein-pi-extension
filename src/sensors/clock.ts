@@ -4,11 +4,9 @@ import type {
   SensorFieldSpec,
   SensorManifest,
   SensorNormalizeContext,
-  SensorSnapshot,
   SensorSpec,
   SensorStateField,
   SensorValueType,
-  SensorViewFragment,
 } from "../core/types.ts";
 
 export type ClockPrecision = "exact" | "minute" | "hour" | "period" | "date";
@@ -142,58 +140,6 @@ const formatLocalClockState = (date: Date): ClockState => {
   };
 };
 
-const fieldValue = (snapshot: SensorSnapshot, key: string): unknown => snapshot.fields[key]?.value;
-
-const localFromSnapshot = (snapshot: SensorSnapshot): string => {
-  const local = fieldValue(snapshot, "clock.local_time");
-  if (typeof local === "string" && local.length > 0) return local;
-  const iso = fieldValue(snapshot, "clock.iso");
-  if (typeof iso === "string") {
-    const date = new Date(iso);
-    if (!Number.isNaN(date.getTime())) return formatLocalClockState(date).local;
-  }
-  return "time_unavailable";
-};
-
-const hourFromLocal = (local: string): number | null => {
-  const match = /(?:^|_)(\d{2})(?::\d{2})?(?::\d{2})?/u.exec(local);
-  if (match?.[1] === undefined) return null;
-  const hour = Number.parseInt(match[1], 10);
-  return Number.isInteger(hour) && hour >= 0 && hour <= 23 ? hour : null;
-};
-
-const periodForHour = (hour: number | null): string => {
-  if (hour === null) return "day";
-  if (hour < 6) return "night";
-  if (hour < 12) return "morning";
-  if (hour < 18) return "afternoon";
-  return "evening";
-};
-
-const dateFromSnapshot = (snapshot: SensorSnapshot, local: string): string => {
-  const iso = fieldValue(snapshot, "clock.iso");
-  if (typeof iso === "string" && /^\d{4}-\d{2}-\d{2}/u.test(iso)) return iso.slice(0, 10);
-  return local.replace(/_\d{2}(?::\d{2}){0,2}.*$/u, "");
-};
-
-const applyPrecision = (snapshot: SensorSnapshot, precision: ClockPrecision): string => {
-  const local = localFromSnapshot(snapshot);
-  switch (precision) {
-    case "exact":
-      return local;
-    case "minute":
-      return local.replace(/(\d{2}:\d{2}):\d{2}/u, "$1");
-    case "hour":
-      return local.replace(/(\d{2})(?::\d{2}){1,2}/u, "$1");
-    case "period":
-      return `${local.replace(/_\d{2}(?::\d{2}){0,2}.*$/u, "")}_${periodForHour(hourFromLocal(local))}`;
-    case "date":
-      return dateFromSnapshot(snapshot, local);
-  }
-};
-
-const asClockPrecision = (value: unknown): ClockPrecision => CLOCK_PRECISIONS.includes(value as ClockPrecision) ? value as ClockPrecision : defaults.precision;
-
 const clockConfigError = (path: string, message: string): ConfigValidationError => ({
   kind: "invalid-value",
   path,
@@ -207,34 +153,6 @@ const normalizeState = (value: ClockState, context: SensorNormalizeContext): Rec
   "clock.utc_offset_minutes": makeField("clock.utc_offset_minutes", value.utcOffsetMinutes, "number", context),
 });
 
-const renderAgent = (snapshot: SensorSnapshot, config: Readonly<ClockConfig>): SensorViewFragment | null => {
-  if (!config.enabled || !config.agent || snapshot.status !== "enabled") return null;
-  const value = applyPrecision(snapshot, asClockPrecision(config.precision));
-  return {
-    sensor_id: "clock",
-    state_key: "clock.local_time",
-    value,
-    value_type: "string",
-    label: "time",
-    status: snapshot.status,
-    source: snapshot.source,
-  };
-};
-
-const renderUI = (snapshot: SensorSnapshot, config: Readonly<ClockConfig>): SensorViewFragment | null => {
-  if (!config.enabled || !config.ui) return null;
-  const value = applyPrecision(snapshot, asClockPrecision(config.precision)).replace(/_/gu, " ").replace(/([+-]\d{2}(?::\d{2})?)$/u, " $1");
-  return {
-    sensor_id: "clock",
-    state_key: "clock.local_time",
-    value,
-    value_type: "string",
-    label: "time",
-    status: snapshot.status,
-    source: snapshot.source,
-  };
-};
-
 const clock: SensorSpec<ClockState, ClockConfig> = {
   key: "clock",
   defaults,
@@ -245,8 +163,6 @@ const clock: SensorSpec<ClockState, ClockConfig> = {
     : [clockConfigError("sensors.clock.precision", "clock.precision must be one of exact, minute, hour, period, date")],
   refresh: (context) => formatLocalClockState(new Date(context.now())),
   normalizeState,
-  renderAgent,
-  renderUI,
 };
 
 export default clock;

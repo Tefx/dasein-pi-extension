@@ -189,6 +189,8 @@ const specFieldControls = (
       valueType: field.type as SettingsListValueType,
       value: pathValue({ sensors: { [sensorKey]: sensorConfig } }, path),
       ...(field.type === "enum" && field.values !== undefined ? { options: field.values } : {}),
+      mutationBackend: "ConfigManager",
+      mutationForValue: (value) => configManagerAssignment(path, value),
     });
   });
 

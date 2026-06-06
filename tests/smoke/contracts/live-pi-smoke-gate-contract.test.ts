@@ -720,16 +720,22 @@ export default function(pi) {
     api: faux.api,
     models: faux.models,
   });
+  let daseinHandler = null;
   const proof = {
     hostBoundary: 'live-pi-process-not-fake-host',
     eventApiKeys: Object.keys(pi.events ?? {}).sort(),
     subscriptions: [],
     emissions: [],
     receives: [],
+    commandResults: [],
     contextChecks: [],
   };
   const proxy = {
     ...pi,
+    registerCommand(name, options) {
+      if (name === 'dasein') daseinHandler = options.handler;
+      return pi.registerCommand(name, options);
+    },
     events: {
       ...pi.events,
       on(topic, handler) {
@@ -754,14 +760,21 @@ export default function(pi) {
         return pi.on(event, async (evt, ctx) => {
           const first = await handler(evt, ctx);
           const firstMessages = Array.isArray(evt?.messages) ? evt.messages : [];
-          proof.contextChecks.push({ phase: 'after-set', messageText: JSON.stringify(firstMessages) });
-          const clearPayload = { key: 'weather' };
-          proof.emissions.push({ topic: 'dasein:state:clear', payload: clearPayload });
-          pi.events.emit('dasein:state:clear', clearPayload);
+          proof.contextChecks.push({ phase: 'after-set-hidden-default', messageText: JSON.stringify(firstMessages) });
+          if (typeof daseinHandler !== 'function') throw new Error('dasein command handler unavailable for event bus config proof');
+          const configResult = await daseinHandler('set external.weather.agent true', ctx);
+          proof.commandResults.push({ command: '/dasein set external.weather.agent true', result: configResult });
           const secondEvent = { messages: [] };
           const second = await handler(secondEvent, ctx);
           const secondMessages = Array.isArray(secondEvent.messages) ? secondEvent.messages : [];
-          proof.contextChecks.push({ phase: 'after-clear', messageText: JSON.stringify(secondMessages), returnedUndefined: second === undefined });
+          proof.contextChecks.push({ phase: 'after-configured-visible', messageText: JSON.stringify(secondMessages), returnedMessages: Array.isArray(second?.messages) });
+          const clearPayload = { key: 'weather' };
+          proof.emissions.push({ topic: 'dasein:state:clear', payload: clearPayload });
+          pi.events.emit('dasein:state:clear', clearPayload);
+          const thirdEvent = { messages: [] };
+          const third = await handler(thirdEvent, ctx);
+          const thirdMessages = Array.isArray(thirdEvent.messages) ? thirdEvent.messages : [];
+          proof.contextChecks.push({ phase: 'after-clear', messageText: JSON.stringify(thirdMessages), returnedUndefined: third === undefined });
           console.log('DASEIN_LIVE_EVENT_BUS_PROOF ' + safeJson({ ...proof, firstReturnedMessages: Array.isArray(first?.messages) }));
           return first;
         });
@@ -784,8 +797,10 @@ export default function(pi) {
   assert.equal(proof.hostBoundary, "live-pi-process-not-fake-host");
   assert.deepEqual(recordArrayOf(proof.receives, "eventBusProof.receives").map((entry) => entry.topic), ["dasein:state:set", "dasein:state:clear"]);
   const checks = recordArrayOf(proof.contextChecks, "eventBusProof.contextChecks");
-  assert.match(String(checks.find((entry) => entry.phase === "after-set")?.messageText), /weather|rain/u);
+  assert.doesNotMatch(String(checks.find((entry) => entry.phase === "after-set-hidden-default")?.messageText), /weather|rain/u, "unconfigured external.weather must be agent-hidden by default");
+  assert.match(String(checks.find((entry) => entry.phase === "after-configured-visible")?.messageText), /weather|rain/u, "public /dasein config must make external.weather agent-visible");
   assert.doesNotMatch(String(checks.find((entry) => entry.phase === "after-clear")?.messageText), /weather|rain/u);
+  assert.match(JSON.stringify(proof.commandResults), /external\.weather\.agent|true/u);
   writeJson(join(latestArtifactDir, "event-bus-proof.json"), proof);
   return proof;
 };
@@ -1195,7 +1210,14 @@ test("live Pi smoke gate produces executable live TUI/process proof artifacts", 
     const slashCommandProof = runSlashCommandProofProbe(piBinary, home);
     const launchFlagProof = runLaunchFlagProofProbe(piBinary, home);
     const contextInjectionProof = runContextInjectionProofProbe(piBinary, home);
-    const eventBusProof = runEventBusProofProbe(piBinary, home);
+    const eventBusHome = mkdtempSync(join(tmpdir(), "dasein-live-pi-events-home-"));
+    const eventBusProof = (() => {
+      try {
+        return runEventBusProofProbe(piBinary, eventBusHome);
+      } finally {
+        rmSync(eventBusHome, { recursive: true, force: true });
+      }
+    })();
     const tuiRender = runTuiRenderProbe(piBinary, home);
     const lifecycleCleanupProof = runLifecycleCleanupProofProbe(piBinary, home);
     const bareDaseinOutsideTuiProof = runBareDaseinOutsideTuiProbe(piBinary, home);
@@ -1248,7 +1270,7 @@ test("live Pi smoke gate produces executable live TUI/process proof artifacts", 
       ]),
       provenRow("pi.events.set-clear-live", ["event-bus-proof.json", "event-bus-proof.log"], [
         "received dasein:state:set and dasein:state:clear through live pi.events",
-        "after-set context contains weather/rain; after-clear context omits weather/rain",
+        "after-set hidden default omits weather/rain; /dasein set external.weather.agent true makes it visible; after-clear omits weather/rain",
       ]),
       provenRow("tui.status-widget-render-clear", ["tui-render-proof.json", "tui-render.raw.text", "lifecycle-cleanup-proof.json"], [
         "raw TUI transcript contains DASEIN_SMOKE_STATUS_RENDERED and widget lines",

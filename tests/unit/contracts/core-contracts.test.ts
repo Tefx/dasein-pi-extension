@@ -211,7 +211,7 @@ test("required contract surfaces are typed at module boundaries", () => {
     input: "effective-config-current-state-store-and-now",
     output: rendered,
     agentOrder: ["configured-renderOrder", "remaining-sensors-lexicographic", "remaining-external-lexicographic"],
-    sensorHookOutput: "SensorViewFragment-proposals",
+    sensorInputSurface: "normalized-typed-state-envelope-only",
     coreOwnedFinalText: true,
     coreOwnedTruncation: true,
   };

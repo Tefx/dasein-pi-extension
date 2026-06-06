@@ -26,7 +26,9 @@ import type {
   ExternalStateKey,
   RenderOrderKey,
   SensorConfig,
+  SensorFieldSpec,
   SensorKey,
+  SensorSpec,
 } from "./types.ts";
 
 export type {
@@ -45,7 +47,9 @@ export type {
   ExternalStateKey,
   RenderOrderKey,
   SensorConfig,
+  SensorFieldSpec,
   SensorKey,
+  SensorSpec,
 } from "./types.ts";
 
 export const DASEIN_CONFIG_VERSION = 1 as const;
@@ -91,7 +95,7 @@ export interface ConfigValidationContract {
 type JsonObject = Record<string, unknown>;
 type FailPoint = ConfigIoFailPoint;
 type Assignment = { inputPath: string; canonicalPath: string; value: unknown };
-type ValidationContext = { config: DaseinConfig; discoveredSensorKeys?: readonly string[] };
+type ValidationContext = { config: DaseinConfig; discoveredSensorKeys?: readonly string[]; sensorSpecs?: readonly SensorSpec[] };
 type LightweightMutationResult =
   | { ok: true; updatedPaths: string[]; deletedPaths: string[] }
   | { ok: false; errors: ConfigValidationError[] };
@@ -130,6 +134,10 @@ const BUILTIN_SENSOR_FIELDS: Record<string, Set<string>> = {
   geo: new Set(["precision", "tags", "exactAddress", "exactCoordinates"]),
   lapse: new Set(["persist", "agentFields"]),
 };
+const SIMPLE_SENSOR_FIELD_TYPES = new Set(["boolean", "string", "number", "enum"]);
+const CLOCK_PRECISIONS = new Set(["exact", "minute", "hour", "period", "date"]);
+const GEO_PRECISIONS = new Set(["city", "district", "street", "exact"]);
+const LAPSE_AGENT_FIELDS = new Set(["user_idle", "agent_idle"]);
 
 const clone = <T>(value: T): T => structuredClone(value);
 
@@ -140,6 +148,12 @@ const error = (kind: ConfigValidationErrorKind, path: string, message: string): 
 const discoveredSet = (context: ValidationContext): Set<string> => new Set(context.discoveredSensorKeys ?? Object.keys(context.config.sensors));
 
 const isKnownSensor = (sensorKey: string, context: ValidationContext): boolean => discoveredSet(context).has(sensorKey);
+
+const sensorSpecFor = (sensorKey: string, context: ValidationContext): SensorSpec | undefined =>
+  context.sensorSpecs?.find((spec) => spec.key === sensorKey);
+
+const sensorFieldSpecFor = (sensorKey: string, field: string, context: ValidationContext): SensorFieldSpec | undefined =>
+  sensorSpecFor(sensorKey, context)?.fields?.[field];
 
 const ensurePartial = (value: unknown): DiskDaseinConfig | null => {
   if (!isRecord(value) || value.version !== 1) return null;
@@ -340,7 +354,7 @@ const validateValue = (canonicalPath: string, value: unknown, context: Validatio
   const parts = canonicalPath.split(".");
   if (parts[0] === "core") return validateCoreValue(canonicalPath, parts[1] ?? "", value, context);
   if (parts[0] === "external") return typeof value === "boolean" ? null : error("invalid-value", canonicalPath, "external visibility must be boolean");
-  if (parts[0] === "sensors") return validateSensorValue(canonicalPath, parts[1] ?? "", parts.slice(2), value);
+  if (parts[0] === "sensors") return validateSensorValue(canonicalPath, parts[1] ?? "", parts.slice(2), value, context);
   return error("invalid-path", canonicalPath, "unknown config path");
 };
 
@@ -373,21 +387,15 @@ const validateCoreValue = (canonicalPath: string, field: string, value: unknown,
   return typeof value === "boolean" ? null : error("invalid-value", canonicalPath, `${field} must be boolean`);
 };
 
-const validateSensorValue = (canonicalPath: string, sensorKey: string, fieldPath: readonly string[], value: unknown): ConfigValidationError | null => {
+const validateSensorValue = (canonicalPath: string, sensorKey: string, fieldPath: readonly string[], value: unknown, context: ValidationContext): ConfigValidationError | null => {
   const field = fieldPath[0] ?? "";
   if (fieldPath.length === 0) return error("invalid-path", canonicalPath, "missing sensor field");
   if (BASE_SENSOR_FIELDS.has(field)) return validateBaseSensorValue(canonicalPath, field, value);
-  if (!isAllowedSensorSpecificField(sensorKey, fieldPath)) return error("invalid-path", canonicalPath, "unknown sensor field");
-  if (sensorKey === "geo" && (field === "exactCoordinates" || field === "exactAddress")) {
-    return typeof value === "boolean" ? null : error("invalid-value", canonicalPath, `${field} must be boolean`);
-  }
-  if (sensorKey === "geo" && field === "tags") {
-    return isRecord(value) ? null : error("invalid-value", canonicalPath, "geo.tags must be an object");
-  }
-  if (sensorKey === "lapse" && field === "persist") return typeof value === "boolean" ? null : error("invalid-value", canonicalPath, "lapse.persist must be boolean");
-  if (sensorKey === "lapse" && field === "agentFields") return Array.isArray(value) ? null : error("invalid-value", canonicalPath, "lapse.agentFields must be an array");
-  if (field === "precision") return typeof value === "string" ? null : error("invalid-value", canonicalPath, "precision must be a string");
-  return null;
+  if (!isAllowedSensorSpecificField(sensorKey, fieldPath, context)) return error("invalid-path", canonicalPath, "unknown sensor field");
+
+  const specificError = validateSensorSpecificValue(canonicalPath, sensorKey, fieldPath, value, context);
+  if (specificError !== null) return specificError;
+  return validateSensorConfigAfterAssignment(canonicalPath, sensorKey, fieldPath, value, context);
 };
 
 const validateBaseSensorValue = (canonicalPath: string, field: string, value: unknown): ConfigValidationError | null => {
@@ -398,12 +406,79 @@ const validateBaseSensorValue = (canonicalPath: string, field: string, value: un
   return null;
 };
 
-const isAllowedSensorSpecificField = (sensorKey: string, fieldPath: readonly string[]): boolean => {
+const validateSensorSpecificValue = (canonicalPath: string, sensorKey: string, fieldPath: readonly string[], value: unknown, context: ValidationContext): ConfigValidationError | null => {
+  const field = fieldPath[0] ?? "";
+  if (sensorKey === "clock" && field === "precision") {
+    return typeof value === "string" && CLOCK_PRECISIONS.has(value) ? null : error("invalid-value", canonicalPath, "clock.precision must be one of exact, minute, hour, period, date");
+  }
+  if (sensorKey === "geo" && field === "precision") {
+    return typeof value === "string" && GEO_PRECISIONS.has(value) ? null : error("invalid-value", canonicalPath, "geo.precision must be one of city, district, street, exact");
+  }
+  if (sensorKey === "geo" && (field === "exactCoordinates" || field === "exactAddress")) {
+    return typeof value === "boolean" ? null : error("invalid-value", canonicalPath, `${field} must be boolean`);
+  }
+  if (sensorKey === "geo" && field === "tags") return validateGeoTagValue(canonicalPath, fieldPath, value);
+  if (sensorKey === "lapse" && field === "persist") return typeof value === "boolean" ? null : error("invalid-value", canonicalPath, "lapse.persist must be boolean");
+  if (sensorKey === "lapse" && field === "agentFields") {
+    return Array.isArray(value) && value.every((item) => typeof item === "string" && LAPSE_AGENT_FIELDS.has(item))
+      ? null
+      : error("invalid-value", canonicalPath, "lapse.agentFields may contain only user_idle and agent_idle");
+  }
+  const specField = sensorFieldSpecFor(sensorKey, field, context);
+  if (specField !== undefined && fieldPath.length === 1) return validateSensorFieldSpecValue(canonicalPath, specField, value);
+  return null;
+};
+
+const validateSensorFieldSpecValue = (canonicalPath: string, field: SensorFieldSpec, value: unknown): ConfigValidationError | null => {
+  if (field.type === "boolean") return typeof value === "boolean" ? null : error("invalid-value", canonicalPath, `${canonicalPath} must be boolean`);
+  if (field.type === "string") return typeof value === "string" ? null : error("invalid-value", canonicalPath, `${canonicalPath} must be string`);
+  if (field.type === "number") return typeof value === "number" && Number.isFinite(value) ? null : error("invalid-value", canonicalPath, `${canonicalPath} must be number`);
+  if (field.type === "enum") return typeof value === "string" && (field.values ?? []).includes(value) ? null : error("invalid-value", canonicalPath, `${canonicalPath} must be one of ${(field.values ?? []).join(", ")}`);
+  return error("invalid-path", canonicalPath, "object and array sensor fields are not scalar config controls");
+};
+
+const validateGeoTagValue = (canonicalPath: string, fieldPath: readonly string[], value: unknown): ConfigValidationError | null => {
+  if (fieldPath.length === 1) {
+    if (!isRecord(value)) return error("invalid-value", canonicalPath, "geo.tags must be an object");
+    for (const [tagName, tagValue] of Object.entries(value)) {
+      if (!KEY_RE.test(tagName)) return error("invalid-path", `sensors.geo.tags.${tagName}`, "geo tag name must match [A-Za-z0-9_-]{1,64}");
+      const tagError = validateSingleGeoTag(`sensors.geo.tags.${tagName}`, tagValue);
+      if (tagError !== null) return tagError;
+    }
+    return null;
+  }
+  if (fieldPath.length === 2 && KEY_RE.test(fieldPath[1] ?? "")) return validateSingleGeoTag(canonicalPath, value);
+  return error("invalid-path", canonicalPath, "geo tag mutations must target sensors.geo.tags or sensors.geo.tags.<name>");
+};
+
+const validateSingleGeoTag = (canonicalPath: string, value: unknown): ConfigValidationError | null => {
+  if (!isRecord(value)) return error("invalid-value", canonicalPath, "geo tag must be an object");
+  const allowedKeys = new Set(["lat", "lon", "radius_m", "label"]);
+  for (const key of Object.keys(value)) if (!allowedKeys.has(key)) return error("invalid-value", `${canonicalPath}.${key}`, "geo tag contains non-canonical key");
+  const radius = value.radius_m;
+  if (typeof value.lat !== "number" || !Number.isFinite(value.lat) || typeof value.lon !== "number" || !Number.isFinite(value.lon)) return error("invalid-value", canonicalPath, "geo tag lat/lon must be finite numbers");
+  if (typeof radius !== "number" || !Number.isInteger(radius) || radius < 1 || radius > 100_000) return error("invalid-value", `${canonicalPath}.radius_m`, "geo tag radius_m must be an integer from 1 to 100000");
+  if ("label" in value && typeof value.label !== "string") return error("invalid-value", `${canonicalPath}.label`, "geo tag label must be a string when present");
+  return null;
+};
+
+const validateSensorConfigAfterAssignment = (canonicalPath: string, sensorKey: string, fieldPath: readonly string[], value: unknown, context: ValidationContext): ConfigValidationError | null => {
+  const validator = sensorSpecFor(sensorKey, context)?.validateConfig;
+  if (validator === undefined) return null;
+  const candidate = clone(context.config.sensors[sensorKey] ?? sensorSpecFor(sensorKey, context)?.defaults ?? { enabled: true, ui: true, agent: true });
+  setNested(candidate as JsonObject, fieldPath, value);
+  const errors = validator(candidate as SensorConfig);
+  const first = errors[0];
+  return first === undefined ? null : { ...first, path: first.path || canonicalPath };
+};
+
+const isAllowedSensorSpecificField = (sensorKey: string, fieldPath: readonly string[], context: ValidationContext): boolean => {
   const [field, second] = fieldPath;
   const builtin = BUILTIN_SENSOR_FIELDS[sensorKey];
   if (builtin?.has(field ?? "")) return true;
   if (sensorKey === "geo" && field === "tags" && second && KEY_RE.test(second)) return true;
-  return false;
+  const specField = field === undefined ? undefined : sensorFieldSpecFor(sensorKey, field, context);
+  return specField !== undefined && fieldPath.length === 1 && specField.actionManaged !== true && SIMPLE_SENSOR_FIELD_TYPES.has(specField.type);
 };
 
 const pathKind = (canonicalPath: string, context: ValidationContext): "boolean" | "number" | "string" | "other" => {
@@ -553,6 +628,7 @@ export const createConfigManager = (options: {
   diskConfig?: unknown;
   launch?: string | DaseinConfigOverlay | null;
   discoveredSensorKeys?: readonly string[];
+  sensorSpecs?: readonly SensorSpec[];
 }): {
   getEffectiveConfig(): DaseinConfig;
   getRuntimeOverriddenPaths(): string[];
@@ -565,18 +641,20 @@ export const createConfigManager = (options: {
   reloadDisk(): Promise<LightweightReloadResult>;
 } => {
   const defaults = clone(options.defaults);
-  const discoveredSensorKeys = options.discoveredSensorKeys ?? Object.keys(defaults.sensors);
+  const sensorSpecs = options.sensorSpecs ?? [];
+  const discoveredSensorKeys = options.discoveredSensorKeys ?? [...new Set([...Object.keys(defaults.sensors), ...sensorSpecs.map((spec) => spec.key)])];
+  const validationContext = (config: DaseinConfig): ValidationContext => ({ config, discoveredSensorKeys, sensorSpecs });
   let statusErrors: ConfigValidationError[] = [];
   let disk: DiskDaseinConfig | null = null;
   if (options.diskConfig === undefined) {
-    const loaded = readDiskFromPathSync(options.configPath, { config: defaults, discoveredSensorKeys });
+    const loaded = readDiskFromPathSync(options.configPath, validationContext(defaults));
     disk = loaded.disk;
     statusErrors = [...statusErrors, ...loaded.errors];
   } else {
     disk = ensurePartial(options.diskConfig);
     if (disk === null) statusErrors.push(error("invalid-schema", options.configPath ?? "diskConfig", "disk config version must be 1"));
     if (disk) {
-      const diskErrors = validateDiskPartial(disk, { config: defaults, discoveredSensorKeys });
+      const diskErrors = validateDiskPartial(disk, validationContext(defaults));
       if (diskErrors.length > 0) {
         statusErrors = [...statusErrors, ...diskErrors];
         disk = null;
@@ -586,7 +664,7 @@ export const createConfigManager = (options: {
   let runtime: DaseinConfigOverlay | null = null;
   const runtimeOverriddenPaths: string[] = [];
   let effective = composeEffective(defaults, disk, null, runtime, runtimeOverriddenPaths);
-  const launchParsed = typeof options.launch === "string" ? parseLaunch(options.launch, { config: effective, discoveredSensorKeys }) : null;
+  const launchParsed = typeof options.launch === "string" ? parseLaunch(options.launch, validationContext(effective)) : null;
   let launch = typeof options.launch === "string" ? null : options.launch ?? null;
   let launchAssignments: Assignment[] = [];
   if (launchParsed) {
@@ -615,7 +693,7 @@ export const createConfigManager = (options: {
     const seen = new Set<string>();
     const errors: ConfigValidationError[] = [];
     for (const [inputPath, value] of Object.entries(assignments)) {
-      const normalized = normalizePath(inputPath, { config: effective, discoveredSensorKeys });
+      const normalized = normalizePath(inputPath, validationContext(effective));
       if (!normalized.ok) {
         errors.push(normalized.error);
         continue;
@@ -625,7 +703,7 @@ export const createConfigManager = (options: {
         continue;
       }
       seen.add(normalized.canonicalPath);
-      const valueError = validateValue(normalized.canonicalPath, value, { config: effective, discoveredSensorKeys });
+      const valueError = validateValue(normalized.canonicalPath, value, validationContext(effective));
       if (valueError) errors.push(valueError);
       normalizedAssignments.push({ inputPath, canonicalPath: normalized.canonicalPath, value });
     }
@@ -663,7 +741,7 @@ export const createConfigManager = (options: {
       return clone(statusErrors);
     },
     parseLaunchAssignments(input: string) {
-      const parsed = parseLaunch(input, { config: effective, discoveredSensorKeys });
+      const parsed = parseLaunch(input, validationContext(effective));
       return parsed.ok ? { ok: true, assignments: parsed.assignments } : { ok: false, errors: parsed.errors };
     },
     setRuntime(path, value, runtimeOptions) {
@@ -683,7 +761,7 @@ export const createConfigManager = (options: {
         const deletedPaths: string[] = [];
         const errors: ConfigValidationError[] = [];
         for (const deletePath of proposal.deletePaths ?? []) {
-          const normalizedDelete = normalizePath(deletePath, { config: effective, discoveredSensorKeys });
+          const normalizedDelete = normalizePath(deletePath, validationContext(effective));
           if (normalizedDelete.ok) deletedPaths.push(normalizedDelete.canonicalPath);
           else errors.push(normalizedDelete.error);
         }
@@ -693,7 +771,7 @@ export const createConfigManager = (options: {
     },
     reloadDisk() {
       return queue.enqueue("reloadDisk", async () => {
-        const loaded = await readDiskFromPath(options.configPath, { config: defaults, discoveredSensorKeys });
+        const loaded = await readDiskFromPath(options.configPath, validationContext(defaults));
         if (loaded.errors.length > 0) return { ok: false, errors: loaded.errors, ...currentReloadOverlayMetadata() };
         disk = loaded.disk;
         const metadata = currentReloadOverlayMetadata();

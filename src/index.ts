@@ -551,6 +551,7 @@ class DaseinAmbientContextBroker {
       defaults,
       launch,
       discoveredSensorKeys: this.entries.map((entry) => entry.spec.key),
+      sensorSpecs: this.entries.map((entry) => entry.spec),
     });
     this.statusErrors.push(...this.configManager.getStatusErrors());
     this.config = this.configManager.getEffectiveConfig();

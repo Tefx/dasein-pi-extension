@@ -3,7 +3,8 @@ import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import test from "node:test";
 
-import type { SensorConfig, SensorSpec, SensorViewFragment } from "../../../src/index.ts";
+import { baseConfig, loadDaseinApi, requireExportedFunction } from "../../fixtures/helpers/core-fixtures.ts";
+import type { SensorConfig, SensorSnapshot, SensorSpec } from "../../../src/index.ts";
 
 type ClockConfig = SensorConfig & { precision: string };
 type ClockState = { epochMs: number; iso: string; local: string; utcOffsetMinutes: number };
@@ -19,8 +20,6 @@ const loadClockSpec = async (): Promise<SensorSpec<ClockState, ClockConfig>> => 
   assert.notEqual(moduleValue.default, null, "src/sensors/clock.ts default export must not be null");
   return moduleValue.default as SensorSpec<ClockState, ClockConfig>;
 };
-
-const fragmentsToText = (value: SensorViewFragment | readonly SensorViewFragment[] | null | undefined): string => JSON.stringify(value ?? null);
 
 test("builtin sensor source files exist only under <extension_root>/src/sensors/*.ts", () => {
   assert.equal(new URL("../../../src/sensors/clock.ts", import.meta.url).pathname, join(extensionRoot.pathname, "src", "sensors", "clock.ts"));
@@ -93,12 +92,15 @@ test("clock SensorSpec defaults, manifest, and precision enum match builtin cont
     description: "local clock refresh",
   });
   assert.deepEqual(clock.fields?.precision?.values, expectedPrecisions);
+  assert.equal("renderAgent" in clock, false, "clock SensorSpec publishes typed state only; core owns agent rendering");
+  assert.equal("renderUI" in clock, false, "clock SensorSpec publishes typed state only; core owns UI rendering");
 });
 
-test("clock precision renders exact/minute/hour/period/date without overlong agent fragments", async () => {
+test("core renderer owns clock precision exact/minute/hour/period/date without overlong agent strings", async () => {
   const clock = await loadClockSpec();
   if (typeof clock.normalizeState !== "function") assert.fail("clock must normalize ClockState into typed fields");
-  if (typeof clock.renderAgent !== "function") assert.fail("clock must provide compact agent fragments");
+  const api = await loadDaseinApi();
+  const renderDaseinContext = requireExportedFunction(api, "renderDaseinContext", "W2 core-owned clock rendering");
 
   const state: ClockState = {
     epochMs: Date.UTC(2026, 5, 6, 14, 32, 45),
@@ -107,9 +109,9 @@ test("clock precision renders exact/minute/hour/period/date without overlong age
     utcOffsetMinutes: 0,
   };
 
-  const snapshot = {
-    contract_version: 1 as const,
-    schema_version: 1 as const,
+  const snapshot: SensorSnapshot = {
+    contract_version: 1,
+    schema_version: 1,
     sensor_id: "clock",
     fields: clock.normalizeState(state, {
       sensorKey: "clock",
@@ -121,15 +123,20 @@ test("clock precision renders exact/minute/hour/period/date without overlong age
     }),
     collected_at: state.epochMs,
     stale_after_ms: 120000,
-    status: "enabled" as const,
-    source: { sensor_id: "clock", source_kind: "builtin" as const },
+    status: "enabled",
+    source: { sensor_id: "clock", source_kind: "builtin" },
   };
 
   const renderedByPrecision = new Map<string, string>();
   for (const precision of expectedPrecisions) {
-    const rendered = fragmentsToText(clock.renderAgent(snapshot, { ...clock.defaults, precision }));
-    assert.ok(rendered.length <= 240, `clock ${precision} agent fragment must be <=240 chars`);
-    renderedByPrecision.set(precision, rendered);
+    const rendered = renderDaseinContext({
+      config: { ...baseConfig, sensors: { ...baseConfig.sensors, clock: { ...baseConfig.sensors.clock, precision } } },
+      sensorSnapshots: [snapshot],
+      now: state.epochMs,
+    }) as { agent: string | null };
+    const agent = rendered.agent ?? "";
+    assert.ok(agent.length <= 240, `clock ${precision} agent string must be <=240 chars`);
+    renderedByPrecision.set(precision, agent);
   }
 
   assert.match(renderedByPrecision.get("exact") ?? "", /14:32:45/u, "exact precision includes seconds");
@@ -137,6 +144,8 @@ test("clock precision renders exact/minute/hour/period/date without overlong age
   assert.doesNotMatch(renderedByPrecision.get("minute") ?? "", /14:32:45/u, "minute precision omits seconds");
   assert.match(renderedByPrecision.get("hour") ?? "", /14/u, "hour precision includes hour");
   assert.doesNotMatch(renderedByPrecision.get("hour") ?? "", /14:32/u, "hour precision omits minutes");
+  assert.match(renderedByPrecision.get("period") ?? "", /Sat_afternoon/u, "period precision renders a coarse period");
   assert.doesNotMatch(renderedByPrecision.get("period") ?? "", /14:32|14:32:45/u, "period precision omits exact time");
+  assert.match(renderedByPrecision.get("date") ?? "", /Sat/u, "date precision keeps date/day token");
   assert.doesNotMatch(renderedByPrecision.get("date") ?? "", /14:32|14:32:45/u, "date precision omits time of day");
 });
