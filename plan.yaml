@@ -16581,7 +16581,7 @@ phases:
       and model instruction channel.'
   - id: prompt-channel-implementation
     name: Move ambient context from custom/user message to system prompt channel
-    status: pending
+    status: claimed
     description: Change Dasein runtime so ambient context is appended to the per-turn
       system prompt in before_agent_start, while lifecycle observation still runs.
       Remove default context-hook CustomMessage injection from live runtime or make
@@ -16602,3 +16602,5 @@ phases:
     - tests/smoke/contracts/live-pi-smoke-gate-contract.test.ts
     depends_on:
     - prompt-channel-docs-plan
+    claimed_by: llm-agent-expert
+    claimed_at: '2026-06-06T16:16:30.065185+00:00'
