@@ -953,7 +953,11 @@ class DaseinAmbientContextBroker {
     const registry = await loadSensorRegistry({ extensionRoot: EXTENSION_ROOT, builtinEntries: BUILTIN_ENTRIES, cacheBustToken: Date.now() });
     const configReload = registry.ok
       ? await manager.reloadDisk()
-      : { ok: true, launchReappliedPaths: [], runtimeOverriddenPaths: manager.getRuntimeOverriddenPaths() };
+      : {
+          ok: true as const,
+          launchReappliedPaths: manager.getLaunchReappliedPaths(),
+          runtimeOverriddenPaths: manager.getRuntimeOverriddenPaths(),
+        };
     if (configReload.ok && registry.ok) {
       this.entries = registry.entries.map(coerceEntryProvenance).sort((left, right) => left.spec.key.localeCompare(right.spec.key));
       this.loadErrors = [];
@@ -974,8 +978,8 @@ class DaseinAmbientContextBroker {
       candidateSensorErrors: registry.loadErrors,
       attemptedFiles: registry.attemptedFiles,
       activeKeys: (configReload.ok && registry.ok ? registry.entries : previousEntries).map((entry) => entry.spec.key),
-      launchReappliedPaths: configReload.ok ? configReload.launchReappliedPaths : [],
-      runtimeOverriddenPaths: manager.getRuntimeOverriddenPaths(),
+      launchReappliedPaths: configReload.launchReappliedPaths,
+      runtimeOverriddenPaths: configReload.runtimeOverriddenPaths,
     });
     return buildReloadCommandResult({ reload: reloadCommand.data.reload as DaseinReloadResult, configPath: CONFIG_PATH });
   }

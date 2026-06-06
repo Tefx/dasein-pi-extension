@@ -97,7 +97,12 @@ type LightweightMutationResult =
   | { ok: false; errors: ConfigValidationError[] };
 type LightweightReloadResult =
   | { ok: true; launchReappliedPaths: string[]; runtimeOverriddenPaths: string[] }
-  | { ok: false; errors: ConfigValidationError[] };
+  | {
+      ok: false;
+      errors: ConfigValidationError[];
+      launchReappliedPaths: string[];
+      runtimeOverriddenPaths: string[];
+    };
 
 const KEY_RE = /^[A-Za-z0-9_-]{1,64}$/u;
 const INJECTED_LABEL_RE = /^[A-Za-z0-9_.:-]{1,32}$/u;
@@ -551,6 +556,7 @@ export const createConfigManager = (options: {
 }): {
   getEffectiveConfig(): DaseinConfig;
   getRuntimeOverriddenPaths(): string[];
+  getLaunchReappliedPaths(): string[];
   getStatusErrors(): ConfigValidationError[];
   parseLaunchAssignments(input: string): { ok: boolean; assignments?: Assignment[]; errors?: ConfigValidationError[] };
   setRuntime(path: string, value: unknown, runtimeOptions?: { failPersistenceAt?: FailPoint }): Promise<LightweightMutationResult>;
@@ -593,6 +599,16 @@ export const createConfigManager = (options: {
   }
   effective = composeEffective(defaults, disk, launch, runtime, runtimeOverriddenPaths);
   const queue = createConfigMutationQueue();
+
+  const currentReloadOverlayMetadata = (): { launchReappliedPaths: string[]; runtimeOverriddenPaths: string[] } => {
+    const skip = new Set(runtimeOverriddenPaths);
+    return {
+      launchReappliedPaths: launchAssignments
+        .filter((assignment) => !skip.has(assignment.canonicalPath))
+        .map((assignment) => assignment.canonicalPath),
+      runtimeOverriddenPaths: [...runtimeOverriddenPaths],
+    };
+  };
 
   const normalizeAssignments = (assignments: Record<string, unknown>): { ok: true; assignments: Assignment[] } | { ok: false; errors: ConfigValidationError[] } => {
     const normalizedAssignments: Assignment[] = [];
@@ -640,6 +656,9 @@ export const createConfigManager = (options: {
     getRuntimeOverriddenPaths() {
       return [...runtimeOverriddenPaths];
     },
+    getLaunchReappliedPaths() {
+      return currentReloadOverlayMetadata().launchReappliedPaths;
+    },
     getStatusErrors() {
       return clone(statusErrors);
     },
@@ -675,12 +694,12 @@ export const createConfigManager = (options: {
     reloadDisk() {
       return queue.enqueue("reloadDisk", async () => {
         const loaded = await readDiskFromPath(options.configPath, { config: defaults, discoveredSensorKeys });
-        if (loaded.errors.length > 0) return { ok: false, errors: loaded.errors };
+        if (loaded.errors.length > 0) return { ok: false, errors: loaded.errors, ...currentReloadOverlayMetadata() };
         disk = loaded.disk;
-        const skip = new Set(runtimeOverriddenPaths);
-        launch = overlayFromAssignments(launchAssignments.filter((assignment) => !skip.has(assignment.canonicalPath)));
+        const metadata = currentReloadOverlayMetadata();
+        launch = overlayFromAssignments(launchAssignments.filter((assignment) => metadata.launchReappliedPaths.includes(assignment.canonicalPath)));
         effective = composeEffective(defaults, disk, launch, runtime, runtimeOverriddenPaths);
-        return { ok: true, launchReappliedPaths: launchAssignments.filter((assignment) => !skip.has(assignment.canonicalPath)).map((assignment) => assignment.canonicalPath), runtimeOverriddenPaths: [...runtimeOverriddenPaths] };
+        return { ok: true, ...metadata };
       }) as Promise<LightweightReloadResult>;
     },
   };

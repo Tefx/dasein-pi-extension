@@ -110,6 +110,8 @@ export type ConfigReloadResult =
       ok: false;
       errors: ConfigValidationError[];
       config: Readonly<DaseinConfig>;
+      launchReappliedPaths: string[];
+      runtimeOverriddenPaths: string[];
     };
 
 export interface ConfigManager {
