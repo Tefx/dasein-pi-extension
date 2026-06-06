@@ -10313,7 +10313,7 @@ phases:
       All nine checklist receipt coverage items proven; blockers none.'
   - id: release-smoke-fix-dynamic-reload-live-blockers
     name: Fix live Pi dynamic reload cache bust and invalid replacement blockers
-    status: claimed
+    status: done
     description: 'step_type: implementation
 
       work_type: defect_repair
@@ -10552,6 +10552,71 @@ phases:
     agent: frontend-engineer
     claimed_by: frontend-engineer
     claimed_at: '2026-06-06T09:27:11.882951+00:00'
+    done_at: '2026-06-06T09:44:54.332481+00:00'
+    evidence: '## refs Read Confirmation
+
+      - `docs/TECHNICAL_DESIGN.md#sensor-loading-and-reload` — reload imports candidates
+      with cache busting; invalid candidate registries never replace active registry;
+      load failures retained as SensorLoadError for sensors/status.
+
+      - `docs/TECHNICAL_DESIGN.md#testing-gate-matrix` — dynamic reload live smoke
+      must verify changed local `.ts` import, old registry/rendered context preservation
+      on load failure, and no fake-host substitution.
+
+      - `docs/PRD.md#7-11-sensor-reload` — reload builds/validates complete candidate
+      state before replacement and keeps last-known-good config/sensors/runtime/rendered
+      context on failure.
+
+      - `docs/PRD.md#9-7-sensor-loading-and-reload` — user-added sensors load only
+      from `<extension_root>/src/sensors/*.ts`; invalid modules report load errors
+      without replacing active runtime.
+
+      - `CONSTITUTION.md#extension-and-sensor-laws` — sensor discovery is explicit/inspectable;
+      local sensors are trusted executable code; no automatic watchers or raw exception
+      context injection.
+
+      - `CONSTITUTION.md#testing-and-gates` — real Pi runtime/live binary proof is
+      required for release boundary.
+
+
+      ## Dynamic Reload Fix Receipt
+
+      - mainline commit: `5e628ae`; worker commit: `c4770cff2d5d49b0fd1e798d3bb6c9a55a84ee6d`.
+
+      - changed files: `src/commands/dasein-command.ts`, `src/core/filesystem-helpers.ts`,
+      `src/core/lifecycle.ts`, `src/core/sensor-loader.ts`, `src/index.ts`, unit reload/sensor-loader
+      tests, and dynamic reload smoke tests.
+
+      - cache-bust strategy: dynamic sensor imports use content-addressed hidden physical
+      copy `.dasein-reload-<sensor>-<sha256>-<batch-token>.ts` plus `?reload=<token>`;
+      hidden cache files excluded and removed.
+
+      - old-state preservation: candidate sensors are loaded/validated before config
+      commit; on failure active registry/config/runtime/rendered context remain previous.
+
+      - load error surface: actual SensorLoadError records surface in `/dasein status`
+      and `/dasein sensors`; failed reload returns `dasein reload: failed; kept previous
+      state`.
+
+
+      ## Commands
+
+      - `npm run typecheck` exit 0.
+
+      - `npm test` exit 0; 133 pass.
+
+      - `npm run test:smoke` exit 0; 2 pass.
+
+      - `npm run test:smoke -- tests/smoke/pi-dynamic-reload.test.ts` exit 0; 3 pass.
+
+      - Dynamic reload receipt: cacheBustManifestV2=true, renderedContextAfterChangeHasV2=true,
+      invalidReloadFails=true, invalidLoadErrorsReportedInSensorsOrStatus=true, preservedRenderedContextAfterInvalid=true,
+      oldRegistryPreservedAfterInvalid=true, blockers=[].
+
+
+      ## checklist_receipt
+
+      All six dynamic reload fix checklist items proven; blockers none.'
 - id: finalization
   name: Documentation Sync and Final Deep Review
   status: locked
