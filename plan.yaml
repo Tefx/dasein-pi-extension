@@ -12982,23 +12982,23 @@ phases:
       - Finalization gates will reject success-path-only `launchReappliedPaths` evidence.
       Failure branches forced by fake-host sensor/config failures must show retained
       non-runtime-overridden launch paths.'
-    verification: '- [ ] `npm run typecheck` exits 0 after the fix.
+    verification: '- [x] `npm run typecheck` exits 0 after the fix.
 
-      - [ ] Focused `/dasein reload` fake-host test with launch flags plus forced
+      - [x] Focused `/dasein reload` fake-host test with launch flags plus forced
       sensor-load/registry failure proves `result.data.launchReappliedPaths` retains
       non-runtime-overridden launch paths.
 
-      - [ ] Focused `/dasein reload` fake-host test with launch flags plus forced
+      - [x] Focused `/dasein reload` fake-host test with launch flags plus forced
       ConfigManager/config reload failure proves `result.data.launchReappliedPaths`
       retains non-runtime-overridden launch paths.
 
-      - [ ] Focused test or assertion proves runtime-overridden paths are not falsely
+      - [x] Focused test or assertion proves runtime-overridden paths are not falsely
       included in `launchReappliedPaths`.
 
-      - [ ] Focused public command output test proves `command`/handler output copies
+      - [x] Focused public command output test proves `command`/handler output copies
       preserved `reload.launchReappliedPaths` in failure cases.
 
-      - [ ] `npm test` exits 0 or evidence explains the exact focused subset plus
+      - [x] `npm test` exits 0 or evidence explains the exact focused subset plus
       why full npm test is deferred to the independent retest.'
     evidence_template: '## refs Read Confirmation (MANDATORY)
 
