@@ -15093,7 +15093,7 @@ phases:
       based on live smoke artifacts.'
   - id: finalization-arch-spec-blockers-retest
     name: Retest architecture/spec final audit blockers (A1 A2 S1 S2)
-    status: claimed
+    status: done
     description: 'step_type: test
 
       step_intent: retest_green
@@ -15282,3 +15282,74 @@ phases:
     agent: integration-verifier
     claimed_by: integration-verifier
     claimed_at: '2026-06-06T13:13:57.836854+00:00'
+    done_at: '2026-06-06T13:19:15.259764+00:00'
+    evidence: '## refs Read Confirmation
+
+      - CONSTITUTION.md#architectural-dogmas / #performance-laws / #extension-and-sensor-laws
+      / #testing-and-gates — config precedence, request-path in-memory only, explicit
+      sensor loading, live proof boundaries.
+
+      - docs/PRD.md#9-7-sensor-loading-and-reload — reload rescans sensors, startup-refreshes
+      enabled sensors, and invalid reload keeps previous state.
+
+      - docs/TECHNICAL_DESIGN.md#sensor-loading-and-reload — manual reload rebuilds
+      defaults/effective config and commits only on candidate success.
+
+      - docs/TECHNICAL_DESIGN.md#builtin-sensors — geo helper cleanup/abort/fail-closed
+      behavior.
+
+      - docs/TECHNICAL_DESIGN.md#core-contracts — core widget default and renderOrder
+      defaults.
+
+      - docs/TECHNICAL_DESIGN.md#rendering-contract — renderOrder first, remaining
+      enabled sensors lexicographically.
+
+      - docs/TECHNICAL_DESIGN.md#testing-gate-matrix — required gates and proof classes.
+
+
+      ## Independent Retest Commands
+
+      - `npm run typecheck` exit 0.
+
+      - Focused A1/A2/S1/S2 command exit 0; 36 pass.
+
+      - `npm test` exit 0; 150 pass.
+
+      - `npm run test:smoke` exit 0; 3 pass.
+
+      - Extra geo signal probe exit 0: abort before spawn returns helper-aborted/timeout
+      style error without live overclaim.
+
+
+      ## Behavioral Proof Register
+
+      - A1_late_sensor_reload_renders: PROVEN; manual reload late sensor scenario
+      passes and context includes late sensor.
+
+      - A1_invalid_reload_keeps_old_registry_and_rendered_context: PROVEN via dynamic
+      reload proof: invalidReloadFails=true, oldRegistryPreservedAfterInvalid=true,
+      preservedRenderedContextAfterInvalid=true.
+
+      - A2_helper_abort_terminate_kill_and_refresh_signal: PROVEN via focused lifecycle/geo
+      tests and signal probe.
+
+      - S1_widget_default_false: PROVEN via no-config/no-launch startup test.
+
+      - S2_render_order_clock_lapse_geo_then_lexicographic_append: PROVEN via renderer
+      focused test and code refs.
+
+      - live_pi_dynamic_reload_not_fake_host: PROVEN via smoke artifacts (`hostBoundary=live-pi-process-not-fake-host`,
+      pi 0.78.1).
+
+
+      ## no_mutation_proof
+
+      No vectl tools, edit/write tools, or tracked source/plan changes in retest worktree;
+      ignored `.dasein`/node_modules artifacts only.
+
+
+      ## checklist_receipt
+
+      All ten checklist items proven and toggled. Blockers: none. No live Pi support
+      claim was made from fake-host/mock/native-supervisor evidence; live claims rely
+      on live smoke artifacts.'
