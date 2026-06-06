@@ -16538,7 +16538,7 @@ phases:
   steps:
   - id: prompt-channel-docs-plan
     name: Document ambient prompt channel hardening
-    status: claimed
+    status: done
     description: Update PRD and Technical Design so Dasein's primary agent-spacetime
       goal is preserved while ambient context is injected through before_agent_start
       system/developer prompt semantics, not through CustomMessage/user prompt conversion.
@@ -16553,6 +16553,32 @@ phases:
     - docs/TECHNICAL_DESIGN.md
     claimed_by: llm-agent-expert
     claimed_at: '2026-06-06T16:08:38.024996+00:00'
+    done_at: '2026-06-06T16:16:17.534219+00:00'
+    evidence: 'Artifact:
+
+      - Commit `521f7a4` (`[prompt-channel] document system prompt ambient context`).
+
+
+      Verification:
+
+      - `git diff --check -- docs/PRD.md docs/TECHNICAL_DESIGN.md` -> exit 0 before
+      commit.
+
+
+      Spec link / channel contract:
+
+      - `docs/PRD.md` now states agent spacetime awareness is the primary product
+      goal, `core.agentInjectionEnabled` remains default-enabled, and ambient context
+      must enter via Pi''s per-turn system/developer prompt path rather than a user-role
+      message.
+
+      - `docs/TECHNICAL_DESIGN.md` Decision 1 now specifies `before_agent_start.systemPrompt`
+      for agent ambient context and documents the failure mode: `CustomMessage` including
+      `display:false` participates in LLM context and Pi `convertToLlm()` serializes
+      it as `role:"user"`.
+
+      - Docs distinguish renderer/debug `[ambient_ctx: ...]`, visible UI/transcript,
+      and model instruction channel.'
   - id: prompt-channel-implementation
     name: Move ambient context from custom/user message to system prompt channel
     status: pending
