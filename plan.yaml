@@ -15505,7 +15505,7 @@ phases:
       on live smoke artifacts.'
   - id: finalization-sensor-action-lapse-durable-blockers-fix
     name: Fix sensor action namespace and lapse durable-write finalization blockers
-    status: pending
+    status: claimed
     description: 'step_type: implementation
 
       work_type: defect_repair
@@ -15760,6 +15760,8 @@ phases:
     depends_on:
     - finalization-arch-spec-blockers-retest
     agent: frontend-engineer
+    claimed_by: frontend-engineer
+    claimed_at: '2026-06-06T13:45:23.065437+00:00'
   - id: finalization-sensor-action-lapse-durable-blockers-retest
     name: Retest sensor action namespace and async lapse persistence blockers
     status: pending
