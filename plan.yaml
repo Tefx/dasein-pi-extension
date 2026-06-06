@@ -4697,20 +4697,20 @@ phases:
       wording is insufficient.
 
       '
-    verification: '- [ ] `npm run test:native -- tests/native/macos-location-helper.test.ts`
+    verification: '- [x] `npm run test:native -- tests/native/macos-location-helper.test.ts`
       passes on macOS or skips with an explicit platform reason on non-macOS, with
       raw output.
 
-      - [ ] Evidence proves helper stdout JSON success/error schema, timeout/process/permission/parse
+      - [x] Evidence proves helper stdout JSON success/error schema, timeout/process/permission/parse
       mappings, backoff behavior, and stdout/stderr 16KiB caps.
 
-      - [ ] Evidence proves no helper spawn occurs during request-path injection and
+      - [x] Evidence proves no helper spawn occurs during request-path injection and
       no helper process survives timeout/shutdown.
 
-      - [ ] Evidence distinguishes helper typecheck/skip from live CoreLocation permission
+      - [x] Evidence distinguishes helper typecheck/skip from live CoreLocation permission
       success.
 
-      - [ ] Evidence proves native helper timeout `3000ms`, terminate-then-force-kill
+      - [x] Evidence proves native helper timeout `3000ms`, terminate-then-force-kill
       grace `250ms`, and backoff sequence `1m -> 5m -> 15m` including manual refresh
       bypass rules.
 
