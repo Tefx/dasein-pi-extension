@@ -22,6 +22,42 @@ export type {
   PiEventBusContract,
 } from "./contracts/pi-host.ts";
 export type { FakePiHostContract } from "./contracts/fake-pi-host.ts";
+export type * from "./core/types.ts";
+export type * from "./core/config.ts";
+export type * from "./core/state.ts";
+export type * from "./core/sensor-loader.ts";
+export type * from "./core/sensor-runtime.ts";
+export type * from "./core/renderer.ts";
+export type * from "./core/injector.ts";
+export type * from "./core/external-events.ts";
+export type * from "./core/lifecycle.ts";
+export type * from "./commands/dasein-command.ts";
+export {
+  CORE_INJECTED_LABEL_CONSTRAINT,
+  CORE_MAX_AGENT_CHARS_CONSTRAINT,
+  CORE_RESERVED_COMMAND_WORDS,
+  DASEIN_CONFIG_PRECEDENCE,
+  DASEIN_CONFIG_VERSION,
+  DASEIN_GLOBAL_CONFIG_ROOT,
+  SENSOR_AND_EXTERNAL_KEY_PATTERN,
+} from "./core/config.ts";
+export {
+  EXTERNAL_STATE_CLEAR_EVENT_KEYS,
+  EXTERNAL_STATE_DEFAULT_TTL_MS,
+  EXTERNAL_STATE_EVENT_TOPICS,
+  EXTERNAL_STATE_KEY_PATTERN,
+  EXTERNAL_STATE_SET_EVENT_KEYS,
+  EXTERNAL_STATE_TEXT_MAX_CHARS,
+  EXTERNAL_STATE_TTL_MS_CONSTRAINT,
+} from "./core/external-events.ts";
+export {
+  EXTERNAL_STATE_SNAPSHOT_KEYS,
+  RENDERED_CONTEXT_KEYS,
+  SENSOR_SNAPSHOT_ENVELOPE_KEYS,
+  SENSOR_STATE_ENVELOPE_KEYS,
+} from "./core/state.ts";
+export { SENSOR_LOAD_ERROR_KINDS, SENSOR_REGISTRY_PROVENANCE_KINDS, SENSOR_SPEC_EXPORT_CONTRACT } from "./core/sensor-loader.ts";
+export { SENSOR_REFRESH_CONTRACT } from "./core/sensor-runtime.ts";
 
 export interface DaseinPiExtensionApi {
   readonly registerCommand: (name: string, options: Record<string, unknown>) => void;
