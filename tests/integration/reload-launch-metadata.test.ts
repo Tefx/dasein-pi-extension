@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { cpSync, mkdirSync, mkdtempSync, rmdirSync, rmSync, writeFileSync } from "node:fs";
+import { cpSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import test from "node:test";
@@ -52,13 +52,10 @@ const createIsolatedExtensionFixture = (): IsolatedExtensionFixture => {
 };
 
 const cleanupIsolatedExtensionFixture = (fixture: IsolatedExtensionFixture): void => {
+  // Each test owns only its mkdtemp-created fixture root. Removing the shared
+  // scratchRoot here can invalidate a sibling test while node:test/full-suite
+  // execution is still preparing or importing its isolated extension copy.
   rmSync(fixture.root, { recursive: true, force: true });
-  rmSync(scratchRoot, { recursive: true, force: true });
-  try {
-    rmdirSync(join(repoRoot, ".dasein"));
-  } catch {
-    // Another ignored Dasein artifact may legitimately share this parent.
-  }
 };
 
 const importIsolatedExtensionFactory = async (fixture: IsolatedExtensionFixture): Promise<DaseinFactory> => {
