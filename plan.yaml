@@ -5494,6 +5494,9 @@ phases:
       - [ ] No unresolved sensors blocker intersects pi_runtime, system_wiring, release_smoke,
       or finalization gates without remediation ownership.
 
+      - [ ] SENSORS-GATE-BLOCKER-001 is reviewed against `sensors-renderer-geo-privacy-retest`
+      evidence and is PROVEN closed before any OPEN recommendation.
+
       - [ ] Final gate verdict is OPEN or BLOCKED with explicit blockers and required
       actions.
 
@@ -5514,9 +5517,7 @@ phases:
 
       - [ ] Gate decision basis reviews negative sensor-directory proof for `~/.pi/dasein/sensors`.
 
-      - [ ] Gate decision basis reviews native helper stdout/stderr `16KiB` cap evidence.
-
-      '
+      - [ ] Gate decision basis reviews native helper stdout/stderr `16KiB` cap evidence.'
     evidence_template: "## refs Read Confirmation (MANDATORY)\nFor each exact refs\
       \ entry listed on this step, provide a key passage or `NOT READ: <reason>`.\n\
       Machine-checkable refs inventory generated from this step refs:\n- `CONSTITUTION.md#testing-and-gates`\
@@ -5618,6 +5619,8 @@ phases:
     - sensors-geo-actions
     - sensors-native-helper
     - sensors-manifest-risk
+    - sensors-renderer-geo-privacy-fix
+    - sensors-renderer-geo-privacy-retest
     agent: gate-reviewer
     claimed_by: gate-reviewer
     claimed_at: '2026-06-06T06:21:27.389727+00:00'
