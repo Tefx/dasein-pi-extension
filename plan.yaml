@@ -8056,20 +8056,20 @@ phases:
       fake HOME/config root, changed paths, and cleanup/reset proof.
 
       '
-    verification: '- [ ] Exact fake-host launch/test command is recorded with raw
+    verification: '- [x] Exact fake-host launch/test command is recorded with raw
       stdout/stderr.
 
-      - [ ] Evidence table shows input submitted -> Pi fake route matched -> real
+      - [x] Evidence table shows input submitted -> Pi fake route matched -> real
       command/event/lifecycle/core module invoked -> state/config/render changed ->
       observable output/effect.
 
-      - [ ] At least one safe interaction/mutation is exercised end-to-end through
+      - [x] At least one safe interaction/mutation is exercised end-to-end through
       the same real modules used by production entrypoint wiring.
 
-      - [ ] Evidence explicitly states remaining live Pi/native support obligations
+      - [x] Evidence explicitly states remaining live Pi/native support obligations
       are deferred to release_smoke.
 
-      - [ ] Evidence distinguishes allowed disposable runtime/config mutation from
+      - [x] Evidence distinguishes allowed disposable runtime/config mutation from
       forbidden repository/product/docs/code mutation and includes cleanup/reset proof.
 
       '
