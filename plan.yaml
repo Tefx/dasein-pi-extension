@@ -1841,7 +1841,7 @@ phases:
     claimed_at: '2026-06-06T04:28:44.784484+00:00'
   - id: core-command-layer
     name: Complete command parser and core command execution layer
-    status: claimed
+    status: done
     description: 'step_type: implementation
 
       Fill in stub bodies in src/commands/dasein-command.ts and any narrow command
@@ -2023,6 +2023,48 @@ phases:
     agent: frontend-engineer
     claimed_by: frontend-engineer
     claimed_at: '2026-06-06T04:28:22.023605+00:00'
+    done_at: '2026-06-06T04:40:36.149279+00:00'
+    evidence: '## refs Read Confirmation
+
+      - `docs/TECHNICAL_DESIGN.md#command-design` — core commands/reserved words include
+      status/reload/sensors/set/apply/help and route before sensor actions.
+
+      - `docs/PRD.md#7-8-slash-commands` / `#9-2-slash-commands` — set/apply validate
+      candidates, persist canonical patches, commit only after success, invalid input
+      cannot corrupt runtime/disk.
+
+      - `CONSTITUTION.md#ux-and-pi-interaction-red-lines` — slash/UI runtime changes
+      override launch args; support claims distinguish API/source from live smoke.
+
+      - `docs/TECHNICAL_DESIGN.md#core-contracts` — canonical path normalization and
+      duplicate detection after canonicalization.
+
+      - `docs/TECHNICAL_DESIGN.md#command-result-and-output-contract` — deterministic
+      structured `DaseinCommandResult` and `CommandParseError` before text formatting.
+
+
+      ## artifacts/commit
+
+      - 4879b36 `[vectl] step-core-command-layer completed`
+
+      - Changed `src/commands/dasein-command.ts`, `src/index.ts`.
+
+
+      ## mainline final-state verification
+
+      - `npm run typecheck` → exit 0.
+
+      - `npm run test:file -- tests/unit/command-parser.test.ts tests/unit/command-result.test.ts
+      tests/unit/commands-status.test.ts tests/unit/commands-sensors.test.ts` → exit
+      0; 13 tests, 13 pass, 0 fail.
+
+
+      ## checklist_receipt
+
+      All command-layer checklist items proven: parsing grammar, deterministic command
+      result objects, no mutation on parse/path errors, `/dasein help` reserved precedence,
+      status version/evidence fields, status/reload concrete fields, and risky sensor
+      inspectability fields.'
   - id: core-static-proof
     name: Verify core local behavior and request-path safety
     status: pending
