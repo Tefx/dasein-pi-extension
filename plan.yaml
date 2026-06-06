@@ -13472,31 +13472,31 @@ phases:
       - Finalization gates will reject hollow scheduling evidence: exposing `intervalMs`/`timeoutMs`
       in config/UI is insufficient unless refresh timeout and recurring scheduler
       behavior are consumed by runtime code and tested.'
-    verification: '- [ ] refs confirmation includes key passages for external-state
+    verification: '- [x] refs confirmation includes key passages for external-state
       defaults, config mutation boundaries, sensor timeout/scheduler semantics, and
       Constitution no-hidden-mutation/no-hidden-recurring-work rules.
 
-      - [ ] `npm run typecheck` exits 0 after the repair.
+      - [x] `npm run typecheck` exits 0 after the repair.
 
-      - [ ] Focused external-state test proves valid event payloads with `payload.agent`
+      - [x] Focused external-state test proves valid event payloads with `payload.agent`
       remain agent-hidden by default when no explicit `external.<key>.agent=true`
       config exists, while UI visibility remains true.
 
-      - [ ] Focused external-state test proves malformed event rejection causes no
+      - [x] Focused external-state test proves malformed event rejection causes no
       mutation to external bridge/list state, active config, `state.json`, or rendered
       output.
 
-      - [ ] Focused sensor-runtime test proves configured `timeoutMs` aborts/errors
+      - [x] Focused sensor-runtime test proves configured `timeoutMs` aborts/errors
       a slow refresh and reports the failure without blocking runtime paths.
 
-      - [ ] Focused sensor-runtime test proves `intervalMs` scheduling triggers an
+      - [x] Focused sensor-runtime test proves `intervalMs` scheduling triggers an
       actual refresh or an explicit supported bounded mechanism per spec, including
       disabled/null interval and cleanup/shutdown boundaries.
 
-      - [ ] `npm test` exits 0 after the repair, or any residual failure has explicit
+      - [x] `npm test` exits 0 after the repair, or any residual failure has explicit
       blocker/non-intersection disposition for finalization.
 
-      - [ ] Evidence includes sibling-search notes for direct `config.external` mutation,
+      - [x] Evidence includes sibling-search notes for direct `config.external` mutation,
       external `state.json` persistence, hollow `pendingReason` usage, and scheduler/timeout
       call paths.'
     evidence_template: '## refs Read Confirmation (MANDATORY)
