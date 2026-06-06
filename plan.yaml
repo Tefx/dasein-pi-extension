@@ -7894,7 +7894,7 @@ phases:
   steps:
   - id: system-wiring-stub-replacement
     name: Replace placeholders and production stubs with real modules
-    status: claimed
+    status: done
     description: 'step_type: implementation
 
       tags: [integration]
@@ -7973,6 +7973,52 @@ phases:
     agent: frontend-engineer
     claimed_by: frontend-engineer
     claimed_at: '2026-06-06T07:32:16.426654+00:00'
+    done_at: '2026-06-06T07:47:54.834493+00:00'
+    evidence: '## refs Read Confirmation
+
+      - `docs/TECHNICAL_DESIGN.md#module-structure` — root `index.ts` remains delegate-only
+      shim; `src/index.ts` is real composition entrypoint.
+
+      - `docs/TECHNICAL_DESIGN.md#data-flow` — startup registers flag/command, loads
+      config/sensors, starts enabled sensors, renders UI, subscribes events/lifecycle,
+      injection uses pre-rendered memory.
+
+      - `docs/TECHNICAL_DESIGN.md#implementation-scaffold` — TypeScript ESM/npm scripts/root
+      shim/fake-host CI; live smoke separate.
+
+      - `CONSTITUTION.md#architectural-dogmas` — core dependency-light and boundaries
+      preserved: sensors publish typed state, core owns rendering/injection, config
+      global only.
+
+
+      ## Files changed / commit
+
+      - Mainline squash commit: `419803f` (worker commit `dfe34bdace33d47ca8e97beaf0d5921a7ab94933`).
+
+      - Changed: `package.json`, `src/index.ts`, core/command/runtime/native/sensor
+      support files, and contract tests updated to runtime-composition contract.
+
+
+      ## Verification
+
+      - `npm run typecheck` exit 0.
+
+      - `npm test` exit 0; 131 pass, 0 fail/skipped.
+
+      - `npm run test:file -- tests/integration/pi-extension.test.ts` exit 0; 15 pass.
+
+      - Marker grep over `index.ts package.json src` for `_Runtime`, `_Stub`, `_Placeholder`,
+      `NotImplementedError`, `TODO stub`, parameter-discard-only: no matches (grep
+      exit 1 = no matches).
+
+      - Import trace: root `index.ts` exports from `./src/index.ts`; `src/index.ts`
+      imports real commands, config/state/external-events/injector/lifecycle/renderer/sensor-loader/sensor-runtime,
+      clock/geo/lapse sensors, UI SettingsList contract, native helper.
+
+
+      ## checklist_receipt
+
+      All four system-wiring-stub-replacement checklist items proven.'
   - id: system-wiring-e2e-fake-host
     name: Verify end-to-end fake-host flow through real modules
     status: pending
