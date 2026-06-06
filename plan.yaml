@@ -6524,7 +6524,7 @@ phases:
       fail-closed, hidden CustomMessage conversion, session cleanup 1000ms.'
   - id: pi-runtime-extension-wiring
     name: Complete Pi entrypoint, hooks, commands, flag, and events wiring
-    status: pending
+    status: claimed
     description: 'step_type: implementation
 
       tags: [integration]
@@ -6713,6 +6713,8 @@ phases:
     depends_on:
     - pi-runtime-tests
     agent: frontend-engineer
+    claimed_by: frontend-engineer
+    claimed_at: '2026-06-06T07:01:14.146514+00:00'
   - id: pi-runtime-tui-surfaces
     name: Complete status, widget, and SettingsList runtime surfaces
     status: pending
