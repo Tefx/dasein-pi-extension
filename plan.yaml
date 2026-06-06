@@ -2357,19 +2357,19 @@ phases:
       mention of ambient context. 2. Disabled/sensitive fields remain absent from
       agent string while UI/status remains inspectable. 3. Malformed external publishers
       cannot inject multiline or overlong strings through renderer/injector paths.</risk_probes>'
-    verification: '- [ ] `tests/behavior/ambient-context.test.ts` is defined as test-only
+    verification: '- [x] `tests/behavior/ambient-context.test.ts` is defined as test-only
       coverage and cites the Technical Design Testing Gate Matrix behavioral row.
 
-      - [ ] Expected-red evidence includes ordinary coding prompt does not force an
+      - [x] Expected-red evidence includes ordinary coding prompt does not force an
       ambient-context mention.
 
-      - [ ] Expected-red evidence includes relevant prompt can use enabled fields
+      - [x] Expected-red evidence includes relevant prompt can use enabled fields
       while disabled fields never appear in the agent string.
 
-      - [ ] Expected-red evidence includes UI/status shows sensitive visibility state
+      - [x] Expected-red evidence includes UI/status shows sensitive visibility state
       and malformed publishers cannot inject multiline or overlong strings.
 
-      - [ ] Product implementation files are not modified by this behavior test-definition
+      - [x] Product implementation files are not modified by this behavior test-definition
       step.'
     evidence_template: "## refs Read Confirmation (MANDATORY)\nFor each exact refs\
       \ entry listed on this step, provide a key passage or `NOT READ: <reason>`.\n\
