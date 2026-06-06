@@ -70,6 +70,7 @@ export interface SettingsListControlItem {
   readonly value: SettingsListValue;
   readonly options?: readonly string[];
   readonly readOnly: false;
+  readonly mutationBackend?: "ConfigManager";
   readonly mutationForValue: (value: SettingsListValue) => ConfigMutationProposal;
 }
 
@@ -84,9 +85,11 @@ export interface BuildSettingsListVisibilityModelInput {
 }
 
 const EXTERNAL_KEY_RE = /^[A-Za-z0-9_-]{1,64}$/u;
+const EXTERNAL_TEXT_MAX_CHARS = 120;
+const EXTERNAL_TEXT_REJECT_RE = /[\u0000-\u001F\u007F\u2028\u2029]/u;
 const SIMPLE_SENSOR_FIELD_TYPES = new Set<SettingsListValueType>(["boolean", "string", "number", "enum"]);
 const CORE_TOGGLE_PATHS = ["core.agentInjectionEnabled", "core.statusEnabled", "core.widgetEnabled"] as const;
-const COMMON_SENSOR_FIELDS = ["enabled", "ui", "agent", "intervalMs"] as const;
+const COMMON_SENSOR_FIELDS = ["enabled", "ui", "agent", "intervalMs", "timeoutMs", "staleAfterMs", "initialRefresh"] as const;
 
 const pathValue = (source: unknown, path: string): SettingsListValue => {
   let cursor: unknown = source;
@@ -99,6 +102,11 @@ const pathValue = (source: unknown, path: string): SettingsListValue => {
 
 const assignment = (path: string, value: SettingsListValue): ConfigMutationProposal => ({ assignments: { [path]: value } });
 
+const configManagerAssignment = (path: string, value: SettingsListValue): ConfigMutationProposal => ({
+  backend: "ConfigManager",
+  assignments: { [path]: value },
+});
+
 const control = (input: {
   readonly id: string;
   readonly section: SettingsListControlItem["section"];
@@ -107,6 +115,7 @@ const control = (input: {
   readonly valueType: SettingsListValueType;
   readonly value: SettingsListValue;
   readonly options?: readonly string[];
+  readonly mutationBackend?: "ConfigManager";
   readonly mutationForValue?: (value: SettingsListValue) => ConfigMutationProposal;
 }): SettingsListControlItem => ({
   id: input.id,
@@ -118,6 +127,7 @@ const control = (input: {
   value: input.value,
   ...(input.options === undefined ? {} : { options: input.options }),
   readOnly: false,
+  ...(input.mutationBackend === undefined ? {} : { mutationBackend: input.mutationBackend }),
   mutationForValue: input.mutationForValue ?? ((value) => assignment(input.path, value)),
 });
 
@@ -149,15 +159,16 @@ const commonSensorControl = (
     section: "sensor",
     label: `${sensorKey}.${field}`,
     path,
-    valueType: field === "intervalMs" ? "number" : "boolean",
+    valueType: field === "intervalMs" || field === "timeoutMs" || field === "staleAfterMs" ? "number" : "boolean",
     value: pathValue({ sensors: { [sensorKey]: sensorConfig } }, path),
+    mutationBackend: "ConfigManager",
     mutationForValue: field === "enabled" && acknowledgementRequired
       ? (value) => ({
           assignments: value === true
             ? { [path]: true, [`sensors.${sensorKey}.acknowledgedManifestDigest`]: digest }
             : { [path]: false },
         })
-      : undefined,
+      : (value) => configManagerAssignment(path, value),
   });
 };
 
@@ -181,6 +192,16 @@ const specFieldControls = (
     });
   });
 
+const validExternalText = (value: string | null): boolean =>
+  value === null || (value.length <= EXTERNAL_TEXT_MAX_CHARS && !EXTERNAL_TEXT_REJECT_RE.test(value));
+
+const validExternalSnapshot = (state: ExternalStateSnapshot, now: number): boolean =>
+  EXTERNAL_KEY_RE.test(state.key)
+  && state.expiresAt > now
+  && validExternalText(state.agent)
+  && validExternalText(state.ui)
+  && validExternalText(state.source);
+
 const liveExternalKeys = (
   config: Readonly<DaseinConfig>,
   states: readonly ExternalStateSnapshot[],
@@ -191,7 +212,7 @@ const liveExternalKeys = (
     if (EXTERNAL_KEY_RE.test(key)) keys.add(key);
   }
   for (const state of states) {
-    if (EXTERNAL_KEY_RE.test(state.key) && state.expiresAt > now) keys.add(state.key);
+    if (validExternalSnapshot(state, now)) keys.add(state.key);
   }
   return [...keys].sort((left, right) => left.localeCompare(right));
 };
@@ -223,11 +244,18 @@ export const buildSettingsListVisibilityModel = (
     };
     const spec = specsByKey.get(entry.key);
 
+    items.push(metadata(entry.key, "provenance", "Provenance", entry.provenance.kind));
+    items.push(metadata(entry.key, "declaredInputClasses", "Declared input classes", entry.manifest.declaredInputClasses));
+    items.push(metadata(entry.key, "outputFields", "Output fields", entry.manifest.outputFields.map((field) => field.state_key)));
+    items.push(metadata(entry.key, "permissions", "Permissions", entry.manifest.permissions.map((permission) => permission.kind)));
+    items.push(metadata(entry.key, "remote.capable", "Remote capable", entry.manifest.remote.capable));
+    items.push(metadata(entry.key, "remote.contactsNetworkByDefault", "Contacts network by default", entry.manifest.remote.contactsNetworkByDefault));
     items.push(metadata(entry.key, "remote.destinations", "Remote destinations", entry.manifest.remote.destinations));
     items.push(metadata(entry.key, "remote.payloadClasses", "Payload classes", entry.manifest.remote.payloadClasses));
     items.push(metadata(entry.key, "remote.transmissionCadence", "Transmission cadence", entry.manifest.remote.transmissionCadence));
     items.push(metadata(entry.key, "remote.disableControl", "Disable control", entry.manifest.remote.disableControl));
     items.push(metadata(entry.key, "backgroundWork", "Declared background work", entry.backgroundWork.description));
+    items.push(metadata(entry.key, "backgroundWork.kinds", "Background work kinds", entry.backgroundWork.kinds));
     items.push(metadata(entry.key, "effectiveIntervalMs", "Effective interval", entry.effectiveIntervalMs));
     items.push(metadata(entry.key, "manifestDigest", "Manifest digest", entry.manifestDigest));
     items.push(metadata(entry.key, "acknowledgedManifestDigest", "Acknowledged manifest digest", entry.acknowledgedManifestDigest));

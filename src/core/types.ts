@@ -78,6 +78,7 @@ export interface ConfigValidationError {
 }
 
 export interface ConfigMutationProposal {
+  backend?: "ConfigManager";
   assignments?: Record<string, unknown>;
   deletePaths?: string[];
 }

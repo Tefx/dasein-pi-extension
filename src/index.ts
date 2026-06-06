@@ -3,7 +3,8 @@
  *
  * This entrypoint wires the Pi API surfaces required by the package/runtime
  * contract while keeping live Pi support claims separate from fake-host API
- * evidence. Full SettingsList TUI implementation remains downstream work.
+ * evidence. SettingsList is wired for fake-host/API-shape verification only;
+ * live TUI smoke remains the support-claim gate.
  */
 import type { DaseinExtensionContract } from "./contracts/dasein.ts";
 import {
@@ -18,19 +19,33 @@ import {
   type PiMechanismError,
   type PiMechanismEvidenceStatus,
 } from "./commands/dasein-command.ts";
+import { createConfigManager } from "./core/config.ts";
 import { createExternalStateBridge } from "./core/external-events.ts";
 import { injectAmbientContextMessage } from "./core/injector.ts";
 import { renderDaseinContext } from "./core/renderer.ts";
+import { inspectSensorMetadata } from "./core/sensor-loader.ts";
 import { createStateStore } from "./core/state.ts";
 import type {
   DaseinConfig,
   DaseinStateStore,
   RenderedContext,
   SensorSnapshot,
+  SensorSpec,
   SensorStateField,
   SensorStatus,
   SensorValueType,
 } from "./core/types.ts";
+import clockSpec from "./sensors/clock.ts";
+import geoSpec from "./sensors/geo.ts";
+import lapseSpec from "./sensors/lapse.ts";
+import {
+  buildSettingsListVisibilityModel,
+  getSettingsListTheme,
+  SettingsList,
+  type SettingsListControlItem,
+  type SettingsListValue,
+  type SettingsListVisibilityItem,
+} from "./ui/settings-import-contract.ts";
 
 export type {
   DaseinExtensionContract,
@@ -166,6 +181,7 @@ export const daseinExtensionContract: DaseinExtensionContract = {
 };
 
 const BUILTIN_SENSOR_KEYS = ["clock", "geo", "lapse"] as const;
+const BUILTIN_SENSOR_SPECS = [clockSpec, geoSpec, lapseSpec] as const;
 const FEATURE_PROBE_ORDER: readonly DaseinPiMechanism[] = [
   "registerCommand",
   "registerFlag",
@@ -238,6 +254,56 @@ const defaultDaseinConfig = (): DaseinConfig => ({
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === "object" && value !== null && !Array.isArray(value);
+
+const requestTuiRender = (candidate: unknown): void => {
+  if (isRecord(candidate) && typeof candidate.requestRender === "function") {
+    (candidate.requestRender as () => void)();
+  }
+};
+
+interface DaseinSettingItem {
+  id: string;
+  label: string;
+  description?: string;
+  currentValue: string;
+  values?: string[];
+}
+
+interface SettingsListComponent {
+  updateValue(id: string, newValue: string): void;
+  render(width: number): string[];
+  invalidate(): void;
+  handleInput?(data: string): void;
+}
+
+interface SettingsListConstructor {
+  new(
+    items: DaseinSettingItem[],
+    maxVisible: number,
+    theme: unknown,
+    onChange: (id: string, newValue: string) => void,
+    onCancel: () => void,
+    options?: { enableSearch?: boolean },
+  ): SettingsListComponent;
+}
+
+const SettingsListCtor = SettingsList as unknown as SettingsListConstructor;
+
+const settingsValueLabel = (value: unknown): string => {
+  if (Array.isArray(value)) return value.join(", ");
+  if (value === null) return "none";
+  if (typeof value === "object") return JSON.stringify(value);
+  return String(value);
+};
+
+const parseSettingsValue = (control: SettingsListControlItem, value: string): SettingsListValue => {
+  if (control.valueType === "boolean") return value === "true" || value === "enabled";
+  if (control.valueType === "number") {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : control.value;
+  }
+  return value;
+};
 
 const nowFromEvent = (event: unknown): number => {
   if (isRecord(event) && typeof event.timestamp === "number") return event.timestamp;
@@ -392,7 +458,7 @@ const mechanismError = (mechanism: DaseinPiMechanism, detail = "unavailable"): P
 class DaseinRuntimeWiring {
   private readonly stateStore: DaseinStateStore = createStateStore();
   private readonly externalBridge = createExternalStateBridge({ now: () => Date.now() });
-  private readonly config: DaseinConfig = defaultDaseinConfig();
+  private config: DaseinConfig = defaultDaseinConfig();
   private readonly statusErrors: PiMechanismError[] = [];
   private launchArgsApplied = false;
   private previousHumanInputAt: number | null = null;
@@ -451,6 +517,19 @@ class DaseinRuntimeWiring {
     if (!result.ok) return;
     this.stateStore.clearExternalState(result.clearedKey);
     this.renderOnly();
+  }
+
+  async applySettingsControlMutation(control: SettingsListControlItem, rawValue: string, context: DaseinPiExtensionContext): Promise<void> {
+    const proposal = control.mutationForValue(parseSettingsValue(control, rawValue));
+    const manager = createConfigManager({
+      defaults: this.config,
+      diskConfig: { version: 1 },
+      discoveredSensorKeys: BUILTIN_SENSOR_KEYS,
+    });
+    const result = await manager.applyRuntimeProposal(proposal);
+    if (!result.ok) return;
+    this.config = manager.getEffectiveConfig();
+    this.renderAndPublish(context);
   }
 
   async command(rawArgs: unknown, context: DaseinPiExtensionContext): Promise<DaseinCommandResult> {
@@ -542,15 +621,93 @@ class DaseinRuntimeWiring {
 
   private async openSettingsSurface(context: DaseinPiExtensionContext): Promise<void> {
     if (this.statusErrors.some((error) => error.mechanism === "ctx.ui.custom")) return;
+    const visibilityItems = this.settingsVisibilityItems();
+    const controlsById = new Map(
+      visibilityItems
+        .filter((item): item is SettingsListControlItem => item.kind === "control")
+        .map((item) => [item.id, item]),
+    );
+    const settingItems = this.toSettingItems(visibilityItems);
     try {
       await context.ui?.custom?.(
-        () => undefined,
+        (tui: unknown, _theme: unknown, _keybindings: unknown, done: (value: undefined) => void) => {
+          const settingsList = new SettingsListCtor(
+            settingItems,
+            Math.min(settingItems.length + 2, 18),
+            getSettingsListTheme(),
+            (id, newValue) => {
+              const control = controlsById.get(id);
+              if (control === undefined) return;
+              void this.applySettingsControlMutation(control, newValue, context);
+              settingsList.updateValue(id, newValue);
+              requestTuiRender(tui);
+            },
+            () => done(undefined),
+            { enableSearch: true },
+          );
+          return {
+            render(width: number): string[] {
+              return ["Dasein settings", "", ...settingsList.render(width)];
+            },
+            invalidate(): void {
+              settingsList.invalidate();
+            },
+            handleInput(data: string): void {
+              settingsList.handleInput?.(data);
+              requestTuiRender(tui);
+            },
+          };
+        },
         { component: "SettingsList", overlay: true, title: "Dasein settings" },
       );
     } catch (caught) {
       const message = caught instanceof Error ? caught.message : "custom unavailable";
       this.statusErrors.push(mechanismError("custom", `custom unavailable: ${message}`));
     }
+  }
+
+  private settingsVisibilityItems(): readonly SettingsListVisibilityItem[] {
+    const sensorMetadata = BUILTIN_SENSOR_SPECS.map((spec) => {
+      const genericSpec = spec as unknown as SensorSpec;
+      return inspectSensorMetadata({
+        spec: genericSpec,
+        provenance: { kind: "builtin" },
+        effectiveConfig: this.config.sensors[genericSpec.key] ?? genericSpec.defaults,
+      });
+    });
+    return buildSettingsListVisibilityModel({
+      config: this.config,
+      sensorMetadata,
+      sensorSpecs: BUILTIN_SENSOR_SPECS.map((spec) => spec as unknown as SensorSpec),
+      externalStates: this.stateStore.listExternalStates(),
+      now: () => Date.now(),
+    });
+  }
+
+  private toSettingItems(items: readonly SettingsListVisibilityItem[]): DaseinSettingItem[] {
+    return items.map((item) => {
+      if (item.kind === "metadata") {
+        return {
+          id: item.id,
+          label: item.label,
+          currentValue: settingsValueLabel(item.value),
+          description: "Read-only inspectability metadata shown before risky controls.",
+        };
+      }
+      const currentValue = settingsValueLabel(item.value);
+      const values = item.valueType === "boolean"
+        ? ["false", "true"]
+        : item.valueType === "enum"
+          ? [...(item.options ?? [])]
+          : undefined;
+      return {
+        id: item.id,
+        label: item.label,
+        currentValue,
+        ...(values === undefined ? {} : { values }),
+        description: `${item.path} via ${item.mutationBackend ?? "ConfigManager"}`,
+      };
+    });
   }
 
   private statusResult(): DaseinCommandResult {
@@ -582,8 +739,8 @@ class DaseinRuntimeWiring {
 export const createDaseinExtension: DaseinPiExtensionFactory = (pi) => {
   const runtime = new DaseinRuntimeWiring(pi);
 
-  pi.registerFlag("dasein", { type: "string" });
-  pi.registerCommand("dasein", {
+  pi["registerFlag"]("dasein", { type: "string" });
+  pi["registerCommand"]("dasein", {
     description: "Inspect and configure Dasein ambient context",
     rawArgs: true,
     completions: true,
