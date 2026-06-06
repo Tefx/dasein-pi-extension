@@ -2837,6 +2837,7 @@ phases:
     - core-command-layer
     - core-behavior-guardrails
     - core-static-boundary-retest
+    - core-gate-blocker-retest
     agent: gate-reviewer
     claimed_by: gate-reviewer
     claimed_at: '2026-06-06T05:01:52.513749+00:00'
