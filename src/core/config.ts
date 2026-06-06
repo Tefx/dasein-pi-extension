@@ -7,9 +7,8 @@
  * canonical partial config patch document rather than the full effective config.
  */
 
-import { closeSync, existsSync, fsyncSync, openSync, readFileSync, renameSync, rmSync, writeFileSync } from "node:fs";
-import { mkdir, readFile } from "node:fs/promises";
-import { dirname } from "node:path";
+import { readTextFileIfExists, readTextFileIfExistsSync, writeConfigAtomically } from "./config-io.ts";
+import type { ConfigIoFailPoint } from "./config-io.ts";
 
 import type {
   ConfigManager,
@@ -90,7 +89,7 @@ export interface ConfigValidationContract {
 }
 
 type JsonObject = Record<string, unknown>;
-type FailPoint = "write" | "fsync" | "rename";
+type FailPoint = ConfigIoFailPoint;
 type Assignment = { inputPath: string; canonicalPath: string; value: unknown };
 type ValidationContext = { config: DaseinConfig; discoveredSensorKeys?: readonly string[] };
 type LightweightMutationResult =
@@ -519,31 +518,7 @@ export const createConfigMutationQueue = (): { enqueue(label: string, work: () =
   };
 };
 
-export const writeConfigAtomically = async ({ path, value, failAt, fsyncAvailable = true }: { path: string; value: unknown; failAt?: FailPoint; fsyncAvailable?: boolean }): Promise<{ ok: boolean; tempPath: string; fsynced: boolean; renamed: boolean; error?: unknown }> => {
-  const tempPath = `${path}.tmp`;
-  await mkdir(dirname(path), { recursive: true });
-  let fsynced = false;
-  try {
-    if (failAt === "write") throw new Error("config write failed at write");
-    writeFileSync(tempPath, `${JSON.stringify(value)}\n`, "utf8");
-    if (fsyncAvailable) {
-      if (failAt === "fsync") throw new Error("config write failed at fsync");
-      const fd = openSync(tempPath, "r");
-      try {
-        fsyncSync(fd);
-        fsynced = true;
-      } finally {
-        closeSync(fd);
-      }
-    }
-    if (failAt === "rename") throw new Error("config write failed at rename");
-    renameSync(tempPath, path);
-    return { ok: true, tempPath, fsynced, renamed: true };
-  } catch (caught) {
-    rmSync(tempPath, { force: true });
-    return { ok: false, tempPath, fsynced, renamed: false, error: caught };
-  }
-};
+export { writeConfigAtomically } from "./config-io.ts";
 
 const parseDiskText = (configPath: string, text: string, context: ValidationContext): { disk: DiskDaseinConfig | null; errors: ConfigValidationError[] } => {
   try {
@@ -558,13 +533,13 @@ const parseDiskText = (configPath: string, text: string, context: ValidationCont
 };
 
 const readDiskFromPathSync = (configPath: string | undefined, context: ValidationContext): { disk: DiskDaseinConfig | null; errors: ConfigValidationError[] } => {
-  if (!configPath || !existsSync(configPath)) return { disk: null, errors: [] };
-  return parseDiskText(configPath, readFileSync(configPath, "utf8"), context);
+  const text = readTextFileIfExistsSync(configPath);
+  return text === null ? { disk: null, errors: [] } : parseDiskText(configPath ?? "diskConfig", text, context);
 };
 
 const readDiskFromPath = async (configPath: string | undefined, context: ValidationContext): Promise<{ disk: DiskDaseinConfig | null; errors: ConfigValidationError[] }> => {
-  if (!configPath || !existsSync(configPath)) return { disk: null, errors: [] };
-  return parseDiskText(configPath, await readFile(configPath, "utf8"), context);
+  const text = await readTextFileIfExists(configPath);
+  return text === null ? { disk: null, errors: [] } : parseDiskText(configPath ?? "diskConfig", text, context);
 };
 
 export const createConfigManager = (options: {

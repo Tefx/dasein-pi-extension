@@ -7,11 +7,11 @@
  */
 
 import { createHash } from "node:crypto";
-import { readdirSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 
 import { CORE_RESERVED_COMMAND_WORDS } from "./config.ts";
+import { listTypeScriptFilenames } from "./filesystem-helpers.ts";
 import type {
   SensorBackgroundWorkDeclaration,
   SensorConfig,
@@ -245,12 +245,7 @@ export const inspectSensorMetadata = (input: InspectSensorMetadataInput): Sensor
 
 const importSensorModules = async (extensionRoot: string, cacheBustToken?: string | number): Promise<SensorModuleCandidate[]> => {
   const sensorDir = resolve(extensionRoot, "src", "sensors");
-  let filenames: string[];
-  try {
-    filenames = readdirSync(sensorDir).filter((name) => name.endsWith(".ts")).sort();
-  } catch {
-    return [];
-  }
+  const filenames = listTypeScriptFilenames(sensorDir);
   const candidates: SensorModuleCandidate[] = [];
   for (const filename of filenames) {
     const filePath = join(sensorDir, filename);

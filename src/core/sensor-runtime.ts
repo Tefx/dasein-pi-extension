@@ -7,6 +7,8 @@
  * the typed-state envelope before it can enter storage/rendering.
  */
 
+import { delay, nextTurn } from "./runtime-timers.ts";
+
 import type {
   SensorAction,
   SensorActionContext,
@@ -176,11 +178,9 @@ export const createSensorRuntime = (input: CreateSensorRuntimeInput): SensorRunt
   const refreshNow = async (options: { reason: string; durationMs?: number; generation?: number; bypassBackoff?: boolean }): Promise<SensorActionRefreshResult> => {
     if (activeController !== null) {
       pendingReason = options.reason;
-      return new Promise((resolve) => {
-        setTimeout(() => resolve(snapshot === null
-          ? { ok: false, snapshot, error: { kind: "unknown", message: "refresh already active; follow-up coalesced" } }
-          : { ok: true, snapshot, fresh: true }), 0);
-      });
+      return nextTurn(() => snapshot === null
+        ? { ok: false, snapshot, error: { kind: "unknown", message: "refresh already active; follow-up coalesced" } }
+        : { ok: true, snapshot, fresh: true });
     }
 
     const controller = new AbortController();
@@ -410,5 +410,4 @@ const isCanonicalField = (sensorKey: string, mapKey: string, field: SensorStateF
 
 const isRefreshResult = (value: unknown): value is SensorRefreshResult<unknown> => isRecord(value) && ("value" in value || "fields" in value || "metadata" in value);
 const isRecord = (value: unknown): value is Record<string, unknown> => typeof value === "object" && value !== null && !Array.isArray(value);
-const delay = (durationMs: number): Promise<void> => new Promise((resolveDelay) => setTimeout(resolveDelay, durationMs));
 const collectedAtForTest = (fallback: number): number => fallback === 0 ? Date.now() : fallback;

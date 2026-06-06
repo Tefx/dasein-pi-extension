@@ -6,6 +6,8 @@
  * active refresh/helper work before bounded concurrent cleanup.
  */
 
+import { withTimeout } from "./runtime-timers.ts";
+
 import type {
   ConfigValidationError,
   DaseinConfig,
@@ -248,20 +250,6 @@ const validateReloadDiskConfig = (diskConfig: unknown): ConfigValidationError | 
     return { kind: "invalid-schema", path: "version", message: "disk config version must be 1" };
   }
   return null;
-};
-
-const withTimeout = async (operation: Promise<void>, timeoutMs: number, message: string): Promise<void> => {
-  let timeout: NodeJS.Timeout | null = null;
-  try {
-    await Promise.race([
-      operation,
-      new Promise<never>((_, reject) => {
-        timeout = setTimeout(() => reject(new Error(message)), timeoutMs);
-      }),
-    ]);
-  } finally {
-    if (timeout !== null) clearTimeout(timeout);
-  }
 };
 
 const isRecord = (value: unknown): value is Record<string, unknown> => typeof value === "object" && value !== null && !Array.isArray(value);

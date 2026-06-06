@@ -5,9 +5,8 @@
  * lapse timestamps in an explicit state.json path supplied by lifecycle code.
  */
 
-import { closeSync, existsSync, fsyncSync, openSync, renameSync, rmSync, writeFileSync } from "node:fs";
-import { mkdir, readFile } from "node:fs/promises";
-import { dirname } from "node:path";
+import { readStateTextIfExists, writeStateAtomically } from "./state-io.ts";
+import type { StateIoFailPoint } from "./state-io.ts";
 
 import type {
   DaseinDurableStateFile,
@@ -80,7 +79,7 @@ export interface StateStoreContract {
 }
 
 type JsonObject = Record<string, unknown>;
-type FailPoint = "write" | "fsync" | "rename";
+type FailPoint = StateIoFailPoint;
 
 type DurableWriteResult =
   | { ok: true; fsynced: boolean; renamed: true }
@@ -219,40 +218,16 @@ const canonicalLapse = (value: unknown): LapsePersistedState | null => {
   return { previous_human_input_at: human, previous_agent_end_at: agent };
 };
 
-const atomicWriteState = async ({ path, value, failAt, fsyncAvailable = true }: { path: string; value: DaseinDurableStateFile; failAt?: FailPoint; fsyncAvailable?: boolean }): Promise<{ ok: boolean; fsynced: boolean; renamed: boolean; error?: unknown }> => {
-  const tempPath = `${path}.tmp`;
-  await mkdir(dirname(path), { recursive: true });
-  let fsynced = false;
-  try {
-    if (failAt === "write") throw new Error("durable_state write-failed at write");
-    writeFileSync(tempPath, `${JSON.stringify(value)}\n`, "utf8");
-    if (fsyncAvailable) {
-      if (failAt === "fsync") throw new Error("durable_state write-failed at fsync");
-      const fd = openSync(tempPath, "r");
-      try {
-        fsyncSync(fd);
-        fsynced = true;
-      } finally {
-        closeSync(fd);
-      }
-    }
-    if (failAt === "rename") throw new Error("durable_state write-failed at rename");
-    renameSync(tempPath, path);
-    return { ok: true, fsynced, renamed: true };
-  } catch (caught) {
-    rmSync(tempPath, { force: true });
-    return { ok: false, fsynced, renamed: false, error: caught };
-  }
-};
-
 export const createDurableStateStore = ({ statePath, lapsePersistEnabled, fsyncAvailable = true }: { statePath: string; lapsePersistEnabled: boolean; fsyncAvailable?: boolean }): {
   load(): Promise<{ ok: boolean; lapse: LapsePersistedState | null; error?: { kind: "durable_state"; message: string } }>;
   writeLapse(lapse: unknown, options?: { failAt?: FailPoint }): Promise<DurableWriteResult>;
 } => ({
   async load() {
-    if (!lapsePersistEnabled || !existsSync(statePath)) return { ok: true, lapse: null };
+    if (!lapsePersistEnabled) return { ok: true, lapse: null };
+    const text = await readStateTextIfExists(statePath);
+    if (text === null) return { ok: true, lapse: null };
     try {
-      const parsed = JSON.parse(await readFile(statePath, "utf8")) as unknown;
+      const parsed = JSON.parse(text) as unknown;
       if (!isRecord(parsed) || parsed.version !== 1) throw new Error("state.json version must be 1");
       const lapse = canonicalLapse(parsed.lapse);
       if (!lapse) throw new Error("state.json lapse state is malformed");
@@ -264,7 +239,7 @@ export const createDurableStateStore = ({ statePath, lapsePersistEnabled, fsyncA
   async writeLapse(lapse, options) {
     const canonical = canonicalLapse(lapse);
     if (!canonical) return { ok: false, error: { kind: "durable_state", message: "write-failed: invalid lapse state" } };
-    const result = await atomicWriteState({ path: statePath, value: { version: 1, lapse: canonical }, failAt: options?.failAt, fsyncAvailable });
+    const result = await writeStateAtomically({ path: statePath, value: { version: 1, lapse: canonical }, failAt: options?.failAt, fsyncAvailable });
     if (!result.ok) return { ok: false, error: { kind: "durable_state", message: "write-failed: state.json persistence failed" } };
     return { ok: true, fsynced: result.fsynced, renamed: true };
   },
