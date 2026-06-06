@@ -4624,29 +4624,29 @@ phases:
       Broad geo tag behavior wording is insufficient.
 
       '
-    verification: '- [ ] `npm run test:file -- tests/unit/sensors/geo.test.ts` passes
+    verification: '- [x] `npm run test:file -- tests/unit/sensors/geo.test.ts` passes
       with raw output.
 
-      - [ ] Evidence proves geo defaults, precision enum, exact coordinate/address
+      - [x] Evidence proves geo defaults, precision enum, exact coordinate/address
       privacy gates, permission/unavailable/error mapping, helper backoff delegation,
       and no request-path helper spawn.
 
-      - [ ] Evidence proves tag add/list/remove canonical storage, redaction, fresh-fix
+      - [x] Evidence proves tag add/list/remove canonical storage, redaction, fresh-fix
       requirement, not-found failure, and deletePaths proposal semantics.
 
-      - [ ] Evidence proves nearest-tag tie handling and stale/unavailable render
+      - [x] Evidence proves nearest-tag tie handling and stale/unavailable render
       degradation.
 
-      - [ ] Evidence explicitly proves `sensors.geo.exactCoordinates` gates exact
+      - [x] Evidence explicitly proves `sensors.geo.exactCoordinates` gates exact
       coordinate output and tag-list coordinate visibility.
 
-      - [ ] Evidence explicitly proves `sensors.geo.exactAddress` gates exact address
+      - [x] Evidence explicitly proves `sensors.geo.exactAddress` gates exact address
       output and missing helper address data is not fabricated.
 
-      - [ ] Evidence proves geo tag add rejects `radius_m` outside `1..100000` and
+      - [x] Evidence proves geo tag add rejects `radius_m` outside `1..100000` and
       non-integer radius values without config mutation.
 
-      - [ ] Evidence proves `geo tag list` returns `GeoTagListPayload` and redacts
+      - [x] Evidence proves `geo tag list` returns `GeoTagListPayload` and redacts
       coordinates unless `sensors.geo.exactCoordinates` and all exact gates are true.
 
       '
