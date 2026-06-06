@@ -16530,7 +16530,7 @@ phases:
       \ status` and `/dasein sensors`; default visible UI is quiet."
 - id: prompt_channel_hardening
   name: Prompt Channel Hardening
-  status: in_progress
+  status: done
   gate: Dasein ambient context is delivered through system/developer prompt semantics,
     never as a user/custom message fallback.
   depends_on:
@@ -16581,7 +16581,7 @@ phases:
       and model instruction channel.'
   - id: prompt-channel-implementation
     name: Move ambient context from custom/user message to system prompt channel
-    status: claimed
+    status: done
     description: Change Dasein runtime so ambient context is appended to the per-turn
       system prompt in before_agent_start, while lifecycle observation still runs.
       Remove default context-hook CustomMessage injection from live runtime or make
@@ -16604,3 +16604,33 @@ phases:
     - prompt-channel-docs-plan
     claimed_by: llm-agent-expert
     claimed_at: '2026-06-06T16:16:30.065185+00:00'
+    done_at: '2026-06-06T16:43:40.935629+00:00'
+    evidence: 'Implemented prompt-channel hardening: src/core/injector.ts now exposes
+      formatAmbientSystemPromptBlock/injectAmbientSystemPrompt and appends a bounded
+      <DaseinAmbientContext> block to systemPrompt only; removed AmbientContextMessage/injectAmbientContextMessage/convertAmbientContextMessageToLlm
+      exports and fake-host custom-message converter. src/index.ts no longer registers
+      pi.on("context") for Dasein ambient injection; before_agent_start now observes
+      lifecycle, mutates/returns systemPrompt, and preserves core.agentInjectionEnabled=true
+      default via rendered in-memory agent string. Updated integration/unit/behavior/smoke
+      tests and docs to assert no Dasein ambient CustomMessage/user-message fallback
+      and live proof row pi.before-agent-start.system-prompt-context.
+
+
+      Verification commands:
+
+      - npm run typecheck -> exit 0
+
+      - npm test -> 157 pass, 0 fail
+
+      - npm run test:native -> 2 pass, 1 skipped, 0 fail
+
+      - npm run test:smoke -> 3 pass, 0 fail
+
+      - git diff --check -> exit 0
+
+
+      Live smoke artifacts refreshed under .dasein/live-pi-smoke/latest: context-injection-proof.json
+      shows hook=before_agent_start, systemPromptChanged=true, containsDaseinSystemPromptBlock=true,
+      containsRawAmbientPrefix=false, daseinCustomMessages=0, daseinUserMessages=0;
+      checklist_receipt.json shows 11/11 proven, 0 blockers. Dynamic reload smoke
+      was also migrated to before_agent_start systemPrompt proof and passes.'
