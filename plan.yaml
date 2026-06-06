@@ -5810,6 +5810,156 @@ phases:
     - sensors-local-proof
     - sensors-geo-actions
     agent: frontend-engineer
+  - id: sensors-renderer-geo-privacy-retest
+    name: Retest core renderer geo privacy closure
+    status: pending
+    description: 'step_type: test
+
+      step_intent: retest_green
+
+      expected_result: green
+
+      verification_scope: phase-check
+
+      PROOF ARTIFACT: Independent phase-check retest for SENSORS-GATE-BLOCKER-001.
+      This step proves the focused renderer geo privacy fix closes the repro and does
+      not regress sensors-gate evidence before sensors-gate can reopen.
+
+
+      As an INDEPENDENT TESTER (`integration-verifier`), validate the fix from a fresh
+      perspective. Finding remaining leaks is a successful verification finding and
+      must be reported with exact repro output.
+
+
+      SCOPE / TOUCH PATHS TO INSPECT READ-ONLY:
+
+      - `src/core/renderer.ts`
+
+      - `src/sensors/geo.ts`
+
+      - `tests/unit/renderer.test.ts`
+
+      - `tests/unit/sensors/geo.test.ts`
+
+      - relevant sensors tests invoked by the command matrix
+
+
+      REQUIREMENT-TO-CHECKLIST TRACEABILITY MATRIX:
+
+      | requirement_id | source_ref + key passage | obligation | owning_step_id |
+      checklist_item | evidence_field | status | non_intersection_or_escalation |
+
+      | GEO-PRIV-001 | docs/PRD.md#8-2-privacy — sensitive data must not be injected
+      unless enabled and agent-visible; exact geo requires explicit exact gates |
+      The reported inline leak is closed | sensors-renderer-geo-privacy-retest | repro
+      closure register proves forbidden terms absent | repro_closure_register | OWNED
+      | protects sensors-gate/pi_runtime |
+
+      | GEO-PRIV-002 | docs/TECHNICAL_DESIGN.md#builtin-sensors — exact coordinate/address
+      gates are independent | Positive and negative exact gate paths pass | sensors-renderer-geo-privacy-retest
+      | focused renderer+geo tests green | command_matrix | OWNED | protects sensors-gate/pi_runtime
+      |
+
+      | GEO-PRIV-003 | docs/TECHNICAL_DESIGN.md#testing-gate-matrix — renderer output
+      contract/builtin contracts are ordinary CI gates | Ordinary typecheck/test and
+      focused renderer+geo+sensors tests are green | sensors-renderer-geo-privacy-retest
+      | typecheck, npm test, focused tests raw output | command_matrix | OWNED | protects
+      sensors-gate |
+
+
+      <side_effect_budget>Allowed: read-only test execution, source inspection, and
+      evidence report. Forbidden: code edits, accepting narrative-only proof, or treating
+      existing green suites as sufficient without the focused repro closure register.</side_effect_budget>
+
+      <risk_probes>1. Recreate the exact failure shape with `geo.placemark` object
+      plus sibling sensitive geo fields under city precision and exact false. 2. Verify
+      the renderer generic fallback cannot leak newly added or object-valued geo fields.
+      3. Confirm existing B1-B4/native/manifest-risk proofs remain non-regressed by
+      the full ordinary suite.</risk_probes>'
+    verification: '- [ ] `npm run typecheck` passes with raw output.
+
+      - [ ] `npm test` passes with raw output.
+
+      - [ ] Focused command passes with raw output: `npm run test:file -- tests/unit/renderer.test.ts
+      tests/unit/sensors/geo.test.ts tests/unit/sensors/clock.test.ts tests/unit/sensors/lapse.test.ts
+      tests/unit/sensor-runtime.test.ts`.
+
+      - [ ] Repro closure register includes the original failing inline shape and
+      post-fix agent output proving `geo.placemark`, city, district, street, formattedAddress,
+      lat/lon, accuracy, permission, and nearestTag do not inject unless the documented
+      exact gates pass.
+
+      - [ ] Positive exact-gate proof confirms exact coordinate output and exact address
+      output remain independently gated and still work when their gates pass.
+
+      - [ ] Behavioral proof register marks SENSORS-GATE-BLOCKER-001 as PROVEN closed
+      or reports remaining blocker with exact command/output and closure path.'
+    evidence_template: '## refs Read Confirmation (MANDATORY)
+
+      For each ref in this step:
+
+      - `docs/PRD.md#8-2-privacy` — <key passage>
+
+      - `docs/TECHNICAL_DESIGN.md#builtin-sensors` — <key passage>
+
+      - `docs/TECHNICAL_DESIGN.md#testing-gate-matrix` — <key passage>
+
+      - `CONSTITUTION.md#privacy-and-safety-laws` — <key passage>
+
+
+      ## Command Matrix
+
+      | command | exit_code | raw_output_ref |
+
+      | --- | --- | --- |
+
+      | `npm run typecheck` | <code> | <paste or attach raw output> |
+
+      | `npm test` | <code> | <paste or attach raw output> |
+
+      | `npm run test:file -- tests/unit/renderer.test.ts tests/unit/sensors/geo.test.ts
+      tests/unit/sensors/clock.test.ts tests/unit/sensors/lapse.test.ts tests/unit/sensor-runtime.test.ts`
+      | <code> | <paste or attach raw output> |
+
+
+      ## Repro Closure Register
+
+      - failure_id: SENSORS-GATE-BLOCKER-001
+
+      - original_repro: `agent: [ambient_ctx: accuracy_m=80; nearestTag=home; permission=authorized;
+      placemark={"city":"Shanghai","district":"Jing''an","street":"Nanjing W Rd","formattedAddress":"123
+      Nanjing W Rd, Shanghai"}]`
+
+      - config_case: `precision=city`, `agent=true`, `exactAddress=false`, `exactCoordinates=false`
+
+      - post_fix_agent_output: <paste exact output>
+
+      - forbidden_terms_absent: <yes/no with terms checked>
+
+      - exact_coordinate_positive_case: <evidence>
+
+      - exact_address_positive_case: <evidence>
+
+      - conclusion: PROVEN_CLOSED | STILL_LEAKING | BLOCKED
+
+
+      ## Behavioral Proof Register
+
+      | requirement_ref | behavior_claim | runtime_proof_expected | evidence_ref |
+      status | closure_path | gate_decision_basis |
+
+      | --- | --- | --- | --- | --- | --- | --- |
+
+      | PRD 8.2 / TD builtin geo | sensitive geo fields do not leak under non-exact
+      gates | focused renderer repro | <test/output> | PROVEN/UNPROVEN/BLOCKED | <path>
+      | sensors-gate |
+
+      | TD testing gate matrix | ordinary CI remains green | typecheck + npm test
+      + focused tests | <output> | PROVEN/UNPROVEN/BLOCKED | <path> | sensors-gate
+      |'
+    depends_on:
+    - sensors-renderer-geo-privacy-fix
+    agent: integration-verifier
 - id: pi_runtime
   name: Pi Runtime, Commands, and TUI Surfaces
   status: locked
