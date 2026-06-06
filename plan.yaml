@@ -2751,8 +2751,12 @@ phases:
       - [ ] Gate decision basis maps every core requirement/checklist row to evidence
       status PROVEN or a blocking remediation path.
 
+      - [ ] Gate decision basis reviews `core-static-boundary-retest` and confirms
+      B1 is PROVEN closed before opening the core gate.
+
       - [ ] No unresolved request-path, config/state, typed envelope, command mutation,
-      or external event blocker intersects sensors/pi_runtime/system_wiring gates.
+      external event, or ordinary-CI blocker intersects sensors/pi_runtime/system_wiring
+      gates.
 
       - [ ] Final gate verdict is OPEN or BLOCKED with explicit blockers and required
       actions.
@@ -2789,124 +2793,30 @@ phases:
       evidence and rejects broad multiline/control-only proof.
 
       - [ ] Gate decision basis reviews explicit renderer hook purity proof and enforceability
-      disposition.
-
-      '
-    evidence_template: "## refs Read Confirmation (MANDATORY)\nFor each exact refs\
-      \ entry listed on this step, provide a key passage or `NOT READ: <reason>`.\n\
-      Machine-checkable refs inventory generated from this step refs:\n- `CONSTITUTION.md#testing-and-gates`\
-      \ — <key passage or \"NOT READ: <reason>\">\n- `docs/TECHNICAL_DESIGN.md#testing-gate-matrix`\
-      \ — <key passage or \"NOT READ: <reason>\">\n- `docs/PRD.md#9-acceptance-criteria`\
-      \ — <key passage or \"NOT READ: <reason>\">\n- `docs/TECHNICAL_DESIGN.md#command-result-and-output-contract`\
-      \ — <key passage or \"NOT READ: <reason>\">\n- `docs/TECHNICAL_DESIGN.md#core-contracts`\
-      \ — <key passage or \"NOT READ: <reason>\">\n- `docs/TECHNICAL_DESIGN.md#verified-pi-mechanisms`\
-      \ — <key passage or \"NOT READ: <reason>\">\n- `docs/TECHNICAL_DESIGN.md#data-flow`\
-      \ — <key passage or \"NOT READ: <reason>\">\n- `docs/TECHNICAL_DESIGN.md#rendering-contract`\
-      \ — <key passage or \"NOT READ: <reason>\">\n- `docs/PRD.md#9-6-external-state`\
-      \ — <key passage or \"NOT READ: <reason>\">\n\nrefs_inventory:\n  - CONSTITUTION.md#testing-and-gates\n\
-      \  - docs/TECHNICAL_DESIGN.md#testing-gate-matrix\n  - docs/PRD.md#9-acceptance-criteria\n\
-      \  - docs/TECHNICAL_DESIGN.md#command-result-and-output-contract\n  - docs/TECHNICAL_DESIGN.md#core-contracts\n\
-      \  - docs/TECHNICAL_DESIGN.md#verified-pi-mechanisms\n  - docs/TECHNICAL_DESIGN.md#data-flow\n\
-      \  - docs/TECHNICAL_DESIGN.md#rendering-contract\n  - docs/PRD.md#9-6-external-state\n\
-      \n## side_effect_budget\n- allowed: <copy allowed side effects from step description\
-      \ and confirm actual changes stayed inside them>\n- forbidden: <copy forbidden\
-      \ side effects from step description and confirm none occurred>\n\n## risk_probes\n\
-      - probe_1: <result/evidence>\n- probe_2: <result/evidence>\n- probe_3: <result/evidence\
-      \ or N/A>\n\n## verify-only purity\n- role: read-only verifier/gate/auditor\n\
-      - repo_product_files_changed: no repository/product files may be changed; disposable\
-      \ runtime/config/test fixture files may change only when this step explicitly\
-      \ requires them and cleanup evidence is provided\n- repo_product_mutation_performed:\
-      \ no repository/product mutation may be performed; documented disposable runtime/config/test\
-      \ mutations are allowed only within the step side_effect_budget and must include\
-      \ cleanup evidence\n- if repo/product mutation was necessary: STOP and report\
-      \ blocker for orchestrator/planner; if disposable runtime/test mutation was\
-      \ required, record scope and cleanup evidence\n\n## raw_command_output\n- command:\
-      \ <exact command or N/A>\n- raw_stdout: <paste raw output or N/A>\n- raw_stderr:\
-      \ <paste raw error output or N/A>\n- exit_code: <code or N/A>\n\n## gate_decision_basis\n\
-      | requirement_or_step_ref | evidence_ref | proof_status | unresolved_status\
-      \ | blocks_remaining_gates | closure_path |\n| --- | --- | --- | --- | --- |\
-      \ --- |\n| <ref> | <artifact> | PROVEN|UNPROVEN|NEEDS_TEST|BLOCKED | <status>\
-      \ | yes/no | <required action> |\n- final_recommendation: OPEN | OPEN_WITH_DEBT\
-      \ | BLOCKED\n- blockers: <list>\n- required_actions: <list>\n\n## checklist_receipt\n\
-      - <checklist item 1>: satisfied | failed | blocked | unobserved — <evidence\
-      \ ref>\n- <checklist item 2>: satisfied | failed | blocked | unobserved — <evidence\
-      \ ref>\n\n## Minimum Pi Version / Status Evidence (MANDATORY)\n- minimumPiVersion:\
-      \ \"0.78.1\"\n- current_pi_version: <captured version or null/unavailable>\n\
-      - pi_binary_path: <path or unavailable>\n- below_minimum_case: <classification\
-      \ + no false support claim>\n- unavailable_version_case: <classification + no\
-      \ false support claim>\n- feature_probe_separation: <proof version check is\
-      \ distinct from API feature probes>\n- status_payload_sample: <includes piVersion,\
-      \ minimumPiVersion, piMechanisms[].evidenceStatuses>\n\n## Protected Status/Sensors\
-      \ Command Tests (MANDATORY)\n- protected_test_files:\n  - tests/unit/commands-status.test.ts\n\
-      \  - tests/unit/commands-sensors.test.ts\n- status_payload_proof: <raw test/output\
-      \ evidence>\n- sensors_inspectability_proof: <raw test/output evidence>\n- deviation_record_if_changed:\
-      \ <none or justified>\n\n## Status / Reload Explicit Payload Fields Evidence\
-      \ (MANDATORY)\n- status_required_fields:\n  - effectiveConfigVersion: <observed\
-      \ value; must be 1>\n  - launchArgsApplied: <observed boolean and scenario>\n\
-      \  - diskConfigLoaded: <observed boolean and scenario>\n- reload_required_fields:\n\
-      \  - launchReappliedPaths: <observed sorted path list and scenario>\n  - runtimeOverriddenPaths:\
-      \ <observed sorted path list and scenario>\n- raw_command_output: <paste `/dasein\
-      \ status` and `/dasein reload` result/test output>\n- failure_or_reload_case:\
-      \ <proof fields remain present/meaningful when disk config/sensor reload fails\
-      \ and old state is kept>\n- broad_payload_shape_claim_rejected: Evidence that\
-      \ does not name all five fields is INCOMPLETE.\n\n## Core Config Validation\
-      \ Evidence (MANDATORY)\n- maxAgentChars_range: \"integer 40..2000 inclusive\"\
-      \n- maxAgentChars_accept_cases: <40, 240 default, 2000>\n- maxAgentChars_reject_cases:\
-      \ <39, 2001, non-integer, NaN/Infinity or invalid numeric token>\n- injectedLabel_regex:\
-      \ \"[A-Za-z0-9_.:-]{1,32}\"\n- injectedLabel_accept_cases: <valid examples including\
-      \ ambient_ctx>\n- injectedLabel_reject_cases: <empty, length 33, invalid characters,\
-      \ whitespace/control>\n- raw_command_output: <tests/commands proving deterministic\
-      \ validation>\n- broad_config_claim_rejected: Evidence that says only \"config\
-      \ validation\" without these two exact rules is INCOMPLETE.\n\n## Context Injection\
-      \ CustomMessage Evidence (MANDATORY)\n- display: false\n- customType: \"dasein\"\
-      \n- timestamp_shape: <deterministic/valid timestamp shape used in injected CustomMessage>\n\
-      - conversion_to_llm_user_message: <proof hidden custom message becomes LLM user-message\
-      \ input>\n- ui_visibility_check: <proof hidden message is not rendered as normal\
-      \ chat UI content>\n- bounded_content_check: <pre-rendered ambient context string\
-      \ respects maxAgentChars and neutral label>\n- no_request_path_io: <proof injection\
-      \ reads only pre-rendered memory>\n- broad_context_claim_rejected: Evidence\
-      \ without all CustomMessage fields and conversion proof is INCOMPLETE.\n\n##\
-      \ Lifecycle Exact Proof Evidence (MANDATORY)\n- session_start: <startup registration/config/sensor\
-      \ initial refresh evidence>\n- session_shutdown: <cleanup event evidence>\n\
-      - per_sensor_cleanup_timeout_ms: 1000\n- active_refresh_abort: <proof active\
-      \ refresh is aborted before cleanup>\n- cleanup_error_aggregation: <proof errors\
-      \ are reported/aggregated deterministically>\n- request_path_non_blocking: <proof\
-      \ lifecycle cleanup does not run during request construction>\n- broad_lifecycle_claim_rejected:\
-      \ Evidence without session_start, session_shutdown, and 1000ms timeout is INCOMPLETE.\n\
-      \n## Render Invalidation Scheduler Evidence (MANDATORY)\n- exactly_one_timer_case:\
-      \ <proof one timer is scheduled, not zero or multiple>\n- minimum_deadline_case:\
-      \ <proof timer uses min(field.collected_at + stale_after_ms, external.expiresAt)>\n\
-      - no_deadline_case: <proof existing timer is cancelled and no new timer is scheduled>\n\
-      - timer_fire_recompute_case: <proof stale sensor/expired external state is recomputed\
-      \ from in-memory state>\n- no_request_path_scheduling_or_io: <static/runtime\
-      \ proof request path does not schedule timers or perform disk/network/subprocess/dynamic\
-      \ import/config mutation>\n- ui_publish_on_change: <proof status/widget updates\
-      \ are published only when recomputed UI strings change>\n- broad_renderer_claim_rejected:\
-      \ Evidence that omits any exact scheduler case is INCOMPLETE.\n\n## Atomic Write\
-      \ + fsync Evidence (MANDATORY)\n- temp_file_same_directory: <proof candidate\
-      \ JSON is written to temp file beside target>\n- fsync_when_available: <proof\
-      \ fsync is called when platform exposes it, or exact platform reason when unavailable>\n\
-      - atomic_rename: <proof rename replaces config.json/state.json atomically after\
-      \ successful write/fsync>\n- failed_write_preserves_previous_file: <proof previous\
-      \ file remains unchanged>\n- failed_write_preserves_active_runtime: <proof active\
-      \ config/runtime changes only after persistence succeeds>\n- applies_to: <config.json\
-      \ and state.json/lapse reset where applicable>\n- broad_atomic_claim_rejected:\
-      \ Evidence that omits fsync availability handling is INCOMPLETE.\n\n## External\
-      \ Event Unicode Separator Evidence (MANDATORY)\n- U+2028_agent_case: <rejected\
-      \ without state mutation>\n- U+2028_ui_case: <rejected without state mutation>\n\
-      - U+2028_source_case: <rejected without state mutation>\n- U+2029_agent_case:\
-      \ <rejected without state mutation>\n- U+2029_ui_case: <rejected without state\
-      \ mutation>\n- U+2029_source_case: <rejected without state mutation>\n- ascii_control_baseline:\
-      \ <CR/LF/tab/control rejection>\n- no_normalization_or_truncation: <proof payload\
-      \ is rejected, not repaired>\n- broad_multiline_claim_rejected: Evidence that\
-      \ says only multiline/control without U+2028 and U+2029 is INCOMPLETE.\n\n##\
-      \ Renderer Hook Purity Evidence (MANDATORY)\n- hooks: renderAgent, renderUI\n\
-      - forbidden_io: fs/network/subprocess/dynamic import/native/helper/durable-state\
-      \ access\n- forbidden_runtime_actions: refresh/action/config mutation/discovery\n\
-      - forbidden_output_ownership: final prompt/UI strings, final ordering, global\
-      \ truncation\n- static_contract_proof: <type/contract/static scan evidence>\n\
-      - runtime_fake_hook_proof: <adversarial hook fixture result>\n- enforcement_disposition:\
-      \ static | contract | runtime fake proof | blocker with closure path\n"
+      disposition.'
+    evidence_template: "## Gate Review Report\n**Reviewer**: gate-reviewer (independent\
+      \ of phase implementation)\n**Phase**: core\n**Timestamp**: <ISO 8601>\n\n###\
+      \ refs Read Confirmation (MANDATORY)\nFor each ref in this step:\n- CONSTITUTION.md#testing-and-gates\
+      \ — key passage or \"NOT READ: <reason>\"\n- docs/TECHNICAL_DESIGN.md#testing-gate-matrix\
+      \ — key passage or \"NOT READ: <reason>\"\n- docs/PRD.md#9-acceptance-criteria\
+      \ — key passage or \"NOT READ: <reason>\"\n- docs/TECHNICAL_DESIGN.md#command-result-and-output-contract\
+      \ — key passage or \"NOT READ: <reason>\"\n- docs/TECHNICAL_DESIGN.md#core-contracts\
+      \ — key passage or \"NOT READ: <reason>\"\n- docs/TECHNICAL_DESIGN.md#verified-pi-mechanisms\
+      \ — key passage or \"NOT READ: <reason>\"\n- docs/TECHNICAL_DESIGN.md#data-flow\
+      \ — key passage or \"NOT READ: <reason>\"\n- docs/TECHNICAL_DESIGN.md#rendering-contract\
+      \ — key passage or \"NOT READ: <reason>\"\n- docs/PRD.md#9-6-external-state\
+      \ — key passage or \"NOT READ: <reason>\"\n\n## B1 Remediation Review\n- core-static-boundary-fix\
+      \ evidence quality: <excellent/adequate/insufficient/missing>\n- core-static-boundary-retest\
+      \ evidence quality: <excellent/adequate/insufficient/missing>\n- ordinary `npm\
+      \ test` status: <PASS/FAIL and evidence ref>\n- `src/core/config.ts` static\
+      \ boundary status: <PROVEN/UNPROVEN/BLOCKED and evidence ref>\n- contract test\
+      \ integrity: <PROVEN/UNPROVEN/BLOCKED>\n\n## Decision Basis\n| requirement_or_blocker\
+      \ | evidence_ref | status | blocks_gate | rationale |\n| --- | --- | --- | ---\
+      \ | --- |\n| B1 core config runtime imports | <evidence ref> | PROVEN/UNPROVEN/BLOCKED\
+      \ | YES/NO | <rationale> |\n\n## Gate Decision\n- [ ] OPEN: Phase passes gate,\
+      \ including B1 closure and ordinary-CI proof.\n- [ ] BLOCKED: Issues must be\
+      \ resolved before proceeding.\n  - Blocking issues: <list>\n  - Required actions:\
+      \ <what needs to happen>"
     refs:
     - CONSTITUTION.md#testing-and-gates
     - docs/TECHNICAL_DESIGN.md#testing-gate-matrix
@@ -2918,7 +2828,6 @@ phases:
     - docs/TECHNICAL_DESIGN.md#rendering-contract
     - docs/PRD.md#9-6-external-state
     depends_on:
-    - core-static-proof
     - core-contracts
     - core-tests
     - core-config-state
@@ -2926,6 +2835,7 @@ phases:
     - core-renderer-injector-external
     - core-command-layer
     - core-behavior-guardrails
+    - core-static-boundary-retest
     agent: gate-reviewer
   - id: core-static-boundary-fix
     name: Fix core static boundary for config runtime imports
