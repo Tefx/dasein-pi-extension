@@ -11814,6 +11814,7 @@ phases:
     depends_on:
     - finalization-doc-sync
     - finalization-full-wiring-audit
+    - finalization-arch-spec-blockers-retest
     agent: software-architect
     claimed_by: software-architect
     claimed_at: '2026-06-06T12:42:35.298989+00:00'
