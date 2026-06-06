@@ -5108,7 +5108,7 @@ phases:
       All six manifest-risk checklist items proven.'
   - id: sensors-local-proof
     name: Verify builtin sensors and native helper local gates
-    status: pending
+    status: claimed
     description: 'step_type: verification
 
       verification_scope: phase-check
@@ -5322,6 +5322,8 @@ phases:
     - sensors-native-helper
     - sensors-manifest-risk
     agent: integration-verifier
+    claimed_by: integration-verifier
+    claimed_at: '2026-06-06T06:16:39.776382+00:00'
   - id: sensors-gate
     name: Gate builtin sensors and native helper
     status: pending
