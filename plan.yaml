@@ -14745,3 +14745,266 @@ phases:
       ## checklist_receipt
 
       All eleven checklist items proven and toggled. Blockers: none.'
+  - id: finalization-arch-spec-blockers-fix
+    name: Fix architecture and spec final audit blockers (A1 A2 S1 S2)
+    status: pending
+    description: 'step_type: implementation
+
+      work_type: defect_repair
+
+      agent_source: project
+
+      TARGET STATE:
+
+      The final architecture/spec blockers A1, A2, S1, and S2 are fixed in one batched
+      implementation slice without changing documented public semantics or making
+      live Pi support claims.
+
+
+      BLOCKERS TO FIX (ALL OF THESE, NOT JUST THE FIRST):
+
+      - A1 Manual reload rebuilds effective config/defaults for sensors added after
+      startup. The reported probe currently shows `reloadOk=true`, late sensor listed/enabled,
+      and `contextHasLate=false`; after the fix, the late enabled sensor must render
+      after reload. Reload must preserve all-or-keep-old behavior on failure: failed
+      sensor load/config/default rebuild must leave the previous registry, effective
+      config/defaults, runtimes, rendered state, and overlays intact.
+
+      - A2 Shutdown/helper escalation contract is complete. Lifecycle currently accepts
+      helper `abort`/`terminate`/`kill` hooks but only calls `abort`; shutdown must
+      call `abort`, then `terminate`, then `kill` according to the documented timeout/escalation
+      contract. Geo refresh must pass `context.signal` through to the native helper
+      supervisor so aborting sensor refresh cancels native helper work.
+
+      - S1 Normative default `core.widgetEnabled` is `false`. `src/index.ts` currently
+      defaults `widgetEnabled` to `true`, and fake-host startup without config/launch
+      creates a widget. Change the default to false and add/update tests proving no
+      widget is created by default without explicit config/launch enablement.
+
+      - S2 Normative default `core.renderOrder` is `["clock", "lapse", "geo"]`. `src/index.ts`
+      currently derives sorted registry order as `clock,geo,lapse`. Pin the normative
+      builtin default order and ensure renderer fallback appends remaining enabled
+      sensors via the existing deterministic fallback ordering rather than losing
+      user-added sensors.
+
+
+      BOUNDING BOX / TOUCH PATHS:
+
+      - `src/index.ts` — default core config, reload path, fake-host startup behavior,
+      runtime rebuild wiring.
+
+      - `src/core/config.ts` — config manager/default rebuild semantics only if needed
+      for A1.
+
+      - `src/core/lifecycle.ts` — helper abort/terminate/kill escalation contract.
+
+      - `src/sensors/geo.ts` and `src/native/macos-location-helper.ts` — pass/consume
+      abort signal for geo native helper supervision only as needed for A2.
+
+      - Tests: `tests/unit/reload.test.ts`, `tests/integration/reload-launch-metadata.test.ts`,
+      `tests/unit/lifecycle.test.ts`, `tests/unit/sensors/geo.test.ts`, `tests/native/macos-location-helper.test.ts`,
+      `tests/integration/pi-extension.test.ts`, `tests/fixtures/helpers/core-fixtures.ts`,
+      and focused adjacent tests as needed.
+
+
+      REQUIREMENT TRACEABILITY MATRIX:
+
+      | requirement_id | source_ref + key passage | obligation | owning_step_id |
+      checklist_item | evidence_field | status | non_intersection_or_escalation |
+
+      | --- | --- | --- | --- | --- | --- | --- | --- |
+
+      | A1 | final audit blocker + docs/PRD.md#9-7-sensor-loading-and-reload + docs/TECHNICAL_DESIGN.md#sensor-loading-and-reload
+      | Reload newly discovered enabled sensors by rebuilding effective config/defaults
+      and rendering late sensor after reload while preserving all-or-keep-old failure
+      semantics. | finalization-arch-spec-blockers-fix | A1 reload/default rebuild
+      checklist | `A1_reload_probe_and_failure_path` | OWNED | Intersects final architecture/spec
+      audits and gate. |
+
+      | A2 | final audit blocker + docs/TECHNICAL_DESIGN.md#builtin-sensors + docs/TECHNICAL_DESIGN.md#testing-gate-matrix
+      | Shutdown escalates helper abort/terminate/kill per contract and geo native
+      helper receives abort signal from `context.signal`. | finalization-arch-spec-blockers-fix
+      | A2 helper escalation/signal checklist | `A2_shutdown_geo_abort_signal` | OWNED
+      | Intersects final architecture/concurrency audit and gate. |
+
+      | S1 | final audit blocker + docs/TECHNICAL_DESIGN.md#core-contracts | Default
+      `core.widgetEnabled` is false and fake-host startup without config/launch does
+      not create widget output. | finalization-arch-spec-blockers-fix | S1 widget
+      default checklist | `S1_widget_default_false` | OWNED | Intersects final spec
+      conformance and gate. |
+
+      | S2 | final audit blocker + CONSTITUTION.md#architectural-dogmas + docs/TECHNICAL_DESIGN.md#rendering-contract
+      | Default `core.renderOrder` is `[clock,lapse,geo]`; remaining enabled sensors
+      are appended by deterministic renderer fallback. | finalization-arch-spec-blockers-fix
+      | S2 renderOrder default/fallback checklist | `S2_render_order_default_and_fallback`
+      | OWNED | Intersects final spec conformance and gate. |
+
+
+      CONSTRAINTS:
+
+      - Do not weaken configuration precedence: defaults < global disk config < launch
+      args < slash/UI runtime changes.
+
+      - Do not add implicit/project-local config sources or live filesystem watcher
+      semantics.
+
+      - Do not use mock/fake-host evidence as live Pi support proof; this step may
+      prove fake-host/runtime behavior only and must explicitly say no live overclaim.
+
+      - Preserve request-path purity: no disk I/O, dynamic import, subprocess, sensor
+      refresh, or config mutation on the prompt/injection path.
+
+      - Preserve all existing previously closed finalization review-fix obligations.
+
+
+      <side_effect_budget>Allowed: targeted TypeScript product/test edits required
+      for A1/A2/S1/S2 in the bounding box. Forbidden: broad redesign, new npm runtime
+      dependencies, CONSTITUTION.md changes, live support claims, implicit config
+      sources, request-path I/O/subprocess/dynamic import, or dropping prior reload/status/sensor
+      proof obligations.</side_effect_budget>
+
+      <risk_probes>1. Reload success must update both registry/runtimes and the effective
+      config/default layer for late sensors; failure must prove previous state is
+      kept. 2. Helper shutdown/abort signal proof must include observable hook/signal
+      invocation, not just type compatibility. 3. Default render order must be normative
+      for builtins while still allowing user-added/remaining sensors to render through
+      fallback.</risk_probes>
+
+
+      ## Completion Criteria (stub exclusion)
+
+      This is an IMPLEMENTATION step. Stub-only completion is NOT acceptable. Each
+      deliverable MUST contain substantive logic that processes inputs and produces
+      outputs that vary based on those inputs.'
+    verification: '- [ ] refs confirmation cites key passages for the Constitution,
+      PRD reload, Technical Design reload, core default, rendering, builtin sensor,
+      and testing-gate refs.
+
+      - [ ] A1 focused test/probe shows manual reload after adding an enabled late
+      sensor reports `reloadOk=true`, lists/enables the late sensor, and renders it
+      (`contextHasLate=true`).
+
+      - [ ] A1 failure-path regression proves invalid reload/load/default rebuild
+      preserves previous registry, effective config/defaults, sensor runtimes, rendered
+      state, and all-or-keep-old overlay behavior.
+
+      - [ ] A2 lifecycle regression proves shutdown invokes helper `abort`, `terminate`,
+      and `kill` hooks in the contracted order/timeout path while preserving cleanup
+      error aggregation.
+
+      - [ ] A2 geo/native regression proves `context.signal` reaches the native helper
+      supervisor and aborting the refresh cancels native helper work without a live
+      Pi/native overclaim.
+
+      - [ ] S1 default regression proves `src/index.ts` default `core.widgetEnabled`
+      is false and fake-host startup with no config/launch does not create/set a widget
+      unless explicitly enabled.
+
+      - [ ] S2 default regression proves `core.renderOrder` defaults to `["clock","lapse","geo"]`
+      and renderer fallback appends remaining enabled sensors deterministically.
+
+      - [ ] Verification commands include raw output for `npm run typecheck`, focused
+      tests for A1/A2/S1/S2, `npm test`, and `npm run test:smoke`.
+
+      - [ ] Evidence explicitly states no live Pi support claim was made from fake-host/mock/native-supervisor
+      tests.'
+    evidence_template: '## refs Read Confirmation (MANDATORY)
+
+      For each ref in this step:
+
+      - CONSTITUTION.md#architectural-dogmas — <key passage>
+
+      - CONSTITUTION.md#performance-laws — <key passage>
+
+      - CONSTITUTION.md#extension-and-sensor-laws — <key passage>
+
+      - CONSTITUTION.md#testing-and-gates — <key passage>
+
+      - docs/PRD.md#9-7-sensor-loading-and-reload — <key passage>
+
+      - docs/TECHNICAL_DESIGN.md#sensor-loading-and-reload — <key passage>
+
+      - docs/TECHNICAL_DESIGN.md#builtin-sensors — <key passage>
+
+      - docs/TECHNICAL_DESIGN.md#core-contracts — <key passage>
+
+      - docs/TECHNICAL_DESIGN.md#rendering-contract — <key passage>
+
+      - docs/TECHNICAL_DESIGN.md#testing-gate-matrix — <key passage>
+
+
+      ## Blocker Closure Evidence
+
+      - A1_reload_probe_and_failure_path: <raw focused test/probe output showing reloadOk,
+      late sensor listed/enabled, contextHasLate=true, and all-or-keep-old failure
+      preservation>
+
+      - A2_shutdown_geo_abort_signal: <raw focused test output showing abort/terminate/kill
+      hook order and context.signal propagation/cancellation>
+
+      - S1_widget_default_false: <raw focused test output and changed default evidence>
+
+      - S2_render_order_default_and_fallback: <raw focused test output proving [clock,lapse,geo]
+      default and fallback append behavior>
+
+
+      ## Commands
+
+      - npm run typecheck:
+
+      ```text
+
+      <paste raw stdout/stderr and exit code>
+
+      ```
+
+      - Focused A1/A2/S1/S2 tests:
+
+      ```text
+
+      <paste exact commands, raw stdout/stderr, and exit codes>
+
+      ```
+
+      - npm test:
+
+      ```text
+
+      <paste raw stdout/stderr and exit code>
+
+      ```
+
+      - npm run test:smoke:
+
+      ```text
+
+      <paste raw stdout/stderr and exit code>
+
+      ```
+
+
+      ## No Live Overclaim
+
+      - live_pi_claim_made: false
+
+      - fake_host_or_native_supervisor_scope: <state exactly what was and was not
+      proven>
+
+
+      ## Checklist Receipt
+
+      - A1: PASS|FAIL|BLOCKED — <evidence ref>
+
+      - A2: PASS|FAIL|BLOCKED — <evidence ref>
+
+      - S1: PASS|FAIL|BLOCKED — <evidence ref>
+
+      - S2: PASS|FAIL|BLOCKED — <evidence ref>'
+    depends_on:
+    - finalization-doc-sync
+    - finalization-full-wiring-audit
+    - finalization-black-box-verification
+    - finalization-reload-launch-path-failure-branches-retest
+    - finalization-external-state-sensor-runtime-blockers-retest
+    - finalization-wiring-blackbox-blockers-retest
+    agent: frontend-engineer
