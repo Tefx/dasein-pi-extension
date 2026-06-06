@@ -771,6 +771,8 @@ Reload failures must be atomic from the user's perspective: Dasein keeps the las
 
 ## 9. Acceptance Criteria
 
+Current evidence note (2026-06-06): ordinary `npm test` covers all-platform unit/integration/behavior/static gates and intentionally excludes live Pi TUI/process smoke and macOS native helper gates. Release-support evidence for Pi mechanisms and dynamic reload comes from `npm run test:smoke`, which generated local ledgers at `.dasein/live-pi-smoke/latest/checklist_receipt.json` and `.dasein/dynamic-reload-smoke/latest/checklist_receipt.json` with zero blockers on Pi `0.78.1` at `/opt/homebrew/bin/pi`. macOS native helper acceptance is limited to typecheck/runtime-policy/fail-closed permission handling unless a separate permission-granted coordinate artifact exists; the product must not claim successful live coordinates from the native gate alone.
+
 ### 9.1 Configuration
 
 - Given no disk config or launch args, Dasein starts with the defined core, builtin sensor, and unconfigured external key defaults.
@@ -897,9 +899,9 @@ Initial success metrics are implementation-readiness metrics rather than adoptio
 ## 11. Dependencies
 
 - Pi `0.78.1` is the current minimum target until broader compatibility is tested.
-- Individual Pi mechanisms, including slash command registration, string launch flags, context-hook injection, TUI status/widget/`SettingsList`, `pi.events`, and lifecycle hooks, are governed by the evidence-status table and live smoke gates in `docs/TECHNICAL_DESIGN.md`.
-- Source/API verification alone does not equal release support; release support requires the relevant live smoke gates or documented fail-closed behavior for unavailable mechanisms.
-- macOS CoreLocation for builtin geo sensor.
+- Individual Pi mechanisms, including slash command registration, string launch flags, context-hook injection, TUI status/widget/`SettingsList`, `pi.events`, lifecycle hooks, and dynamic `.ts` sensor reload, are governed by the evidence-status table and live smoke gates in `docs/TECHNICAL_DESIGN.md`.
+- Source/API verification alone does not equal release support; release support requires the relevant live smoke gate ledger or documented fail-closed behavior for unavailable mechanisms. Fake-host integration evidence must remain separate from release support claims.
+- macOS CoreLocation for builtin geo sensor, subject to user/system permission. Native helper tests prove helper typecheck, runtime policy, and fail-closed mapping; they do not prove that a permission-blocked host can emit coordinates.
 - Swift compiler or prebuilt helper strategy for builtin geo sensor.
 - Local filesystem access to `~/.pi/dasein/`.
 - Dasein extension root access for `<extension_root>/src/sensors/*.ts` in directory/package-form installs.
