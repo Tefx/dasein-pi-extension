@@ -16487,22 +16487,22 @@ phases:
       summarize visible status output, avoid raw ambient context/debug fields in default
       visible chrome, and reduce SettingsList default surface to common controls while
       preserving diagnostics via /dasein status and /dasein sensors.'
-    verification: '- [ ] `/dasein status` and `/dasein sensors` produce visible TUI
+    verification: '- [x] `/dasein status` and `/dasein sensors` produce visible TUI
       feedback.
 
-      - [ ] default TUI status chrome does not show raw `epoch_ms`, `iso`, `agent_id`,
+      - [x] default TUI status chrome does not show raw `epoch_ms`, `iso`, `agent_id`,
       or full ambient debug fields.
 
-      - [ ] default SettingsList first surface is common controls, not 89 raw diagnostic
+      - [x] default SettingsList first surface is common controls, not 89 raw diagnostic
       rows.
 
-      - [ ] diagnostics remain available through status/sensors outputs.
+      - [x] diagnostics remain available through status/sensors outputs.
 
-      - [ ] npm run typecheck exits 0.
+      - [x] npm run typecheck exits 0.
 
-      - [ ] focused UX tests exit 0.
+      - [x] focused UX tests exit 0.
 
-      - [ ] npm test exits 0.'
+      - [x] npm test exits 0.'
     depends_on:
     - ux-polish-docs-plan
     agent: general
