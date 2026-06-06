@@ -4857,24 +4857,24 @@ phases:
       fallback, or reload path may treat `~/.pi/dasein/sensors` as a sensor directory.
 
       '
-    verification: '- [ ] `npm run test:file -- tests/unit/sensor-loader.test.ts tests/unit/commands-status.test.ts
+    verification: '- [x] `npm run test:file -- tests/unit/sensor-loader.test.ts tests/unit/commands-status.test.ts
       tests/unit/commands-sensors.test.ts` passes with raw output.
 
-      - [ ] Evidence proves manifestDigest canonical inputs and invalidation after
+      - [x] Evidence proves manifestDigest canonical inputs and invalidation after
       metadata/effective scheduling changes.
 
-      - [ ] Evidence proves risky user-added sensors stay forced disabled for module
+      - [x] Evidence proves risky user-added sensors stay forced disabled for module
       defaults, disk enabled-only, launch enabled-only, and slash enabled-only cases.
 
-      - [ ] Evidence proves `/dasein sensors` and `/dasein status` expose provenance,
+      - [x] Evidence proves `/dasein sensors` and `/dasein status` expose provenance,
       permissions, remote/background behavior, effectiveIntervalMs, acknowledgement,
       and forcedDisabledReason before enablement.
 
-      - [ ] Evidence proves manifest/risk loading computes and exposes `acknowledgedManifestDigest`,
+      - [x] Evidence proves manifest/risk loading computes and exposes `acknowledgedManifestDigest`,
       `acknowledgementRequired`, `acknowledgementSatisfied`, `defaultEnabled`, and
       `effectiveEnabled` exactly.
 
-      - [ ] Evidence proves loader/reload paths do not scan or import from `~/.pi/dasein/sensors`
+      - [x] Evidence proves loader/reload paths do not scan or import from `~/.pi/dasein/sensors`
       and use only `<extension_root>/src/sensors/*.ts` for user-added sensors.
 
       '
