@@ -8323,6 +8323,91 @@ phases:
     - system-wiring-ordinary-ci
     - system-wiring-stub-replacement
     agent: gate-reviewer
+  - id: system-wiring-native-test-discovery-fix
+    name: Make native test discovery include root native tests
+    status: pending
+    description: 'step_type: implementation
+
+      tags: [ci, native-test-discovery]
+
+      TARGET STATE: `npm run test:native` deterministically discovers the native gate
+      contract test and root native helper tests. On macOS it must execute both `tests/native/contracts/native-gate-contract.test.ts`
+      and `tests/native/macos-location-helper.test.ts`; skip behavior is acceptable
+      only off macOS with an explicit non-macOS reason.
+
+
+      BOUNDING BOX:
+
+      - `package.json`
+
+      - native test runner/config files
+
+      - `tests/native/contracts/native-gate-contract.test.ts`
+
+      - `tests/native/macos-location-helper.test.ts`
+
+
+      CONSTRAINTS:
+
+      - Preserve ordinary/live gate separation; do not add live Pi smoke or release
+      smoke to `npm run test:native`.
+
+      - Preserve zero arbitrary runtime npm dependency policy; do not add runtime
+      dependencies for test discovery.
+
+      - Do not weaken or delete native gate assertions to make discovery pass.
+
+      - Keep the fix local to deterministic native test discovery unless evidence
+      shows the native test command itself is miswired.
+
+
+      ## Completion Criteria (stub exclusion)
+
+      This is an IMPLEMENTATION step. Stub-only completion is NOT acceptable. The
+      native test command must exercise real test files discovered by the command
+      rather than reporting a vacuous pass/skip.
+
+
+      <side_effect_budget>Allowed: update npm script/test config/globs and minimal
+      test-runner wiring needed for deterministic native test discovery. Forbidden:
+      suppressing macOS native tests, converting macOS execution into a skip, adding
+      live Pi smoke to ordinary CI, adding arbitrary runtime npm dependencies, or
+      changing native helper product behavior without a separate blocker.</side_effect_budget>
+
+      <risk_probes>1. On macOS, discovery includes root `tests/native/*.test.ts` files
+      as well as nested `tests/native/contracts/*.test.ts` files. 2. Non-macOS skip
+      messages identify platform gating explicitly and are not reused on macOS. 3.
+      Ordinary CI remains broad enough to catch native-helper regressions without
+      claiming live Pi/native release smoke.</risk_probes>'
+    verification: '- [ ] `npm run test:native` raw stdout/stderr on macOS shows both
+      `tests/native/contracts/native-gate-contract.test.ts` and `tests/native/macos-location-helper.test.ts`
+      were discovered/executed.
+
+      - [ ] If run off macOS, native helper tests skip only with an explicit non-macOS
+      reason and the evidence does not claim macOS pass.
+
+      - [ ] Ordinary CI commands remain passing with raw stdout/stderr, including
+      at minimum `npm run typecheck`, `npm test`, and `npm run test:native`.
+
+      - [ ] No live Pi smoke/release-smoke tests are added to ordinary native CI.'
+    evidence_template: "## refs Read Confirmation (MANDATORY)\nFor each ref in this\
+      \ step:\n- `docs/TECHNICAL_DESIGN.md#testing-gate-matrix` — <key passage or\
+      \ NOT READ: reason>\n- `CONSTITUTION.md#testing-and-gates` — <key passage or\
+      \ NOT READ: reason>\n- `CONSTITUTION.md#quality-baselines` — <key passage or\
+      \ NOT READ: reason>\n\n## Native Test Discovery Receipt\n- platform: <macOS\
+      \ / non-macOS with explicit reason>\n- command: `npm run test:native`\n- raw_stdout_stderr:\
+      \ <paste raw output>\n- discovered_or_executed_files:\n  - `tests/native/contracts/native-gate-contract.test.ts`:\
+      \ <seen/not seen>\n  - `tests/native/macos-location-helper.test.ts`: <seen/not\
+      \ seen>\n- skip_reason_if_any: <must be explicit non-macOS reason; macOS skip\
+      \ is not acceptable>\n\n## Ordinary CI Receipt\n- `npm run typecheck`: <raw\
+      \ output + exit code>\n- `npm test`: <raw output + exit code>\n- `npm run test:native`:\
+      \ <raw output + exit code>\n\n## Safety Notes\n- live_smoke_added_to_ordinary_ci:\
+      \ <yes/no, must be no>\n- runtime_dependencies_added: <yes/no, must be no>\n\
+      - checklist_receipt: <satisfied/failed/blocked/unobserved for each checklist\
+      \ item>"
+    depends_on:
+    - system-wiring-stub-replacement
+    agent: frontend-engineer
 - id: release_smoke
   name: Live Pi and Native Release Smoke
   status: locked
