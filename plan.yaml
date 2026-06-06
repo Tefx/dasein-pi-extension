@@ -9478,6 +9478,174 @@ phases:
     - release-smoke-dynamic-reload
     - release-smoke-native-helper
     agent: gate-reviewer
+  - id: release-smoke-fix-live-pi-tui-smoke
+    name: Fix live Pi TUI smoke runner and proof artifacts
+    status: pending
+    description: 'step_type: implementation
+
+      work_type: defect_repair
+
+      agent_source: project
+
+      TARGET STATE: `npm run test:smoke` contains an actual live Pi smoke path for
+      the Dasein Pi extension instead of a scaffold skip. When live Pi is available,
+      the smoke exercises the real Pi binary/process and user-visible TUI/CLI surfaces;
+      when the environment is genuinely unavailable, it reports exact environment
+      blockers without converting fake-host proof into live proof.
+
+
+      BOUNDING BOX:
+
+      - package.json `test:smoke` script and smoke test entrypoints under `tests/smoke/`.
+
+      - Existing scaffold: `tests/smoke/contracts/live-pi-smoke-gate-contract.test.ts`.
+
+      - Live Pi extension/runtime seams in `src/index.ts`, `src/commands/dasein-command.ts`,
+      `src/ui/settings-import-contract.ts`, and Pi peer package surfaces.
+
+      - Existing verifier artifacts for reproduction context: `/tmp/dasein-tui-live.OBqMlU`,
+      `/tmp/dasein-flag-tui.rNRs06`, `/tmp/dasein-context-live.XRd5pO`, `/tmp/dasein-tui-toggle.CFOzWG`,
+      `/tmp/dasein-tui-keys.vjxbN7`.
+
+
+      BLOCKERS TO FIX (ALL OF THESE, NOT JUST THE FIRST):
+
+      1. `npm run test:smoke` currently reaches only a scaffold skip for live Pi smoke.
+      Replace the scaffold-only behavior with a live Pi TUI/process smoke runner/script
+      that uses `/opt/homebrew/bin/pi` when available, records Pi version `0.78.1`
+      or the actual version observed, loads the Dasein extension, and reports exact
+      missing binary/version/TUI/extension/path/permission blockers when not executable.
+
+      2. SettingsList live interaction is unproven. Provide either an implementation/test
+      fix that makes a deterministic documented key sequence change a SettingsList
+      selection/value and persist canonical config under a disposable HOME/config
+      root, OR document the correct live interaction path in the smoke runner and
+      prove it with raw key transcript plus before/after canonical config evidence.
+
+      3. Status/widget calls have API-call evidence but no independent rendered footer/widget
+      proof. Extend the smoke artifact collection to capture a rendered footer/widget
+      visual/snapshot/terminal artifact, or record an explicit Pi limitation and the
+      acceptable alternative artifact that independently proves user-observable status/widget
+      surface.
+
+
+      REQUIREMENT TRACEABILITY MATRIX:
+
+      | requirement_id | source_ref + key passage | obligation | owning_step_id |
+      checklist_item | evidence_field | status | non_intersection_or_escalation |
+
+      | R1 | verifier evidence: `npm run test:smoke` scaffold skip | smoke script
+      must be real live-Pi-capable runner, not scaffold skip | release-smoke-fix-live-pi-tui-smoke
+      | verification item 1 | smoke_runner_stdout | OWNED | blocks release-smoke-live-pi-tui
+      |
+
+      | R2 | verifier evidence: SettingsList Enter/Space/Down did not change selection/value
+      or persist config | SettingsList interaction path must be implemented/fixed
+      or documented with live proof | release-smoke-fix-live-pi-tui-smoke | verification
+      item 2 | settings_interaction_trace + config_before_after | OWNED | blocks release-smoke-live-pi-tui
+      |
+
+      | R3 | verifier evidence: status/widget setStatus/setWidget calls without rendered
+      footer/widget proof | visual/rendered artifact or explicit Pi limitation with
+      acceptable alternative is required | release-smoke-fix-live-pi-tui-smoke | verification
+      item 3 | status_widget_visual_artifact | OWNED | blocks release-smoke-live-pi-tui
+      |
+
+      | R4 | CONSTITUTION.md > Quality Baselines / UX and Pi Interaction Red-lines
+      | mock/fake-host tests must not be treated as live integration proof; live mechanisms
+      require real Pi evidence before support claims | release-smoke-fix-live-pi-tui-smoke
+      | verification item 4 | live_vs_fake_disposition | OWNED | blocks release-smoke
+      gate |
+
+
+      CONSTRAINTS:
+
+      - Do NOT mark fake-host proof, unit proof, source inspection, or scaffold skip
+      output as live Pi proof.
+
+      - Do NOT mutate repository/product code outside the smoke runner/test fix scope
+      required to close the blockers.
+
+      - Use disposable HOME/Pi config/extension roots for any config toggles; do not
+      modify the user''s durable `~/.pi/dasein/` config.
+
+      - Preserve Constitution red lines: no hidden autonomous config mutation, no
+      hidden project-local config reads, no live support claim without live evidence.
+
+      - If Pi has a true TUI capture limitation for footer/widget rendering, the smoke
+      must state the limitation precisely and capture the strongest acceptable alternative
+      artifact with the command, raw output, and why it proves user-observable surface.
+
+
+      ## Completion Criteria (stub exclusion)
+
+      This is an IMPLEMENTATION step. Stub-only completion is NOT acceptable. Each
+      deliverable MUST contain substantive live-smoke runner behavior that processes
+      its inputs/environment and produces outputs that vary based on observed Pi availability
+      and live surface behavior.
+
+
+      <side_effect_budget>Allowed: edit smoke runner/tests and minimal supporting
+      test harness code; execute disposable live Pi smoke paths; mutate config only
+      under a test-controlled disposable HOME/Pi config root. Forbidden: product/docs/config
+      support-claim inflation, fake-host proof as live proof, persistent user config
+      mutation, broad unrelated TUI redesign, or repository code changes unrelated
+      to the three listed blockers.</side_effect_budget>
+
+      <risk_probes>1. `npm run test:smoke` must fail, pass, or block based on real
+      live Pi/environment state rather than always skipping. 2. SettingsList key-path
+      proof must include before/after canonical config evidence, not only rendered
+      text. 3. Status/widget proof must demonstrate rendered/user-observable surface
+      or a precise Pi limitation with an independently reviewable alternative.</risk_probes>'
+    verification: '- [ ] `npm run test:smoke` raw stdout/stderr shows live Pi smoke
+      no longer exits via scaffold skip when live Pi prerequisites are present; if
+      blocked, output names exact missing binary/version/TUI/extension path/permission/command.
+
+      - [ ] Smoke evidence covers literal `/dasein`, context injection, status/widget,
+      and SettingsList live surfaces using the real Pi binary/process path when available.
+
+      - [ ] SettingsList proof includes deterministic documented interaction path
+      plus before/after canonical config evidence under a disposable HOME/Pi config
+      root, or an exact implementation blocker that the downstream live-smoke step
+      can retest.
+
+      - [ ] Status/widget proof includes rendered footer/widget visual/snapshot/terminal
+      artifact, or explicit Pi limitation plus an acceptable alternative artifact
+      proving user-observable surface.
+
+      - [ ] Evidence explicitly separates live Pi proof from fake-host/API/source
+      proof and does not upgrade unobserved mechanisms to live support.
+
+      - [ ] Disposable runtime/config paths and cleanup/reset proof are included for
+      any live interaction mutation.'
+    evidence_template: "## refs Read Confirmation (MANDATORY)\nFor each ref in this\
+      \ step:\n- tests/smoke/contracts/live-pi-smoke-gate-contract.test.ts — <key\
+      \ passage or NOT READ: reason>\n- package.json — <key passage or NOT READ: reason>\n\
+      - src/index.ts — <key passage or NOT READ: reason>\n- src/ui/settings-import-contract.ts\
+      \ — <key passage or NOT READ: reason>\n- src/commands/dasein-command.ts — <key\
+      \ passage or NOT READ: reason>\n- docs/TECHNICAL_DESIGN.md#verified-pi-mechanisms\
+      \ — <key passage or NOT READ: reason>\n- docs/TECHNICAL_DESIGN.md#testing-gate-matrix\
+      \ — <key passage or NOT READ: reason>\n- docs/PRD.md#9-4-tui — <key passage\
+      \ or NOT READ: reason>\n- CONSTITUTION.md#quality-baselines — <key passage or\
+      \ NOT READ: reason>\n- CONSTITUTION.md#ux-and-pi-interaction-red-lines — <key\
+      \ passage or NOT READ: reason>\n\n## Smoke Runner Fix Receipt\n- changed_files:\
+      \ <paths>\n- command: npm run test:smoke\n- raw_stdout_stderr: |\n    <paste\
+      \ raw output>\n- exit_code: <code>\n- pi_binary_path: </opt/homebrew/bin/pi\
+      \ or actual path or exact blocker>\n- pi_version: <observed version or exact\
+      \ blocker>\n- extension_load_path: <path/symlink used or exact blocker>\n- scaffold_skip_status:\
+      \ <removed|not_reached|still_present with explanation>\n\n## Live Surface Proof\
+      \ / Blockers\n- slash_context_status: <PASS|BLOCKED plus artifact refs>\n- context_injection_status:\
+      \ <PASS|BLOCKED plus artifact refs>\n- settingslist_interaction_status: <PASS|BLOCKED>\n\
+      - settingslist_key_path: <documented keys and raw transcript>\n- config_before_after:\
+      \ <canonical config path + before/after diff or exact blocker>\n- status_widget_visual_status:\
+      \ <PASS|LIMITED|BLOCKED>\n- status_widget_visual_artifact: <screenshot/snapshot/terminal\
+      \ artifact or alternative with Pi limitation>\n\n## Live vs Fake Disposition\n\
+      - fake_host_evidence_used_as_live: NO (required)\n- live_support_status_updates:\
+      \ <mechanism rows changed or left pending>\n- remaining_env_blockers: <exact\
+      \ blockers, empty if none>\n\n## Side-Effect Cleanup\n- disposable_home: <path>\n\
+      - disposable_config_paths: <paths>\n- cleanup_reset_proof: <evidence>\n- user_config_touched:\
+      \ NO (required)"
+    agent: frontend-engineer
 - id: finalization
   name: Documentation Sync and Final Deep Review
   status: locked
