@@ -2947,20 +2947,20 @@ phases:
       3. Focused config/state behavior regresses while the static assertion passes.
 
       4. Evidence omits raw command output or does not show ordinary `npm test` consideration.'
-    verification: '- [ ] B1 is fixed by restoring the core contract/static boundary
+    verification: '- [x] B1 is fixed by restoring the core contract/static boundary
       without weakening `tests/unit/contracts/core-contracts.test.ts`.
 
-      - [ ] `src/core/config.ts` no longer imports `node:fs`, `node:fs/promises`,
+      - [x] `src/core/config.ts` no longer imports `node:fs`, `node:fs/promises`,
       `node:path`, or equivalent runtime FS/path implementation dependencies.
 
-      - [ ] Runtime FS/path config behavior is relocated to an architecture-allowed
+      - [x] Runtime FS/path config behavior is relocated to an architecture-allowed
       narrow runtime helper, or an explicit deviation record explains why relocation
       was impossible.
 
-      - [ ] Config/state behavior remains preserved under the focused core matrix
+      - [x] Config/state behavior remains preserved under the focused core matrix
       and relevant config/state tests.
 
-      - [ ] Ordinary `npm test` is run or, if blocked by a new unrelated blocker,
+      - [x] Ordinary `npm test` is run or, if blocked by a new unrelated blocker,
       the output is captured and the remaining blocker is identified without hiding
       B1.'
     evidence_template: "## refs Read Confirmation (MANDATORY)\nFor each ref in this\
