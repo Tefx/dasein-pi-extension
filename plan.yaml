@@ -4156,7 +4156,7 @@ phases:
   steps:
   - id: sensors-tests
     name: Define expected-red builtin sensor and native helper tests
-    status: claimed
+    status: done
     description: 'step_type: test
 
       step_intent: test_define_red
@@ -4372,6 +4372,78 @@ phases:
     agent: frontend-engineer
     claimed_by: frontend-engineer
     claimed_at: '2026-06-06T05:42:30.172087+00:00'
+    done_at: '2026-06-06T05:53:07.062331+00:00'
+    evidence: 'step_intent: test_define_red
+
+      expected_result: red
+
+      observed_result: red
+
+      failure_alignment: aligned — red failures expose intended missing builtin sensor/native-helper/loader
+      implementation gaps; no product code was changed to force green.
+
+      product_files_modified: false
+
+
+      ## refs Read Confirmation
+
+      - `docs/TECHNICAL_DESIGN.md#builtin-sensors` — builtins clock/geo/lapse; geo
+      exactCoordinates/exactAddress gates; tag list payload; native helper timeout/backoff;
+      lapse observe/persist/reset.
+
+      - `docs/TECHNICAL_DESIGN.md#testing-gate-matrix` — builtin tests under `tests/unit/sensors`;
+      native helper gate macOS-only with explicit non-macOS skip.
+
+      - `docs/PRD.md#7-3-builtin-sensors` — clock minute default; geo disabled/ui
+      true/agent false/city; lapse enabled/persist/user_idle.
+
+      - `docs/PRD.md#9-5-builtin-sensors` — builtin defaults, geo privacy/tags/helper
+      mapping, lapse persistence/reset.
+
+      - `CONSTITUTION.md#extension-and-sensor-laws` — only clock/geo/lapse builtins;
+      typed sensor contract; inspectable discovery; no hidden priority.
+
+      - `docs/TECHNICAL_DESIGN.md#core-contracts` — SensorSpec default export, manifest/metadata/acknowledgement/config
+      validation.
+
+      - `docs/TECHNICAL_DESIGN.md#command-result-and-output-contract` — sensor metadata
+      fields `acknowledgedManifestDigest`, `acknowledgementRequired`, `acknowledgementSatisfied`,
+      `defaultEnabled`, `effectiveEnabled`.
+
+      - `docs/PRD.md#7-2-sensor-model` — user-added sensors load only from `<extension_root>/src/sensors/*.ts`;
+      risky sensors require acknowledgement.
+
+      - `docs/PRD.md#9-7-sensor-loading-and-reload` — `~/.pi/dasein/sensors` is not
+      a sensor loading path.
+
+
+      ## Files changed / commit
+
+      - Mainline squash commit: `afb026d` (worker commit `ab7771fde02e481acd9e183df35c677d70fd329c`).
+
+      - Added tests only: `tests/unit/sensors/clock.test.ts`, `geo.test.ts`, `lapse.test.ts`,
+      `loader-risk.test.ts`, `tests/native/macos-location-helper.test.ts`.
+
+
+      ## Command evidence
+
+      - `npm run typecheck` exit 0.
+
+      - targeted red: `npm run test:file -- tests/unit/sensors/clock.test.ts tests/unit/sensors/geo.test.ts
+      tests/unit/sensors/lapse.test.ts tests/unit/sensors/loader-risk.test.ts tests/native/macos-location-helper.test.ts`
+      exit 1 as expected; 18 tests, 2 pass, 16 fail.
+
+      - Key expected red gaps: missing `src/sensors/clock.ts`, `geo.ts`, `lapse.ts`,
+      missing `src/native/macos-location-helper.swift`, missing `getMacOSLocationHelperRuntimePolicy`,
+      `mapMacOSLocationHelperOutput`, `createLapsePersistenceController`, and loader
+      still admitting non-canonical `/extension/sensors/legacy.ts` / `~/.pi/dasein/sensors/home.ts`.
+
+
+      ## checklist_receipt
+
+      All 10 checklist items proven: tests limited to allowed test paths; red covers
+      clock/geo/lapse/native/helper/risk/loader behavior; non-macOS skip semantics
+      included; no product implementation modified.'
   - id: sensors-clock-lapse
     name: Complete clock and lapse sensors
     status: pending
