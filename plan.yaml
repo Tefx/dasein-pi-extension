@@ -15658,45 +15658,45 @@ phases:
       deliverable MUST contain substantive logic that processes its inputs and produces
       outputs that vary based on those inputs; a dead helper or test-only namespace
       check does not satisfy B1.'
-    verification: '- [ ] refs confirmation cites key passages for sensor-action namespace
+    verification: '- [x] refs confirmation cites key passages for sensor-action namespace
       limits, lifecycle observation async durable-write rule, durable write error
       surfacing, status evidence vocabulary, and Constitution sensor/config/request-path
       boundaries.
 
-      - [ ] B1 malicious sensor action proposal containing `core.agentInjectionEnabled=false`
+      - [x] B1 malicious sensor action proposal containing `core.agentInjectionEnabled=false`
       or another non-`sensors.<sensorKey>.*` path is rejected before ConfigManager
       persistence/commit and leaves runtime config plus disk config unchanged.
 
-      - [ ] B1 valid own-namespace sensor action proposal under `sensors.<sensorKey>.*`
+      - [x] B1 valid own-namespace sensor action proposal under `sensors.<sensorKey>.*`
       succeeds where applicable and reports deterministic `updatedPaths`/`deletedPaths`
       only inside that namespace.
 
-      - [ ] B1 sibling search proves no production path still calls unscoped `manager.applyRuntimeProposal(proposal)`
+      - [x] B1 sibling search proves no production path still calls unscoped `manager.applyRuntimeProposal(proposal)`
       or applies `result.mutation` without the caller `sensorKey` namespace check.
 
-      - [ ] B2 `before_agent_start`, `input`, and `agent_end` observation handlers
+      - [x] B2 `before_agent_start`, `input`, and `agent_end` observation handlers
       commit memory/renderable lapse state synchronously and return before durable
       `state.json` write begins or completes.
 
-      - [ ] B2 coalesced asynchronous durable write eventually persists the latest
+      - [x] B2 coalesced asynchronous durable write eventually persists the latest
       lapse timestamps without losing the latest event when multiple observations
       occur rapidly.
 
-      - [ ] B2 asynchronous durable write failure is surfaced in `/dasein status`/status
+      - [x] B2 asynchronous durable write failure is surfaced in `/dasein status`/status
       errors without blocking the event handler return path.
 
-      - [ ] W1 is either safely corrected so status payload/final artifacts do not
+      - [x] W1 is either safely corrected so status payload/final artifacts do not
       underclaim live-smoke `PROVEN` rows, or evidence records a precise non-blocking
       disposition preserving exact documented vocabulary.
 
-      - [ ] `npm run typecheck` exits 0 with raw stdout/stderr captured.
+      - [x] `npm run typecheck` exits 0 with raw stdout/stderr captured.
 
-      - [ ] Focused tests for B1/B2, and W1 if changed, exit 0 with raw stdout/stderr
+      - [x] Focused tests for B1/B2, and W1 if changed, exit 0 with raw stdout/stderr
       captured.
 
-      - [ ] `npm test` exits 0 with raw stdout/stderr captured.
+      - [x] `npm test` exits 0 with raw stdout/stderr captured.
 
-      - [ ] `npm run test:smoke` exits 0 or reports exact environment blockers without
+      - [x] `npm run test:smoke` exits 0 or reports exact environment blockers without
       false live support overclaim.'
     evidence_template: '## refs Read Confirmation (MANDATORY)
 
