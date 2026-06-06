@@ -25,6 +25,14 @@ export type { FakePiHostContract } from "./contracts/fake-pi-host.ts";
 export type * from "./core/types.ts";
 export type * from "./core/config.ts";
 export type * from "./core/state.ts";
+export {
+  applyRuntimeProposal,
+  createConfigManager,
+  createConfigMutationQueue,
+  validateConfigAssignment,
+  writeConfigAtomically,
+} from "./core/config.ts";
+export { createDurableStateStore, createStateStore } from "./core/state.ts";
 export type * from "./core/sensor-loader.ts";
 export type * from "./core/sensor-runtime.ts";
 export type * from "./core/renderer.ts";
