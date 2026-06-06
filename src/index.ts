@@ -75,8 +75,16 @@ export {
   SENSOR_SNAPSHOT_ENVELOPE_KEYS,
   SENSOR_STATE_ENVELOPE_KEYS,
 } from "./core/state.ts";
-export { SENSOR_LOAD_ERROR_KINDS, SENSOR_REGISTRY_PROVENANCE_KINDS, SENSOR_SPEC_EXPORT_CONTRACT } from "./core/sensor-loader.ts";
-export { SENSOR_REFRESH_CONTRACT } from "./core/sensor-runtime.ts";
+export {
+  SENSOR_LOAD_ERROR_KINDS,
+  SENSOR_REGISTRY_PROVENANCE_KINDS,
+  SENSOR_SPEC_EXPORT_CONTRACT,
+  detectDaseinInstallMode,
+  inspectSensorMetadata,
+  loadSensorRegistry,
+} from "./core/sensor-loader.ts";
+export { SENSOR_REFRESH_CONTRACT, createSensorRuntime, normalizeSensorRefreshResult, observeLapseLifecycle } from "./core/sensor-runtime.ts";
+export { createDaseinLifecycle, reloadDaseinRuntime } from "./core/lifecycle.ts";
 
 export interface DaseinPiExtensionApi {
   readonly registerCommand: (name: string, options: Record<string, unknown>) => void;
