@@ -11723,7 +11723,7 @@ phases:
     claimed_at: '2026-06-06T13:19:28.134211+00:00'
   - id: finalization-architecture-concurrency-review
     name: Architecture, lifecycle, and concurrency review
-    status: claimed
+    status: done
     description: 'step_type: audit
 
       verification_scope: full-plan-check
@@ -11819,6 +11819,64 @@ phases:
     agent: software-architect
     claimed_by: software-architect
     claimed_at: '2026-06-06T13:19:35.675568+00:00'
+    done_at: '2026-06-06T13:27:44.667116+00:00'
+    evidence: '## refs Read Confirmation
+
+      - CONSTITUTION.md#architectural-dogmas — core owns rendering/injection/config
+      precedence and sensors publish typed state.
+
+      - CONSTITUTION.md#performance-laws — request path must not perform IO/refresh/helper
+      work.
+
+      - docs/TECHNICAL_DESIGN.md#data-flow — startup/reload/injection/UI/shutdown
+      data paths and cleanup sequence.
+
+      - docs/TECHNICAL_DESIGN.md#sensor-loading-and-reload — reload scans/cache-busts,
+      all-or-keep-old, candidate commit behavior.
+
+      - docs/TECHNICAL_DESIGN.md#rendering-contract — core renderer owns order/truncation/final
+      strings.
+
+
+      ## Architecture Review Verdict
+
+      status: SUCCESS; headline: PASS; verdict: PASS; blockers: none.
+
+
+      ## Evidence
+
+      - `npm run typecheck` exit 0.
+
+      - `npm test` exit 0; 150 pass.
+
+      - `npm run test:smoke` exit 0; 3 pass.
+
+      - Focused architecture probes exit 0; 48 pass.
+
+      - Request path no IO/refresh: PASS via injector/static tests.
+
+      - Lifecycle startup/shutdown cleanup: PASS; shutdown aborts runtimes, stops
+      recurring timers, aborts/terminates/kills helpers, bounded cleanup, UI clearing.
+
+      - Geo helper signal/root: PASS; signal reaches supervisor and no cwd root use.
+
+      - Config FIFO: PASS; promise-tail queue covers runtime/settings/proposals/reload.
+
+      - Reload late sensor/all-or-keep-old/cache bust: PASS; late sensor renders after
+      reload and invalid reload preserves old state.
+
+      - Sensor runtime concurrency/timeout/interval cleanup: PASS.
+
+      - Core-owned rendering/default renderOrder: PASS.
+
+      - Widget default false: PASS.
+
+      - External state no config mutation: PASS.
+
+
+      ## checklist_receipt
+
+      All five architecture checklist items proven and toggled. Blockers: none.'
   - id: finalization-black-box-verification
     name: Black-box public interface verification
     status: done
