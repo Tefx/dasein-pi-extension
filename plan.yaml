@@ -11089,38 +11089,38 @@ phases:
       exclusion.
 
       '
-    verification: '- [ ] Orphan exports report includes grep/import-trace output or
+    verification: '- [x] Orphan exports report includes grep/import-trace output or
       `none found`.
 
-      - [ ] Unregistered commands/actions report includes trace from Pi registration
+      - [x] Unregistered commands/actions report includes trace from Pi registration
       to core/sensor handler or `none found`.
 
-      - [ ] Unconsumed config fields report includes grep/import-trace output or `none
+      - [x] Unconsumed config fields report includes grep/import-trace output or `none
       found`.
 
-      - [ ] No production NotImplementedError/stub/placeholder and no write-only fields
+      - [x] No production NotImplementedError/stub/placeholder and no write-only fields
       remain without explicit accepted exclusion.
 
-      - [ ] Wiring audit traces SettingsList controls for `enabled`, `ui`, `agent`,
+      - [x] Wiring audit traces SettingsList controls for `enabled`, `ui`, `agent`,
       `intervalMs`, `timeoutMs`, `staleAfterMs`, and `initialRefresh` to ConfigManager
       consumers.
 
-      - [ ] Wiring audit verifies SettingsList external controls are reachable only
+      - [x] Wiring audit verifies SettingsList external controls are reachable only
       for valid configured/live external keys and absent for invalid/dotted/expired/malformed
       external inputs.
 
-      - [ ] Post-fix wiring audit verifies `src/sensors/geo.ts` helper supervision
+      - [x] Post-fix wiring audit verifies `src/sensors/geo.ts` helper supervision
       no longer derives helper location from `process.cwd()` and is rooted in the
       real extension runtime/configured root.
 
-      - [ ] Post-fix wiring audit verifies duplicate sensor candidate loadErrors produce
+      - [x] Post-fix wiring audit verifies duplicate sensor candidate loadErrors produce
       all-or-no-admit or keep-safe startup behavior and cannot leave duplicate user
       sensors active.
 
-      - [ ] Post-fix wiring audit verifies reload `launchReappliedPaths` are passed
+      - [x] Post-fix wiring audit verifies reload `launchReappliedPaths` are passed
       from ConfigManager reload through `src/index.ts` lifecycle/public result wiring.
 
-      - [ ] Post-fix wiring audit confirms the `/dasein lapse reset` action is registered/reachable
+      - [x] Post-fix wiring audit confirms the `/dasein lapse reset` action is registered/reachable
       through the production command/sensor action path rather than falling through
       to `unknown-sensor-action`.'
     evidence_template: "## refs Read Confirmation (MANDATORY)\nFor each exact refs\
