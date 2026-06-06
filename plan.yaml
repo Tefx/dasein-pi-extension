@@ -16641,3 +16641,18 @@ phases:
     without exposing exact location by default.
   depends_on:
   - prompt_channel_hardening
+  steps:
+  - id: geo-permission-app-helper
+    name: Add app-bundled macOS location helper path
+    status: pending
+    description: 'Implement a bounded macOS .app bundle helper/probe path so CoreLocation
+      requests are attributed to an app with a location usage description instead
+      of swift-frontend/raw CLI. Preserve Dasein privacy defaults: exact coordinates/address
+      remain disabled unless explicitly configured. Ordinary npm test must not require
+      live Location Services permission; native/live checks may report permission_denied
+      as environment state.'
+    verification: Run npm run typecheck, npm test, npm run test:native. Provide exact
+      manual command to build/run permission helper and expected success/failure JSON.
+      Do not claim live location success unless helper returns ok:true on this host.
+    evidence_template: Files changed; helper/app-bundle behavior; privacy defaults
+      preserved; commands run and outputs; unresolved live permission state.
