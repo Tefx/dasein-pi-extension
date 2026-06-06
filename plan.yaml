@@ -2840,7 +2840,7 @@ phases:
     agent: gate-reviewer
   - id: core-static-boundary-fix
     name: Fix core static boundary for config runtime imports
-    status: claimed
+    status: done
     description: 'step_type: implementation
 
       priority: HIGH
@@ -2984,6 +2984,59 @@ phases:
     agent: frontend-engineer
     claimed_by: frontend-engineer
     claimed_at: '2026-06-06T04:51:33.787875+00:00'
+    done_at: '2026-06-06T04:58:12.520872+00:00'
+    evidence: '## refs Read Confirmation
+
+      - `tests/unit/contracts/core-contracts.test.ts` — contract/static test rejects
+      runtime imports in bounded core contract modules; B1 assertion preserved.
+
+      - `src/core/config.ts` — prior node fs/path imports removed; runtime IO moved
+      to helper modules.
+
+      - `docs/TECHNICAL_DESIGN.md#core-contracts` — active runtime changes after disk
+      success; atomic write semantics preserved.
+
+      - `CONSTITUTION.md#testing-and-gates` — static/unit checks enforce no implicit/project-local
+      config reads and no request-path I/O/mutation.
+
+
+      ## B1 Fix Report
+
+      - root_cause: runtime persistence concerns leaked into contract-scanned core
+      module `src/core/config.ts`.
+
+      - remediation: moved FS/path persistence and related runtime helpers into narrow
+      helper modules (`config-io.ts`, `state-io.ts`, `filesystem-helpers.ts`, `runtime-timers.ts`)
+      while preserving public exports and behavior.
+
+      - architecture_deviation: NONE.
+
+      - tests_weakened: NO; `tests/unit/contracts/core-contracts.test.ts` unchanged
+      and passes.
+
+
+      ## artifacts/commit
+
+      - a3695e8 `[vectl] step-core-static-boundary-fix completed`
+
+
+      ## mainline final-state verification
+
+      - `npm run typecheck` → exit 0.
+
+      - `npm test` → exit 0; 21 tests, 21 pass, 0 fail.
+
+      - focused config/state/core-contracts matrix → exit 0; 13 tests, 13 pass.
+
+      - static boundary proof: `src/core/config.ts` no longer imports `node:fs`, `node:fs/promises`,
+      `node:path`; contract test passes.
+
+
+      ## checklist_receipt
+
+      All B1 fix checklist items proven: boundary restored without weakening test,
+      config.ts runtime imports removed, runtime FS/path behavior relocated, focused
+      behavior preserved, ordinary npm test green.'
   - id: core-static-boundary-retest
     name: Retest core static boundary and ordinary CI
     status: pending
