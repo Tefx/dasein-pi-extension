@@ -644,7 +644,7 @@ phases:
       - Symlinked load/root shim/SettingsList-getSettingsListTheme evidence: PROVEN.'
   - id: scaffold-gate
     name: Gate scaffold foundation
-    status: pending
+    status: claimed
     description: 'step_type: gate
 
       DECISION ARTIFACT: Independent phase-check gate for scaffold. Review scaffold
@@ -717,6 +717,8 @@ phases:
     - scaffold-complete
     - scaffold-static-proof
     agent: gate-reviewer
+    claimed_by: gate-reviewer
+    claimed_at: '2026-06-06T03:54:17.491681+00:00'
 - id: core
   name: Core Broker Contracts and Implementation
   status: locked
