@@ -16699,3 +16699,10 @@ phases:
       registered but currently reports timeout/not_determined until the user allows
       the new ''Dasein Location Helper'' entry in Location Services; no exact coordinates/address
       are reported in evidence.'
+- id: status_detail_control
+  name: Status Bar Detail Control
+  status: pending
+  gate: Settings exposes a status bar detail level without changing quiet default
+    or leaking raw ambient context.
+  depends_on:
+  - geo_permission_helper
