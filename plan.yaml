@@ -3596,7 +3596,7 @@ phases:
       release-scope gate and does not intersect this ordinary non-native retest.'
   - id: core-gate-b4-external-default-fix
     name: Fix B4 external default agent visibility
-    status: claimed
+    status: done
     description: 'step_type: implementation
 
       agent_source: project
@@ -3751,6 +3751,64 @@ phases:
     agent: frontend-engineer
     claimed_by: frontend-engineer
     claimed_at: '2026-06-06T05:29:19.417297+00:00'
+    done_at: '2026-06-06T05:32:43.352582+00:00'
+    evidence: '## refs Read Confirmation
+
+      - `CONSTITUTION.md#privacy-and-safety-laws` — injected fields must be traceable;
+      Dasein must not collect/inject hidden fields; privacy constraints enforced.
+
+      - `docs/PRD.md#9-6-external-state` — per-key external config controls UI/agent
+      exposure independently; unconfigured keys UI-visible and agent-hidden by default.
+
+      - `docs/TECHNICAL_DESIGN.md#core-contracts` — unconfigured external key defaults
+      to `{ui:true, agent:false}` for valid events.
+
+      - `docs/TECHNICAL_DESIGN.md#testing-gate-matrix` — renderer output applies config.external
+      visibility; SettingsList matrix row includes default `{ui:true, agent:false}`.
+
+
+      ## B4 Fix Receipt
+
+      - Mainline squash commit: `02ed778` (worker commit `fc786ec7a3bd358bb983e8ead3b104e2bd9b2ee9`).
+
+      - Changed files: `src/core/renderer.ts`, `tests/unit/renderer.test.ts`.
+
+      - Renderer diff summary: fallback changed from `config.external[key]?.agent
+      ?? true` to `?? false`; tests now configure explicit positive agent visibility
+      and add unconfigured external regression.
+
+      - Sibling search (worker): remaining defaults show `src/ui/settings-import-contract.ts`
+      `{ui:true, agent:false}`, `src/core/external-events.ts` `agent ?? false`, `src/core/renderer.ts`
+      `agent ?? false`, `src/core/config.ts` `{ui:true, agent:false}`; no remaining
+      external unconfigured agent-visible fallback.
+
+
+      ## Verification
+
+      - Mainline `npm run typecheck` exit 0.
+
+      - Mainline `npm test` exit 0; 27 files discovered, 78 tests pass, 0 fail/skipped.
+
+      - Mainline `npm run test:file -- tests/unit/renderer.test.ts tests/unit/external-events.test.ts
+      tests/behavior/ambient-context.test.ts` exit 0; 13 tests pass; includes new
+      unconfigured external agent-hidden regression.
+
+
+      ## Regression Notes
+
+      - Unconfigured external keys remain UI-visible and agent-hidden.
+
+      - Explicit `external.weather.agent: true` positive case still renders in agent
+      output.
+
+      - No B1/B2/B3 regression observed.
+
+
+      ## checklist_receipt
+
+      All B4 fix checklist items proven: renderer fallback false, unconfigured external
+      omitted from agent string, explicit agent=true still visible, UI default remains
+      visible, sibling search clear.'
   - id: core-gate-b4-external-default-retest
     name: Retest B4 external default agent visibility
     status: pending
