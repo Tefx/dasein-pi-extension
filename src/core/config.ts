@@ -119,7 +119,7 @@ const LOWER_SHA256_RE = /^[a-f0-9]{64}$/u;
 const CORE_FIELDS = new Set([
   "agentInjectionEnabled",
   "statusEnabled",
-  "widgetEnabled",
+  "statusDetail",
   "maxAgentChars",
   "injectedLabel",
   "renderOrder",
@@ -143,6 +143,7 @@ const SIMPLE_SENSOR_FIELD_TYPES = new Set(["boolean", "string", "number", "enum"
 const CLOCK_PRECISIONS = new Set(["exact", "minute", "hour", "period", "date"]);
 const GEO_PRECISIONS = new Set(["city", "district", "street", "exact"]);
 const LAPSE_AGENT_FIELDS = new Set(["user_idle", "agent_idle"]);
+const STATUS_DETAIL_LEVELS = new Set(["quiet", "summary", "diagnostic"]);
 
 const clone = <T>(value: T): T => structuredClone(value);
 
@@ -374,6 +375,11 @@ const validateCoreValue = (canonicalPath: string, field: string, value: unknown,
       ? null
       : error("invalid-value", canonicalPath, "core.injectedLabel must match [A-Za-z0-9_.:-]{1,32}");
   }
+  if (field === "statusDetail") {
+    return typeof value === "string" && STATUS_DETAIL_LEVELS.has(value)
+      ? null
+      : error("invalid-value", canonicalPath, "core.statusDetail must be quiet, summary, or diagnostic");
+  }
   if (field === "renderOrder") {
     if (!Array.isArray(value)) return error("invalid-value", canonicalPath, "core.renderOrder must be an array");
     const seen = new Set<string>();
@@ -493,8 +499,9 @@ const pathKind = (canonicalPath: string, context: ValidationContext): "boolean" 
   if (typeof current === "number") return "number";
   if (typeof current === "string") return "string";
   if (parts[0] === "external") return "boolean";
-  if (parts[0] === "core" && ["agentInjectionEnabled", "statusEnabled", "widgetEnabled"].includes(parts[1] ?? "")) return "boolean";
+  if (parts[0] === "core" && ["agentInjectionEnabled", "statusEnabled"].includes(parts[1] ?? "")) return "boolean";
   if (parts[0] === "core" && parts[1] === "maxAgentChars") return "number";
+  if (parts[0] === "core" && parts[1] === "statusDetail") return "string";
   if (parts[0] === "sensors") {
     const field = parts[2] ?? "";
     if (["enabled", "ui", "agent", "initialRefresh", "persist", "exactCoordinates", "exactAddress"].includes(field)) return "boolean";

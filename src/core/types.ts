@@ -11,6 +11,7 @@ export type SensorKey = string;
 export type ExternalStateKey = string;
 export type CommandPath = string;
 export type RenderOrderKey = SensorKey | `external:${ExternalStateKey}`;
+export type StatusDetailLevel = "quiet" | "summary" | "diagnostic";
 
 export interface DaseinConfig {
   version: 1;
@@ -22,7 +23,7 @@ export interface DaseinConfig {
 export interface CoreConfig {
   agentInjectionEnabled: boolean;
   statusEnabled: boolean;
-  widgetEnabled: boolean;
+  statusDetail: StatusDetailLevel;
   maxAgentChars: number;
   injectedLabel: string;
   renderOrder: RenderOrderKey[];
@@ -197,7 +198,6 @@ export interface ExternalStateSnapshot {
 export interface RenderedContext {
   agent: string | null;
   status: string | null;
-  widgetLines: string[] | null;
   omittedKeys: string[];
   truncated: boolean;
 }
@@ -217,8 +217,6 @@ export interface DaseinStateStore {
   setRenderedAgentString(value: string | null): void;
   getRenderedStatusString(): string | null;
   setRenderedStatusString(value: string | null): void;
-  getRenderedWidgetLines(): string[] | null;
-  setRenderedWidgetLines(value: string[] | null): void;
 }
 
 export interface SensorManifest {

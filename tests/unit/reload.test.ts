@@ -42,7 +42,7 @@ test("reload result preserves ConfigManager launchReappliedPaths metadata", asyn
 test("failed reload keeps old config, registry, runtime overrides, rendered context, and exposes keep-old fields", async () => {
   const api = await loadDaseinApi();
   const reloadDaseinRuntime = requireExportedFunction(api, "reloadDaseinRuntime", "Testing Gate Matrix row: Sensor export, install modes, provenance, and reload all-or-keep-old");
-  const oldRendered = { agent: "[ambient_ctx: time=old]", status: "old", widgetLines: null, omittedKeys: [], truncated: false };
+  const oldRendered = { agent: "[ambient_ctx: local=old]", status: "old", omittedKeys: [], truncated: false };
   const result = await reloadDaseinRuntime({ previousConfig: baseConfig, previousRendered: oldRendered, diskConfig: { version: 2 }, candidateSensorsOk: false, runtimeOverriddenPaths: ["sensors.clock.precision"] }) as {
     ok: boolean;
     message: string;
@@ -62,7 +62,7 @@ test("failed reload keeps old config, registry, runtime overrides, rendered cont
 test("sensor reload failure returns actual SensorLoadError records instead of a synthetic ok result", async () => {
   const api = await loadDaseinApi();
   const reloadDaseinRuntime = requireExportedFunction(api, "reloadDaseinRuntime", "Testing Gate Matrix row: Sensor export, install modes, provenance, and reload all-or-keep-old");
-  const oldRendered = { agent: "[ambient_ctx: dynamic=v2]", status: "dynamic v2", widgetLines: null, omittedKeys: [], truncated: false };
+  const oldRendered = { agent: "[ambient_ctx: dynamic=v2]", status: "dynamic v2", omittedKeys: [], truncated: false };
   const sensorError = { file: "/extension/src/sensors/dynamic.ts", kind: "import", message: "SensorLoadError: failed to import sensor module: syntax" };
   const result = await reloadDaseinRuntime({
     previousConfig: baseConfig,

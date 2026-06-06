@@ -139,7 +139,7 @@ export const baseConfig: DaseinConfig = {
   core: {
     agentInjectionEnabled: true,
     statusEnabled: true,
-    widgetEnabled: false,
+    statusDetail: "quiet",
     maxAgentChars: 240,
     injectedLabel: "ambient_ctx",
     renderOrder: ["clock", "lapse", "geo"],
@@ -218,9 +218,8 @@ export const externalWeather: ExternalStateSetEvent = {
 };
 
 export const renderedContext: RenderedContext = {
-  agent: "[ambient_ctx: time=Fri_14:32+08]",
+  agent: "[ambient_ctx: local=14:32]",
   status: "time Fri 14:32 +08",
-  widgetLines: ["time Fri 14:32 +08"],
   omittedKeys: [],
   truncated: false,
 };
@@ -240,8 +239,6 @@ export const fakeStore = (rendered: RenderedContext = renderedContext): DaseinSt
   setRenderedAgentString: () => undefined,
   getRenderedStatusString: () => rendered.status,
   setRenderedStatusString: () => undefined,
-  getRenderedWidgetLines: () => rendered.widgetLines,
-  setRenderedWidgetLines: () => undefined,
 });
 
 export const expectedAmbientSystemPromptBlock = (agent = renderedContext.agent ?? "[ambient_ctx: none]"): string => {

@@ -7,7 +7,10 @@ import test from "node:test";
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
 
 type PackageContract = {
+  readonly private?: boolean;
   readonly type?: string;
+  readonly keywords?: readonly string[];
+  readonly files?: readonly string[];
   readonly dependencies?: Record<string, string>;
   readonly peerDependencies?: Record<string, string>;
   readonly devDependencies?: Record<string, string>;
@@ -19,7 +22,18 @@ const readText = (path: string): string => readFileSync(resolve(repoRoot, path),
 const packageJson = JSON.parse(readText("package.json")) as PackageContract;
 
 test("package.json pins the scaffold package and dependency contract", () => {
+  assert.equal(packageJson.private, false);
   assert.equal(packageJson.type, "module");
+  assert.equal(packageJson.keywords?.includes("pi-package"), true);
+  assert.deepEqual(packageJson.files, [
+    "index.ts",
+    "src/",
+    "docs/PRD.md",
+    "docs/TECHNICAL_DESIGN.md",
+    "docs/RELEASE.md",
+    "docs/config.sample.json",
+    "CONSTITUTION.md",
+  ]);
   assert.deepEqual(packageJson.dependencies, {});
   assert.deepEqual(packageJson.peerDependencies, {
     "@earendil-works/pi-coding-agent": "*",
@@ -56,6 +70,20 @@ test("package.json pins the required npm script command shapes", () => {
   assert.match(nativeTestRunner, /--import", "tsx", "--test"/u);
   assert.match(nativeTestRunner, /endsWith\("\.test\.ts"\)/u);
   assert.equal(packageJson.scripts?.["test:smoke"], "node --import tsx --test tests/smoke/**/*.test.ts");
+  assert.equal(packageJson.scripts?.["package:check"], "node scripts/check-package-manifest.mjs");
+  assert.equal(packageJson.scripts?.["release:check"], "npm run typecheck && npm test && npm run test:native && npm run package:check && npm run test:smoke");
+});
+
+test("package dry-run checker enforces publishable Pi package contents", () => {
+  const checker = readText("scripts/check-package-manifest.mjs");
+  assert.match(checker, /npm", \["pack", "--dry-run", "--json"\]/u);
+  assert.match(checker, /keywords.*pi-package/su);
+  assert.match(checker, /package\.json pi\.extensions must include \.\/index\.ts/u);
+  assert.match(checker, /packed tarball missing required path/u);
+  assert.match(checker, /packed tarball contains non-runtime\/development path/u);
+  assert.match(checker, /src\/native\/macos-location-helper\.swift/u);
+  assert.match(checker, /docs\/RELEASE\.md/u);
+  assert.match(checker, /docs\/config\.sample\.json/u);
 });
 
 test("root index.ts is a symlink-load Pi auto-discovery shim delegating to ./src/index.ts", () => {
@@ -68,7 +96,7 @@ test("root index.ts is a symlink-load Pi auto-discovery shim delegating to ./src
 
 test("SettingsList/getSettingsListTheme resolve only through approved Pi peer dependency paths", () => {
   const settingsContract = readText("src/ui/settings-import-contract.ts");
-  assert.match(settingsContract, /import \{ SettingsList \} from "@earendil-works\/pi-tui";/);
+  assert.match(settingsContract, /import \{ matchesKey, SettingsList \} from "@earendil-works\/pi-tui";/);
   assert.match(
     settingsContract,
     /const piCodingAgentPackageName = "@earendil-works\/pi-coding-agent";/,
@@ -77,6 +105,14 @@ test("SettingsList/getSettingsListTheme resolve only through approved Pi peer de
   assert.equal(packageJson.peerDependencies?.["@earendil-works/pi-coding-agent"], "*");
   assert.equal(packageJson.dependencies?.["@earendil-works/pi-tui"], undefined);
   assert.equal(packageJson.dependencies?.["@earendil-works/pi-coding-agent"], undefined);
+});
+
+test("Dasein TUI text fitting uses approved Pi TUI width helpers", () => {
+  const statusFormat = readText("src/ui/status-format.ts");
+  const overlayFrame = readText("src/ui/overlay-frame.ts");
+  assert.match(statusFormat, /import \{ truncateToWidth, visibleWidth \} from "@earendil-works\/pi-tui";/);
+  assert.match(overlayFrame, /import \{ truncateToWidth, visibleWidth, wrapTextWithAnsi \} from "@earendil-works\/pi-tui";/);
+  assert.doesNotMatch(`${statusFormat}\n${overlayFrame}`, /\.slice\(|substring\(|substr\(/u);
 });
 
 test("fake Pi host API shape is contract-only and does not claim live support", () => {

@@ -2,6 +2,8 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
 
+import { visibleWidth } from "@earendil-works/pi-tui";
+
 import { baseConfig, clockSnapshot, loadDaseinApi, requireExportedFunction } from "../fixtures/helpers/core-fixtures.ts";
 
 test("renderer deterministically orders renderOrder sensors, remaining sensors, and external keys with core-owned final strings", async () => {
@@ -16,15 +18,85 @@ test("renderer deterministically orders renderOrder sensors, remaining sensors, 
     sensorSnapshots: [clockSnapshot()],
     externalStates: [{ key: "weather", agent: "dry", ui: "dry", source: "fixture", updatedAt: 1000, expiresAt: 61000 }],
     now: 1000,
-  }) as { agent: string | null; status: string | null; widgetLines: string[] | null; omittedKeys: string[]; truncated: boolean };
+  }) as { agent: string | null; status: string | null; omittedKeys: string[]; truncated: boolean };
 
   assert.deepEqual(rendered, {
-    agent: "[ambient_ctx: weather=dry; time=Fri_14:32+08]",
+    agent: "[ambient_ctx: weather=dry; local=14:32]",
     status: "weather dry; time Fri 14:32 +08",
-    widgetLines: ["weather dry", "time Fri 14:32 +08"],
     omittedKeys: [],
     truncated: false,
   });
+});
+
+test("status bar formatter stays silent for normal quiet state and shows only useful bounded details", async () => {
+  const api = await loadDaseinApi();
+  const formatDaseinStatusBar = requireExportedFunction(api, "formatDaseinStatusBar", "status bar detail level formatting contract") as (input: {
+    statusDetail: "quiet" | "summary" | "diagnostic";
+    rendered: { agent: string | null; status: string | null; omittedKeys: string[]; truncated: boolean };
+    errorCount: number;
+    maxWidth?: number;
+  }) => string | undefined;
+
+  const normalClockOnly = {
+    agent: "[ambient_ctx: local=14:32]",
+    status: "time Fri 14:32 +08; utc_offset_minutes 480",
+    omittedKeys: [],
+    truncated: false,
+  };
+  assert.equal(formatDaseinStatusBar({ statusDetail: "quiet", rendered: normalClockOnly, errorCount: 0 }), undefined);
+  assert.equal(formatDaseinStatusBar({ statusDetail: "summary", rendered: normalClockOnly, errorCount: 0 }), undefined);
+  assert.equal(formatDaseinStatusBar({ statusDetail: "quiet", rendered: { ...normalClockOnly, status: "placemark loc visible" }, errorCount: 0 }), undefined);
+  assert.equal(formatDaseinStatusBar({ statusDetail: "summary", rendered: { ...normalClockOnly, status: "placemark loc visible" }, errorCount: 0 }), undefined);
+  assert.equal(formatDaseinStatusBar({ statusDetail: "summary", rendered: { ...normalClockOnly, status: "loc Singapore" }, errorCount: 0 }), "loc Singapore");
+
+  const rendered = {
+    agent: "[ambient_ctx: idle=7h; weather=heavy rain later in the afternoon]",
+    status: "time Fri 14:32 +08; user_idle 7h; weather heavy rain later in the afternoon; utc_offset_minutes 480",
+    omittedKeys: ["geo.lat"],
+    truncated: true,
+  };
+
+  const summary = formatDaseinStatusBar({ statusDetail: "summary", rendered, errorCount: 0, maxWidth: 42 });
+  assert.equal(typeof summary, "string");
+  assert.equal(visibleWidth(summary ?? "") <= 42, true);
+  assert.match(summary ?? "", /^! agent truncated · idle 7h/u);
+  assert.doesNotMatch(summary ?? "", /Dasein|Ready|time|utc_offset|\(agent hidden\)|ambient_ctx|geo\.lat/u);
+  assert.match(summary ?? "", /…/u);
+
+  const diagnostic = formatDaseinStatusBar({ statusDetail: "diagnostic", rendered, errorCount: 1, maxWidth: 120 });
+  assert.match(diagnostic ?? "", /^! degraded 1/u);
+  assert.match(diagnostic ?? "", /omitted 1/u);
+  assert.match(diagnostic ?? "", /agent truncated/u);
+});
+
+test("renderer suppresses null lapse values instead of showing idle null", async () => {
+  const api = await loadDaseinApi();
+  const renderDaseinContext = requireExportedFunction(api, "renderDaseinContext", "Testing Gate Matrix row: Renderer output contract");
+  const field = {
+    ...clockSnapshot().fields["clock.local_time"]!,
+    sensor_id: "lapse",
+    state_key: "lapse.user_idle",
+    value: null,
+    value_type: "null",
+  };
+  const rendered = renderDaseinContext({
+    config: baseConfig,
+    sensorSnapshots: [{
+      contract_version: 1,
+      schema_version: 1,
+      sensor_id: "lapse",
+      fields: { "lapse.user_idle": field },
+      collected_at: 1000,
+      stale_after_ms: 120000,
+      status: "enabled",
+      source: { sensor_id: "lapse", source_kind: "builtin" },
+    }],
+    now: 1000,
+  }) as { agent: string | null; status: string | null; omittedKeys: string[]; truncated: boolean };
+
+  assert.equal(rendered.agent, null);
+  assert.equal(rendered.status, null);
+  assert.deepEqual(rendered.omittedKeys, ["lapse.user_idle"]);
 });
 
 test("default render order is clock, lapse, geo and renderer appends remaining sensors lexicographically", async () => {
@@ -73,7 +145,7 @@ test("default render order is clock, lapse, geo and renderer appends remaining s
     now: 1000,
   }) as { agent: string | null };
 
-  assert.equal(rendered.agent, "[ambient_ctx: time=Fri_14:32+08; user_idle=7h; loc=Shanghai; value=alpha-after-builtins]");
+  assert.equal(rendered.agent, "[ambient_ctx: local=14:32; idle=7h; loc=Shanghai; value=alpha-after-builtins]");
 });
 
 test("unconfigured external keys stay UI-visible but hidden from the agent string", async () => {
@@ -84,12 +156,11 @@ test("unconfigured external keys stay UI-visible but hidden from the agent strin
     sensorSnapshots: [clockSnapshot()],
     externalStates: [{ key: "weather", agent: "secret-agent-value", ui: "human weather", source: "fixture", updatedAt: 1000, expiresAt: 61000 }],
     now: 1000,
-  }) as { agent: string | null; status: string | null; widgetLines: string[] | null; omittedKeys: string[]; truncated: boolean };
+  }) as { agent: string | null; status: string | null; omittedKeys: string[]; truncated: boolean };
 
-  assert.equal(rendered.agent, "[ambient_ctx: time=Fri_14:32+08]");
+  assert.equal(rendered.agent, "[ambient_ctx: local=14:32]");
   assert.doesNotMatch(rendered.agent ?? "", /weather|secret-agent-value/u);
   assert.match(rendered.status ?? "", /weather human weather \(agent hidden\)/u);
-  assert.deepEqual(rendered.widgetLines?.includes("weather human weather (agent hidden)"), true);
   assert.deepEqual(rendered.omittedKeys.includes("external:weather"), true);
   assert.equal(rendered.truncated, false);
 });
@@ -122,6 +193,11 @@ test("render invalidation scheduler creates exactly one timer at min stale/expir
 test("geo field-level city precision suppresses lower-precision and exact raw geo fields", async () => {
   const api = await loadDaseinApi();
   const renderDaseinContext = requireExportedFunction(api, "renderDaseinContext", "SENSORS-GATE-BLOCKER-001 field-level geo privacy regression");
+  const formatDaseinStatusBar = requireExportedFunction(api, "formatDaseinStatusBar", "status bar summary geo privacy regression") as (input: {
+    statusDetail: "quiet" | "summary" | "diagnostic";
+    rendered: { agent: string | null; status: string | null; omittedKeys: string[]; truncated: boolean };
+    errorCount: number;
+  }) => string | undefined;
   const field = (stateKey: string, value: unknown, valueType: string) => ({
     contract_version: 1,
     schema_version: 1,
@@ -156,9 +232,10 @@ test("geo field-level city precision suppresses lower-precision and exact raw ge
     config: { ...baseConfig, sensors: { ...baseConfig.sensors, geo: { ...baseConfig.sensors.geo, enabled: true, agent: true, precision: "city", exactCoordinates: false, exactAddress: false } } },
     sensorSnapshots: [geoSnapshot],
     now: 1000,
-  }) as { agent: string | null; omittedKeys: string[] };
+  }) as { agent: string | null; status: string | null; omittedKeys: string[]; truncated: boolean };
 
   assert.equal(rendered.agent, "[ambient_ctx: loc=Shanghai]");
+  assert.equal(formatDaseinStatusBar({ statusDetail: "summary", rendered, errorCount: 0 }), "loc Shanghai");
   assert.doesNotMatch(rendered.agent ?? "", /geo\.city|geo\.district|geo\.street|formattedAddress|Jing'an|Nanjing|123|31\.2304|121\.4737/u);
   assert.deepEqual(["geo.district", "geo.formattedAddress", "geo.lat", "geo.lon", "geo.street"].every((key) => rendered.omittedKeys.includes(key)), true);
 });

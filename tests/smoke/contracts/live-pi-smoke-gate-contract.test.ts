@@ -56,16 +56,16 @@ type ProofRecord = Record<string, unknown>;
 
 const refs = [
   "docs/TECHNICAL_DESIGN.md#verified-pi-mechanisms: LIVE_SMOKE_VERIFIED means observed in a live Pi process; source/API evidence alone cannot ship support claims.",
-  "docs/TECHNICAL_DESIGN.md#testing-gate-matrix: npm run test:smoke is release smoke only and requires live Pi TUI/process for SettingsList/status/widget behavior.",
-  "docs/PRD.md#9-4-tui: status footer, optional widget, and SettingsList toggles must reflect effective configuration.",
+  "docs/TECHNICAL_DESIGN.md#testing-gate-matrix: npm run test:smoke is release smoke only and requires live Pi TUI/process for SettingsList/status behavior.",
+  "docs/PRD.md#9-4-tui: status footer, explicit diagnostics, and SettingsList toggles must reflect effective configuration.",
   "CONSTITUTION.md#quality-baselines: mock tests must not be treated as integration proof; black-box liveness evidence takes precedence.",
-  "CONSTITUTION.md#ux-and-pi-interaction-red-lines: Pi/UI mechanisms need live verification with mechanism name, Pi version, binary path, and executable artifacts or signoff.",
+  "CONSTITUTION.md#ux-interaction-red-lines: Pi/UI mechanisms need live verification with mechanism name, Pi version, binary path, and executable artifacts or signoff.",
 ] as const;
 
 const checklistDefinitions = [
   {
     id: "pi.registerCommand./dasein",
-    requirement: "Live Pi registers and invokes bare /dasein plus /dasein status through the real command path.",
+    requirement: "Live Pi registers and invokes bare /dasein, /dasein status, and /dasein inspect agent through the real command path."
   },
   {
     id: "pi.registerFlag.--dasein",
@@ -80,12 +80,12 @@ const checklistDefinitions = [
     requirement: "Live pi.events publishes and receives dasein:state:set and dasein:state:clear, with set visible to system-prompt context and clear removing it.",
   },
   {
-    id: "tui.status-widget-render-clear",
-    requirement: "Live TUI renders status/widget sentinels and session_shutdown clears status and widget after Dasein cleanup.",
+    id: "tui.status-render-clear",
+    requirement: "Live TUI renders status sentinel and session_shutdown clears status after Dasein cleanup.",
   },
   {
     id: "lifecycle.before-agent-start-agent-end-cleanup",
-    requirement: "Live lifecycle runs before_agent_start and agent_end observations, then session_start/session_shutdown cleanup/clear-status/clear-widget sequence.",
+    requirement: "Live lifecycle runs before_agent_start and agent_end observations, then session_start/session_shutdown cleanup/clear-status sequence.",
   },
   {
     id: "slash.bare-dasein-non-tui-fallback",
@@ -401,13 +401,12 @@ export default function(pi) {
   return { factory, session };
 };
 
-const runTuiRenderProbe = (piBinary: string, home: string): { readonly renderedStatus: boolean; readonly renderedWidget: boolean } => {
+const runTuiRenderProbe = (piBinary: string, home: string): { readonly renderedStatus: boolean } => {
   const extensionPath = writeProbe("tui-render-probe.ts", `
 export default function(pi) {
   pi.on('session_start', (_event, ctx) => {
     console.log('DASEIN_LIVE_TUI_RENDER_SESSION ' + JSON.stringify({ mode: ctx.mode, hasUI: ctx.hasUI ?? null, uiKeys: Object.keys(ctx.ui ?? {}).sort() }));
     ctx.ui.setStatus?.('dasein-smoke', 'DASEIN_SMOKE_STATUS_RENDERED');
-    ctx.ui.setWidget?.('dasein-smoke', ['DASEIN_SMOKE_WIDGET_LINE_A', 'DASEIN_SMOKE_WIDGET_LINE_B']);
     setTimeout(() => ctx.shutdown?.(), 1200);
   });
   pi.on('session_shutdown', (_event, ctx) => console.log('DASEIN_LIVE_TUI_RENDER_SHUTDOWN ' + JSON.stringify({ mode: ctx.mode })));
@@ -423,17 +422,14 @@ export default function(pi) {
   assertOkProcess("tui-render-probe", process);
   assert.match(process.output, /DASEIN_LIVE_TUI_RENDER_SESSION .*"mode":"tui"/u);
   const renderedStatus = process.output.includes("DASEIN_SMOKE_STATUS_RENDERED");
-  const renderedWidget = process.output.includes("DASEIN_SMOKE_WIDGET_LINE_A") && process.output.includes("DASEIN_SMOKE_WIDGET_LINE_B");
   assert.equal(renderedStatus, true, "raw TUI transcript must contain the rendered footer status sentinel");
-  assert.equal(renderedWidget, true, "raw TUI transcript must contain rendered widget line sentinels");
   writeJson(join(latestArtifactDir, "tui-render-proof.json"), {
     mode: "tui",
     renderedStatus,
-    renderedWidget,
     rawArtifact: "tui-render.raw",
     textArtifact: "tui-render.raw.text",
   });
-  return { renderedStatus, renderedWidget };
+  return { renderedStatus };
 };
 
 const runSlashCommandProofProbe = (piBinary: string, home: string): ProofRecord => {
@@ -472,6 +468,10 @@ export default function(pi) {
           proof.invocations.push({ name, literalInvoked: '/' + name, args, mode: ctx.mode });
           const result = await options.handler(args, ctx);
           proof.results.push(result);
+          if (args === 'status') {
+            proof.invocations.push({ name, literalInvoked: '/' + name, args: 'inspect agent', mode: ctx.mode, synthetic: true });
+            proof.results.push(await options.handler('inspect agent', ctx));
+          }
           console.log('DASEIN_LIVE_SLASH_COMMAND_PROOF ' + safeJson(proof));
           return result;
         },
@@ -500,6 +500,12 @@ export default function(pi) {
   assert.equal(invocations.some((entry) => entry.name === "dasein" && entry.literalInvoked === "/dasein" && entry.args === "status" && entry.mode === "print"), true);
   const statusResult = results.find((entry) => entry.ok === true && entry.command === "status");
   assert.ok(statusResult, "live /dasein status must return a successful status command result");
+  const inspectResult = results.find((entry) => entry.ok === true && entry.command === "inspect");
+  assert.ok(inspectResult, "live /dasein inspect agent must return a successful inspect command result");
+  const inspectData = recordOf(inspectResult.data, "slashCommandProof.inspect.data");
+  assert.equal(inspectData.source, "pre-rendered-memory");
+  assert.equal(typeof inspectData.renderedAgent === "string" || inspectData.renderedAgent === null, true);
+  if (inspectData.renderedAgent !== null) assert.match(String(inspectData.systemPromptBlock), /<DaseinAmbientContext>/u);
   const statusData = recordOf(statusResult.data, "slashCommandProof.status.data");
   const hiddenContributors = recordArrayOf(statusData.hiddenContributors, "slashCommandProof.status.data.hiddenContributors");
   assert.equal(hiddenContributors.some((entry) => entry.key === "geo" && entry.hiddenReason === "disabled" && recordOf(entry.sensorMetadata, "geo hidden contributor metadata").key === "geo"), true, "live /dasein status must keep disabled geo inspectable through hiddenContributors");
@@ -511,7 +517,7 @@ export default function(pi) {
 
 const runLaunchFlagProofProbe = (piBinary: string, home: string): ProofRecord => {
   const daseinEntryPath = join(repoRoot, "src", "index.ts");
-  const launchValue = "core.agentInjectionEnabled=false,core.statusEnabled=false,core.widgetEnabled=false";
+  const launchValue = "core.agentInjectionEnabled=false,core.statusEnabled=false";
   const extensionPath = writeProbe("launch-flag-proof-probe.ts", `
 import createDaseinExtension from ${JSON.stringify(daseinEntryPath)};
 import { fauxAssistantMessage, registerFauxProvider } from '@earendil-works/pi-ai';
@@ -707,7 +713,7 @@ export default function(pi) {
   assert.equal(proof.returnedSystemPromptMatchesEvent, true);
   const promptTail = String(proof.systemPromptTail);
   assert.match(promptTail, /<DaseinAmbientContext>\nLocal ambient context for relevance only\./u);
-  assert.match(promptTail, /time=/u);
+  assert.match(promptTail, /local=/u);
   assert.doesNotMatch(promptTail, /\[ambient_ctx:/u);
   writeJson(join(latestArtifactDir, "context-injection-proof.json"), proof);
   return proof;
@@ -866,7 +872,6 @@ export default function(pi) {
     observedEvents: [],
     cleanupCalls: [],
     uiStatusCalls: [],
-    uiWidgetCalls: [],
   };
   const wrapContext = (ctx, phase) => ({
     ...ctx,
@@ -875,10 +880,6 @@ export default function(pi) {
       setStatus(slot, value) {
         proof.uiStatusCalls.push({ phase, slot, value: value === undefined ? '__undefined__' : value });
         return ctx.ui.setStatus?.(slot, value);
-      },
-      setWidget(slot, value) {
-        proof.uiWidgetCalls.push({ phase, slot, value: value === undefined ? '__undefined__' : value });
-        return ctx.ui.setWidget?.(slot, value);
       },
       custom: ctx.ui.custom?.bind(ctx.ui),
     },
@@ -921,7 +922,6 @@ export default function(pi) {
   }
   assert.deepEqual(recordArrayOf(proof.cleanupCalls, "lifecycleCleanupProof.cleanupCalls").map((entry) => [entry.sensorKey, entry.timeoutMs]), [["clock", 1000], ["geo", 1000], ["lapse", 1000]]);
   assert.equal(recordArrayOf(proof.uiStatusCalls, "lifecycleCleanupProof.uiStatusCalls").some((entry) => entry.phase === "session_shutdown" && entry.slot === "dasein" && entry.value === "__undefined__"), true);
-  assert.equal(recordArrayOf(proof.uiWidgetCalls, "lifecycleCleanupProof.uiWidgetCalls").some((entry) => entry.phase === "session_shutdown" && entry.slot === "dasein" && entry.value === "__undefined__"), true);
   writeJson(join(latestArtifactDir, "lifecycle-cleanup-proof.json"), proof);
   return proof;
 };
@@ -1075,7 +1075,7 @@ const defaults = {
   core: {
     agentInjectionEnabled: true,
     statusEnabled: true,
-    widgetEnabled: false,
+    statusDetail: 'quiet',
     maxAgentChars: 240,
     injectedLabel: 'ambient_ctx',
     renderOrder: ['clock'],
@@ -1258,7 +1258,6 @@ test("live Pi smoke gate produces executable live TUI/process proof artifacts", 
     }
     assert.equal(session.mode, "print", "API probe intentionally handles print-mode input to avoid provider calls");
     assert.ok(JSON.stringify(session).includes("setStatus"));
-    assert.ok(JSON.stringify(session).includes("setWidget"));
     assert.ok(JSON.stringify(session).includes("custom"));
 
     const noFakeHostConflation = {
@@ -1283,7 +1282,7 @@ test("live Pi smoke gate produces executable live TUI/process proof artifacts", 
     const checklistRows: readonly ChecklistRow[] = [
       provenRow("pi.registerCommand./dasein", ["slash-command-proof.json", "bare-dasein-outside-tui-proof.json"], [
         "registered /dasein with rawArgs=true and completions=true",
-        "literal prompts /dasein status and /dasein invoked through live Pi print mode",
+        "literal prompts /dasein status and /dasein invoked through live Pi print mode; /dasein inspect agent returns pre-rendered-memory inspector data",
       ]),
       provenRow("pi.registerFlag.--dasein", ["launch-flag-proof.json"], [
         `--dasein=${String(launchFlagProof.argvValue)}`,
@@ -1297,9 +1296,9 @@ test("live Pi smoke gate produces executable live TUI/process proof artifacts", 
         "received dasein:state:set and dasein:state:clear through live pi.events",
         "after-set hidden default omits weather/rain; /dasein set external.weather.agent true makes it visible; after-clear omits weather/rain",
       ]),
-      provenRow("tui.status-widget-render-clear", ["tui-render-proof.json", "tui-render.raw.text", "lifecycle-cleanup-proof.json"], [
-        "raw TUI transcript contains DASEIN_SMOKE_STATUS_RENDERED and widget lines",
-        "session_shutdown setStatus/setWidget clear values are __undefined__",
+      provenRow("tui.status-render-clear", ["tui-render-proof.json", "tui-render.raw.text", "lifecycle-cleanup-proof.json"], [
+        "raw TUI transcript contains DASEIN_SMOKE_STATUS_RENDERED",
+        "session_shutdown setStatus clear value is __undefined__",
       ]),
       provenRow("lifecycle.before-agent-start-agent-end-cleanup", ["lifecycle-cleanup-proof.json", "lifecycle-cleanup.raw.text"], [
         "registered/observed session_start, before_agent_start, agent_end, session_shutdown",

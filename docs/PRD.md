@@ -7,7 +7,7 @@ Dasein is an ambient context broker and sensor framework for the Pi coding-agent
 Its purpose is to collect bounded, privacy-controlled ambient state from builtin sensors, user-added sensors, and external Pi extensions; normalize that state; and expose it to both:
 
 1. the LLM agent, through short deterministic context injection; and
-2. the human user, through Pi TUI surfaces such as a status footer, optional widgets, and configuration UI.
+2. the human user, through Pi TUI surfaces such as a status footer, explicit diagnostic commands, and configuration UI.
 
 Clock, geo, and lapse are the only builtin sensors for this product scope. Continuity is a semantic property provided by the lapse sensor, not a separate builtin sensor. They are not the core product. The core product is the framework that lets ambient state be configured, brokered, rendered, and injected safely.
 
@@ -419,6 +419,8 @@ Required user-editable configuration file:
 ~/.pi/dasein/config.json
 ```
 
+A copyable sample is maintained at `docs/config.sample.json`.
+
 The only initial runtime support path is the lapse persistence file, used only where lapse persistence is explicitly defined:
 
 ```text
@@ -437,7 +439,7 @@ The core configuration schema must include:
   "core": {
     "agentInjectionEnabled": true,
     "statusEnabled": true,
-    "widgetEnabled": false,
+    "statusDetail": "quiet",
     "maxAgentChars": 240,
     "injectedLabel": "ambient_ctx",
     "renderOrder": ["clock", "lapse", "geo"]
@@ -454,7 +456,9 @@ The core configuration schema must include:
       "ui": true,
       "agent": false,
       "precision": "city",
-      "tags": {}
+      "tags": {},
+      "exactAddress": false,
+      "exactCoordinates": false
     },
     "lapse": {
       "enabled": true,
@@ -483,7 +487,6 @@ Core defaults:
 
 - `core.agentInjectionEnabled`: `true`
 - `core.statusEnabled`: `true`
-- `core.widgetEnabled`: `false`
 - `core.maxAgentChars`: `240`
 - `core.injectedLabel`: `ambient_ctx`
 - `core.renderOrder`: `["clock", "lapse", "geo"]`
@@ -580,7 +583,7 @@ Dasein must also allow sensor-owned subcommands, including:
 
 Command path grammar:
 
-- Core paths use `core.<field>`, such as `core.agentInjectionEnabled`, `core.statusEnabled`, `core.widgetEnabled`, and `core.maxAgentChars`.
+- Core paths use `core.<field>`, such as `core.agentInjectionEnabled`, `core.statusEnabled`, `core.statusDetail`, and `core.maxAgentChars`.
 - Slash command paths must accept short sensor aliases directly, such as `geo.agent`, `geo.ui`, `geo.enabled`, `clock.precision`, and `lapse.agentFields`; the `sensors.` prefix is not required. Canonical sensor paths are defined by Technical Design and may also be accepted.
 - External visibility paths use `external.<key>.agent` and `external.<key>.ui`, such as `external.weather.agent`.
 - Sensor aliases and external keys in command paths must match `[A-Za-z0-9_-]{1,64}` and therefore cannot contain dots.
@@ -609,6 +612,7 @@ The injected context must:
 - be deterministic;
 - be bounded by `core.maxAgentChars`, default `240` characters;
 - use stable ordering from `core.renderOrder`, default `["clock", "lapse", "geo"]`, with deterministic fallback ordering for other state;
+- be a compact human-reality delta, not a dump of every collected field;
 - omit all state when `core.agentInjectionEnabled=false`;
 - omit disabled sensors;
 - omit sensors with `agent=false`;
@@ -616,6 +620,7 @@ The injected context must:
 - omit sensitive details unless explicitly enabled;
 - omit stale readings or mark them stale according to render config and sensor render behavior;
 - avoid branding-heavy labels;
+- avoid redundant time representations: do not include local time, timezone, and UTC offset together when one canonical value is enough;
 - enter the model through Pi's per-turn system/developer prompt path, not through a user-role message.
 
 The injection path must not perform sensor refresh work, filesystem reads, network calls, CoreLocation/helper subprocess calls, or other fresh computation. It must render only the current in-memory readings and external state.
@@ -625,7 +630,7 @@ Dasein must append ambient context during `before_agent_start` by returning an u
 The renderer's canonical diagnostic label remains neutral:
 
 ```text
-[ambient_ctx: local_time=14:32; user_idle=4m]
+[ambient_ctx: local=14:32; idle=4m]
 ```
 
 That string is a renderer/debug representation, not default human-facing UI and not a transcript message. Dasein must not show raw `[ambient_ctx: ...]` text in the default TUI status footer, editor-adjacent chrome, default settings surface, or user-message transcript. Raw renderer payload may appear only in explicit diagnostics/debug proof paths.
@@ -639,16 +644,23 @@ The default label must not be:
 Dasein must not inject priority semantics such as `low_priority` by default.
 
 ### 7.10 Human TUI Surfaces
-
 Dasein must expose ambient context to the human TUI through:
 
 - a status footer;
-- an optional widget;
+- explicit diagnostic commands, including `/dasein status`, `/dasein sensors`, and `/dasein inspect agent`;
 - a `SettingsList` configuration UI.
 
-The status footer must respect `core.statusEnabled`. The default footer is a quiet summary such as `Dasein · Ready` or `Dasein · Degraded (N)`, not a raw field dump. It must not show raw sensor keys, epoch/ISO timestamps, agent IDs, manifest digests, or raw `[ambient_ctx: ...]` text by default.
+The status footer must respect `core.statusEnabled`. Status is not a readiness badge: normal operation with no attention-worthy state should render no persistent Dasein footer text. `core.statusDetail` controls footer behavior:
 
-The optional widget must respect `core.widgetEnabled`. Both surfaces must omit disabled sensors, sensors with `ui=false`, and external values whose per-key config has `ui=false`.
+- `quiet`: silent unless there is an anomaly, degradation, truncation, privacy exposure, remote/network activity, or enabled non-default sensor behavior that merits persistent attention.
+- `summary`: a compact agent/context exposure mirror for facts the agent may use and the human may need to keep in mind, such as meaningful idle duration, agent-visible coarse location, exact-location gates, or agent-visible external context. UI-only coarse location must not render as a naked `loc visible` footer item.
+- `diagnostic`: bounded debugging counters and compact useful context, such as degraded mechanisms, omitted fields, and agent-context truncation.
+
+The status footer must not show raw sensor keys, epoch/ISO timestamps, duplicated timezone/UTC-offset representations, agent IDs, manifest digests, raw `[ambient_ctx: ...]` text, or redundant clock-only state by default.
+
+Dasein does not provide a persistent widget surface. If a fact is important enough for always-visible UI, it belongs in the bounded status footer; otherwise it belongs in an explicit diagnostic command. `/dasein inspect agent` is the authoritative agent-injection inspector and must show the exact pre-rendered system prompt block that would be appended for the agent, plus truncation and omitted-key metadata.
+
+Dasein UI surfaces should align with Larva Pi-extension styling discipline: use Pi TUI primitives and width helpers for TUI components, keep persistent footer text unboxed and terse, and ensure any custom overlay `render(width)` line stays within the supplied visible width.
 
 The TUI must make privacy-sensitive state inspectable on demand, especially location state, geo precision, and whether geo is available to the agent. Default surfaces should stay low-noise; diagnostics remain available through `/dasein status` and `/dasein sensors`.
 
@@ -656,7 +668,7 @@ The default SettingsList UI is common-first, not a flat diagnostic inventory. It
 
 The SettingsList UI must allow users to configure at least:
 
-- core visibility toggles: `core.agentInjectionEnabled`, `core.statusEnabled`, and `core.widgetEnabled`;
+- core visibility/detail controls: `core.agentInjectionEnabled`, `core.statusEnabled`, and `core.statusDetail`;
 - for every loaded sensor, the common fields `enabled`, `ui`, and `agent`;
 - for user-added sensors, inspectable metadata before enablement, including loader-owned provenance plus manifest-declared permissions, input classes, output fields, remote/network behavior, remote/network-capable status, declared recurring/background work, and effective `intervalMs` where applicable;
 - each sensor-declared simple config field whose type is `boolean`, `string`, `number`, or constrained string `enum`, including builtin `clock.precision` and `geo.precision`;
@@ -834,8 +846,8 @@ Current evidence note (2026-06-06): ordinary `npm test` covers all-platform unit
 ### 9.4 TUI
 
 - The status footer can show Dasein state when `core.statusEnabled=true` and is hidden when `core.statusEnabled=false`.
-- An optional widget can show richer ambient context when `core.widgetEnabled=true` and is hidden when `core.widgetEnabled=false`.
-- SettingsList allows configuration of core visibility toggles: `core.agentInjectionEnabled`, `core.statusEnabled`, and `core.widgetEnabled`.
+- `/dasein inspect agent` returns the exact current pre-rendered agent system prompt block, or an explicit no-context result when no agent context is available.
+- SettingsList allows configuration of core visibility/detail controls: `core.agentInjectionEnabled`, `core.statusEnabled`, and `core.statusDetail`.
 - SettingsList allows configuration of each loaded sensor's common `enabled`, `ui`, and `agent` fields.
 - SettingsList exposes inspectable user-added sensor metadata before enablement, including loader-owned provenance plus manifest-declared permissions, input classes, output fields, remote/network behavior, remote/network-capable status, declared recurring/background work, and effective `intervalMs` where applicable.
 - SettingsList allows configuration of sensor-declared simple fields with `boolean`, `string`, `number`, or constrained string `enum` types, including builtin `clock.precision` and `geo.precision`.
@@ -909,7 +921,7 @@ Initial success metrics are implementation-readiness metrics rather than adoptio
 ## 11. Dependencies
 
 - Pi `0.78.1` is the current minimum target until broader compatibility is tested.
-- Individual Pi mechanisms, including slash command registration, string launch flags, context-hook injection, TUI status/widget/`SettingsList`, `pi.events`, lifecycle hooks, and dynamic `.ts` sensor reload, are governed by the evidence-status table and live smoke gates in `docs/TECHNICAL_DESIGN.md`.
+- Individual Pi mechanisms, including slash command registration, string launch flags, context-hook injection, TUI status/`SettingsList`, `pi.events`, lifecycle hooks, and dynamic `.ts` sensor reload, are governed by the evidence-status table and live smoke gates in `docs/TECHNICAL_DESIGN.md`.
 - Source/API verification alone does not equal release support; release support requires the relevant live smoke gate ledger or documented fail-closed behavior for unavailable mechanisms. Fake-host integration evidence must remain separate from release support claims.
 - macOS CoreLocation for builtin geo sensor, subject to user/system permission. Native helper tests prove helper typecheck, runtime policy, and fail-closed mapping; they do not prove that a permission-blocked host can emit coordinates.
 - Swift compiler or prebuilt app-bundled helper strategy for builtin geo sensor.

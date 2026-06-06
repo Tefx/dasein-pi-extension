@@ -14,8 +14,8 @@ const refs = [
   "docs/TECHNICAL_DESIGN.md#testing-gate-matrix",
   "docs/PRD.md#7-11-sensor-reload",
   "docs/PRD.md#9-7-sensor-loading-and-reload",
-  "CONSTITUTION.md#extension-and-sensor-laws",
-  "CONSTITUTION.md#testing-and-gates",
+  "CONSTITUTION.md#architectural-dogmas",
+  "CONSTITUTION.md#quality-baselines",
 ] as const;
 
 const commandOutput = (command: string, args: readonly string[], cwd = repoRoot): { status: number | null; stdout: string; stderr: string; signal: NodeJS.Signals | null } => {

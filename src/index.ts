@@ -11,13 +11,16 @@ import { fileURLToPath } from "node:url";
 
 import type { DaseinExtensionContract } from "./contracts/dasein.ts";
 import {
+  buildAgentInspectCommandResult,
   buildReloadCommandResult,
   buildSensorsCommandResult,
   buildStatusCommandResult,
   classifyPiSupport,
+  compactAgentInspectCommandMessage,
   executeDaseinCommand,
   makeDaseinCommandResult,
   parseLaunchAssignments,
+  type AgentInspectCommandData,
   type DaseinCommandResult,
   type DaseinStatusError,
   type PiMechanismError,
@@ -32,6 +35,11 @@ import { createExternalStateBridge } from "./core/external-events.ts";
 import { injectAmbientSystemPrompt } from "./core/injector.ts";
 import { createDaseinLifecycle, reloadDaseinRuntime, type DaseinReloadResult } from "./core/lifecycle.ts";
 import { renderDaseinContext } from "./core/renderer.ts";
+import { createAgentInspectOverlayComponent } from "./ui/agent-inspect-overlay.ts";
+import { DASEIN_SETTINGS_OVERLAY_HINT } from "./ui/overlay-hints.ts";
+import { renderDaseinOverlayFrame } from "./ui/overlay-frame.ts";
+import { daseinSettingDisplayDescription, daseinSettingDisplayLabel, stripSettingsListPeerHintLines } from "./ui/settings-copy.ts";
+import { formatDaseinStatusBar } from "./ui/status-format.ts";
 import { cancelRuntimeTimer, scheduleRuntimeTimer, type RuntimeTimer } from "./core/runtime-timers.ts";
 import { createSensorRuntime, normalizeSensorRefreshResult, type SensorRuntimeHarness } from "./core/sensor-runtime.ts";
 import {
@@ -132,6 +140,11 @@ export {
   createRenderInvalidationScheduler,
   renderDaseinContext,
 } from "./core/renderer.ts";
+export { createAgentInspectOverlayComponent } from "./ui/agent-inspect-overlay.ts";
+export { DASEIN_SETTINGS_OVERLAY_HINT, daseinScrollableOverlayHint } from "./ui/overlay-hints.ts";
+export { renderDaseinOverlayFrame } from "./ui/overlay-frame.ts";
+export { daseinSettingDisplayDescription, daseinSettingDisplayLabel, stripSettingsListPeerHintLines } from "./ui/settings-copy.ts";
+export { DASEIN_STATUS_BAR_DEFAULT_MAX_WIDTH, formatDaseinStatusBar } from "./ui/status-format.ts";
 export {
   formatAmbientSystemPromptBlock,
   injectAmbientSystemPrompt,
@@ -164,7 +177,6 @@ export { configureGeoNativeHelper, getGeoNativeHelperRuntimePolicy, getGeoNative
 
 export interface DaseinPiUiApi {
   readonly setStatus?: (slot: string, value?: string) => void;
-  readonly setWidget?: (slot: string, value?: readonly string[] | string) => void;
   readonly custom?: (componentFactory: unknown, options?: Record<string, unknown>) => Promise<unknown> | unknown;
   readonly notify?: (message: string, level?: "info" | "success" | "warning" | "error") => void;
 }
@@ -196,7 +208,6 @@ type DaseinPiMechanism =
   | "before_agent_start"
   | "events"
   | "setStatus"
-  | "setWidget"
   | "custom"
   | "SettingsList";
 
@@ -254,7 +265,6 @@ const FEATURE_PROBE_ORDER: readonly DaseinPiMechanism[] = [
   "before_agent_start",
   "events",
   "setStatus",
-  "setWidget",
   "custom",
   "SettingsList",
 ];
@@ -271,7 +281,6 @@ const piMechanismName = (mechanism: DaseinPiMechanism): string => {
   if (mechanism === "before_agent_start") return "pi.on(\"before_agent_start\")";
   if (mechanism === "events") return "pi.events";
   if (mechanism === "setStatus") return "ctx.ui.setStatus";
-  if (mechanism === "setWidget") return "ctx.ui.setWidget";
   if (mechanism === "custom") return "ctx.ui.custom";
   return mechanism;
 };
@@ -288,7 +297,7 @@ const observedBehaviorFor = (mechanism: DaseinPiMechanism): string => {
   if (mechanism === "registerFlag") return "live Pi smoke ledger pi.registerFlag.--dasein=PROVEN";
   if (mechanism === "before_agent_start") return "live Pi smoke ledger pi.before-agent-start.system-prompt-context=PROVEN";
   if (mechanism === "events") return "live Pi smoke ledger pi.events.set-clear-live=PROVEN";
-  if (mechanism === "setStatus" || mechanism === "setWidget") return "live Pi smoke ledger tui.status-widget-render-clear=PROVEN";
+  if (mechanism === "setStatus") return "live Pi smoke ledger tui.status-render-clear=PROVEN";
   if (mechanism === "custom") return "live Pi smoke ledger ctx.ui.custom.no-api-key-render-path=PROVEN";
   return "live Pi smoke ledger settingslist controls/metadata/persistence rows=PROVEN";
 };
@@ -317,7 +326,7 @@ const defaultCoreConfig = (entries: readonly SensorRegistryEntry[]): DaseinConfi
   return {
     agentInjectionEnabled: true,
     statusEnabled: true,
-    widgetEnabled: false,
+    statusDetail: "quiet",
     maxAgentChars: 240,
     injectedLabel: "ambient_ctx",
     renderOrder: DEFAULT_CORE_RENDER_ORDER.filter((key) => availableKeys.has(key)),
@@ -564,6 +573,38 @@ class DaseinAmbientContextBroker {
     return result;
   }
 
+  private async publishInspectAgentResult(result: DaseinCommandResult, context: DaseinPiExtensionContext): Promise<void> {
+    if (!result.ok || !isRecord(result.data)) {
+      context.ui?.notify?.(result.message, result.ok ? "info" : "error");
+      return;
+    }
+    const data = result.data as unknown as AgentInspectCommandData;
+    if (context.mode !== "tui" || typeof context.ui?.custom !== "function" || this.statusErrors.some((error) => error.kind === "pi_mechanism" && error.mechanism === "ctx.ui.custom")) {
+      context.ui?.notify?.(compactAgentInspectCommandMessage(data), "info");
+      return;
+    }
+
+    try {
+      await context.ui.custom(
+        (tui: unknown, _theme: unknown, _keybindings: unknown, done: (value: undefined) => void) => createAgentInspectOverlayComponent({
+          data,
+          done,
+          requestRender: () => requestTuiRender(tui),
+        }),
+        {
+          component: "DaseinAgentInspect",
+          overlay: true,
+          title: "Dasein agent inspect",
+          overlayOptions: { width: "75%", minWidth: 68, maxHeight: "85%", anchor: "center", margin: 2 },
+        },
+      );
+    } catch (caught) {
+      const message = caught instanceof Error ? caught.message : "custom unavailable";
+      this.statusErrors.push(mechanismError("custom", `custom unavailable: ${message}`));
+      context.ui?.notify?.(compactAgentInspectCommandMessage(data), "info");
+    }
+  }
+
   async command(rawArgs: unknown, context: DaseinPiExtensionContext): Promise<DaseinCommandResult> {
     await this.initialize();
     const args = typeof rawArgs === "string" ? rawArgs.trim() : "";
@@ -572,15 +613,21 @@ class DaseinAmbientContextBroker {
         await this.openSettingsSurface(context);
         return makeDaseinCommandResult({ command: "open-ui", message: "dasein: open settings" });
       }
-      return this.publishCommandResult(makeDaseinCommandResult({ command: "help", message: "dasein: status | reload | sensors | set | apply" }), context);
+      return this.publishCommandResult(makeDaseinCommandResult({ command: "help", message: "dasein: status | reload | sensors | inspect agent | set | apply" }), context);
     }
     if (args === "status") return this.publishCommandResult(this.statusResult(), context);
     if (args === "sensors") return this.publishCommandResult(this.sensorsResult(), context);
+    if (args === "inspect agent") {
+      const result = this.inspectAgentResult();
+      await this.publishInspectAgentResult(result, context);
+      return result;
+    }
     if (args === "reload") return this.publishCommandResult(await this.reloadResult(), context);
 
     const result = await executeDaseinCommand(`/dasein ${args}`, {
       discoveredSensorKeys: this.sensorKeys(),
       sensorActions: this.sensorActions(),
+      inspectAgent: this.inspectAgentOptions(),
       mutateConfig: async (command) => this.mutateFromCommand(command.assignments ?? []),
       runSensorAction: async (command) => this.runSensorAction(command.sensorKey ?? "", command.action ?? "", command.actionArgs ?? [], context),
     });
@@ -605,7 +652,6 @@ class DaseinAmbientContextBroker {
     await this.flushLapsePersistenceQueue();
     await this.persistCurrentLapseSnapshotNow();
     context.ui?.setStatus?.("dasein", undefined);
-    context.ui?.setWidget?.("dasein", undefined);
   }
 
   private async initialize(): Promise<void> {
@@ -930,17 +976,19 @@ class DaseinAmbientContextBroker {
     return rendered;
   }
 
-  private visibleStatusSummary(): string {
-    return this.statusErrors.length === 0 ? "Dasein · Ready" : `Dasein · Degraded (${this.statusErrors.length})`;
+  private visibleStatusSummary(rendered: RenderedContext): string | undefined {
+    return formatDaseinStatusBar({
+      statusDetail: this.config.core.statusDetail,
+      rendered,
+      errorCount: this.statusErrors.length,
+    });
   }
 
   private renderAndPublish(context: DaseinPiExtensionContext): void {
     const rendered = this.renderOnly();
     if (context.mode !== "tui") return;
-    if (this.config.core.statusEnabled) context.ui?.setStatus?.("dasein", this.visibleStatusSummary());
+    if (this.config.core.statusEnabled) context.ui?.setStatus?.("dasein", this.visibleStatusSummary(rendered));
     else context.ui?.setStatus?.("dasein", undefined);
-    if (this.config.core.widgetEnabled) context.ui?.setWidget?.("dasein", rendered.widgetLines ?? []);
-    else context.ui?.setWidget?.("dasein", undefined);
   }
 
   private async openSettingsSurface(context: DaseinPiExtensionContext): Promise<void> {
@@ -971,7 +1019,18 @@ class DaseinAmbientContextBroker {
           );
           return {
             render(width: number): string[] {
-              return ["Dasein settings", "", ...settingsList.render(width)];
+              const contentWidth = Math.max(1, Math.min(96, Math.floor(width) - 6));
+              return renderDaseinOverlayFrame({
+                title: "Dasein settings",
+                width,
+                maxWidth: 100,
+                lines: [
+                  "Ambient context broker controls.",
+                  DASEIN_SETTINGS_OVERLAY_HINT,
+                  "",
+                  ...stripSettingsListPeerHintLines(settingsList.render(contentWidth)),
+                ],
+              });
             },
             invalidate(): void {
               settingsList.invalidate();
@@ -982,7 +1041,12 @@ class DaseinAmbientContextBroker {
             },
           };
         },
-        { component: "SettingsList", overlay: true, title: "Dasein settings" },
+        {
+          component: "SettingsList",
+          overlay: true,
+          title: "Dasein settings",
+          overlayOptions: { width: "70%", minWidth: 64, maxHeight: "85%", anchor: "center", margin: 2 },
+        },
       );
     } catch (caught) {
       const message = caught instanceof Error ? caught.message : "custom unavailable";
@@ -1010,9 +1074,9 @@ class DaseinAmbientContextBroker {
       if (item.kind === "metadata") {
         return {
           id: item.id,
-          label: item.label,
+          label: daseinSettingDisplayLabel(item),
           currentValue: settingsValueLabel(item.value),
-          description: "Read-only inspectability metadata shown before risky controls.",
+          description: daseinSettingDisplayDescription(item),
         };
       }
       const currentValue = settingsValueLabel(item.value);
@@ -1023,10 +1087,10 @@ class DaseinAmbientContextBroker {
           : undefined;
       return {
         id: item.id,
-        label: item.label,
+        label: daseinSettingDisplayLabel(item),
         currentValue,
         ...(values === undefined ? {} : { values }),
-        description: `${item.path} via ${item.mutationBackend ?? "ConfigManager"}`,
+        description: daseinSettingDisplayDescription(item),
       };
     });
   }
@@ -1070,6 +1134,20 @@ class DaseinAmbientContextBroker {
       }];
     });
     return [...sensorContributors, ...externalContributors].sort((left, right) => `${left.kind}:${left.key}`.localeCompare(`${right.kind}:${right.key}`));
+  }
+
+  private inspectAgentOptions(): Parameters<typeof buildAgentInspectCommandResult>[0] {
+    const rendered = this.stateStore.getRenderedContext();
+    return {
+      rendered: { agent: rendered.agent, omittedKeys: rendered.omittedKeys, truncated: rendered.truncated },
+      agentInjectionEnabled: this.config.core.agentInjectionEnabled,
+      injectedLabel: this.config.core.injectedLabel,
+      source: "pre-rendered-memory",
+    };
+  }
+
+  private inspectAgentResult(): DaseinCommandResult {
+    return buildAgentInspectCommandResult(this.inspectAgentOptions());
   }
 
   private statusResult(): DaseinCommandResult {

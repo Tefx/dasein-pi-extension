@@ -12,6 +12,7 @@ import {
   riskyWeatherManifest,
   userLocalProvenance,
 } from "../fixtures/helpers/core-fixtures.ts";
+import { daseinSettingDisplayDescription, daseinSettingDisplayLabel, stripSettingsListPeerHintLines } from "../../src/ui/settings-copy.ts";
 import { buildSettingsListVisibilityModel, filterDefaultSettingsListItems } from "../../src/ui/settings-import-contract.ts";
 import type { SensorInspectabilityMetadata, SensorSpec } from "../../src/index.ts";
 import type { SettingsListControlItem, SettingsListVisibilityItem } from "../../src/ui/settings-import-contract.ts";
@@ -62,8 +63,8 @@ const weatherSpec: SensorSpec = {
   },
   manifest: riskyWeatherManifest,
   fields: {
-    notify: { label: "Notify", type: "boolean" },
-    nickname: { label: "Nickname", type: "string" },
+    notify: { label: "Notify", type: "boolean", description: "Show a local weather notification." },
+    nickname: { label: "Nickname", type: "string", description: "Human-readable weather source name." },
     precision: { label: "Precision", type: "number" },
     unit: { label: "Unit", type: "enum", values: ["celsius", "fahrenheit"] },
     tags: { label: "Tags", type: "object" },
@@ -81,6 +82,13 @@ const controlById = (items: readonly SettingsListVisibilityItem[], id: string): 
   assert.ok(found, `missing SettingsList control ${id}`);
   return found;
 };
+
+test("Dasein overlay key hints use one Larva-like separator style", async () => {
+  const api = await loadDaseinApi();
+  const daseinScrollableOverlayHint = requireExportedFunction(api, "daseinScrollableOverlayHint", "Dasein overlay key hint consistency") as (input: { scrollable: boolean; start?: number; end?: number; total?: number }) => string;
+  assert.equal(api.DASEIN_SETTINGS_OVERLAY_HINT, "↑↓ navigate • enter cycle • / search • esc close");
+  assert.equal(daseinScrollableOverlayHint({ scrollable: true, start: 2, end: 9, total: 20 }), "↑↓ scroll • PgUp/PgDn page • Home/End jump • Esc/q close • 2-9/20");
+});
 
 test("SettingsList visibility model exposes inspectability metadata before risky enable controls", () => {
   const config = {
@@ -168,7 +176,7 @@ test("default SettingsList surface is common-first and hides diagnostic metadata
   for (const expected of [
     "core.agentInjectionEnabled",
     "core.statusEnabled",
-    "core.widgetEnabled",
+    "core.statusDetail",
     "sensors.clock.enabled",
     "external.calendar.ui",
     "external.calendar.agent",
@@ -183,7 +191,41 @@ test("default SettingsList surface is common-first and hides diagnostic metadata
   ]) {
     assert.equal(defaultIds.includes(diagnosticOrAdvanced), false, `default SettingsList should not show ${diagnosticOrAdvanced}`);
   }
-  assert.equal(defaultItems.length <= 12, true, "default SettingsList should stay compact");
+  assert.equal(daseinSettingDisplayLabel(controlById(defaultItems, "core.agentInjectionEnabled")), "Agent context");
+  assert.equal(daseinSettingDisplayDescription(controlById(defaultItems, "core.agentInjectionEnabled")), "Adds enabled ambient context to the agent system prompt.");
+  assert.equal(stripSettingsListPeerHintLines(["row", "", "  Type to search · Enter/Space to change · Esc to cancel"]).join("\n"), "row");
+  assert.equal(defaultItems.length <= 13, true, "default SettingsList should stay compact");
+});
+
+test("sensor-specific SettingsList copy can come from SensorSpec labels and descriptions", () => {
+  const config = {
+    ...baseConfig,
+    sensors: {
+      ...baseConfig.sensors,
+      weather: {
+        enabled: true,
+        ui: true,
+        agent: false,
+        intervalMs: 300000,
+        notify: false,
+        nickname: "outside",
+      },
+    },
+  };
+  const items = buildSettingsListVisibilityModel({
+    config,
+    sensorMetadata: [weatherMetadata],
+    sensorSpecs: [weatherSpec],
+    externalStates: [],
+    now: () => 1000,
+  }) as readonly SettingsListVisibilityItem[];
+
+  const notify = controlById(items, "sensors.weather.notify");
+  const nickname = controlById(items, "sensors.weather.nickname");
+  assert.equal(daseinSettingDisplayLabel(notify), "Notify");
+  assert.equal(daseinSettingDisplayDescription(notify), "Show a local weather notification.");
+  assert.equal(daseinSettingDisplayLabel(nickname), "Nickname");
+  assert.equal(daseinSettingDisplayDescription(nickname), "Human-readable weather source name.");
 });
 
 test("SettingsList visibility model exposes core, common sensor, simple sensor, and live external controls only", () => {
@@ -225,7 +267,7 @@ test("SettingsList visibility model exposes core, common sensor, simple sensor, 
   for (const expectedControl of [
     "core.agentInjectionEnabled",
     "core.statusEnabled",
-    "core.widgetEnabled",
+    "core.statusDetail",
     "sensors.clock.intervalMs",
     "sensors.weather.enabled",
     "sensors.weather.ui",
@@ -242,6 +284,9 @@ test("SettingsList visibility model exposes core, common sensor, simple sensor, 
   ]) {
     assert.ok(itemIds.includes(expectedControl), `missing SettingsList control ${expectedControl}`);
   }
+
+  const statusDetail = items.find((item) => item.kind === "control" && item.id === "core.statusDetail");
+  assert.deepEqual(statusDetail?.kind === "control" ? statusDetail.options : undefined, ["quiet", "summary", "diagnostic"]);
 
   for (const omittedControl of [
     "sensors.weather.tags",
@@ -312,8 +357,8 @@ const geoSpec: SensorSpec = {
   fields: {
     precision: { label: "Location precision", type: "enum", values: ["city", "district", "street", "exact"] },
     tags: { label: "Location tags", type: "object", actionManaged: true },
-    exactAddress: { label: "Include exact address", type: "boolean" },
-    exactCoordinates: { label: "Include exact coordinates", type: "boolean" },
+    exactAddress: { label: "Exact address to agent", type: "boolean" },
+    exactCoordinates: { label: "Exact coordinates to agent", type: "boolean" },
   },
 };
 
@@ -349,6 +394,11 @@ test("SettingsList user sensor simple field mutationForValue proposals apply thr
     getEffectiveConfig(): typeof config;
   };
 
+  const statusDetailControl = controlById(items, "core.statusDetail");
+  assert.equal(statusDetailControl.mutationBackend, "ConfigManager");
+  assert.deepEqual(statusDetailControl.options, ["quiet", "summary", "diagnostic"]);
+  const statusDetailResult = await manager.applyRuntimeProposal(statusDetailControl.mutationForValue("summary"));
+  assert.equal(statusDetailResult.ok, true, `core.statusDetail=summary should apply through ConfigManager; errors=${JSON.stringify(statusDetailResult.errors)}`);
   for (const [id, value] of [
     ["sensors.weather.unit", "fahrenheit"],
     ["sensors.weather.nickname", "patio"],
@@ -362,6 +412,7 @@ test("SettingsList user sensor simple field mutationForValue proposals apply thr
   }
 
   const effective = manager.getEffectiveConfig();
+  assert.equal(effective.core.statusDetail, "summary");
   assert.equal(effective.sensors.weather.unit, "fahrenheit");
   assert.equal(effective.sensors.weather.nickname, "patio");
   assert.equal(effective.sensors.weather.precision, 3);
@@ -444,4 +495,12 @@ test("SettingsList exposes geo exact privacy controls but omits geo tags as a fl
   assert.ok(itemIds.includes("sensors.geo.exactCoordinates"));
   assert.ok(itemIds.includes("sensors.geo.exactAddress"));
   assert.equal(itemIds.includes("sensors.geo.tags"), false);
+  assert.deepEqual(
+    ["sensors.geo.precision", "sensors.geo.exactCoordinates", "sensors.geo.exactAddress"].map((id) => itemIds.indexOf(id) >= 0),
+    [true, true, true],
+  );
+  assert.equal(itemIds.indexOf("sensors.geo.precision") < itemIds.indexOf("sensors.geo.exactCoordinates"), true);
+  assert.equal(itemIds.indexOf("sensors.geo.exactCoordinates") < itemIds.indexOf("sensors.geo.exactAddress"), true);
+  assert.equal(daseinSettingDisplayLabel(controlById(items, "sensors.geo.exactCoordinates")), "Exact coordinates to agent");
+  assert.equal(daseinSettingDisplayDescription(controlById(items, "sensors.geo.exactAddress")), "Permit formatted address/name only when location precision is exact.");
 });

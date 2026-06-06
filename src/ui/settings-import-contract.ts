@@ -10,7 +10,9 @@
  *   interaction. Its visibility model output is plain data for downstream Pi UI
  *   wiring.
  */
-import { SettingsList } from "@earendil-works/pi-tui";
+import { matchesKey, SettingsList } from "@earendil-works/pi-tui";
+
+import { compareSensorFieldNamesForSettings } from "./settings-copy.ts";
 
 import type {
   ConfigMutationProposal,
@@ -39,12 +41,13 @@ export const getSettingsListTheme: SettingsThemeLoader = piCodingAgentPeer.getSe
 export type SettingsListPeerImportContract = {
   readonly SettingsList: typeof SettingsList;
   readonly getSettingsListTheme: typeof getSettingsListTheme;
+  readonly matchesKey: typeof matchesKey;
   readonly settingsListPackageName: "@earendil-works/pi-tui";
   readonly settingsThemePackageName: "@earendil-works/pi-coding-agent";
   readonly dependencyPlacement: "peerDependencies";
 };
 
-export { SettingsList };
+export { matchesKey, SettingsList };
 
 export type SettingsListValueType = "boolean" | "string" | "number" | "enum";
 export type SettingsListValue = boolean | string | number | null;
@@ -69,6 +72,7 @@ export interface SettingsListControlItem {
   readonly valueType: SettingsListValueType;
   readonly value: SettingsListValue;
   readonly options?: readonly string[];
+  readonly description?: string;
   readonly readOnly: false;
   readonly mutationBackend?: "ConfigManager";
   readonly mutationForValue: (value: SettingsListValue) => ConfigMutationProposal;
@@ -88,7 +92,8 @@ const EXTERNAL_KEY_RE = /^[A-Za-z0-9_-]{1,64}$/u;
 const EXTERNAL_TEXT_MAX_CHARS = 120;
 const EXTERNAL_TEXT_REJECT_RE = /[\u0000-\u001F\u007F\u2028\u2029]/u;
 const SIMPLE_SENSOR_FIELD_TYPES = new Set<SettingsListValueType>(["boolean", "string", "number", "enum"]);
-const CORE_TOGGLE_PATHS = ["core.agentInjectionEnabled", "core.statusEnabled", "core.widgetEnabled"] as const;
+const CORE_TOGGLE_PATHS = ["core.agentInjectionEnabled", "core.statusEnabled"] as const;
+const STATUS_DETAIL_OPTIONS = ["quiet", "summary", "diagnostic"] as const;
 const COMMON_SENSOR_FIELDS = ["enabled", "ui", "agent", "intervalMs", "timeoutMs", "staleAfterMs", "initialRefresh"] as const;
 
 const pathValue = (source: unknown, path: string): SettingsListValue => {
@@ -115,6 +120,7 @@ const control = (input: {
   readonly valueType: SettingsListValueType;
   readonly value: SettingsListValue;
   readonly options?: readonly string[];
+  readonly description?: string;
   readonly mutationBackend?: "ConfigManager";
   readonly mutationForValue?: (value: SettingsListValue) => ConfigMutationProposal;
 }): SettingsListControlItem => ({
@@ -126,6 +132,7 @@ const control = (input: {
   valueType: input.valueType,
   value: input.value,
   ...(input.options === undefined ? {} : { options: input.options }),
+  ...(input.description === undefined ? {} : { description: input.description }),
   readOnly: false,
   ...(input.mutationBackend === undefined ? {} : { mutationBackend: input.mutationBackend }),
   mutationForValue: input.mutationForValue ?? ((value) => assignment(input.path, value)),
@@ -178,7 +185,7 @@ const specFieldControls = (
   fields: Readonly<Record<string, SensorFieldSpec>>,
 ): SettingsListControlItem[] => Object.entries(fields)
   .filter(([, field]) => SIMPLE_SENSOR_FIELD_TYPES.has(field.type as SettingsListValueType) && field.actionManaged !== true)
-  .sort(([left], [right]) => left.localeCompare(right))
+  .sort(([left], [right]) => compareSensorFieldNamesForSettings(sensorKey, left, right))
   .map(([fieldName, field]) => {
     const path = `sensors.${sensorKey}.${fieldName}`;
     return control({
@@ -189,6 +196,7 @@ const specFieldControls = (
       valueType: field.type as SettingsListValueType,
       value: pathValue({ sensors: { [sensorKey]: sensorConfig } }, path),
       ...(field.type === "enum" && field.values !== undefined ? { options: field.values } : {}),
+      ...(field.description === undefined ? {} : { description: field.description }),
       mutationBackend: "ConfigManager",
       mutationForValue: (value) => configManagerAssignment(path, value),
     });
@@ -222,7 +230,7 @@ const liveExternalKeys = (
 const DEFAULT_SETTINGS_LIST_CONTROL_IDS = new Set<string>([
   "core.agentInjectionEnabled",
   "core.statusEnabled",
-  "core.widgetEnabled",
+  "core.statusDetail",
   "sensors.clock.enabled",
   "sensors.lapse.enabled",
   "sensors.geo.enabled",
@@ -257,7 +265,17 @@ export const buildSettingsListVisibilityModel = (
       value: pathValue(input.config, path),
     }));
   }
-
+  items.push(control({
+    id: "core.statusDetail",
+    section: "core",
+    label: "core.statusDetail",
+    path: "core.statusDetail",
+    valueType: "enum",
+    value: pathValue(input.config, "core.statusDetail"),
+    options: STATUS_DETAIL_OPTIONS,
+    mutationBackend: "ConfigManager",
+    mutationForValue: (value) => configManagerAssignment("core.statusDetail", value),
+  }));
   for (const entry of [...input.sensorMetadata].sort((left, right) => left.key.localeCompare(right.key))) {
     const sensorConfig = input.config.sensors[entry.key] ?? {
       enabled: false,

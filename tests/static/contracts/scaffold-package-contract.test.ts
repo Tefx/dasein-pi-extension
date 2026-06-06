@@ -7,6 +7,9 @@ import test from "node:test";
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "../../..");
 
 interface PackageJsonShape {
+  readonly private?: boolean;
+  readonly keywords?: readonly string[];
+  readonly files?: readonly string[];
   readonly dependencies?: Record<string, string>;
   readonly peerDependencies?: Record<string, string>;
   readonly devDependencies?: Record<string, string>;
@@ -37,7 +40,18 @@ const listSourceFiles = (dir: string): readonly string[] => {
 };
 
 test("package scaffold keeps zero runtime dependencies and approved Pi peers only", () => {
+  assert.equal(packageJson.private, false);
   assert.equal(packageJson.type, "module");
+  assert.equal(packageJson.keywords?.includes("pi-package"), true);
+  assert.deepEqual(packageJson.files, [
+    "index.ts",
+    "src/",
+    "docs/PRD.md",
+    "docs/TECHNICAL_DESIGN.md",
+    "docs/RELEASE.md",
+    "docs/config.sample.json",
+    "CONSTITUTION.md",
+  ]);
   assert.deepEqual(packageJson.dependencies ?? {}, {});
   assert.deepEqual(packageJson.peerDependencies, {
     "@earendil-works/pi-coding-agent": "*",
@@ -76,6 +90,18 @@ test("required npm scripts preserve the Technical Design command shapes", () => 
   assert.match(nativeTestRunner, /--import", "tsx", "--test"/u);
   assert.match(nativeTestRunner, /endsWith\("\.test\.ts"\)/u);
   assert.equal(packageJson.scripts?.["test:smoke"], "node --import tsx --test tests/smoke/**/*.test.ts");
+  assert.equal(packageJson.scripts?.["package:check"], "node scripts/check-package-manifest.mjs");
+  assert.equal(packageJson.scripts?.["release:check"], "npm run typecheck && npm test && npm run test:native && npm run package:check && npm run test:smoke");
+});
+
+test("package dry-run checker pins runtime tarball contents", () => {
+  const checker = readText("scripts/check-package-manifest.mjs");
+  assert.match(checker, /npm", \["pack", "--dry-run", "--json"\]/u);
+  assert.match(checker, /package\.json keywords must include pi-package/u);
+  assert.match(checker, /src\/native\/macos-location-helper\.swift/u);
+  assert.match(checker, /docs\/RELEASE\.md/u);
+  assert.match(checker, /docs\/config\.sample\.json/u);
+  assert.match(checker, /packed tarball contains non-runtime\/development path/u);
 });
 
 test("package.json pi.extensions includes the root symlink discovery shim when present", () => {
@@ -93,7 +119,7 @@ test("root index.ts is exactly a delegate-only shim to ./src/index.ts", () => {
 test("SettingsList/getSettingsListTheme imports resolve only through approved Pi peer dependencies", async () => {
   const settingsContractPath = "src/ui/settings-import-contract.ts";
   const settingsContract = readText(settingsContractPath);
-  assert.match(settingsContract, /import \{ SettingsList \} from "@earendil-works\/pi-tui";/);
+  assert.match(settingsContract, /import \{ matchesKey, SettingsList \} from "@earendil-works\/pi-tui";/);
   assert.match(
     settingsContract,
     /const piCodingAgentPackageName = "@earendil-works\/pi-coding-agent";/,
@@ -120,6 +146,12 @@ test("SettingsList/getSettingsListTheme imports resolve only through approved Pi
       }
     }
   }
+
+  const statusFormat = readText("src/ui/status-format.ts");
+  const overlayFrame = readText("src/ui/overlay-frame.ts");
+  assert.match(statusFormat, /import \{ truncateToWidth, visibleWidth \} from "@earendil-works\/pi-tui";/);
+  assert.match(overlayFrame, /import \{ truncateToWidth, visibleWidth, wrapTextWithAnsi \} from "@earendil-works\/pi-tui";/);
+  assert.doesNotMatch(`${statusFormat}\n${overlayFrame}`, /\.slice\(|substring\(|substr\(/u);
 
   const resolvedTuiPeer = await import.meta.resolve("@earendil-works/pi-tui");
   assert.match(resolvedTuiPeer, /@earendil-works\/pi-tui/);

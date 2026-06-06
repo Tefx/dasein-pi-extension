@@ -11,7 +11,7 @@ Dasein is a standalone local project that provides a Pi extension ambient contex
 The core product is the broker/framework, not any single sensor.
 
 - **Core framework** owns config merge, config persistence, sensor loading, state store, rendering, request-path injection, UI, command routing, external event intake, and lifecycle cleanup.
-- **Sensors** own data collection, sensor-specific state, optional structured view-fragment proposals, and sensor-specific slash actions. Core owns final prompt/status/widget strings.
+- **Sensors** own data collection, sensor-specific state, optional structured view-fragment proposals, and sensor-specific slash actions. Core owns final prompt/status strings and explicit diagnostic command payloads.
 
 Builtin sensors are limited to:
 
@@ -43,11 +43,10 @@ Current verification evidence:
 | `pi.on("before_agent_start")` per-turn system prompt modification | `0.78.1` | `/opt/homebrew/bin/pi` | `SOURCE_VERIFIED`, `LIVE_SMOKE_VERIFIED` | 2026-06-06 | `docs/extensions.md` documents `before_agent_start` and its `systemPrompt` return. Live ledger row `pi.before-agent-start.system-prompt-context=PROVEN`; artifact `context-injection-proof.json` shows Dasein appending ambient context to the chained system prompt without adding a Dasein `CustomMessage` or user-role message. | Re-run `npm run test:smoke` for release evidence. |
 | `CustomMessage display:false` conversion to LLM user message through Pi `convertToLlm` | `0.78.1` | `/opt/homebrew/bin/pi` | `SOURCE_VERIFIED` | 2026-06-06 | Pi source shows `convertToLlm` serializes extension `CustomMessage` entries as `role:"user"`; this is a negative contract for Dasein, not the default ambient-context channel. Dasein ambient context must not rely on `display:false` custom messages for hidden agent context. | Enforced by source-backed negative tests; do not claim this as live support evidence for Dasein's ambient injection path. |
 | `pi.events` for cross-extension state publishing | `0.78.1` | `/opt/homebrew/bin/pi` | `SOURCE_VERIFIED`, `LIVE_SMOKE_VERIFIED` | 2026-06-06 | `examples/extensions/event-bus.ts` documents the API. Live ledger row `pi.events.set-clear-live=PROVEN`; artifact `event-bus-proof.json` shows `dasein:state:set` and `dasein:state:clear` received through live `pi.events`. | Re-run `npm run test:smoke` for release evidence. |
-| `ctx.ui.setStatus` for persistent footer status | `0.78.1` | `/opt/homebrew/bin/pi` | `SOURCE_VERIFIED`, `LIVE_SMOKE_VERIFIED` | 2026-06-06 | `docs/extensions.md` documents `setStatus`. Live ledger row `tui.status-widget-render-clear=PROVEN`; artifacts `tui-render-proof.json`, `tui-render.raw.text`, and `lifecycle-cleanup-proof.json` show status sentinel rendering and shutdown clear calls. | Re-run `npm run test:smoke` for release evidence. |
-| `ctx.ui.setWidget` for optional editor-adjacent context display | `0.78.1` | `/opt/homebrew/bin/pi` | `SOURCE_VERIFIED`, `LIVE_SMOKE_VERIFIED` | 2026-06-06 | `docs/extensions.md` documents `setWidget`. Live ledger row `tui.status-widget-render-clear=PROVEN`; artifacts `tui-render-proof.json`, `tui-render.raw.text`, and `lifecycle-cleanup-proof.json` show widget sentinel rendering and shutdown clear calls. | Re-run `npm run test:smoke` for release evidence. |
+| `ctx.ui.setStatus` for persistent footer status | `0.78.1` | `/opt/homebrew/bin/pi` | `SOURCE_VERIFIED`, `LIVE_SMOKE_VERIFIED` | 2026-06-06 | `docs/extensions.md` documents `setStatus`. Live ledger row `tui.status-render-clear=PROVEN`; artifacts `tui-render-proof.json`, `tui-render.raw.text`, and `lifecycle-cleanup-proof.json` show status sentinel rendering and shutdown clear calls. | Re-run `npm run test:smoke` for release evidence. |
 | `ctx.ui.custom` plus `SettingsList` for interactive configuration UI | `0.78.1` | `/opt/homebrew/bin/pi` | `API_VERIFIED`, `LIVE_SMOKE_VERIFIED` | 2026-06-06 | `ctx.ui.custom` and `SettingsList` are API/source verified. Live ledger rows `settingslist.common-sensor-controls`, `settingslist.metadata-before-enable-and-persistence`, and `ctx.ui.custom.no-api-key-render-path` are `PROVEN`; artifacts include `settingslist-persistence-proof.json`, `settingslist-persistence.raw.text`, and `custom-no-api-key-proof.json`. | Re-run `npm run test:smoke`; do not treat SettingsList import availability alone as live TUI support. |
 | `ctx.mode === "tui"` guard for TUI-only rendering | `0.78.1` | `/opt/homebrew/bin/pi` | `SOURCE_VERIFIED`, `LIVE_SMOKE_VERIFIED` | 2026-06-06 | `docs/extensions.md` documents modes. Live smoke exercised both TUI rendering and print-mode fallback; artifacts `bare-dasein-outside-tui-proof.json` and `custom-no-api-key-proof.json` prove the non-TUI fallback and TUI custom path stay separated. | Re-run `npm run test:smoke` for release evidence. |
-| `session_start` and `session_shutdown` for lifecycle and cleanup | `0.78.1` | `/opt/homebrew/bin/pi` | `SOURCE_VERIFIED`, `LIVE_SMOKE_VERIFIED` | 2026-06-06 | `docs/extensions.md` documents both events. Live ledger row `lifecycle.before-agent-start-agent-end-cleanup=PROVEN`; artifact `lifecycle-cleanup-proof.json` shows startup, cleanup, per-sensor cleanup timeouts, and status/widget clear order. | Re-run `npm run test:smoke` for release evidence. |
+| `session_start` and `session_shutdown` for lifecycle and cleanup | `0.78.1` | `/opt/homebrew/bin/pi` | `SOURCE_VERIFIED`, `LIVE_SMOKE_VERIFIED` | 2026-06-06 | `docs/extensions.md` documents both events. Live ledger row `lifecycle.before-agent-start-agent-end-cleanup=PROVEN`; artifact `lifecycle-cleanup-proof.json` shows startup, cleanup, per-sensor cleanup timeouts, and status clear order. | Re-run `npm run test:smoke` for release evidence. |
 | Human input observation through `input` when available, otherwise `before_agent_start` as fallback sampling point | `0.78.1` | `/opt/homebrew/bin/pi` | `SOURCE_VERIFIED`, `LIVE_SMOKE_VERIFIED` | 2026-06-06 | `docs/extensions.md` documents `input` and `before_agent_start`. Live smoke proves the fallback observation path through `before_agent_start` in `lifecycle-cleanup-proof.json`; direct `input` availability remains a source/API-supported registration path and must not be overclaimed beyond that observation. | Re-run `npm run test:smoke`; if Pi changes lifecycle availability, fail the affected lapse observation feature closed and report it. |
 | Agent completion observation through `agent_end` | `0.78.1` | `/opt/homebrew/bin/pi` | `SOURCE_VERIFIED`, `LIVE_SMOKE_VERIFIED` | 2026-06-06 | `docs/extensions.md` documents `agent_end`; artifact `lifecycle-cleanup-proof.json` shows live `agent_end` observation. | Re-run `npm run test:smoke` for release evidence. |
 | Directory/package dynamic `.ts` sensor discovery and manual `/dasein reload` | `0.78.1` | `/opt/homebrew/bin/pi` | `API_VERIFIED`, `LIVE_SMOKE_VERIFIED` | 2026-06-06 | `npm run test:smoke` generated `.dasein/dynamic-reload-smoke/latest/checklist_receipt.json` and `dynamic-reload-proof.json`; checklist proves cache-busted import of a changed sensor, rendered context update to v2, invalid reload failure, load-error reporting, and preservation of old registry/rendered context. | Re-run `npm run test:smoke`; single-file packaged installs still must not claim user-added dynamic discovery. |
@@ -81,7 +80,7 @@ The renderer's canonical diagnostic string is:
 
 This string is a render/debug representation, not default human-facing chrome and not a transcript message. For model use, Dasein appends a bounded per-turn block to Pi's chained system prompt in `before_agent_start`; Pi then serializes that system prompt as provider-native `developer` or `system` according to provider compatibility. Dasein must not deliver this block through `CustomMessage`, because Pi `convertToLlm()` serializes custom messages as `role:"user"` even when `display:false`.
 
-In TUI mode, Dasein must not publish the raw `[ambient_ctx: ...]` string through the visible status footer or default settings surface. Human-facing status defaults to a short Dasein summary, while raw renderer payload remains inspectable only through explicit diagnostics such as `/dasein status` proof data and debug artifacts.
+In TUI mode, Dasein must not publish the raw `[ambient_ctx: ...]` string through the visible status footer or default settings surface. Human-facing status defaults to silence unless attention-worthy state exists; optional `summary` detail is a compact agent/context exposure mirror, while raw renderer payload remains inspectable only through explicit diagnostics such as `/dasein status`, `/dasein inspect agent`, proof data, and debug artifacts.
 
 Rationale: the project name `Dasein` is useful for UI and branding but too philosophically loaded for every inference payload. The raw renderer representation is useful for diagnostics but too noisy and semantically wrong for default human UI or user-message transcript.
 
@@ -168,7 +167,6 @@ dasein-pi-extension/
 │   │   └── dasein-command.ts
 │   ├── ui/
 │   │   ├── status.ts
-│   │   ├── widget.ts
 │   │   └── settings.ts
 │   ├── native/
 │   │   └── macos-location-helper.swift
@@ -184,7 +182,6 @@ The root `index.ts` shim exists because Pi's documented global extension auto-di
 ## Core Contracts
 
 ### Dasein Config
-
 ```typescript
 export type SensorKey = string;
 export type ExternalStateKey = string;
@@ -198,11 +195,12 @@ export interface DaseinConfig {
 }
 
 export type RenderOrderKey = SensorKey | `external:${ExternalStateKey}`;
+export type StatusDetailLevel = "quiet" | "summary" | "diagnostic";
 
 export interface CoreConfig {
   agentInjectionEnabled: boolean;
   statusEnabled: boolean;
-  widgetEnabled: boolean;
+  statusDetail: StatusDetailLevel;
   maxAgentChars: number;
   injectedLabel: string;
   renderOrder: RenderOrderKey[];
@@ -238,7 +236,7 @@ Key and path grammar:
 - Command aliases are not accepted for subcommands or sensor actions. Only documented command words and discovered sensor action names are valid.
 - All validation and persistence uses normalized canonical paths; user-facing results may echo both `inputPath` and `canonicalPath` when they differ.
 
-Full effective defaults after builtin sensor defaults and shared non-recurring timing defaults are composed:
+Full effective defaults after builtin sensor defaults and shared non-recurring timing defaults are composed. A copyable partial user override sample is maintained at `docs/config.sample.json` for `~/.pi/dasein/config.json`.
 
 ```json
 {
@@ -246,7 +244,7 @@ Full effective defaults after builtin sensor defaults and shared non-recurring t
   "core": {
     "agentInjectionEnabled": true,
     "statusEnabled": true,
-    "widgetEnabled": false,
+    "statusDetail": "quiet",
     "maxAgentChars": 240,
     "injectedLabel": "ambient_ctx",
     "renderOrder": ["clock", "lapse", "geo"]
@@ -294,6 +292,7 @@ Full effective defaults after builtin sensor defaults and shared non-recurring t
 Validation rules:
 
 - `version` must be `1`.
+- `core.statusDetail` must be `quiet`, `summary`, or `diagnostic`; default is `quiet`.
 - `core.maxAgentChars` must be an integer from `40` to `2000`; default is `240`.
 - `core.injectedLabel` must match `[A-Za-z0-9_.:-]{1,32}`; default is `ambient_ctx`.
 - `core.renderOrder` must contain unique render keys. A render key is either a discovered sensor key matching `[A-Za-z0-9_-]{1,64}` or an external key written as `external:<externalKey>` where `externalKey` matches the same key grammar. Unknown unprefixed sensor keys are rejected after sensor discovery; prefixed external keys are allowed even before a live external snapshot exists.
@@ -888,7 +887,6 @@ Validation rules:
 export interface RenderedContext {
   agent: string | null;
   status: string | null;
-  widgetLines: string[] | null;
   omittedKeys: string[];
   truncated: boolean;
 }
@@ -908,8 +906,6 @@ export interface DaseinStateStore {
   setRenderedAgentString(value: string | null): void;
   getRenderedStatusString(): string | null;
   setRenderedStatusString(value: string | null): void;
-  getRenderedWidgetLines(): string[] | null;
-  setRenderedWidgetLines(value: string[] | null): void;
 }
 ```
 
@@ -945,14 +941,12 @@ Atomic write behavior:
 - Startup with malformed `state.json` ignores the durable file, starts with empty durable lapse state, and records a status error only when effective `sensors.lapse.persist === true`; it must not block config loading or command registration. When effective persistence is false, startup does not read `state.json` and therefore cannot fail on malformed dormant durable state.
 
 ## Rendering Contract
-
 Renderer input is the effective config, current state store snapshots, and `now` supplied by the caller. Renderer output is stored as one value:
 
 ```typescript
 export interface RenderedContext {
   agent: string | null;
   status: string | null;
-  widgetLines: string[] | null;
   omittedKeys: string[];
   truncated: boolean;
 }
@@ -971,7 +965,7 @@ Rendering rules:
 - The renderer has two input classes: typed sensor envelope fields and sanitized external state snapshots. External state snapshots are not sensor envelopes; core still validates their keys, applies `config.external` visibility, drops expired snapshots, sanitizes the stored snapshot shape, and orders external keys separately after sensors.
 - Disabled sensors never render.
 - `agent: false` fields never enter the agent string.
-- `ui: false` fields never enter status/widget strings.
+- `ui: false` fields never enter status strings.
 - Expired external state is ignored and may be lazily removed.
 - Before formatting sensor fields, core drops keys outside `contract_version`, `schema_version`, `sensor_id`, `state_key`, `value`, `value_type`, `collected_at`, `stale_after_ms`, `status`, `source`, and `error`.
 - Before formatting external state, core drops keys outside `key`, `agent`, `ui`, `source`, `updatedAt`, and `expiresAt`.
@@ -984,22 +978,22 @@ Rendering rules:
 - The core renderer owns final truncation to `core.maxAgentChars` and sets `truncated: true` when truncation occurs.
 - `omittedKeys` contains keys skipped because of config visibility, disabled state, expiry, schema/contract mismatch, or truncation.
 - When `core.agentInjectionEnabled === false`, the renderer/state store exposes `RenderedContext.agent` and `getRenderedAgentString()` as `null` or an empty string. The injector does not read config to decide this.
-- Status rendering and `/dasein status` keep disabled and hidden contributors inspectable even when their values do not enter agent/widget output.
-- Sensor renderers must return compact `SensorViewFragment` proposals and must not self-truncate based on global max length or include preformatted final prompt/status/widget strings.
+- Status rendering and `/dasein status` keep disabled and hidden contributors inspectable even when their values do not enter agent output.
+- Sensor renderers must return compact `SensorViewFragment` proposals and must not self-truncate based on global max length or include preformatted final prompt/status strings.
 - The injected message is appended at the end of the copied Pi message list.
 
 Render invalidation scheduler:
 
 - After each render, core schedules exactly one in-memory render invalidation timer at the minimum upcoming freshness deadline: any `field.collected_at + field.stale_after_ms` from rendered sensor fields or any live external snapshot `expiresAt`.
 - If there are no rendered sensor freshness deadlines and no live external `expiresAt`, core cancels any existing invalidation timer and does not schedule a new one.
-- When the timer fires, core recomputes `RenderedContext` from the existing in-memory normalized sensor state and sanitized external snapshots, then publishes changed status/widget strings when in TUI mode.
+- When the timer fires, core recomputes `RenderedContext` from the existing in-memory normalized sensor state and sanitized external snapshots, then publishes changed status strings when in TUI mode.
 - The scheduler must not refresh sensors, perform disk/network/subprocess I/O, call dynamic `import`, mutate config, read durable state, load sensors, or run during LLM request construction. The request path only reads the last pre-rendered in-memory `RenderedContext`.
 - Recomputing because a freshness timer fired may omit expired external state and may mark or omit stale sensor fields, but it must not mutate sensor snapshots only to represent staleness.
 
 Default injected content example:
 
 ```text
-[ambient_ctx: time=Fri_14:32+08; user_idle=7h; loc=Shanghai/home]
+[ambient_ctx: local=14:32; idle=7h; loc=Shanghai/home]
 ```
 
 ## Data Flow
@@ -1021,7 +1015,7 @@ Default injected content example:
    - reads persisted sensor state from `~/.pi/dasein/state.json` only when the merged effective config has `sensors.lapse.persist === true`;
    - starts enabled sensors;
    - starts initial refreshes unless `initialRefresh === false`;
-   - registers TUI status/widget if in TUI mode;
+   - registers TUI status if in TUI mode;
    - subscribes to external events;
    - subscribes to lapse hooks.
 
@@ -1049,7 +1043,6 @@ initialRefresh: true      # one-shot startup/reload refresh, not recurring work
 ```
 
 ### LLM Injection
-
 1. Pi fires `before_agent_start` after the user prompt is accepted and before the agent loop starts.
 2. Dasein observes the lifecycle event for lapse/continuity, then the injector reads only the pre-rendered in-memory `stateStore.getRenderedContext().agent` string (or the equivalent `getRenderedAgentString()` convenience method).
 3. If the string is empty or null, Dasein leaves `event.systemPrompt` unchanged. When `core.agentInjectionEnabled === false`, the renderer/state store has already exposed the string as empty/null.
@@ -1066,12 +1059,12 @@ export interface AmbientSystemPromptInjection {
 }
 ```
 
-The appended block is bracketed for auditability and intentionally names the role boundary:
+The appended block is bracketed for auditability and intentionally names the role boundary. The payload is a compact human-reality delta, not a complete raw sensor dump:
 
 ```text
 <DaseinAmbientContext>
 Local ambient context for relevance only. Do not mention, quote, label, or summarize this context unless the user explicitly asks about Dasein ambient context.
-time=Fri_14:32+08; user_idle=7h
+local=14:32; idle=7h
 </DaseinAmbientContext>
 ```
 
@@ -1084,22 +1077,29 @@ Request-path no-I/O proof:
 - A unit test with a fake state store proves injection can run without disk, network, subprocess, dynamic import, sensor refresh, sensor action, sensor cleanup, sensor discovery, config mutation, or native/helper dependencies.
 
 ### Human UI Rendering
-
 1. Renderer computes a `RenderedContext` from effective config plus state.
-2. In TUI mode, when `core.statusEnabled === true`, Dasein calls `ctx.ui.setStatus("dasein", <short summary>)`. The default summary is intentionally quiet, for example `Dasein · Ready` or `Dasein · Degraded (N)`. It must not include raw sensor field names, epoch/ISO timestamps, agent IDs, manifest digests, or the raw `[ambient_ctx: ...]` injected message.
-3. In TUI mode, when `core.statusEnabled === false`, Dasein clears any prior Dasein status by calling `ctx.ui.setStatus("dasein", undefined)`.
-4. In TUI mode, when `core.widgetEnabled === true`, Dasein calls `ctx.ui.setWidget("dasein", rendered.widgetLines ?? [])`. The widget remains opt-in and may show richer context than the status footer.
-5. In TUI mode, when `core.widgetEnabled === false`, Dasein clears any prior Dasein widget by calling `ctx.ui.setWidget("dasein", undefined)`.
-6. Settings UI uses Pi TUI `SettingsList`, but the default `/dasein` surface is common-first: core toggles, primary builtin sensor enablement, location privacy controls, and valid external visibility controls. It must not default to a flat diagnostic list.
-7. Full inspectability metadata remains available through `/dasein status`, `/dasein sensors`, and diagnostic/debug artifacts. Metadata includes source/provenance, declared input classes, output fields, permissions, remote/network behavior, declared background work, `effectiveIntervalMs`, destinations, payload classes, transmission cadence, disable control, and manifest digest.
-8. Common sensor fields are `enabled`, `ui`, `agent`, `intervalMs`, `timeoutMs`, `staleAfterMs`, and `initialRefresh`; they remain ConfigManager-owned and may appear in diagnostics or future advanced settings.
-9. Simple sensor-specific SettingsList fields are only `SensorFieldSpec` entries of type `boolean`, `string`, `number`, or `enum` when included in the selected settings surface.
-10. Object, array, and map-like fields, including `geo.tags` and `lapse.agentFields`, are not SettingsList controls; they are managed by sensor commands or a future submenu design.
-11. Before enabling risky user-added sensors, Dasein must still expose required read-only inspectability metadata in a diagnostic/advanced path before the enabling action is accepted.
-12. For every valid external key matching `[A-Za-z0-9_-]{1,64}` that exists in config or has a live external state snapshot, the default SettingsList exposes both `external.<key>.ui` and `external.<key>.agent` controls.
-13. SettingsList must not create controls for invalid external keys, dotted external keys, expired external state, malformed external events, or object/array/map-like sensor fields.
-14. UI setting changes enter the same validated FIFO config mutation queue as slash commands and persist only canonical disk paths.
-15. Slash command results in TUI mode must provide visible feedback, such as a Pi notification, so `/dasein status` and `/dasein sensors` do not appear to do nothing when invoked from the main input.
+2. In TUI mode, when `core.statusEnabled === true`, Dasein calls `ctx.ui.setStatus("dasein", <bounded status text | undefined>)`.
+3. `core.statusDetail` controls footer detail:
+   - `quiet` is the default and normally clears the Dasein status slot; it renders only anomalies, degradation, truncation, or other attention-worthy failure states. Coarse UI-only location exposure must not become `loc visible` footer chrome.
+   - `summary` is a compact agent/context exposure mirror for facts the agent may use and the human may need to keep in mind, such as meaningful idle duration, agent-visible coarse location, exact-location gates, or agent-visible external context. UI-only coarse location must not render as a naked `loc visible` footer item. Redundant clock-only state remains silent.
+   - `diagnostic` may add counts such as omitted fields or agent truncation before contextual detail, so truncation does not hide warnings.
+4. Status footer text is capped by Dasein when Pi provides only `ctx.ui.setStatus(key, text)` and no per-extension status-slot width. Dasein uses Pi TUI `visibleWidth`/`truncateToWidth` helpers for display width, but the status API itself does not pass the available footer segment width to the extension. If Pi later exposes available status width, Dasein may pass that width into the formatter, but the formatter must still keep a conservative cap for split terminals.
+5. Status footer text must not include the raw `[ambient_ctx: ...]` injected message, epoch/ISO timestamps, manifest digests, agent IDs, exact coordinates, exact addresses, permission internals, timezone/UTC-offset repetition, baseline readiness text, or other machine/debug labels. These remain available through diagnostics or command surfaces when explicitly requested.
+6. In TUI mode, when `core.statusEnabled === false`, Dasein clears any prior Dasein status by calling `ctx.ui.setStatus("dasein", undefined)`.
+7. Dasein does not publish a persistent widget. If a fact is important enough for always-visible UI, it belongs in the bounded status footer; otherwise it belongs in explicit diagnostics such as `/dasein status`, `/dasein sensors`, or `/dasein inspect agent`.
+8. Status and settings UI use Pi TUI styling discipline compatible with the sibling Larva Pi extension: import Pi TUI primitives from `@earendil-works/pi-tui`, use Pi TUI width helpers for width-sensitive text, keep footer text unboxed/terse, render SettingsList inside a bounded overlay frame, and ensure any custom overlay `render(width)` line stays within the supplied visible width.
+9. Settings UI uses Pi TUI `SettingsList`, but the default `/dasein` surface is common-first: core agent/display toggles, `core.statusDetail`, primary builtin sensor enablement, location privacy controls, and valid external visibility controls. It must not default to a flat diagnostic list.
+10. Settings inclusion principle: expose controls that directly change user-visible display, agent-visible context, privacy, or live integration behavior. Keep raw formatter internals, complex maps/arrays, and rare diagnostic metadata outside the default settings surface.
+12. Full inspectability metadata remains available through `/dasein status`, `/dasein sensors`, and diagnostic/debug artifacts. Metadata includes source/provenance, declared input classes, output fields, permissions, remote/network behavior, declared background work, `effectiveIntervalMs`, destinations, payload classes, transmission cadence, disable control, and manifest digest.
+13. Common sensor fields are `enabled`, `ui`, `agent`, `intervalMs`, `timeoutMs`, `staleAfterMs`, and `initialRefresh`; they remain ConfigManager-owned and may appear in diagnostics or future advanced settings.
+14. Simple sensor-specific SettingsList fields are only `SensorFieldSpec` entries of type `boolean`, `string`, `number`, or `enum` when included in the selected settings surface.
+15. Object, array, and map-like fields, including `geo.tags` and `lapse.agentFields`, are not SettingsList controls; they are managed by sensor commands or a future submenu design.
+16. Before enabling risky user-added sensors, Dasein must still expose required read-only inspectability metadata in a diagnostic/advanced path before the enabling action is accepted.
+17. For every valid external key matching `[A-Za-z0-9_-]{1,64}` that exists in config or has a live external state snapshot, the default SettingsList exposes both `external.<key>.ui` and `external.<key>.agent` controls.
+18. SettingsList must not create controls for invalid external keys, dotted external keys, expired external state, malformed external events, or object/array/map-like sensor fields.
+19. UI setting changes enter the same validated FIFO config mutation queue as slash commands and persist only canonical disk paths.
+20. Slash command results in TUI mode must provide visible feedback, such as a Pi notification, so `/dasein status` and `/dasein sensors` do not appear to do nothing when invoked from the main input.
+21. Future sensor principle: separate collection (`enabled`), local display (`ui`), agent injection (`agent`), and external/integration sharing. Sensitive sensors need explicit privacy gates and status-safe label tests before their values appear in persistent footer text.
 
 ### Shutdown
 
@@ -1111,7 +1111,7 @@ On `session_shutdown`, Dasein uses a bounded cleanup sequence:
 4. aggregate cleanup/helper errors for `/dasein status` or logs, but continue shutdown;
 5. terminate remaining helpers in order: graceful terminate, wait `250ms`, then force kill if still alive;
 6. flush explicit durable state such as lapse timestamps to `~/.pi/dasein/state.json`;
-7. clear status/widget UI last where possible.
+7. clear status UI last where possible.
 
 A cleanup timeout is reported as a cleanup error. It must not block UI clearing or process exit.
 
@@ -1794,7 +1794,6 @@ Builtin inspectability manifests are deterministic:
 | `lapse` | `pi_lifecycle`, `derived` | `lapse.user_idle`, `lapse.agent_idle`, latest continuity timestamps | `none` | `capable:false`, `contactsNetworkByDefault:false`, `destinations:[]`, `payloadClasses:[]`, `transmissionCadence:"none"`, `disableControl:"none"`, `description:"none"` | `capable:true`, `kinds:["initial_refresh","recurring_interval","pi_lifecycle_observe"]`, `defaultIntervalMs:60000`, `intervalRelationship:"default_interval_sets_effective_interval_unless_overridden"`, `description:"local lapse refresh and Pi lifecycle observation"` |
 
 ### Clock
-
 Responsibilities:
 
 - format local time;
@@ -1859,8 +1858,8 @@ Actions: none for initial implementation.
 Sample render outputs:
 
 ```text
-agent: time=Fri_14:32+08
-status/widget: time Fri 14:32 +08
+agent: local=14:32
+status: <empty for redundant clock-only state>
 ```
 
 ### Geo
@@ -1981,8 +1980,8 @@ export const geoFields: Record<string, SensorFieldSpec> = {
     actionManaged: true,
     description: "Managed by /dasein geo tag actions and validated by the geo validator.",
   },
-  exactAddress: { label: "Include exact address", type: "boolean" },
-  exactCoordinates: { label: "Include exact coordinates", type: "boolean" },
+  exactAddress: { label: "Exact address to agent", type: "boolean" },
+  exactCoordinates: { label: "Exact coordinates to agent", type: "boolean" },
 };
 ```
 
@@ -2091,12 +2090,11 @@ agent precision=city: loc=Shanghai/home
 agent precision=district: loc=Jing'an/home
 agent precision=street: loc=Nanjing_W_Rd/home
 agent precision=exact: loc=31.2304,121.4737±80m/home
-status/widget unavailable: loc=unavailable(permission)
-status/widget stale: loc=stale(31m)
+status unavailable: loc=unavailable(permission)
+status stale: loc=stale(31m)
 ```
 
 ### Lapse / Continuity
-
 Responsibilities:
 
 - implement the optional `SensorSpec.observe` hook for Pi lifecycle observations;
@@ -2198,9 +2196,9 @@ ui previous-run duration = previous_agent_end_at - previous_human_input_at
 Sample render outputs:
 
 ```text
-agent: user_idle=7h
-agent: user_idle=7h; agent_idle=2m
-status/widget: idle user 7h, agent 2m
+agent: idle=7h
+agent: idle=7h; agent_idle=2m
+status: idle 7h
 ```
 
 Non-responsibilities:
@@ -2221,12 +2219,15 @@ Package/tooling choices are part of the initial implementation contract:
   - `npm run test:file -- <files>`: runs the Node TypeScript test runner for explicit file-scoped checks, using a checked-in loader strategy such as `node --import tsx --test`.
   - `npm run test:native`: runs native/macOS tests and must skip with an explicit reason on non-macOS.
   - `npm run test:smoke`: runs release smoke tests that require a live Pi TUI, including SettingsList rendering and interaction.
+  - `npm run package:check`: runs the npm package dry-run and tarball allowlist checker.
+  - `npm run release:check`: runs the release-candidate gate sequence.
+- Pi package metadata contract: `package.json.private` must be `false` for publishable release candidates; `keywords` must include `pi-package`; `files` must be a runtime allowlist; `package.json.pi.extensions` must include `./index.ts`.
 - Runtime npm dependency contract: `package.json.dependencies` must be absent or `{}` for initial scope. Pi-owned runtime imports required by documented Pi APIs must be declared in `package.json.peerDependencies` with `"*"` and must not be bundled; for the current SettingsList/getSettingsListTheme surface this means `@earendil-works/pi-tui` and, when documented runtime imports require it, `@earendil-works/pi-coding-agent`. Any non-Pi runtime dependency key is forbidden without a design update.
 - Pi extension entrypoint contract: the project must be loadable when symlinked as `~/.pi/agent/extensions/dasein`; the repository root must contain `index.ts` as the Pi auto-discovery shim, and that shim must delegate to `./src/index.ts`. `package.json.pi.extensions` may also include `./index.ts` for package/local-path install metadata, but it is not a replacement for the root shim in symlinked extension mode.
 - Required dev tooling: `typescript`, `tsx` for TypeScript test execution under Node's test runner, and Node type definitions if needed by TypeScript.
 - Dev dependencies are allowed only for TypeScript/test tooling; they must not be imported by runtime modules.
 - Tests use Node's built-in `node:test` assertions and must not introduce a second test framework without a design update.
-- Fake Pi API strategy: unit and integration tests construct a small fake Pi extension host that records registered commands, flags, lifecycle handlers, events, `ctx.mode`, `ctx.ui.setStatus`, `ctx.ui.setWidget`, and `ctx.ui.custom` calls. The fake host is the default for CI when `/opt/homebrew/bin/pi` or matching Pi APIs are unavailable.
+- Fake Pi API strategy: unit and integration tests construct a small fake Pi extension host that records registered commands, flags, lifecycle handlers, events, `ctx.mode`, `ctx.ui.setStatus`, and `ctx.ui.custom` calls. The fake host is the default for CI when `/opt/homebrew/bin/pi` or matching Pi APIs are unavailable.
 - Install modes:
   - Directory/package install keeps `src/sensors/*.ts` available and supports user-added local sensors through manual `/dasein reload`.
   - Single-file packaged install embeds a static sensor registry and does not support user-added sensors or dynamic sensor scanning.
@@ -2238,7 +2239,18 @@ Rationale: this keeps implementation boring and testable while avoiding a full P
 
 ```json
 {
+  "private": false,
   "type": "module",
+  "keywords": ["pi-package", "pi-extension", "ambient-context", "dasein"],
+  "files": [
+    "index.ts",
+    "src/",
+    "docs/PRD.md",
+    "docs/TECHNICAL_DESIGN.md",
+    "docs/RELEASE.md",
+    "docs/config.sample.json",
+    "CONSTITUTION.md"
+  ],
   "dependencies": {},
   "peerDependencies": {
     "@earendil-works/pi-coding-agent": "*",
@@ -2253,12 +2265,33 @@ Rationale: this keeps implementation boring and testable while avoiding a full P
     "test:file": "node --import tsx --test",
     "pretest:native": "node scripts/prepare-native-test-env.mjs",
     "test:native": "node scripts/run-native-tests.mjs",
-    "test:smoke": "node --import tsx --test tests/smoke/**/*.test.ts"
+    "test:smoke": "node --import tsx --test tests/smoke/**/*.test.ts",
+    "package:check": "node scripts/check-package-manifest.mjs",
+    "release:check": "npm run typecheck && npm test && npm run test:native && npm run package:check && npm run test:smoke"
   }
 }
 ```
 
-Downstream implementation may add build or lint scripts, but the required gate scripts above must remain stable. Ordinary `npm test` is the full all-platform non-native/non-smoke CI gate and must not require a live Pi TUI; it may delegate to a checked-in discovery script so native/smoke files remain excluded by construction. `npm run test:file -- <files>` is for file-scoped matrix rows; `npm run test:native` is the macOS native-helper gate and must skip explicitly on non-macOS; `npm run test:smoke` is the live Pi release smoke gate. The package/static gate must fail if runtime `dependencies` is present and non-empty; if Pi-owned runtime imports are missing from `peerDependencies` or use any range other than `"*"`; if a non-Pi runtime dependency is declared without a design update; if root `index.ts` is missing or does more than delegate to `./src/index.ts`; if `package.json.pi.extensions`, when present, does not include `./index.ts`; if the root extension entrypoint is not loadable from a symlinked `~/.pi/agent/extensions/dasein` install; or if that symlinked load cannot resolve the documented SettingsList/getSettingsListTheme imports. `devDependencies` are permitted for TypeScript/test tooling only.
+Pi package design follows `docs/packages.md`: Dasein is a source package with `package.json.pi.extensions = ["./index.ts"]`, a `pi-package` keyword for gallery/discovery, Pi-owned runtime imports declared as `peerDependencies` with `"*"`, and no bundled non-Pi runtime dependencies. The npm package tarball is intentionally a runtime source package, not a compiled `dist/` artifact, because Pi loads TypeScript extensions through its documented extension loader.
+
+`package.json.files` is a release allowlist. It MUST include the root extension shim, runtime `src/` tree, product/design/release docs needed by users, the copyable sample config, and the constitution. It MUST NOT include tests, scripts, local evidence ledgers, node_modules, vectl state, plan files, package-lock, or TypeScript project/dev-only files in the published runtime tarball.
+
+`npm run package:check` runs `npm pack --dry-run --json` and verifies both metadata and tarball contents. It is the package-shape gate for npm, git, and local-path Pi package distribution.
+
+`npm run release:check` is the release-candidate gate. It runs typecheck, ordinary non-native tests, native helper tests, package dry-run verification, and live Pi smoke. Release notes MAY cite individual gate artifacts instead of duplicating logs, but release support claims MUST remain tied to the live-smoke evidence generated for that candidate.
+
+Supported install channels:
+
+```bash
+pi install npm:dasein-pi-extension@<version>
+pi install git:<repo-url>@<tag-or-commit>
+pi install /absolute/path/to/dasein-pi-extension
+pi -e /absolute/path/to/dasein-pi-extension
+```
+
+Versioned npm specs and git refs are pinned by Pi package semantics. Project-local package installation (`pi install -l ...`) MAY be used for team trials, but Dasein runtime configuration remains under the documented Dasein config root and MUST NOT be inferred from project-local package settings.
+
+Downstream implementation may add build or lint scripts, but the required gate scripts above must remain stable. Ordinary `npm test` is the full all-platform non-native/non-smoke CI gate and must not require a live Pi TUI. `npm run test:file -- <files>` is for file-scoped matrix rows; `npm run test:native` is the macOS native-helper gate and must skip explicitly on non-macOS; `npm run test:smoke` is the live Pi release smoke gate.
 
 ## Testing Gate Matrix
 
@@ -2274,12 +2307,12 @@ The implementation scaffold above is normative. CI must run `npm run typecheck` 
 | Sensor export, install modes, provenance, and reload all-or-keep-old | `tests/unit/sensor-loader.test.ts`, `tests/unit/reload.test.ts`, `tests/unit/install-mode.test.ts` | `npm run test:file -- tests/unit/sensor-loader.test.ts tests/unit/reload.test.ts tests/unit/install-mode.test.ts` | Directory/package install scans `<extension_root>/src/sensors/*.ts`; single-file packaged install uses bundled/static registry only and rejects/disables user-added sensor scanning; treats user-added `.ts` sensor modules as trusted local executable code at import time with no sandbox for top-level side effects; accepts default export exactly one `SensorSpec`; rejects named-export-only module; rejects missing `manifest`; rejects defaults missing `enabled`, `ui`, or `agent`; rejects duplicate keys; rejects sensor keys matching reserved core command words with `reserved-key` load errors; validates manifest-declared input classes, output fields, permissions, remote/network behavior, and background work; computes stable `manifestDigest` from canonical inspectability metadata/current manifest; `remote.capable=true` requires destinations, payload classes, non-`none` cadence, and disable control; `remote.capable=false` requires deterministic empty/`none` values; `backgroundWork.capable=false` requires deterministic `kinds: []`, `defaultIntervalMs: null`, `intervalRelationship: "none"`, and `description: "none"`; manifest/ack/default-off controls govern post-load refresh/action/background/network behavior only; user-added sensors with background work, remote/network behavior, or positive effective `intervalMs` stay effective disabled for module default `enabled:true`, disk `enabled:true`, launch `enabled:on`, and slash enabled-alone cases; SettingsList enable and explicit `/dasein apply sensors.<key>.enabled=true,sensors.<key>.acknowledgedManifestDigest=<current-digest>` enable only when the digest matches; manifest/digest changes invalidate old acknowledgement and force disabled again; registry provenance distinguishes `{kind:"builtin"}` from `{kind:"user_added_local_file", filePath}`; static lint/tests enforce no top-level filesystem, subprocess, network, timer, native helper, config, refresh, or action side effects in first-party/builtin sensors; load failures are retained for status/sensors output; candidate import/spec/config/renderer failure keeps old registry, old runtime, launch overlay state, runtime-overridden paths, and old rendered context; failed `DaseinReloadResult` represents config-only, sensor-only, and combined failures without requiring `sensors` for config-only failure; successful reload returns `DaseinReloadResult`; `/dasein reload` returns deterministic success/failure messages. | All platforms |
 | Sensor runtime typed state, observe hook, stale, refresh, and cleanup | `tests/unit/sensor-runtime.test.ts`, `tests/unit/lifecycle.test.ts` | `npm run test:file -- tests/unit/sensor-runtime.test.ts tests/unit/lifecycle.test.ts` | Every committed `SensorSnapshot` and field carries `contract_version`, `schema_version`, and typed-state envelope fields with `sensor_id`, `state_key`, `value`, `value_type`, `collected_at`, `stale_after_ms`, `status`, and `source`; committed snapshots never contain raw `state` or arbitrary raw sensor-returned fields outside the envelope; source kinds include `builtin`, `local_sensor`, `external_event`, and `derived`; `external_event` is used only for sensor-republished normalized state, while raw external snapshots remain separate and are not sensor envelopes; extra envelope keys are rejected or dropped before storage/render; `SensorStatus` accepts only `enabled`, `disabled`, `stale`, `error`; raw refresh returns, `SensorSpec.normalizeState`, single-output-field manifest mapping, and `SensorRefreshResult.fields` all convert into snapshots deterministically before commit; multi-field snapshots require every field envelope; allows one active refresh per sensor; `refreshNow({bypassBackoff, reason})` resolves to a normalized fresh `SensorSnapshot` or structured `SensorError`, while `scheduleRefresh(reason)` is fire-and-forget; recurring refresh uses only visible/configurable/disableable `intervalMs` scheduling with no file watcher or hidden polling; `observe` receives `input`, `before_agent_start`, and `agent_end` events for lapse without request-path I/O and without disk I/O during request construction/event handling; aborted/obsolete refresh cannot commit; stale is derived without store mutation; shutdown aborts refresh before cleanup; cleanup runs concurrently with `1000ms` timeout per sensor and aggregates errors. | All platforms |
 | External state intake and SettingsList visibility | `tests/unit/external-events.test.ts`, `tests/unit/settings-list.test.ts` | `npm run test:file -- tests/unit/external-events.test.ts tests/unit/settings-list.test.ts` | Unconfigured key defaults to `{ui:true, agent:false}`; omitted `ttlMs` defaults to `60000`; present `ttlMs` is bounded `1000..86400000`; set rejects unknown event fields; clear accepts `{key}` only; rejects multiline/control-character `agent`, `ui`, and `source` without normalization; `listExternalStates()` enumerates live snapshots; expired state is ignored; raw external snapshots are separate from sensor envelopes; SettingsList exposes read-only sensor inspectability metadata before enable controls, including remote destinations, payload classes, transmission cadence, disable control, declared background work, `effectiveIntervalMs`, and `manifestDigest`; user-added remote/network-capable or background-capable sensors remain disabled while their metadata is visible; enabling a risky user-added sensor from SettingsList writes both `enabled:true` and the matching `acknowledgedManifestDigest`; SettingsList exposes core toggles, common sensor fields including visible recurring interval controls, simple `boolean`/`string`/`number`/`enum` sensor fields, and `external.<key>.ui`/`external.<key>.agent` for valid configured/live external keys; it omits invalid/expired keys and object/array/map-like fields such as `geo.tags` and `lapse.agentFields`. | All platforms |
-| Renderer output contract | `tests/unit/renderer.test.ts` | `npm run test:file -- tests/unit/renderer.test.ts` | Produces `RenderedContext { agent, status, widgetLines, omittedKeys, truncated }`; renderer accepts typed sensor envelope fields plus sanitized external state snapshots; external snapshots are not sensor envelopes and can participate in `core.renderOrder` only with the deterministic `external:<key>` prefix; deterministic order is prefixed/unprefixed renderOrder entries, remaining sensors, then remaining external keys; every default per-sensor/per-field agent fragment is at most `240` chars before global `core.maxAgentChars` truncation unless a future explicit verbose mode exists, and core rejects/truncates/omits overlong default fragments before global truncation; after render, core schedules the next one-shot in-memory render invalidation at the minimum upcoming sensor stale deadline or external `expiresAt`, or cancels/does not schedule a timer when no rendered sensor freshness deadline and no live external `expiresAt` exist; timer fire recomputes from in-memory normalized state/external snapshots and republishes UI strings if changed, without sensor refresh, disk/network/subprocess I/O, dynamic import, config mutation, or request-path execution; tests prove stale sensor fields and expired external state are omitted or marked stale after timer fire even without another sensor event and without request-path recomputation; when `core.agentInjectionEnabled=false`, renderer/state store exposes `agent` as null/empty; optional `renderAgent`/`renderUI` hooks receive only normalized `SensorSnapshot`/`SensorStateField` data, return only structured `SensorViewFragment` proposals, never final prompt/UI strings, and cannot perform refresh/action/I/O paths; core canonicalizes labels, field-level order by `sensor_id` then `state_key`, visibility, stale handling, sanitization, truncation, and final injection/status/widget strings; truncation sets `truncated`; disabled/hidden/expired/schema/contract-invalid fields enter `omittedKeys`; disabled/hidden contributors remain inspectable by `/dasein status`; geo unavailable/stale and placemark-missing cases degrade without fabricating exact location details. | All platforms |
+| Renderer output contract | `tests/unit/renderer.test.ts` | `npm run test:file -- tests/unit/renderer.test.ts` | Produces `RenderedContext { agent, status, omittedKeys, truncated }`; renderer accepts typed sensor envelope fields plus sanitized external state snapshots; external snapshots are not sensor envelopes and can participate in `core.renderOrder` only with the deterministic `external:<key>` prefix; deterministic order is prefixed/unprefixed renderOrder entries, remaining sensors, then remaining external keys; every default per-sensor/per-field agent fragment is at most `240` chars before global `core.maxAgentChars` truncation unless a future explicit verbose mode exists, and core rejects/truncates/omits overlong default fragments before global truncation; after render, core schedules the next one-shot in-memory render invalidation at the minimum upcoming sensor stale deadline or external `expiresAt`, or cancels/does not schedule a timer when no rendered sensor freshness deadline and no live external `expiresAt` exist; timer fire recomputes from in-memory normalized state/external snapshots and republishes UI strings if changed, without sensor refresh, disk/network/subprocess I/O, dynamic import, config mutation, or request-path execution; tests prove stale sensor fields and expired external state are omitted or marked stale after timer fire even without another sensor event and without request-path recomputation; when `core.agentInjectionEnabled=false`, renderer/state store exposes `agent` as null/empty; optional `renderAgent`/`renderUI` hooks receive only normalized `SensorSnapshot`/`SensorStateField` data, return only structured `SensorViewFragment` proposals, never final prompt/UI strings, and cannot perform refresh/action/I/O paths; core canonicalizes labels, field-level order by `sensor_id` then `state_key`, visibility, stale handling, sanitization, truncation, and final injection/status strings; truncation sets `truncated`; disabled/hidden/expired/schema/contract-invalid fields enter `omittedKeys`; disabled/hidden contributors remain inspectable by `/dasein status`; geo unavailable/stale and placemark-missing cases degrade without fabricating exact location details. | All platforms |
 | Request-path no I/O | `tests/unit/injector.test.ts`, `tests/static/no-request-io.test.ts` | `npm run test:file -- tests/unit/injector.test.ts tests/static/no-request-io.test.ts` | Injector reads only the pre-rendered in-memory agent string/types through an explicit import allowlist and appends or returns no change; it does not read config, durable state, or sensor state directly; request construction does not invoke the renderer or render invalidation scheduler; fake store test performs no `fs`, `child_process`, `http`, `https`, `net`, `tls`, `dns`, `fetch`, `XMLHttpRequest`, `WebSocket`, dynamic `import`, sensor refresh/action/cleanup/discovery, config read/mutation, durable state read/write, native/helper import, or helper module work; with `core.agentInjectionEnabled=false`, the fake store exposes empty/null `agent` and injector returns no change without consulting config; static test rejects the full denylist from `src/core/injector.ts` and its request-path dependencies. | All platforms |
 | Builtin contracts | `tests/unit/sensors/clock.test.ts`, `tests/unit/sensors/geo.test.ts`, `tests/unit/sensors/lapse.test.ts` | `npm run test:file -- tests/unit/sensors/clock.test.ts tests/unit/sensors/geo.test.ts tests/unit/sensors/lapse.test.ts` | Validates builtin defaults/enums and required `enabled/ui/agent` defaults; builtin local refresh intervals are visible/configurable/disableable; clock precision is exactly `exact/minute/hour/period/date`; builtin default agent fragments are each at most `240` chars before global truncation; geo precision is exactly `city/district/street/exact`; `sensors.geo.exactCoordinates` defaults to `false`; geo exact coordinate output requires `sensors.geo.agent === true`, `sensors.geo.precision === "exact"`, and `sensors.geo.exactCoordinates === true`; exact address text requires `sensors.geo.agent === true`, `sensors.geo.precision === "exact"`, and `sensors.geo.exactAddress === true`; geo tags use canonical `{lat, lon, radius_m, label?}` under key; `geo tag list` reads effective config only, performs no refresh/scheduling/helper spawn/state read, sorts by tag name, and redacts lat/lon from text and payload unless exact coordinate gates are all true; tag add uses an existing fresh normalized snapshot or awaits `refreshNow({ bypassBackoff: true, reason: "geo_tag_add" })`, fails deterministically on structured refresh error/stale/missing coordinates, and captures `{lat, lon}` through a core-mediated proposed config mutation; `geo tag remove` fails deterministically for absent tags and deletes existing tags through `ConfigMutationProposal.deletePaths` with no persisted tombstone marker; validates helper placemark fallback and exact no-fabrication rule; validates geo unavailable/permission-denied conditions map to `status: "error"` plus `SensorError.kind`; validates `lapse.persist` independently gates durable reads/writes, `lapse.agentFields` accepts only `user_idle` and `agent_idle` and rejects `previous_run`; clock sample render; geo nearest-tag tie rule; lapse `observe` sampling/reset semantics and persisted state shape without a separate previous-run storage/history field. | All platforms |
-| Pi integration smoke | `tests/integration/pi-extension.test.ts` | `npm run test:file -- tests/integration/pi-extension.test.ts` | Requires Pi `0.78.1` or later unless compatibility tests explicitly expand support; records mechanism evidence as non-empty `evidenceStatuses` lists containing `SOURCE_VERIFIED`, `API_VERIFIED`, `LIVE_SMOKE_PENDING`, and/or `LIVE_SMOKE_VERIFIED`; docs/source-only evidence never reports live verification; fake Pi API may prove registration shape but cannot satisfy live support claims; registers `/dasein`; registers `--dasein` string flag; `before_agent_start` observes lapse and appends Dasein ambient context to the per-turn `systemPrompt`; Dasein does not append ambient `CustomMessage`/user messages by default; TUI status/widget calls are guarded by `ctx.mode === "tui"`; `core.statusEnabled=false` calls `ctx.ui.setStatus("dasein", undefined)` and `core.widgetEnabled=false` calls `ctx.ui.setWidget("dasein", undefined)`; SettingsList import/model checks remain API-shape evidence only unless paired with `npm run test:smoke` artifacts. | All platforms, with Pi APIs faked when Pi is unavailable |
+| Pi integration smoke | `tests/integration/pi-extension.test.ts` | `npm run test:file -- tests/integration/pi-extension.test.ts` | Requires Pi `0.78.1` or later unless compatibility tests explicitly expand support; records mechanism evidence as non-empty `evidenceStatuses` lists containing `SOURCE_VERIFIED`, `API_VERIFIED`, `LIVE_SMOKE_PENDING`, and/or `LIVE_SMOKE_VERIFIED`; docs/source-only evidence never reports live verification; fake Pi API may prove registration shape but cannot satisfy live support claims; registers `/dasein`; registers `--dasein` string flag; `before_agent_start` observes lapse and appends Dasein ambient context to the per-turn `systemPrompt`; Dasein does not append ambient `CustomMessage`/user messages by default; TUI status calls are guarded by `ctx.mode === "tui"`; `core.statusEnabled=false` calls `ctx.ui.setStatus("dasein", undefined)`; SettingsList import/model checks remain API-shape evidence only unless paired with `npm run test:smoke` artifacts. | All platforms, with Pi APIs faked when Pi is unavailable |
 | macOS native helper | `tests/native/macos-location-helper.test.ts` | `npm run test:native -- tests/native/macos-location-helper.test.ts` | Swift helper typechecks; directory/package installs use `<extension_root>/src/native/macos-location-helper.swift` to build and run `<extension_root>/.dasein/native/DaseinLocationHelper.app/Contents/MacOS/DaseinLocationHelper --once` with bundle id `works.earendil.dasein.location-helper` and Location Services usage strings; single-file packaged installs either expose a materialized packaged helper file path or geo fails closed with `SensorError.kind: "helper-unavailable"` and no helper spawn; timeout is `3000ms`; stdout/stderr cap at `16KiB`; helper stdout success contract is `lat`, `lon`, `accuracy_m`, `permission`, `timestamp`, and optional `placemark`, but the native gate does not claim permission-granted live coordinates; timeout/process/permission errors increment backoff; success resets backoff; manual refresh bypasses delay but not timeout; no helper spawns during backoff unless manual; no orphan helper processes after timeout/shutdown. | Run only on `process.platform === "darwin"`; skip with explicit reason on non-macOS; live coordinate availability requires separate permission-granted evidence. |
-| Pi live mechanism and SettingsList smoke release gate | `tests/smoke/contracts/live-pi-smoke-gate-contract.test.ts` | `npm run test:smoke` | Runs against a live Pi `0.78.1+` TUI/process environment; proves command registration, `--dasein`, `before_agent_start` system-prompt ambient context injection with no Dasein custom/user message fallback, `pi.events`, status/widget render and cleanup, lifecycle observation, non-TUI fallback, SettingsList common controls, inspectability metadata before enablement, canonical-path persistence, `ctx.ui.custom` without provider/API key, and no fake-host conflation. Generates `.dasein/live-pi-smoke/latest/checklist_receipt.json` with all rows proven and zero blockers when successful. | Blocking release gate with live Pi TUI/process required; not satisfied by fake Pi API alone and not run by ordinary `npm test` |
+| Pi live mechanism and SettingsList smoke release gate | `tests/smoke/contracts/live-pi-smoke-gate-contract.test.ts` | `npm run test:smoke` | Runs against a live Pi `0.78.1+` TUI/process environment; proves command registration, `--dasein`, `before_agent_start` system-prompt ambient context injection with no Dasein custom/user message fallback, `pi.events`, status render and cleanup, lifecycle observation, non-TUI fallback, SettingsList common controls, inspectability metadata before enablement, canonical-path persistence, `ctx.ui.custom` without provider/API key, and no fake-host conflation. Generates `.dasein/live-pi-smoke/latest/checklist_receipt.json` with all rows proven and zero blockers when successful. | Blocking release gate with live Pi TUI/process required; not satisfied by fake Pi API alone and not run by ordinary `npm test` |
 | Pi dynamic sensor reload live smoke release gate | `tests/smoke/contracts/pi-dynamic-reload.test.ts` | `npm run test:smoke` | Runs against a real Pi process in directory/package install mode; adds or changes a local `.ts` sensor under `<extension_root>/src/sensors`; verifies startup/manual `/dasein reload` discovers it, imports the changed module through a content-addressed hidden `.dasein-reload-...ts` copy plus `?reload` token, load failure keeps the old registry/rendered context, load errors surface in commands, and single-file packaged mode does not claim dynamic user-added sensor discovery. Generates `.dasein/dynamic-reload-smoke/latest/checklist_receipt.json` and `dynamic-reload-proof.json` when successful. | Blocking release gate with live Pi process required; not satisfied by fake Pi API alone and not run by ordinary `npm test` |
 | Behavioral guardrails | `tests/behavior/ambient-context.test.ts` | `npm run test:file -- tests/behavior/ambient-context.test.ts` | Ordinary coding prompt does not require model to mention ambient context; relevant prompt can use enabled fields; disabled fields never appear in agent string; UI shows whether sensitive fields are agent-visible; malformed publishers cannot inject multiline or overlong strings. | All platforms |
 
@@ -2299,7 +2332,7 @@ Latest live-smoke evidence generated on 2026-06-06 with `/opt/homebrew/bin/pi` `
 
 These generated artifacts are local evidence ledgers, not source files required by ordinary CI. `npm test` intentionally excludes live Pi smoke and native macOS helper gates; `npm run test:native` and `npm run test:smoke` are separate release/evidence commands.
 
-No-I/O injection, reload all-or-keep-old, config atomicity, typed-state envelope, external event rejection, durable lapse state atomicity and retention bounds, startup lapse persistence gating, command/status error typing, install-mode behavior, user-added sensor import trust-boundary warnings, builtin no-top-level-side-effect static checks, sensor inspectability metadata, remote/background manifest disclosure, remote and recurring user-added sensor default-disable behavior, geo exact-location privacy gates, geo tag list privacy/no-refresh behavior, geo tag add fresh async refresh, render-hook boundary canonicalization, per-fragment render cap, render invalidation TTL/no-deadline behavior, external render-order fairness, package approved-runtime-dependency and Pi entrypoint static checks, SettingsList external/background controls, UI status/widget clear behavior, dynamic `.ts` sensor reload live smoke, and helper cleanup are blocking gates for initial release. Live Pi smoke is a release gate for support claims, TUI behavior, and dynamic reload behavior.
+No-I/O injection, reload all-or-keep-old, config atomicity, typed-state envelope, external event rejection, durable lapse state atomicity and retention bounds, startup lapse persistence gating, command/status error typing, install-mode behavior, user-added sensor import trust-boundary warnings, builtin no-top-level-side-effect static checks, sensor inspectability metadata, remote/background manifest disclosure, remote and recurring user-added sensor default-disable behavior, geo exact-location privacy gates, geo tag list privacy/no-refresh behavior, geo tag add fresh async refresh, render-hook boundary canonicalization, per-fragment render cap, render invalidation TTL/no-deadline behavior, external render-order fairness, package approved-runtime-dependency and Pi entrypoint static checks, SettingsList external/background controls, UI status clear behavior, dynamic `.ts` sensor reload live smoke, and helper cleanup are blocking gates for initial release. Live Pi smoke is a release gate for support claims, TUI behavior, and dynamic reload behavior.
 
 ## Risks
 

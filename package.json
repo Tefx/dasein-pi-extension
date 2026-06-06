@@ -1,9 +1,27 @@
 {
   "name": "dasein-pi-extension",
   "version": "0.0.0",
-  "private": true,
+  "private": false,
   "type": "module",
   "description": "Dasein Pi ambient context broker extension.",
+  "keywords": [
+    "pi-package",
+    "pi-extension",
+    "ambient-context",
+    "dasein"
+  ],
+  "files": [
+    "index.ts",
+    "src/",
+    "docs/PRD.md",
+    "docs/TECHNICAL_DESIGN.md",
+    "docs/RELEASE.md",
+    "docs/config.sample.json",
+    "CONSTITUTION.md"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
   "dependencies": {},
   "peerDependencies": {
     "@earendil-works/pi-coding-agent": "*",
@@ -20,7 +38,9 @@
     "test:file": "node --import tsx --test",
     "pretest:native": "node scripts/prepare-native-test-env.mjs",
     "test:native": "node scripts/run-native-tests.mjs",
-    "test:smoke": "node --import tsx --test tests/smoke/**/*.test.ts"
+    "test:smoke": "node --import tsx --test tests/smoke/**/*.test.ts",
+    "package:check": "node scripts/check-package-manifest.mjs",
+    "release:check": "npm run typecheck && npm test && npm run test:native && npm run package:check && npm run test:smoke"
   },
   "devDependencies": {
     "@types/node": "^22.10.2",

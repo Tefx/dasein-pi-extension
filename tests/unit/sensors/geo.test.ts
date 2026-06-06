@@ -130,8 +130,8 @@ test("geo SensorSpec defaults, exactCoordinates/exactAddress privacy defaults, m
     exactCoordinates: false,
   });
   assert.deepEqual(geo.fields?.precision?.values, expectedPrecisions);
-  assert.deepEqual(geo.fields?.exactCoordinates, { label: "Include exact coordinates", type: "boolean" });
-  assert.deepEqual(geo.fields?.exactAddress, { label: "Include exact address", type: "boolean" });
+  assert.deepEqual(geo.fields?.exactCoordinates, { label: "Exact coordinates to agent", type: "boolean" });
+  assert.deepEqual(geo.fields?.exactAddress, { label: "Exact address to agent", type: "boolean" });
   assert.deepEqual(geo.manifest.declaredInputClasses, ["native_location", "subprocess"]);
   assert.deepEqual(geo.manifest.permissions, [
     { kind: "macos_location", required: true, reason: "CoreLocation user-approved location" },

@@ -156,10 +156,17 @@ const sampleHumanInput = (at: number, previous: LapsePersistedState): LapseState
 });
 
 const sampleAgentEnd = (at: number, previous: LapsePersistedState): LapseState => ({
-  userIdleMs: null,
-  agentIdleMs: null,
+  userIdleMs: previous.previous_human_input_at === null ? null : Math.max(0, at - previous.previous_human_input_at),
+  agentIdleMs: previous.previous_agent_end_at === null ? null : Math.max(0, at - previous.previous_agent_end_at),
   previousHumanInputAt: previous.previous_human_input_at,
   previousAgentEndAt: at,
+});
+
+const sampleRefresh = (at: number, previous: LapsePersistedState): LapseState => ({
+  userIdleMs: previous.previous_human_input_at === null ? null : Math.max(0, at - previous.previous_human_input_at),
+  agentIdleMs: previous.previous_agent_end_at === null ? null : Math.max(0, at - previous.previous_agent_end_at),
+  previousHumanInputAt: previous.previous_human_input_at,
+  previousAgentEndAt: previous.previous_agent_end_at,
 });
 
 const normalizeState = (value: LapseState, context: SensorNormalizeContext): Record<string, SensorStateField> => ({
@@ -205,12 +212,7 @@ const lapse: SensorSpec<LapseState, LapseConfig> = {
     if (!validateAgentFields(config.agentFields)) errors.push(lapseConfigError("sensors.lapse.agentFields", "lapse.agentFields may contain only user_idle and agent_idle"));
     return errors;
   },
-  refresh: () => ({
-    userIdleMs: null,
-    agentIdleMs: null,
-    previousHumanInputAt: null,
-    previousAgentEndAt: null,
-  }),
+  refresh: (context, previous) => sampleRefresh(context.now(), persistedFromSnapshot(previous)),
   observe: (event, context, previous) => {
     if (!context.config.enabled) return null;
     const at = observedAt(event, context.now());

@@ -65,7 +65,6 @@ interface RenderCandidate {
   key: string;
   agentPart: string | null;
   statusLine: string | null;
-  widgetLine: string | null;
 }
 
 interface SanitizedSensor {
@@ -241,6 +240,38 @@ const formatClockByPrecision = (value: unknown, sensorConfig: Readonly<SensorCon
   }
 };
 
+const localClockMatch = (value: string): { dow: string | null; hour: string; minute: string | null; second: string | null } | null => {
+  const match = /^(?:(?<dow>[A-Za-z]{3})_)?(?<hour>\d{2})(?::(?<minute>\d{2}))?(?::(?<second>\d{2}))?(?:[+-]\d{2}(?::?\d{2})?)?$/u.exec(value);
+  const groups = match?.groups;
+  const hour = groups?.hour;
+  if (groups === undefined || hour === undefined) return null;
+  return {
+    dow: groups.dow ?? null,
+    hour,
+    minute: groups.minute ?? null,
+    second: groups.second ?? null,
+  };
+};
+
+const formatClockAgentPart = (value: unknown, sensorConfig: Readonly<SensorConfig>): string | null => {
+  if (typeof value !== "string") return null;
+  const parts = localClockMatch(value);
+  if (parts === null) return null;
+  const period = clockPeriodForHour(Number.parseInt(parts.hour, 10));
+  switch (clockPrecisionFor(sensorConfig)) {
+    case "exact":
+      return parts.minute === null || parts.second === null ? `local=${parts.hour}` : `local=${parts.hour}:${parts.minute}:${parts.second}`;
+    case "minute":
+      return parts.minute === null ? `local=${parts.hour}` : `local=${parts.hour}:${parts.minute}`;
+    case "hour":
+      return `local=${parts.hour}`;
+    case "period":
+      return `tod=${period}`;
+    case "date":
+      return parts.dow === null ? null : `dow=${parts.dow}`;
+  }
+};
+
 const compactDuration = (milliseconds: unknown): string | null => {
   if (typeof milliseconds !== "number" || !Number.isFinite(milliseconds)) return null;
   const seconds = Math.floor(milliseconds / 1000);
@@ -332,14 +363,14 @@ const formatSensorAgentPart = (field: SensorStateField, sensorConfig: Readonly<S
     return null;
   }
   if (field.sensor_id === "clock") {
-    return field.state_key === "clock.local_time" ? `${label}=${formatAgentValue(formatClockByPrecision(field.value, sensorConfig))}` : null;
+    return field.state_key === "clock.local_time" ? formatClockAgentPart(field.value, sensorConfig) : null;
   }
   if (field.sensor_id === "lapse") {
     const agentFields = Array.isArray(sensorConfig.agentFields) ? sensorConfig.agentFields : ["user_idle"];
     const duration = compactDuration(field.value);
     if (duration === null) return null;
-    if (field.state_key === "lapse.user_idle" && agentFields.includes("user_idle")) return `${label}=${duration}`;
-    if (field.state_key === "lapse.agent_idle" && agentFields.includes("agent_idle")) return `${label}=${duration}`;
+    if (field.state_key === "lapse.user_idle" && agentFields.includes("user_idle")) return `idle=${duration}`;
+    if (field.state_key === "lapse.agent_idle" && agentFields.includes("agent_idle")) return `agent_idle=${duration}`;
     return null;
   }
   if (field.sensor_id === "geo") {
@@ -358,17 +389,22 @@ const buildSensorCandidate = (
   const humanValue = formatHumanFieldValue(field, sensorConfig);
   if (!sensorConfig.enabled) {
     omittedKeys.add(field.state_key);
-    return sensorConfig.ui ? { key: field.state_key, agentPart: null, statusLine: `${field.sensor_id} disabled`, widgetLine: null } : null;
+    return sensorConfig.ui ? { key: field.state_key, agentPart: null, statusLine: `${field.sensor_id} disabled` } : null;
   }
 
   const stale = field.status === "stale" || isFieldStale(field, now);
   if (field.status === "error") {
     omittedKeys.add(field.state_key);
-    return sensorConfig.ui ? { key: field.state_key, agentPart: null, statusLine: `${label} error`, widgetLine: `${label} error` } : null;
+    return sensorConfig.ui ? { key: field.state_key, agentPart: null, statusLine: `${label} error` } : null;
   }
   if (stale) {
     omittedKeys.add(field.state_key);
-    return sensorConfig.ui ? { key: field.state_key, agentPart: null, statusLine: `${label} stale`, widgetLine: `${label} stale` } : null;
+    return sensorConfig.ui ? { key: field.state_key, agentPart: null, statusLine: `${label} stale` } : null;
+  }
+
+  if (field.value === null) {
+    omittedKeys.add(field.state_key);
+    return null;
   }
 
   const agentPart = formatSensorAgentPart(field, sensorConfig, label);
@@ -379,10 +415,9 @@ const buildSensorCandidate = (
     omittedKeys.add(field.state_key);
   }
 
-  const statusSuffix = sensorConfig.agent ? "" : " (agent hidden)";
+  const statusSuffix = agentPart === null ? " (agent hidden)" : "";
   const statusLine = sensorConfig.ui ? `${label} ${humanValue}${statusSuffix}` : null;
-  const widgetLine = sensorConfig.ui ? `${label} ${humanValue}${statusSuffix}` : null;
-  return { key: field.state_key, agentPart, statusLine, widgetLine };
+  return { key: field.state_key, agentPart, statusLine };
 };
 
 const buildExternalCandidate = (
@@ -407,7 +442,6 @@ const buildExternalCandidate = (
     key,
     agentPart: agentAllowed ? `${external.key}=${external.snapshot.agent}` : null,
     statusLine: uiAllowed ? `${external.key} ${external.snapshot.ui}${statusSuffix}` : null,
-    widgetLine: uiAllowed ? `${external.key} ${external.snapshot.ui}${statusSuffix}` : null,
   };
 };
 
@@ -514,12 +548,10 @@ export const renderDaseinContext = (rawInput: DirectRendererInput | RendererInpu
   const candidates = buildOrderedCandidates(input, sensors, externals, omittedKeys);
   const agent = buildAgent(input.config.core, candidates, omittedKeys);
   const statusLines = candidates.map((candidate) => candidate.statusLine).filter((line): line is string => line !== null);
-  const widgetLines = candidates.map((candidate) => candidate.widgetLine).filter((line): line is string => line !== null);
 
   const rendered: RenderedContext = {
     agent: agent.agent,
     status: statusLines.length === 0 ? null : statusLines.join("; "),
-    widgetLines: widgetLines.length === 0 ? null : widgetLines,
     omittedKeys: [...omittedKeys].sort(compareText),
     truncated: agent.truncated,
   };
@@ -548,7 +580,7 @@ const defaultConfigFor = (sensorSnapshots: readonly SensorSnapshot[]): DaseinCon
   core: {
     agentInjectionEnabled: true,
     statusEnabled: true,
-    widgetEnabled: false,
+    statusDetail: "quiet",
     maxAgentChars: 240,
     injectedLabel: "ambient_ctx",
     renderOrder: builtinDefaultRenderOrder.filter((key) => sensorSnapshots.some((snapshot) => snapshot.sensor_id === key)),
@@ -591,7 +623,7 @@ export const createRenderInvalidationScheduler = (): RenderInvalidationScheduler
           refreshedSensors: false,
           performedIo: false,
           mutatedConfig: false,
-          rendered: { agent: null, status: null, widgetLines: null, omittedKeys: [], truncated: false },
+          rendered: { agent: null, status: null, omittedKeys: [], truncated: false },
         };
       }
       const config = lastInput.config ?? defaultConfigFor(lastInput.sensorSnapshots);

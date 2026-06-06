@@ -83,6 +83,7 @@ test("core config schema constants pin exact validation boundaries", () => {
   for (const rejected of CORE_INJECTED_LABEL_CONSTRAINT.rejects) {
     assert.equal(injectedLabelRegex.test(rejected), false, `${rejected} should violate injected label contract`);
   }
+
 });
 
 test("required contract surfaces are typed at module boundaries", () => {
@@ -91,7 +92,7 @@ test("required contract surfaces are typed at module boundaries", () => {
     core: {
       agentInjectionEnabled: true,
       statusEnabled: true,
-      widgetEnabled: false,
+      statusDetail: "quiet",
       maxAgentChars: 240,
       injectedLabel: "ambient_ctx",
       renderOrder: ["clock", "lapse", "geo", "external:weather"],
@@ -129,9 +130,8 @@ test("required contract surfaces are typed at module boundaries", () => {
   };
 
   const rendered = {
-    agent: "[ambient_ctx: time=14:32]",
+    agent: "[ambient_ctx: local=14:32]",
     status: "dasein: ok",
-    widgetLines: ["time=14:32"],
     omittedKeys: [],
     truncated: false,
   };
@@ -151,8 +151,6 @@ test("required contract surfaces are typed at module boundaries", () => {
     setRenderedAgentString: () => undefined,
     getRenderedStatusString: () => rendered.status,
     setRenderedStatusString: () => undefined,
-    getRenderedWidgetLines: () => rendered.widgetLines,
-    setRenderedWidgetLines: () => undefined,
   };
 
   const configManager: ConfigManager = {
@@ -195,7 +193,7 @@ test("required contract surfaces are typed at module boundaries", () => {
   const injectorContract: DaseinContextInjectorContract = {
     readSurface: "pre-rendered-in-memory-agent-string",
     inputStore: store,
-    appendedSystemPromptBlock: "<DaseinAmbientContext>\ntime=14:32\n</DaseinAmbientContext>",
+    appendedSystemPromptBlock: "<DaseinAmbientContext>\nlocal=14:32\n</DaseinAmbientContext>",
     mutatesConfig: false,
     triggersSensorWork: false,
     appendsUserMessage: false,
@@ -211,7 +209,7 @@ test("required contract surfaces are typed at module boundaries", () => {
   };
   const commandContract: CommandParserContract = {
     rootCommand: "/dasein",
-    coreCommands: ["status", "reload", "sensors", "set", "apply", "help"],
+    coreCommands: ["status", "reload", "sensors", "inspect", "set", "apply", "help"],
     sensorRoute: "/dasein <sensor-key> <action> [...args]",
     pathAliases: "short-sensor-paths-only",
     duplicateDetection: "normalized-canonical-path",
@@ -253,7 +251,7 @@ test("contract constants preserve broker boundaries and envelope keys", () => {
     "error",
     "refresh",
   ]);
-  assert.deepEqual(RENDERED_CONTEXT_KEYS, ["agent", "status", "widgetLines", "omittedKeys", "truncated"]);
+  assert.deepEqual(RENDERED_CONTEXT_KEYS, ["agent", "status", "omittedKeys", "truncated"]);
   assert.deepEqual(EXTERNAL_STATE_EVENT_TOPICS, { set: "dasein:state:set", clear: "dasein:state:clear" });
   assert.equal(SENSOR_SPEC_EXPORT_CONTRACT.moduleExport, "default");
   assert.equal(SENSOR_SPEC_EXPORT_CONTRACT.namedExportAlternativeAccepted, false);

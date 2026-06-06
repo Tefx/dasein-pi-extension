@@ -144,8 +144,8 @@ test("core renderer owns clock precision exact/minute/hour/period/date without o
   assert.doesNotMatch(renderedByPrecision.get("minute") ?? "", /14:32:45/u, "minute precision omits seconds");
   assert.match(renderedByPrecision.get("hour") ?? "", /14/u, "hour precision includes hour");
   assert.doesNotMatch(renderedByPrecision.get("hour") ?? "", /14:32/u, "hour precision omits minutes");
-  assert.match(renderedByPrecision.get("period") ?? "", /Sat_afternoon/u, "period precision renders a coarse period");
+  assert.match(renderedByPrecision.get("period") ?? "", /tod=afternoon/u, "period precision renders a coarse period");
   assert.doesNotMatch(renderedByPrecision.get("period") ?? "", /14:32|14:32:45/u, "period precision omits exact time");
-  assert.match(renderedByPrecision.get("date") ?? "", /Sat/u, "date precision keeps date/day token");
+  assert.match(renderedByPrecision.get("date") ?? "", /dow=Sat/u, "date precision keeps date/day token");
   assert.doesNotMatch(renderedByPrecision.get("date") ?? "", /14:32|14:32:45/u, "date precision omits time of day");
 });

@@ -15,6 +15,10 @@ declare module "@earendil-works/pi-tui" {
   }
 
   export function getSettingsListTheme(...args: never[]): unknown;
+  export function matchesKey(data: string, key: string): boolean;
+  export function truncateToWidth(text: string, width: number, ellipsis?: string, pad?: boolean): string;
+  export function visibleWidth(text: string): number;
+  export function wrapTextWithAnsi(text: string, width: number): string[];
 }
 
 declare module "@earendil-works/pi-coding-agent" {

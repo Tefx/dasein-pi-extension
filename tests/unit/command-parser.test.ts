@@ -11,6 +11,7 @@ type ParsedCommand = {
   sensorKey?: string;
   action?: string;
   actionArgs?: string[];
+  target?: "agent";
 };
 
 test("/dasein help is a core command before sensor routing and preserves deterministic parser output", async () => {
@@ -19,6 +20,7 @@ test("/dasein help is a core command before sensor routing and preserves determi
 
   assert.deepEqual(parseDaseinCommand("/dasein help", { discoveredSensorKeys: ["help", "geo"] }), { ok: true, command: { kind: "help" } });
   assert.deepEqual(parseDaseinCommand("/dasein status", { discoveredSensorKeys: ["status", "geo"] }), { ok: true, command: { kind: "status" } });
+  assert.deepEqual(parseDaseinCommand("/dasein inspect agent", { discoveredSensorKeys: ["inspect", "geo"] }), { ok: true, command: { kind: "inspect", target: "agent" } });
   assert.deepEqual(parseDaseinCommand("/dasein geo tag add \"home base\" 120", { discoveredSensorKeys: ["geo"] }), {
     ok: true,
     command: { kind: "sensor-action", sensorKey: "geo", action: "tag", actionArgs: ["add", "home base", "120"] },

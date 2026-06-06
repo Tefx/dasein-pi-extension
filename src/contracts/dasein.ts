@@ -33,7 +33,7 @@ export interface DaseinEntrypointContract {
 export interface DaseinSettingsImportContract {
   readonly settingsListPackageName: "@earendil-works/pi-tui";
   readonly settingsThemePackageName: "@earendil-works/pi-coding-agent";
-  readonly requiredRuntimeImports: readonly ["SettingsList", "getSettingsListTheme"];
+  readonly requiredRuntimeImports: readonly ["SettingsList", "getSettingsListTheme", "matchesKey"];
   readonly packagePlacement: "peerDependencies";
   readonly bundledRuntimeDependency: false;
   readonly liveSupportClaim: "not-claimed-by-fake-host";
@@ -45,7 +45,6 @@ export interface DaseinFakePiHostApiContract {
   readonly recordsLifecycleHandlers: true;
   readonly recordsEventBusHandlers: true;
   readonly recordsUiStatusCalls: true;
-  readonly recordsUiWidgetCalls: true;
   readonly recordsUiCustomCalls: true;
   readonly exposesMode: "tui-rpc-json-print";
   readonly supportClaimBoundary: "api-shape-only-not-live-pi-smoke";

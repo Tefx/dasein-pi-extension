@@ -79,7 +79,7 @@ export interface FakeStatusCall {
 
 export interface FakeWidgetCall {
   readonly slot: string;
-  readonly value: readonly string[] | string | undefined;
+  readonly value: unknown;
 }
 
 export interface FakeCustomCall {
@@ -112,7 +112,7 @@ export interface FakePiHostLedger {
 
 export interface FakePiUiApi {
   setStatus(slot: string, value?: string): void;
-  setWidget(slot: string, value?: readonly string[] | string): void;
+  setWidget(slot: string, value?: unknown, options?: Record<string, unknown>): void;
   custom(componentFactory: unknown, options?: Record<string, unknown>): Promise<unknown>;
 }
 

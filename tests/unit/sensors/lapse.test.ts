@@ -76,6 +76,24 @@ test("lapse SensorSpec defaults, manifest, and agentFields enum match continuity
   assert.equal("renderUI" in lapse, false, "lapse SensorSpec publishes typed state only; core owns UI rendering");
 });
 
+test("lapse refresh recomputes durations from previous timestamps without erasing continuity", async () => {
+  const lapse = await loadLapseSpec();
+  if (typeof lapse.refresh !== "function") assert.fail("lapse must implement SensorSpec.refresh");
+
+  const refreshed = await lapse.refresh(
+    { config: lapse.defaults, signal: new AbortController().signal, now: () => 70_000 },
+    previousLapseSnapshot(),
+  );
+  const text = JSON.stringify(refreshed);
+
+  assert.match(text, /userIdleMs/u);
+  assert.match(text, /60000/u, "refresh user_idle is now - previous_human_input_at");
+  assert.match(text, /agentIdleMs/u);
+  assert.match(text, /52000/u, "refresh agent_idle is now - previous_agent_end_at");
+  assert.match(text, /previousHumanInputAt/u);
+  assert.match(text, /previousAgentEndAt/u);
+});
+
 test("lapse observe samples input, suppresses duplicate before_agent_start for the same turn, and updates latest timestamps only", async () => {
   const lapse = await loadLapseSpec();
   if (typeof lapse.observe !== "function") assert.fail("lapse must implement SensorSpec.observe");

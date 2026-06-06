@@ -7,6 +7,8 @@
  * runtime collaborators.
  */
 
+import { formatAmbientSystemPromptBlock } from "../core/injector.ts";
+
 import type {
   ConfigMutationProposal,
   ConfigMutationResult,
@@ -31,6 +33,7 @@ export type DaseinCommandName =
   | "status"
   | "reload"
   | "sensors"
+  | "inspect"
   | "set"
   | "apply"
   | "sensor-action"
@@ -50,6 +53,7 @@ export interface ParsedDaseinCommand {
   sensorKey?: string;
   action?: string;
   actionArgs?: string[];
+  target?: "agent";
 }
 
 export interface CommandParseError {
@@ -194,6 +198,17 @@ export interface ReloadCommandData {
   runtimeOverriddenPaths: string[];
 }
 
+export interface AgentInspectCommandData {
+  target: "agent";
+  source: "pre-rendered-memory";
+  agentInjectionEnabled: boolean;
+  injectedLabel: string;
+  renderedAgent: string | null;
+  systemPromptBlock: string | null;
+  truncated: boolean;
+  omittedKeys: string[];
+}
+
 export interface SensorListRecord {
   key: SensorKey;
   loaded: boolean;
@@ -245,7 +260,7 @@ export interface SensorActionCommandData {
 
 export interface CommandParserContract {
   rootCommand: "/dasein";
-  coreCommands: readonly ["status", "reload", "sensors", "set", "apply", "help"];
+  coreCommands: readonly ["status", "reload", "sensors", "inspect", "set", "apply", "help"];
   sensorRoute: "/dasein <sensor-key> <action> [...args]";
   pathAliases: "short-sensor-paths-only";
   duplicateDetection: "normalized-canonical-path";
@@ -270,6 +285,7 @@ export interface ExecuteDaseinCommandOptions extends CommandParseOptions {
   status?: BuildStatusCommandResultOptions;
   sensors?: BuildSensorsCommandResultOptions;
   reload?: BuildReloadCommandResultOptions;
+  inspectAgent?: BuildAgentInspectCommandResultOptions;
 }
 
 export interface BuildStatusCommandResultOptions {
@@ -303,6 +319,13 @@ export interface BuildReloadCommandResultOptions {
   configPath?: string;
 }
 
+export interface BuildAgentInspectCommandResultOptions {
+  rendered?: Pick<RenderedContext, "agent" | "omittedKeys" | "truncated">;
+  agentInjectionEnabled?: boolean;
+  injectedLabel?: string;
+  source?: "pre-rendered-memory";
+}
+
 export interface MakeDaseinCommandResultInput {
   ok?: boolean;
   command: DaseinCommandName;
@@ -321,7 +344,7 @@ export interface PiSupportClassification {
 
 const ROOT_COMMAND = "/dasein";
 const MINIMUM_PI_VERSION = "0.78.1" as const;
-const CORE_COMMANDS = ["status", "reload", "sensors", "set", "apply", "help"] as const;
+const CORE_COMMANDS = ["status", "reload", "sensors", "inspect", "set", "apply", "help"] as const;
 const CORE_COMMAND_SET = new Set<string>(CORE_COMMANDS);
 const KEY_PATTERN = /^[A-Za-z0-9_-]{1,64}$/u;
 const SEGMENT_PATTERN = /^[A-Za-z0-9_-]{1,64}$/u;
@@ -341,7 +364,32 @@ const commandParseError = (
   extras: Pick<CommandParseError, "input" | "path"> = {},
 ): CommandParseError => ({ kind: "command_parse", code, message: singleLine(message), ...extras });
 
-const singleLine = (value: string): string => value.replace(/[\r\n\u2028\u2029]+/gu, " ");
+const singleLine = (value: string): string => value.replace(/[\r\n\u2028\u2029]+/gu, " ").replace(/\s+/gu, " ").trim();
+
+const truncateChars = (value: string, maxChars: number): string => value.length <= maxChars ? value : `${value.slice(0, Math.max(0, maxChars - 1))}…`;
+
+export const formatAgentInspectCommandLines = (data: AgentInspectCommandData): string[] => [
+  "target: agent",
+  `source: ${data.source}`,
+  `agentInjectionEnabled: ${data.agentInjectionEnabled}`,
+  `injectedLabel: ${data.injectedLabel}`,
+  `truncated: ${data.truncated}`,
+  `omittedKeys: ${data.omittedKeys.length === 0 ? "none" : data.omittedKeys.join(", ")}`,
+  "",
+  "systemPromptBlock:",
+  ...(data.systemPromptBlock === null ? ["(none)"] : data.systemPromptBlock.split("\n")),
+];
+
+export const compactAgentInspectCommandMessage = (data: Partial<AgentInspectCommandData> | undefined, maxChars = 220): string => {
+  if (data?.systemPromptBlock === null) return "dasein inspect agent: no agent context";
+  if (typeof data?.systemPromptBlock === "string" && data.systemPromptBlock.trim().length > 0) {
+    return `dasein inspect agent: ${truncateChars(singleLine(data.systemPromptBlock), maxChars)}`;
+  }
+  if (typeof data?.renderedAgent === "string" && data.renderedAgent.trim().length > 0) {
+    return `dasein inspect agent: ${truncateChars(singleLine(data.renderedAgent), maxChars)}`;
+  }
+  return "dasein inspect agent: unavailable";
+};
 
 const isSpace = (char: string): boolean => ASCII_WS.test(char);
 const isInvalidTextChar = (char: string): boolean => CONTROL_OR_LINE_SEPARATOR.test(char);
@@ -408,7 +456,7 @@ const fieldKindForPath = (canonicalPath: string): FieldKind => {
   if (canonicalPath === "core.maxAgentChars") {
     return "number";
   }
-  if (["agentInjectionEnabled", "statusEnabled", "widgetEnabled"].includes(last)) {
+  if (["agentInjectionEnabled", "statusEnabled"].includes(last)) {
     return "boolean";
   }
   if (parts[0] === "external" && ["ui", "agent"].includes(last)) {
@@ -420,7 +468,7 @@ const fieldKindForPath = (canonicalPath: string): FieldKind => {
   if (["intervalMs", "timeoutMs", "staleAfterMs"].includes(last)) {
     return "number";
   }
-  if (canonicalPath === "core.injectedLabel" || last === "acknowledgedManifestDigest" || last === "precision") {
+  if (canonicalPath === "core.injectedLabel" || canonicalPath === "core.statusDetail" || last === "acknowledgedManifestDigest" || last === "precision") {
     return "string";
   }
   return "unknown";
@@ -725,6 +773,13 @@ export const parseDaseinCommand = (input: string, options: CommandParseOptions =
     return { ok: true, command: { kind: "apply", assignments: parsed.assignments } };
   }
 
+  if (first === "inspect") {
+    if (afterFirst !== "agent") {
+      return { ok: false, errors: [commandParseError("bad-grammar", "inspect requires target: agent", { input })] };
+    }
+    return { ok: true, command: { kind: "inspect", target: "agent" } };
+  }
+
   if (CORE_COMMAND_SET.has(first)) {
     if (afterFirst.length > 0) {
       return { ok: false, errors: [commandParseError("bad-grammar", `${first} does not accept arguments`, { input })] };
@@ -760,7 +815,7 @@ const inferCommandName = (input: string): DaseinCommandName => {
   const trimmed = input.trim();
   const rest = trimmed.startsWith(ROOT_COMMAND) ? trimmed.slice(ROOT_COMMAND.length).trim() : "";
   const first = /^(\S+)/u.exec(rest)?.[1];
-  if (first === "set" || first === "apply" || first === "status" || first === "reload" || first === "sensors" || first === "help") {
+  if (first === "set" || first === "apply" || first === "status" || first === "reload" || first === "sensors" || first === "inspect" || first === "help") {
     return first;
   }
   if (first !== undefined && first.length > 0) {
@@ -800,8 +855,12 @@ const defaultMessageFor = (input: MakeDaseinCommandResultInput): string => {
     const data = input.data as Partial<SensorsCommandData> | undefined;
     return `dasein sensors: ${(data?.sensors?.length ?? 0)} records; user-added local .ts sensors are trusted executable code at import time and are not sandboxed`;
   }
+  if (input.command === "inspect") {
+    const data = input.data as Partial<AgentInspectCommandData> | undefined;
+    return compactAgentInspectCommandMessage(data);
+  }
   if (input.command === "help") {
-    return "dasein help: /dasein status | reload | sensors | set <path> <value> | apply <path=value,...> | help";
+    return "dasein help: /dasein status | reload | sensors | inspect agent | set <path> <value> | apply <path=value,...> | help";
   }
   if (input.command === "open-ui") {
     return "dasein: open settings";
@@ -893,6 +952,23 @@ export const buildSensorsCommandResult = (options: BuildSensorsCommandResultOpti
   return makeDaseinCommandResult({ command: "sensors", data });
 };
 
+export const buildAgentInspectCommandResult = (options: BuildAgentInspectCommandResultOptions = {}): DaseinCommandResult => {
+  const rendered = options.rendered ?? { agent: null, omittedKeys: [], truncated: false };
+  const renderedAgent = rendered.agent === null || rendered.agent.trim().length === 0 ? null : rendered.agent;
+  const data: AgentInspectCommandData = {
+    target: "agent",
+    source: options.source ?? "pre-rendered-memory",
+    agentInjectionEnabled: options.agentInjectionEnabled ?? false,
+    injectedLabel: options.injectedLabel ?? "ambient_ctx",
+    renderedAgent,
+    systemPromptBlock: renderedAgent === null ? null : formatAmbientSystemPromptBlock(renderedAgent),
+    truncated: rendered.truncated,
+    omittedKeys: [...rendered.omittedKeys].sort(),
+  };
+
+  return makeDaseinCommandResult({ command: "inspect", data });
+};
+
 export const buildReloadCommandResult = (options: BuildReloadCommandResultOptions = {}): DaseinCommandResult => {
   const reload: DaseinReloadResult = options.reload ?? {
     ok: true,
@@ -958,6 +1034,9 @@ export const executeDaseinCommand = async (input: string, options: ExecuteDasein
   if (command.kind === "sensors") {
     return buildSensorsCommandResult(options.sensors);
   }
+  if (command.kind === "inspect") {
+    return buildAgentInspectCommandResult(options.inspectAgent);
+  }
   if (command.kind === "reload") {
     return buildReloadCommandResult(options.reload);
   }
@@ -996,7 +1075,7 @@ export const commandParserContract: CommandParserContract = {
   pathAliases: "short-sensor-paths-only",
   duplicateDetection: "normalized-canonical-path",
   parserOutput: { kind: "help" },
-  resultOutput: { ok: true, command: "help", message: "dasein help: status reload sensors set apply help" },
+  resultOutput: { ok: true, command: "help", message: "dasein help: status reload sensors inspect set apply help" },
 };
 
 export const validateConfigAssignment = (path: string, value: unknown, options: { config?: Readonly<DaseinConfig>; discoveredSensorKeys?: readonly string[] } = {}): boolean => {
@@ -1020,6 +1099,9 @@ export const validateConfigAssignment = (path: string, value: unknown, options: 
   }
   if (canonicalPath === "core.injectedLabel") {
     return typeof value === "string" && /^[A-Za-z0-9_.:-]{1,32}$/u.test(value);
+  }
+  if (canonicalPath === "core.statusDetail") {
+    return typeof value === "string" && ["quiet", "summary", "diagnostic"].includes(value);
   }
   if (canonicalPath.endsWith(".acknowledgedManifestDigest")) {
     return value === null || (typeof value === "string" && /^[a-f0-9]{64}$/u.test(value));

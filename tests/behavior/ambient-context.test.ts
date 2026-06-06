@@ -114,9 +114,8 @@ test("ordinary coding prompt receives system-prompt ambient data without a manda
   const injectAmbientSystemPrompt = requireExportedFunction(api, "injectAmbientSystemPrompt", BEHAVIORAL_GATE_MATRIX_ROW);
   const ordinaryCodingPrompt = "Fix the TypeScript compile error in src/core/render.ts.";
   const rendered: RenderedContext = {
-    agent: "[ambient_ctx: time=Fri_14:32+08]",
+    agent: "[ambient_ctx: local=14:32]",
     status: "time Fri 14:32 +08",
-    widgetLines: ["time Fri 14:32 +08"],
     omittedKeys: [],
     truncated: false,
   };
@@ -171,7 +170,7 @@ test("UI/status exposes sensitive agent visibility and malformed publishers cann
     externalStates: externalStates(),
     now: 1_000,
   }) as RenderedContext;
-  const humanSurface = [rendered.status, ...(rendered.widgetLines ?? [])].filter((line): line is string => typeof line === "string").join("\n");
+  const humanSurface = [rendered.status].filter((line): line is string => typeof line === "string").join("\n");
 
   assert.match(humanSurface, /private_note|On call with counsel/u, "UI/status should keep UI-visible sensitive external state inspectable by the human");
   assert.match(

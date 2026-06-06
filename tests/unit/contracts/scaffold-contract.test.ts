@@ -23,7 +23,7 @@ const topLevelContract: DaseinTopLevelContracts = {
   settingsImports: {
     settingsListPackageName: "@earendil-works/pi-tui",
     settingsThemePackageName: "@earendil-works/pi-coding-agent",
-    requiredRuntimeImports: ["SettingsList", "getSettingsListTheme"],
+    requiredRuntimeImports: ["SettingsList", "getSettingsListTheme", "matchesKey"],
     packagePlacement: "peerDependencies",
     bundledRuntimeDependency: false,
     liveSupportClaim: "not-claimed-by-fake-host",
@@ -34,7 +34,6 @@ const topLevelContract: DaseinTopLevelContracts = {
     recordsLifecycleHandlers: true,
     recordsEventBusHandlers: true,
     recordsUiStatusCalls: true,
-    recordsUiWidgetCalls: true,
     recordsUiCustomCalls: true,
     exposesMode: "tui-rpc-json-print",
     supportClaimBoundary: "api-shape-only-not-live-pi-smoke",
@@ -60,6 +59,7 @@ test("top-level contracts pin package, entrypoint, SettingsList import, and fake
   assert.deepEqual(topLevelContract.settingsImports.requiredRuntimeImports, [
     "SettingsList",
     "getSettingsListTheme",
+    "matchesKey",
   ]);
   assert.equal(topLevelContract.fakePiHost.supportClaimBoundary, "api-shape-only-not-live-pi-smoke");
 });

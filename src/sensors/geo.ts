@@ -246,8 +246,8 @@ const geoSpec: SensorSpec<GeoState, GeoConfig> = {
   fields: {
     precision: { label: "Location precision", type: "enum", values: ["city", "district", "street", "exact"] },
     tags: { label: "Location tags", type: "object", additionalProperties: true, actionManaged: true, description: "Managed by /dasein geo tag actions and validated by the geo validator." },
-    exactAddress: { label: "Include exact address", type: "boolean" },
-    exactCoordinates: { label: "Include exact coordinates", type: "boolean" },
+    exactAddress: { label: "Exact address to agent", type: "boolean" },
+    exactCoordinates: { label: "Exact coordinates to agent", type: "boolean" },
   },
   validateConfig: validateGeoConfig,
   normalizeState: (value, context) => normalizeGeoState(value, context),

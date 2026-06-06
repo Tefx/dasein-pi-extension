@@ -26,10 +26,10 @@ test("injector appends ambient context to system prompt without creating user/cu
 test("injector formats renderer ambient envelope as bounded system prompt context", async () => {
   const api = await loadDaseinApi();
   const formatAmbientSystemPromptBlock = requireExportedFunction(api, "formatAmbientSystemPromptBlock", "Testing Gate Matrix row: Request-path no I/O");
-  const content = formatAmbientSystemPromptBlock("[ambient_ctx: time=Fri_14:32+08]") as string;
+  const content = formatAmbientSystemPromptBlock("[ambient_ctx: local=14:32]") as string;
 
   assert.match(content, /^<DaseinAmbientContext>\n/u);
-  assert.match(content, /time=Fri_14:32\+08/u);
+  assert.match(content, /local=14:32/u);
   assert.doesNotMatch(content, /\[ambient_ctx:/u);
   assert.match(content, /<\/DaseinAmbientContext>$/u);
 });

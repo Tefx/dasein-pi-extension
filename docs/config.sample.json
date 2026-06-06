@@ -1,0 +1,41 @@
+{
+  "version": 1,
+  "core": {
+    "agentInjectionEnabled": true,
+    "statusEnabled": true,
+    "statusDetail": "quiet",
+    "maxAgentChars": 240,
+    "injectedLabel": "ambient_ctx",
+    "renderOrder": ["clock", "lapse", "geo"]
+  },
+  "sensors": {
+    "clock": {
+      "enabled": true,
+      "ui": true,
+      "agent": true,
+      "precision": "minute"
+    },
+    "lapse": {
+      "enabled": true,
+      "ui": true,
+      "agent": true,
+      "persist": true,
+      "agentFields": ["user_idle"]
+    },
+    "geo": {
+      "enabled": false,
+      "ui": true,
+      "agent": false,
+      "precision": "city",
+      "exactAddress": false,
+      "exactCoordinates": false,
+      "tags": {}
+    }
+  },
+  "external": {
+    "weather": {
+      "ui": true,
+      "agent": false
+    }
+  }
+}

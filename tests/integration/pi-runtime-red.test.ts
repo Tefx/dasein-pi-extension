@@ -2,6 +2,8 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
 
+import { visibleWidth } from "@earendil-works/pi-tui";
+
 import createDaseinExtension from "../../src/index.ts";
 import {
   classifyFakePiSupport,
@@ -83,7 +85,7 @@ test("ordinary npm test discovery excludes live Pi smoke while keeping fake-host
 
 test("[expected-red] startup probes Pi APIs and fail-closes status for unavailable mechanisms", async () => {
   const host = await registerInFakeHost({}, "tui", {
-    unavailableMechanisms: ["custom", "setWidget"],
+    unavailableMechanisms: ["custom"],
   });
 
   await invokeFakeLifecycle(host, "session_start");
@@ -98,12 +100,13 @@ test("[expected-red] startup probes Pi APIs and fail-closes status for unavailab
       ["before_agent_start", true],
       ["events", true],
       ["setStatus", true],
-      ["setWidget", false],
       ["custom", false],
       ["SettingsList", true],
     ],
   );
-  assert.match(JSON.stringify(data.statusErrors), /PiMechanismError|setWidget|custom/u);
+  assert.match(JSON.stringify(data.statusErrors), /PiMechanismError|custom/u);
+  assert.doesNotMatch(JSON.stringify(data.statusErrors), /setWidget/u);
+  assert.match(host.ledger.uiStatusCalls.at(-1)?.value ?? "", /^! degraded 1$/u, "quiet statusbar must surface degraded runtime state");
 });
 
 test("[expected-red] Pi version status captures minimum/current/classification independently from API probes", async () => {
@@ -135,18 +138,30 @@ test("[expected-red] Pi lifecycle wiring registers startup, shutdown, input, bef
   ]);
 });
 
-test("no-config/no-launch startup keeps core.widgetEnabled default off", async () => {
+test("no-config/no-launch startup does not publish a Dasein widget", async () => {
   const host = await registerInFakeHost();
 
   await invokeFakeLifecycle(host, "session_start");
 
-  assert.deepEqual(host.ledger.uiWidgetCalls.at(-1), { slot: "dasein", value: undefined });
-  assert.equal(host.ledger.uiWidgetCalls.some((call) => Array.isArray(call.value) || typeof call.value === "string"), false, "default startup must not emit widget content without an explicit core.widgetEnabled=true config source");
+  assert.equal(host.ledger.uiWidgetCalls.some((call) => call.slot === "dasein"), false, "Dasein must not use a persistent widget surface");
+});
+
+test("status detail launch setting suppresses readiness and raw clock/debug status", async () => {
+  const host = await registerInFakeHost({ dasein: "core.statusDetail=summary" });
+
+  await invokeFakeLifecycle(host, "session_start");
+
+  const value = host.ledger.uiStatusCalls.at(-1)?.value;
+  if (value !== undefined) {
+    assert.equal(visibleWidth(value) <= 80, true, "summary status must stay compact for split terminal layouts");
+    assert.doesNotMatch(value, /Dasein · Ready|epoch_ms|utc_offset|\[ambient_ctx:|"city":/u);
+  }
+  assert.equal(host.ledger.uiStatusCalls.some((call) => /Dasein · Ready|epoch_ms|utc_offset|\[ambient_ctx:|"city":/u.test(call.value ?? "")), false);
 });
 
 test("[expected-red] /dasein slash command and --dasein flag drive runtime behavior in the fake host", async () => {
   const host = await registerInFakeHost({
-    dasein: "core.statusEnabled=false,core.widgetEnabled=false,sensors.clock.precision=hour",
+    dasein: "core.statusEnabled=false,sensors.clock.precision=hour",
   });
 
   assert.deepEqual(
@@ -162,7 +177,7 @@ test("[expected-red] /dasein slash command and --dasein flag drive runtime behav
 
   assert.notEqual(commandResult, undefined, "slash command handler should return a status/help result");
   assert.deepEqual(host.ledger.uiStatusCalls.at(-1), { slot: "dasein", value: undefined });
-  assert.deepEqual(host.ledger.uiWidgetCalls.at(-1), { slot: "dasein", value: undefined });
+  assert.equal(host.ledger.uiWidgetCalls.some((call) => call.slot === "dasein"), false);
 });
 
 test("[expected-red] before_agent_start appends Dasein ambient context to system prompt only", async () => {
@@ -175,7 +190,7 @@ test("[expected-red] before_agent_start appends Dasein ambient context to system
   assert.equal(event.messages?.length, 0);
   assert.equal(objectRecord(results[0]).systemPrompt, event.systemPrompt);
   assert.match(event.systemPrompt ?? "", /^BASE SYSTEM\n\n<DaseinAmbientContext>/u);
-  assert.match(event.systemPrompt ?? "", /time=/u);
+  assert.match(event.systemPrompt ?? "", /local=/u);
   assert.doesNotMatch(event.systemPrompt ?? "", /^\[ambient_ctx:/u);
 });
 
@@ -210,6 +225,24 @@ test("pi.events external state keeps unconfigured agent payload hidden until Con
   assert.match(visibleContext, /weather=rain soon/u);
 });
 
+test("summary statusbar shows agent-visible external context after a lifecycle publish", async () => {
+  const host = await registerInFakeHost({ dasein: "core.statusDetail=summary,external.weather.agent=true" });
+  await invokeFakeLifecycle(host, "session_start");
+
+  host.pi.events.emit("dasein:state:set", {
+    key: "weather",
+    agent: "rain soon",
+    ui: "rain soon",
+    source: "test-fixture",
+    ttlMs: 60_000,
+  });
+  await invokeFakeLifecycle(host, "input", { text: "hello", timestamp: 10_000, turnId: "turn-weather" });
+
+  const value = host.ledger.uiStatusCalls.at(-1)?.value ?? "";
+  assert.match(value, /weather rain soon/u);
+  assert.doesNotMatch(value, /\(agent hidden\)|Dasein · Ready|ambient_ctx|time Fri|utc_offset/u);
+});
+
 test("pi.events malformed Unicode-separator external updates preserve previous state without mutation", async () => {
   const host = await registerInFakeHost({ dasein: "external.weather.agent=true" });
   await invokeFakeLifecycle(host, "session_start");
@@ -237,15 +270,14 @@ test("pi.events malformed Unicode-separator external updates preserve previous s
   assert.doesNotMatch(content, /bad|weather=bad/u);
 });
 
-test("[expected-red] TUI session start publishes status and widget only through ctx.ui in tui mode", async () => {
+test("[expected-red] TUI session start publishes status only through ctx.ui in tui mode", async () => {
   const host = await registerInFakeHost();
 
   await invokeFakeLifecycle(host, "session_start");
 
   assert.equal(host.ledger.uiStatusCalls.length > 0, true, "session_start should set dasein status");
-  assert.equal(host.ledger.uiWidgetCalls.length > 0, true, "session_start should set dasein widget");
+  assert.equal(host.ledger.uiWidgetCalls.some((call) => call.slot === "dasein"), false, "session_start must not set a Dasein widget");
   assert.equal(host.ledger.uiStatusCalls.every((call) => call.slot === "dasein"), true);
-  assert.equal(host.ledger.uiWidgetCalls.every((call) => call.slot === "dasein"), true);
 });
 
 test("[expected-red] /dasein opens a SettingsList-backed TUI surface with metadata before controls", async () => {
@@ -255,7 +287,31 @@ test("[expected-red] /dasein opens a SettingsList-backed TUI surface with metada
   await invokeFakeCommand(host, "dasein", "");
 
   assert.equal(host.ledger.uiCustomCalls.length, 1, "bare /dasein should call ctx.ui.custom in TUI mode");
-  assert.deepEqual(host.ledger.uiCustomCalls[0]?.optionKeys, ["component", "overlay", "title"]);
+  assert.deepEqual(host.ledger.uiCustomCalls[0]?.optionKeys, ["component", "overlay", "overlayOptions", "title"]);
+});
+
+test("/dasein inspect agent opens an explicit TUI inspector instead of a persistent widget", async () => {
+  const host = await registerInFakeHost({ dasein: "external.weather.agent=true" });
+  await invokeFakeLifecycle(host, "session_start");
+
+  host.pi.events.emit("dasein:state:set", {
+    key: "weather",
+    agent: "rain soon",
+    ui: "rain soon",
+    source: "test-fixture",
+    ttlMs: 60_000,
+  });
+  await ambientSystemPromptContent(host);
+  const result = objectRecord(await invokeFakeCommand(host, "dasein", "inspect agent"));
+
+  assert.equal(result.ok, true);
+  assert.equal(result.command, "inspect");
+  assert.notEqual(result.message, "dasein inspect agent: ok");
+  assert.match(String(result.message), /DaseinAmbientContext|rain soon/u);
+  assert.match(JSON.stringify(result.data), /systemPromptBlock|pre-rendered-memory|rain soon/u);
+  assert.equal(host.ledger.uiCustomCalls.length, 1, "explicit inspect command should open a TUI custom diagnostic surface");
+  assert.deepEqual(host.ledger.uiCustomCalls[0]?.optionKeys, ["component", "overlay", "overlayOptions", "title"]);
+  assert.equal(host.ledger.uiWidgetCalls.some((call) => call.slot === "dasein"), false, "inspect must not reintroduce persistent Dasein widgets");
 });
 
 test("[expected-red] bare /dasein outside TUI falls back to deterministic help/status without config mutation", async () => {
@@ -295,11 +351,10 @@ test("[expected-red] builtin clock/geo/lapse wiring starts sensors while default
   await invokeFakeLifecycle(host, "input", { text: "again", timestamp: 10_000, turnId: "turn-2" });
 
   const renderedStatus = host.ledger.uiStatusCalls.map((call) => call.value ?? "").join("\n");
-  const renderedWidget = host.ledger.uiWidgetCalls.map((call) => call.value).join("\n");
-  const renderedTui = `${renderedStatus}\n${renderedWidget}`;
 
-  assert.match(renderedStatus, /Dasein · Ready/u, "default visible TUI status should be a quiet summary");
-  assert.doesNotMatch(renderedTui, /\[ambient_ctx:|epoch_ms|clock\.iso|agent_id|manifest digest|user_idle=|loc=/u, "default visible TUI must not expose raw ambient/debug context");
+  assert.equal(/Dasein · Ready/u.test(renderedStatus), false, "default quiet TUI status must not waste footer space on readiness text");
+  assert.doesNotMatch(renderedStatus, /epoch_ms|utc_offset|"city":/u, "default visible TUI status must not expose raw clock/debug JSON");
+  assert.doesNotMatch(renderedStatus, /\[ambient_ctx:|epoch_ms|clock\.iso|agent_id|manifest digest|user_idle=|loc=/u, "default visible TUI must not expose raw ambient/debug context");
 
   const hiddenContext = beforeAgentEvent.systemPrompt ?? "";
   assert.equal(beforeAgentEvent.messages?.length, 0, "agent-facing ambient context must not append user/custom messages");
@@ -319,5 +374,5 @@ test("[expected-red] session_shutdown routes bounded cleanup with 1000ms per-sen
     { sensorKey: "lapse", timeoutMs: 1000 },
   ]);
   assert.deepEqual(host.ledger.uiStatusCalls.at(-1), { slot: "dasein", value: undefined });
-  assert.deepEqual(host.ledger.uiWidgetCalls.at(-1), { slot: "dasein", value: undefined });
+  assert.equal(host.ledger.uiWidgetCalls.some((call) => call.slot === "dasein"), false);
 });

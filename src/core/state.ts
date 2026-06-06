@@ -66,7 +66,6 @@ export const EXTERNAL_STATE_SNAPSHOT_KEYS = [
 export const RENDERED_CONTEXT_KEYS = [
   "agent",
   "status",
-  "widgetLines",
   "omittedKeys",
   "truncated",
 ] as const;
@@ -138,7 +137,6 @@ const canonicalExternal = (snapshot: ExternalStateSnapshot): ExternalStateSnapsh
 const canonicalRendered = (value: RenderedContext): RenderedContext => ({
   agent: value.agent,
   status: value.status,
-  widgetLines: value.widgetLines ? [...value.widgetLines] : null,
   omittedKeys: [...value.omittedKeys],
   truncated: value.truncated,
 });
@@ -149,7 +147,6 @@ export const createStateStore = (initialRendered?: Partial<RenderedContext>): Da
   let rendered: RenderedContext = canonicalRendered({
     agent: null,
     status: null,
-    widgetLines: null,
     omittedKeys: [],
     truncated: false,
     ...initialRendered,
@@ -199,12 +196,6 @@ export const createStateStore = (initialRendered?: Partial<RenderedContext>): Da
     },
     setRenderedStatusString(value) {
       rendered = { ...rendered, status: value };
-    },
-    getRenderedWidgetLines() {
-      return rendered.widgetLines ? [...rendered.widgetLines] : null;
-    },
-    setRenderedWidgetLines(value) {
-      rendered = { ...rendered, widgetLines: value ? [...value] : null };
     },
   };
 };
