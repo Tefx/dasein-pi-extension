@@ -8174,7 +8174,7 @@ phases:
       All five checklist items proven; no product/docs/code mutation in verifier worktree.'
   - id: system-wiring-ordinary-ci
     name: Verify ordinary CI closure without live Pi smoke
-    status: pending
+    status: claimed
     description: 'step_type: verification
 
       verification_scope: full-plan-check
@@ -8244,6 +8244,8 @@ phases:
     - system-wiring-stub-replacement
     - system-wiring-native-test-discovery-fix
     agent: integration-verifier
+    claimed_by: integration-verifier
+    claimed_at: '2026-06-06T08:00:50.122278+00:00'
   - id: system-wiring-gate
     name: Gate system wiring and ordinary CI
     status: pending
