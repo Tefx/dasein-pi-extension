@@ -59,7 +59,7 @@ project_guidance: 'Dasein constitutional guidance for all execution agents:
 phases:
 - id: scaffold
   name: Scaffold and Contract Foundation
-  status: in_progress
+  status: done
   gate: Scaffold contracts, tooling, and fake-host proof basis are ready for implementation
     phases.
   context: Establish the TypeScript package, root Pi extension shim, shared contracts,
@@ -644,7 +644,7 @@ phases:
       - Symlinked load/root shim/SettingsList-getSettingsListTheme evidence: PROVEN.'
   - id: scaffold-gate
     name: Gate scaffold foundation
-    status: claimed
+    status: done
     description: 'step_type: gate
 
       DECISION ARTIFACT: Independent phase-check gate for scaffold. Review scaffold
@@ -719,9 +719,78 @@ phases:
     agent: gate-reviewer
     claimed_by: gate-reviewer
     claimed_at: '2026-06-06T03:54:17.491681+00:00'
+    done_at: '2026-06-06T03:58:56.459694+00:00'
+    evidence: '## refs Read Confirmation
+
+      - `CONSTITUTION.md` — loadable from `~/.pi/agent/extensions/dasein`; 0 non-Pi
+      runtime deps/Pi peers only; fake-host proof not live integration proof.
+
+      - `docs/PRD.md` — source/API verification alone is not release support; live
+      smoke/fail-closed behavior remains separate.
+
+      - `docs/TECHNICAL_DESIGN.md` — scaffold contract requires `dependencies: {}`,
+      Pi peers, required scripts, delegate-only root shim, fake Pi shape but not live
+      support.
+
+
+      headline: PASS_WITH_DEBT
+
+      verdict: PASS
+
+      blockers: []
+
+      gate_open_allowed: true
+
+      orchestrator_action_hint: COMPLETE
+
+
+      ## gate_decision
+
+      - decision: GATE OPEN
+
+      - basis: Scaffold package, shim, symlink entrypoint, fake-host boundary, dependency
+      policy, and SettingsList/getSettingsListTheme import resolution all have positive
+      source and executed verification. Live Pi smoke/native helper remain explicit
+      downstream/release gates and are not scaffold blockers or fake-host support
+      claims.
+
+
+      ## verify-only purity
+
+      - No code/docs/config/plan changes; read-only gate.
+
+
+      ## receipts
+
+      - `npm run typecheck` → exit 0.
+
+      - `npm test` → exit 0; 17 pass, 0 fail.
+
+      - `npm run test:native` → exit 0; 1 skipped.
+
+      - `npm run test:smoke` → exit 0; 1 skipped; live Pi required, fake host cannot
+      satisfy release support.
+
+      - dependency audit: `packageDependencies: {}`, Pi peers only, `piExtensions:
+      ["./index.ts"]`.
+
+      - settings import probe: `hasSettingsList: true`, `hasGetSettingsListTheme:
+      true`.
+
+
+      ## checklist_receipt
+
+      - All scaffold steps have checklist receipts and refs confirmations: PROVEN.
+
+      - Gate maps package, shim, fake-host, dependency requirements to evidence: PROVEN.
+
+      - No blocker-class scaffold gaps remain: PROVEN; blockers empty.
+
+      - Gate explicitly reviewed symlinked load, root shim, package entrypoint, SettingsList/getSettingsListTheme
+      import resolution: PROVEN.'
 - id: core
   name: Core Broker Contracts and Implementation
-  status: locked
+  status: pending
   gate: Core broker behavior is contract-defined, tested, implemented, and independently
     verified against request-path and config/state invariants.
   context: Build the functional core contracts and executable core modules for config,
