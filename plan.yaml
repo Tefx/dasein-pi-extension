@@ -3333,6 +3333,118 @@ phases:
     - core-behavior-guardrails
     - core-static-boundary-retest
     agent: frontend-engineer
+  - id: core-gate-blocker-retest
+    name: Retest core gate blockers B2 and B3
+    status: pending
+    description: 'step_type: verification
+
+      step_intent: retest_green
+
+      expected_result: green
+
+      verification_scope: phase-check
+
+      agent_source: project
+
+      INDEPENDENT RETEST:
+
+      As an independent verifier, retest the batched B2/B3 remediation after `core-gate-blocker-fix`.
+      The retest protects the `core-gate` phase check and downstream `sensors`, `pi_runtime`,
+      and `system_wiring` gates from ordinary-CI and SettingsList matrix proof gaps.
+
+
+      PROOF ARTIFACT:
+
+      Produce a gate blocker closure register that proves B2 and B3 are closed and
+      that B1 remains closed by `core-static-boundary-retest`. Finding a remaining
+      blocker is a valid verification outcome, but the step is incomplete without
+      raw command output, discovery proof, and explicit closure/disposition for each
+      blocker.
+
+
+      REQUIREMENT TRACEABILITY MATRIX:
+
+      | requirement_id | source_ref + key passage | obligation | owning_step_id |
+      checklist_item | evidence_field | status | non_intersection_or_escalation |
+
+      |---|---|---|---|---|---|---|---|
+
+      | B2.ordinary-npm-full-suite | docs/TECHNICAL_DESIGN.md#testing-gate-matrix
+      — ordinary `npm test` is the full all-platform non-native gate | Run ordinary
+      `npm test` and independently prove it covers all non-native tests discovered
+      on this shell | core-gate-blocker-retest | ordinary npm full-suite closure verified
+      | `typecheck_output`, `npm_test_raw_output`, `discovery_proof` | OWNED | Blocks
+      `core-gate` if unproven. |
+
+      | B3.settings-list-matrix | docs/TECHNICAL_DESIGN.md#testing-gate-matrix — `tests/unit/settings-list.test.ts`
+      is named for SettingsList visibility | Verify SettingsList matrix target proof
+      or authoritative non-intersecting deferral | core-gate-blocker-retest | SettingsList
+      matrix proof/disposition verified | `settings_list_matrix_disposition`, `settings_list_proof_output`
+      | OWNED | Blocks `core-gate` if absent or only narrative. |
+
+      | B1.static-boundary | prior gate evidence — closed by `core-static-boundary-retest`
+      | Confirm the B2/B3 fix did not reopen the static/request-path boundary blocker
+      | core-gate-blocker-retest | B1 remains closed in closure register | `blocker_closure_register`
+      | OWNED | Blocks `core-gate` if regressed. |
+
+
+      RETEST COMMAND FAMILY:
+
+      - `npm run typecheck`
+
+      - `npm test`
+
+      - explicit non-native `.test.ts` discovery/enumeration command on the target
+      shell
+
+      - SettingsList-specific command or exact deferral evidence, as applicable
+
+
+      <side_effect_budget>Allowed: read repo state and execute verification commands.
+      Forbidden: code edits, test edits, changing package scripts, or approving unresolved
+      blockers as non-blocking without non-intersection evidence.</side_effect_budget>
+
+      <risk_probes>1. Does ordinary `npm test` now match explicit discovery, not just
+      a scoped file command? 2. Does B3 have positive SettingsList proof or a genuine
+      non-intersecting deferral with owner? 3. Does the closure register distinguish
+      PROVEN, DEFERRED, and BLOCKED rather than using vague PASS language?</risk_probes>'
+    verification: '- [ ] `npm run typecheck` exits successfully with raw stdout/stderr
+      evidence.
+
+      - [ ] Ordinary `npm test` exits successfully with raw stdout/stderr evidence.
+
+      - [ ] Explicit non-native discovery/enumeration proves ordinary `npm test` covers
+      every non-native `.test.ts` file on this shell, including top-level unit/static
+      files.
+
+      - [ ] SettingsList matrix target has concrete test proof from `tests/unit/settings-list.test.ts`
+      or an authoritative DEFERRED disposition with concrete downstream owner and
+      non-intersection rationale.
+
+      - [ ] Gate blocker closure register marks B2 and B3 PROVEN or BLOCKED with evidence
+      refs, and records B1 as already closed with no regression.'
+    evidence_template: "## refs Read Confirmation (MANDATORY)\nFor each ref in this\
+      \ step:\n- CONSTITUTION.md#testing-and-gates — <key passage>\n- docs/TECHNICAL_DESIGN.md#implementation-scaffold\
+      \ — <key passage>\n- docs/TECHNICAL_DESIGN.md#testing-gate-matrix — <key passage>\n\
+      - src/ui/settings-import-contract.ts — <key passage or NOT READ: reason>\n\n\
+      ## Command Evidence\n- typecheck_command: npm run typecheck\n- typecheck_raw_output:\
+      \ |\n  <paste raw stdout/stderr>\n- npm_test_command: npm test\n- npm_test_raw_output:\
+      \ |\n  <paste raw stdout/stderr>\n- explicit_discovery_command: <exact command\
+      \ used to enumerate non-native tests>\n- discovery_proof: |\n  <paste discovered\
+      \ files/counts/tests and comparison against npm test>\n\n## SettingsList Matrix\
+      \ Target\n- disposition: TEST_PROVEN | DEFERRED_NON_INTERSECTING | BLOCKED\n\
+      - settings_list_proof_command: <npm run test:file -- tests/unit/settings-list.test.ts\
+      \ or n/a>\n- settings_list_proof_output: |\n  <paste raw output or n/a>\n- deferred_owner:\
+      \ <owning step id if deferred>\n- non_intersection_rationale: <required if deferred>\n\
+      \n## Gate Blocker Closure Register\n| blocker | status | evidence_ref | notes\
+      \ |\n|---|---|---|---|\n| B1 static-boundary | PROVEN_CLOSED / REGRESSED | core-static-boundary-retest\
+      \ + current evidence | <notes> |\n| B2 ordinary npm full-suite | PROVEN / BLOCKED\
+      \ | <evidence ref> | <notes> |\n| B3 SettingsList matrix target | PROVEN / DEFERRED_NON_INTERSECTING\
+      \ / BLOCKED | <evidence ref> | <notes> |\n\n## Headline\n- [ ] PASS: B2/B3 closed\
+      \ and B1 remains closed.\n- [ ] FAIL: one or more core-gate blockers remain."
+    depends_on:
+    - core-gate-blocker-fix
+    agent: integration-verifier
 - id: sensors
   name: Builtin Sensors and Native Helper
   status: locked
