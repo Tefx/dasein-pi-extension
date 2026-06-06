@@ -13706,7 +13706,7 @@ phases:
       All eight checklist items proven and toggled. Blockers: none.'
   - id: finalization-external-state-sensor-runtime-blockers-retest
     name: Retest external state visibility and sensor runtime blockers
-    status: claimed
+    status: done
     description: 'step_type: test
 
       step_intent: retest_green
@@ -13904,3 +13904,75 @@ phases:
     agent: integration-verifier
     claimed_by: integration-verifier
     claimed_at: '2026-06-06T11:42:45.584458+00:00'
+    done_at: '2026-06-06T11:49:12.733854+00:00'
+    evidence: '## refs Read Confirmation
+
+      - docs/PRD.md#9-6-external-state — external set/clear only per contract; malformed/unknown
+      fields rejected; external cannot force agent injection; unconfigured keys UI-visible
+      and agent-hidden.
+
+      - docs/TECHNICAL_DESIGN.md#configuration-files — runtime mutations persist path-local
+      config patches only; state.json is version+lapse only; external state is not
+      stored and must be republished.
+
+      - docs/TECHNICAL_DESIGN.md#builtin-sensors — builtin clock/geo/lapse declare
+      visible recurring intervals and timeout defaults.
+
+      - CONSTITUTION.md#architectural-dogmas — sensors must not mutate config; only
+      launch/slash/UI controls mutate config; request path is read-only.
+
+      - CONSTITUTION.md#non-goals — no hidden watchers or undeclared recurring work;
+      builtin refresh intervals must be visible/configurable/disableable.
+
+      - CONSTITUTION.md#performance-laws — injector consumes in-memory typed state
+      only; slow/failing sensors must not block prompt construction.
+
+      - CONSTITUTION.md#privacy-and-safety-laws — external state visible when enabled;
+      no hidden fields; no durable ambient history by default.
+
+
+      ## Verification Report
+
+      Independent integration-verifier retest in isolated worktree. No product/plan/vectl
+      mutations.
+
+
+      ## Commands
+
+      - `npm run typecheck` exit 0.
+
+      - `npm run test:file -- tests/unit/external-events.test.ts tests/unit/renderer.test.ts
+      tests/integration/pi-runtime-red.test.ts` exit 0; 28 pass.
+
+      - `npm run test:file -- tests/unit/sensor-runtime.test.ts tests/unit/lifecycle.test.ts
+      tests/unit/contracts/core-contracts.test.ts` exit 0; 10 pass.
+
+      - `npm run test:file -- tests/integration/reload-launch-metadata.test.ts` exit
+      0; 2 pass.
+
+      - `npm test` exit 0; 143 pass.
+
+      - PendingReason runtime probe exit 0: coalesced active refresh produced follow-up
+      commit tick-2.
+
+      - External persistence probe exit 0: memoryExternalCount=1, persistedTopLevelKeys=[lapse,version],
+      persistedHasExternal=false.
+
+
+      ## Behavioral Proof Register
+
+      - B1 external state visibility/config mutation: PROVEN. Focused tests pass;
+      code inspection confirms external handlers do not mutate `config.external`;
+      external persistence probe shows state.json lacks external data.
+
+      - B2 sensor runtime timeout/scheduler: PROVEN. Focused tests pass; timeoutMs
+      aborts slow refresh; intervalMs recurring refresh/cleanup pass; pendingReason
+      consumed into queued follow-up.
+
+      - Downstream finalization-full-wiring-audit and finalization-black-box-verification
+      are dependency-ordered after this retest in plan state.
+
+
+      ## checklist_receipt
+
+      All eight retest checklist items proven and toggled. Blockers: none.'
