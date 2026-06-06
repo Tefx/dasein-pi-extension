@@ -13,27 +13,22 @@ strategy_ref: Approved architecture_basis from user prompt; Constitution + PRD +
 context: Implementation DAG for greenfield TypeScript Dasein Pi extension using approved
   architecture_basis; work_type=new_capability; style=balanced with runtime/liveness
   gates.
-project_guidance: 'Constitutional constraints for all downstream agents: Dasein is
-  a standalone local Pi ambient context broker/sensor framework, not a time/space
-  plugin, memory product, ranking/policy/workflow engine, or plugin marketplace. Keep
-  architecture minimal, local, dependency-light, and loadable as a Pi extension from
-  ~/.pi/agent/extensions/dasein. Core owns typed-state normalization, deterministic
-  ordering, render budgets/truncation, renderable view models, and Pi context injection;
-  sensors publish typed state only and must not own final prompt text, injection order,
-  priority, config mutation, or hidden fields. Configuration is global-only under
-  ~/.pi/dasein/ with precedence defaults < global disk config < launch args < slash/UI
-  runtime changes; do not read implicit project-local config or infer project behavior
-  from cwd/repo files. Request-path injection must be read-only and must not perform
-  disk I/O, subprocess, network, dynamic import, sensor refresh/action/cleanup/discovery,
-  or config mutation. Enabled sensors and injected fields must be human-visible and
-  traceable; remote/network-capable sensors are default-off and require explicit human-visible
-  opt-in. Builtin sensors are limited to clock, geo, and lapse; continuity is lapse
-  semantics, not a separate sensor. User-added sensors load only from explicit configured
-  local sensor files, are inspectable, and do not run recurring work by default. Mock
-  tests are not integration proof; Pi extension boundaries and UI/Pi mechanisms require
-  live Pi or equivalent binary-path evidence before support claims. Documentation
-  must preserve these boundaries and not amend CONSTITUTION.md without explicit human
-  approval and amendment evidence.'
+project_guidance: 'Constitution-derived execution guidance: Dasein is a minimal local
+  Pi extension/context broker, not a policy engine, memory product, scheduler marketplace,
+  or sensor-defined product. Preserve zero arbitrary runtime npm dependencies; Pi-approved
+  peer deps only. Configuration is global under ~/.pi/dasein with precedence defaults
+  < global disk config < launch args < slash/UI runtime changes; no implicit project-local
+  config reads and no cwd discovery. Only human-triggered launch/slash/UI controls
+  may mutate configuration; request/agent runtime and external state events must not
+  mutate config unless routed through canonical human-visible config paths. External
+  state is ephemeral/runtime state, not state.json persistence; default external visibility
+  is human-visible (ui:true) and agent-hidden (agent:false) unless explicit config
+  enables injection. Builtin recurring sensor work must be declared, visible, configurable,
+  disableable, timeout-bounded, and cleanup-safe; user-added sensors must not run
+  recurring work by default. Request-path injection must be read-only and must not
+  perform I/O, subprocess/network calls, sensor refresh/action/cleanup/discovery,
+  or config mutation. Mock tests are not integration proof; black-box/live/fake-host
+  evidence takes precedence for extension integration and user-visible support claims.'
 phases:
 - id: scaffold
   name: Scaffold and Contract Foundation
