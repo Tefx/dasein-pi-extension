@@ -14351,7 +14351,7 @@ phases:
       All ten checklist items proven and toggled. Blockers: none.'
   - id: finalization-wiring-blackbox-blockers-retest
     name: Retest wiring and live-smoke finalization blockers
-    status: claimed
+    status: done
     description: 'step_type: test
 
       step_intent: retest_green
@@ -14491,3 +14491,83 @@ phases:
     agent: integration-verifier
     claimed_by: integration-verifier
     claimed_at: '2026-06-06T12:28:12.535185+00:00'
+    done_at: '2026-06-06T12:32:28.109256+00:00'
+    evidence: '## Verification Report
+
+      Tester: integration-verifier. Scope: W1/W6/W12/W2/LIVE finalization blocker
+      retest. No tracked mutations; only ignored `.dasein` smoke artifacts produced.
+
+
+      ## refs Read Confirmation
+
+      - CONSTITUTION.md#architectural-dogmas — core owns normalization/rendering/injection;
+      config precedence defaults < disk < launch < runtime; no implicit/project config.
+
+      - CONSTITUTION.md#testing-and-gates — mock tests are not integration proof;
+      Pi boundary requires live/equivalent binary; black-box liveness takes precedence.
+
+      - docs/TECHNICAL_DESIGN.md#configuration-files — config/state live under ~/.pi/dasein;
+      runtime mutations persist canonical partial paths only; malformed config never
+      partially applies.
+
+      - docs/TECHNICAL_DESIGN.md#builtin-sensors — clock/geo/lapse follow SensorSpec;
+      geo helper fails closed; lapse persistence controlled by config.
+
+      - docs/TECHNICAL_DESIGN.md#human-ui-rendering — SettingsList exposes metadata/common/simple
+      controls; UI changes enter validated FIFO config queue.
+
+      - docs/TECHNICAL_DESIGN.md#data-flow — startup loads specs/config; injection
+      reads pre-rendered memory only; shutdown performs bounded cleanup/UI clearing.
+
+      - docs/PRD.md#9-6-external-state — valid set/clear accepted; malformed rejected;
+      unconfigured external keys UI-visible and agent-hidden.
+
+      - package.json — scripts match gates: typecheck, non-native test, live smoke.
+
+      - tests/smoke/contracts/live-pi-smoke-gate-contract.test.ts — live Pi smoke
+      writes proof artifacts and checklist_receipt.json.
+
+
+      ## Commands
+
+      - `npm run typecheck` exit 0.
+
+      - Focused W1/W6/W12/W2 tests exit 0; 38 pass.
+
+      - `npm test` exit 0; 145 pass.
+
+      - `npm run test:smoke` exit 0; 3 pass.
+
+
+      ## Source/Artifact Probes
+
+      - no `createLapsePersistenceController` in `src`: PASS.
+
+      - no `renderAgent`/`renderUI`/`SensorViewFragment` in `src`: PASS.
+
+      - ConfigManager consumes `sensorSpecs`/`validateConfig`: PASS.
+
+      - SettingsList simple field mutation through ConfigManager: PASS.
+
+      - live smoke event bus phases: after-set-hidden-default, after-configured-visible,
+      after-clear: PASS.
+
+
+      ## Behavioral Proof Register
+
+      - W1_lapse_persistence_controller_removed: PROVEN.
+
+      - W6_ConfigManager_sensorSpecs_validateConfig: PROVEN.
+
+      - W12_SettingsList_simple_field_ConfigManager_mutation: PROVEN.
+
+      - W2_renderer_hook_ingress_removed: PROVEN.
+
+      - LIVE_live_Pi_smoke_closure: PROVEN.
+
+      - typecheck/focused/full/smoke gates: PROVEN.
+
+
+      ## checklist_receipt
+
+      All eleven checklist items proven and toggled. Blockers: none.'
