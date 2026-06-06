@@ -13126,7 +13126,7 @@ phases:
       All six checklist items proven and toggled.'
   - id: finalization-reload-launch-path-failure-branches-retest
     name: Retest reload launch path metadata failure branches
-    status: claimed
+    status: done
     description: 'step_type: test
 
       step_intent: retest_green
@@ -13285,3 +13285,57 @@ phases:
     agent: integration-verifier
     claimed_by: integration-verifier
     claimed_at: '2026-06-06T11:07:22.198113+00:00'
+    done_at: '2026-06-06T11:12:47.211731+00:00'
+    evidence: '## refs Read Confirmation
+
+      - docs/TECHNICAL_DESIGN.md#sensor-loading-and-reload/manual-reload — DaseinReloadResult
+      includes launchReappliedPaths/runtimeOverriddenPaths on success and failure;
+      failure command result carries data.reload equal to failed reload result.
+
+      - docs/TECHNICAL_DESIGN.md#configuration-files — Malformed disk config during
+      reload keeps last-known-good active config/runtime/rendered context, launch
+      overlay state, and runtime-overridden paths; no partial apply.
+
+      - CONSTITUTION.md#testing-and-gates — Mock tests are not live integration proof,
+      but static/unit checks must verify config precedence defaults < disk < launch
+      < slash/UI runtime changes.
+
+
+      ## Verification Report
+
+      Tester: integration-verifier; independent of frontend-engineer. Scope: reload
+      failure-branch launch metadata retest. No product/plan/vectl mutation.
+
+
+      ## Commands
+
+      - `npm run typecheck` exit 0.
+
+      - `npm run test:file -- tests/integration/reload-launch-metadata.test.ts` exit
+      0; 2 pass.
+
+      - `npm test` exit 0; 139 pass.
+
+
+      ## Behavioral Proof Register
+
+      - sensor_load_failure_preserves_launchReappliedPaths: PROVEN by targeted test
+      and ad-hoc probe: commandOk=false, failureScope=sensors, data/reload launchReappliedPaths=[sensors.geo.agent],
+      runtimeOverriddenPaths=[sensors.clock.precision], no runtime override in launchReappliedPaths.
+
+      - config_reload_failure_preserves_launchReappliedPaths: PROVEN by targeted test
+      and ad-hoc probe: commandOk=false, failureScope=config, same metadata preserved.
+
+      - runtime_overridden_paths_excluded_from_launchReappliedPaths: PROVEN by tests
+      and ad-hoc probe.
+
+      - public_command_data_copies_reload_metadata: PROVEN by code inspection and
+      test assertions on `data.launchReappliedPaths` and `data.reload.launchReappliedPaths`.
+
+      - downstream dependency order: PROVEN via plan show; `finalization-full-wiring-audit`
+      and `finalization-black-box-verification` depend on this retest.
+
+
+      ## checklist_receipt
+
+      All six retest checklist items proven and toggled. Blockers: none.'
