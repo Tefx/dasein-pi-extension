@@ -4812,7 +4812,7 @@ phases:
       All five native-helper checklist items proven.'
   - id: sensors-manifest-risk
     name: Complete user-added sensor manifest and risk loading behavior
-    status: claimed
+    status: done
     description: 'step_type: implementation
 
       TARGET STATE: User-added local sensors loaded through the core loader expose
@@ -4933,6 +4933,70 @@ phases:
     agent: frontend-engineer
     claimed_by: frontend-engineer
     claimed_at: '2026-06-06T05:53:52.590582+00:00'
+    done_at: '2026-06-06T06:06:46.480791+00:00'
+    evidence: '## refs Read Confirmation
+
+      - `CONSTITUTION.md#extension-and-sensor-laws` — user-added sensors load only
+      from explicit local files; source/permissions/remote behavior inspectable before
+      enablement; no marketplace/install semantics.
+
+      - `docs/TECHNICAL_DESIGN.md#sensor-loading-and-reload` — canonical user sensor
+      scan path is `<extension_root>/src/sensors/*.ts`; invalid candidates must not
+      replace active registry.
+
+      - `docs/PRD.md#7-2-sensor-model` — user-added sensors expose provenance/manifest;
+      remote or background user sensors disabled until inspected; `~/.pi/dasein/sensors`
+      unsupported.
+
+      - `docs/PRD.md#9-7-sensor-loading-and-reload` — package/directory installs load
+      only `<extension_root>/src/sensors/*.ts`; no `~/.pi/dasein/sensors`; risky sensors
+      require inspection.
+
+      - `docs/TECHNICAL_DESIGN.md#core-contracts` — SensorConfig has `acknowledgedManifestDigest`;
+      metadata includes provenance, manifestDigest, acknowledgementRequired/Satisfied,
+      defaultEnabled, effectiveEnabled, forcedDisabledReason; risk forced disabled
+      unless digest matches.
+
+      - `docs/TECHNICAL_DESIGN.md#command-result-and-output-contract` — status/sensors/SettingsList
+      data expose inspectable metadata including digest, acknowledgement, intervals,
+      provenance, remote/background behavior, forced disabled.
+
+
+      ## Files changed / commit
+
+      - Mainline squash commit: `56994dd` (worker commit `24b2ec217a91c06a50cc993360dcd80ee573e627`).
+
+      - Changed: `src/core/sensor-loader.ts`, `src/ui/settings-import-contract.ts`,
+      `src/commands/dasein-command.ts`.
+
+
+      ## Verification
+
+      - Mainline `npm run typecheck` exit 0.
+
+      - Mainline `npm run test:file -- tests/unit/sensor-loader.test.ts tests/unit/commands-status.test.ts
+      tests/unit/commands-sensors.test.ts tests/unit/sensors/loader-risk.test.ts tests/unit/settings-list.test.ts`
+      exit 0; 14 pass, 0 fail/skipped.
+
+
+      ## Proof
+
+      - Canonical admission limited to `<extension_root>/src/sensors/*.ts`; legacy
+      `~/.pi/dasein/sensors` rejected.
+
+      - Manifest digest and acknowledgement metadata exposed via loader/status/sensors/SettingsList
+      fields.
+
+      - Exact fields proven: `acknowledgedManifestDigest`, `acknowledgementRequired`,
+      `acknowledgementSatisfied`, `defaultEnabled`, `effectiveEnabled`.
+
+      - Risky user-added sensors remain forced disabled until matching digest acknowledgement;
+      launch/disk/slash enabled-only cases do not satisfy acknowledgement.
+
+
+      ## checklist_receipt
+
+      All six manifest-risk checklist items proven.'
   - id: sensors-local-proof
     name: Verify builtin sensors and native helper local gates
     status: pending
