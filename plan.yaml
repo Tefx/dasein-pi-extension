@@ -16072,7 +16072,7 @@ phases:
       All thirteen checklist items proven and toggled. Blockers: none.'
   - id: finalization-status-output-contract-blocker-fix
     name: Fix final status output contract blocker
-    status: claimed
+    status: done
     description: 'step_type: implementation
 
       Fix final gate blocker B-FINAL-001: production `/dasein status` output currently
@@ -16149,6 +16149,78 @@ phases:
     agent: frontend-engineer
     claimed_by: frontend-engineer
     claimed_at: '2026-06-06T14:25:52.845567+00:00'
+    done_at: '2026-06-06T14:45:26.967239+00:00'
+    evidence: '## refs Read Confirmation
+
+      - CONSTITUTION.md — status/output changes preserve local Pi scope, privacy/safety,
+      request-path safety, and live proof separation.
+
+      - docs/PRD.md:591/795 — `/dasein status` must include effective config, sensor
+      health/freshness, lapse persistence health/presence.
+
+      - docs/TECHNICAL_DESIGN.md:933/983/1467 — status output contract requires disabled/hidden
+      contributor inspectability and effective lapse collection/persistence/injection
+      controls.
+
+
+      ## Artifact
+
+      - Worker commits: c94f00e2f6ae08572705a952bad7e20a877b53ec and 2470616d1f7b6ba018265438e0f1ad20a5838372.
+
+      - Main commits: 5bbc901 and d78f608.
+
+
+      ## B-FINAL-001 Resolution
+
+      - Production `/dasein status` now builds and passes hiddenContributors for disabled/agent-hidden
+      sensors and external contributors.
+
+      - Status includes `effectiveLapseControls` with enabled/persist/agent/agentFields
+      semantic controls.
+
+      - Production-path integration test `tests/integration/status-output-contract.test.ts`
+      proves hidden contributor records and effective lapse controls via extension
+      runtime path beyond formatter fixtures.
+
+      - Unit status and live smoke contract tests updated so live status proof artifacts
+      include required fields without changing release gate verdict vocabulary.
+
+
+      ## W-FINAL-001 Resolution
+
+      - Initial mainline verification exposed the same ENOENT fixture isolation family
+      in the new status test.
+
+      - Follow-up created shared `tests/integration/fixtures/isolated-extension.ts`
+      rooted at repository source and updated isolated extension tests to copy `src/sensors`
+      from repo source instead of transient fixture roots.
+
+      - Mainline `npm test` now passes 156/156; focused status/lapse tests pass; smoke
+      passes.
+
+
+      ## Commands
+
+      - `npm run typecheck` exit 0.
+
+      - Focused status/lapse command `npm run test:file -- tests/integration/status-output-contract.test.ts
+      tests/integration/lapse-persistence-async.test.ts` exit 0; 3 pass.
+
+      - Additional focused command `npm run test:file -- tests/unit/commands-status.test.ts
+      tests/integration/status-output-contract.test.ts tests/integration/lapse-persistence-async.test.ts
+      tests/integration/lapse-reset-public-command.test.ts tests/unit/sensors/lapse.test.ts`
+      exit 0; 12 pass.
+
+      - Smoke contract focused command exit 0; 2 pass.
+
+      - `npm test` exit 0; 156 pass.
+
+      - `npm run test:smoke` exit 0; 3 pass.
+
+
+      ## checklist_receipt
+
+      All ten checklist items proven and toggled. Blockers: none.'
   - id: finalization-status-output-contract-blocker-retest
     name: Retest final status output contract blocker
     status: pending
