@@ -67,7 +67,7 @@ phases:
   steps:
   - id: scaffold-contracts
     name: Define scaffold and fake-host contracts
-    status: claimed
+    status: done
     description: 'step_type: contract
 
       contract_purity: ENFORCED
@@ -157,6 +157,72 @@ phases:
     agent: frontend-engineer
     claimed_by: frontend-engineer
     claimed_at: '2026-06-06T03:21:13.636069+00:00'
+    done_at: '2026-06-06T03:33:04.075618+00:00'
+    evidence: '## refs Read Confirmation
+
+      - `CONSTITUTION.md` — Dasein loadable from `~/.pi/agent/extensions/dasein`;
+      zero non-Pi external runtime npm dependencies; approved Pi packages only as
+      peer dependencies.
+
+      - `docs/PRD.md` — standalone Dasein project symlinked to Pi extension path;
+      fake/source verification does not equal live release support.
+
+      - `docs/TECHNICAL_DESIGN.md` — npm/TypeScript ESM scaffold, required scripts,
+      empty runtime dependencies, Pi peer dependencies, root shim delegation, fake
+      Pi host API shape, and static package tests.
+
+
+      ## artifacts/commits
+
+      - fcf5538 `[vectl] step-scaffold-contracts completed`: package/tooling, root
+      shim, src contracts, fake host contracts, SettingsList import contract, scaffold
+      tests.
+
+      - 180be79 `[vectl] step-scaffold-contracts final-state fix`: synchronized `package-lock.json`
+      so mainline `npm ci` is valid.
+
+
+      ## mainline final-state verification
+
+      - `npm ci` → exit 0; added 148 packages; 0 vulnerabilities.
+
+      - `npm run typecheck` → exit 0 (`tsc --noEmit`).
+
+      - `npm test` → exit 0; 9 tests, 9 pass, 0 fail.
+
+      - `npm run test:native` → exit 0; native future implementation gate skipped
+      as out of scaffold-contracts scope.
+
+      - `npm run test:smoke` → exit 0; live Pi smoke skipped as release gate requiring
+      live Pi.
+
+
+      ## requirement coverage
+
+      - scaffold.entrypoint: PROVEN by root `index.ts` shim, `src/index.ts`, contracts,
+      and passing static tests.
+
+      - scaffold.no_deps: PROVEN by `package.json.dependencies` `{}`; Pi packages
+      remain peerDependencies with `"*"`; lockfile only provides installable peer/transitive
+      resolution metadata.
+
+
+      ## checklist_receipt
+
+      - Contract artifacts pin package scripts, dependency policy, root shim delegation,
+      and fake Pi host API shape: PROVEN.
+
+      - No runtime implementation logic is present beyond stubs/types/interfaces:
+      PROVEN by static/behavior tests.
+
+      - Refs confirmation cites Constitution dependency/entrypoint laws and Technical
+      Design scaffold contract: PROVEN.
+
+      - Symlinked `~/.pi/agent/extensions/dasein` load behavior and root shim delegation
+      to `./src/index.ts`: PROVEN.
+
+      - SettingsList/getSettingsListTheme import resolution and approved Pi peer dependency
+      placement: PROVEN.'
   - id: scaffold-tests
     name: Define expected-red scaffold and fake-host tests
     status: pending
