@@ -210,18 +210,76 @@ const formatHumanValue = (value: unknown): string => formatAgentValue(value).rep
 
 const isFieldStale = (field: SensorStateField, now: number): boolean => now - field.collected_at > field.stale_after_ms;
 
-const shouldRenderGeoAgentField = (field: SensorStateField, sensorConfig: Readonly<SensorConfig>): boolean => {
-  if (field.sensor_id !== "geo") {
-    return true;
+const geoPrecisions = new Set(["city", "district", "street", "exact"]);
+const geoNeverRawAgentFields = new Set(["geo.permission", "geo.nearestTag"]);
+
+const geoPrecisionFor = (sensorConfig: Readonly<SensorConfig>): "city" | "district" | "street" | "exact" =>
+  typeof sensorConfig.precision === "string" && geoPrecisions.has(sensorConfig.precision) ? sensorConfig.precision as "city" | "district" | "street" | "exact" : "city";
+
+const compactGeoValue = (value: string): string => value.replace(/\s+/gu, "_");
+
+const placemarkString = (value: unknown, precision: "city" | "district" | "street" | "exact", exactAddress: boolean): string | null => {
+  if (!isRecord(value)) {
+    return null;
   }
-  const precision = sensorConfig.precision;
+  const textField = (key: string): string | null => {
+    const candidate = value[key];
+    return typeof candidate === "string" && candidate.length > 0 ? candidate : null;
+  };
+  if (precision === "city") {
+    return textField("city") ?? textField("district") ?? textField("street");
+  }
+  if (precision === "district") {
+    return textField("district") ?? textField("city") ?? textField("street");
+  }
+  if (precision === "street") {
+    return textField("street") ?? textField("district") ?? textField("city");
+  }
+  return exactAddress ? textField("formattedAddress") ?? textField("name") : null;
+};
+
+const formatGeoAgentPart = (field: SensorStateField, sensorConfig: Readonly<SensorConfig>, label: string): string | null => {
+  const precision = geoPrecisionFor(sensorConfig);
+  const exactCoordinates = precision === "exact" && sensorConfig.exactCoordinates === true;
+  const exactAddress = precision === "exact" && sensorConfig.exactAddress === true;
+  const textAgentPart = (): string | null => typeof field.value === "string" && field.value.length > 0 ? `loc=${compactGeoValue(field.value)}` : null;
+
   if (field.state_key === "geo.lat" || field.state_key === "geo.lon") {
-    return precision === "exact" && sensorConfig.exactCoordinates === true;
+    return exactCoordinates ? `${label}=${formatAgentValue(field.value)}` : null;
   }
-  if (field.state_key === "geo.formattedAddress") {
-    return precision === "exact" && sensorConfig.exactAddress === true;
+  if (field.state_key === "geo.accuracy_m") {
+    return exactCoordinates ? `${label}=${formatAgentValue(field.value)}` : null;
   }
-  return true;
+  if (field.state_key === "geo.city") {
+    return precision === "city" || precision === "district" || precision === "street" ? textAgentPart() : null;
+  }
+  if (field.state_key === "geo.district") {
+    return precision === "district" || precision === "street" ? textAgentPart() : null;
+  }
+  if (field.state_key === "geo.street") {
+    return precision === "street" ? textAgentPart() : null;
+  }
+  if (field.state_key === "geo.formattedAddress" || field.state_key === "geo.name") {
+    return exactAddress ? `${label}=${formatAgentValue(field.value)}` : null;
+  }
+  if (field.state_key === "geo.placemark") {
+    const place = placemarkString(field.value, precision, exactAddress);
+    return place === null ? null : `loc=${compactGeoValue(place)}`;
+  }
+  if (geoNeverRawAgentFields.has(field.state_key)) {
+    return null;
+  }
+  return field.state_key.startsWith("geo.") ? null : `${label}=${formatAgentValue(field.value)}`;
+};
+
+const formatSensorAgentPart = (field: SensorStateField, sensorConfig: Readonly<SensorConfig>, label: string): string | null => {
+  if (!sensorConfig.agent) {
+    return null;
+  }
+  if (field.sensor_id === "geo") {
+    return formatGeoAgentPart(field, sensorConfig, label);
+  }
+  return `${label}=${formatAgentValue(field.value)}`;
 };
 
 const normalizeHookOutputs = (value: unknown): Record<string, unknown>[] => {
@@ -289,15 +347,14 @@ const buildSensorCandidate = (
     return sensorConfig.ui ? { key: field.state_key, agentPart: null, statusLine: `${label} stale`, widgetLine: `${label} stale` } : null;
   }
 
-  const agentAllowed = sensorConfig.agent && shouldRenderGeoAgentField(field, sensorConfig);
-  if (!agentAllowed) {
+  const agentPart = formatSensorAgentPart(field, sensorConfig, label);
+  if (agentPart === null) {
     omittedKeys.add(field.state_key);
   }
   if (!sensorConfig.ui) {
     omittedKeys.add(field.state_key);
   }
 
-  const agentPart = agentAllowed ? `${label}=${formatAgentValue(field.value)}` : null;
   const statusSuffix = sensorConfig.agent ? "" : " (agent hidden)";
   const statusLine = sensorConfig.ui ? `${label} ${humanValue}${statusSuffix}` : null;
   const widgetLine = sensorConfig.ui ? `${label} ${humanValue}${statusSuffix}` : null;

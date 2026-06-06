@@ -69,6 +69,141 @@ test("render invalidation scheduler creates exactly one timer at min stale/expir
   });
 });
 
+test("geo field-level city precision suppresses lower-precision and exact raw geo fields", async () => {
+  const api = await loadDaseinApi();
+  const renderDaseinContext = requireExportedFunction(api, "renderDaseinContext", "SENSORS-GATE-BLOCKER-001 field-level geo privacy regression");
+  const field = (stateKey: string, value: unknown, valueType: string) => ({
+    contract_version: 1,
+    schema_version: 1,
+    sensor_id: "geo",
+    state_key: stateKey,
+    value,
+    value_type: valueType,
+    collected_at: 1000,
+    stale_after_ms: 1800000,
+    status: "enabled",
+    source: { sensor_id: "geo", source_kind: "builtin" },
+  });
+  const geoSnapshot = {
+    contract_version: 1,
+    schema_version: 1,
+    sensor_id: "geo",
+    fields: {
+      "geo.city": field("geo.city", "Shanghai", "string"),
+      "geo.district": field("geo.district", "Jing'an", "string"),
+      "geo.street": field("geo.street", "Nanjing W Rd", "string"),
+      "geo.formattedAddress": field("geo.formattedAddress", "123 Nanjing W Rd, Shanghai", "string"),
+      "geo.lat": field("geo.lat", 31.2304, "number"),
+      "geo.lon": field("geo.lon", 121.4737, "number"),
+    },
+    collected_at: 1000,
+    stale_after_ms: 1800000,
+    status: "enabled",
+    source: { sensor_id: "geo", source_kind: "builtin" },
+  };
+
+  const rendered = renderDaseinContext({
+    config: { ...baseConfig, sensors: { ...baseConfig.sensors, geo: { ...baseConfig.sensors.geo, enabled: true, agent: true, precision: "city", exactCoordinates: false, exactAddress: false } } },
+    sensorSnapshots: [geoSnapshot],
+    now: 1000,
+  }) as { agent: string | null; omittedKeys: string[] };
+
+  assert.equal(rendered.agent, "[ambient_ctx: loc=Shanghai]");
+  assert.doesNotMatch(rendered.agent ?? "", /geo\.city|geo\.district|geo\.street|formattedAddress|Jing'an|Nanjing|123|31\.2304|121\.4737/u);
+  assert.deepEqual(["geo.district", "geo.formattedAddress", "geo.lat", "geo.lon", "geo.street"].every((key) => rendered.omittedKeys.includes(key)), true);
+});
+
+test("geo placemark envelope at city precision never renders raw sensitive geo fields into the agent string", async () => {
+  const api = await loadDaseinApi();
+  const renderDaseinContext = requireExportedFunction(api, "renderDaseinContext", "SENSORS-GATE-BLOCKER-001 renderer-level geo privacy regression");
+  const field = (stateKey: string, value: unknown, valueType: string) => ({
+    contract_version: 1,
+    schema_version: 1,
+    sensor_id: "geo",
+    state_key: stateKey,
+    value,
+    value_type: valueType,
+    collected_at: 1000,
+    stale_after_ms: 1800000,
+    status: "enabled",
+    source: { sensor_id: "geo", source_kind: "builtin" },
+  });
+  const geoSnapshot = {
+    contract_version: 1,
+    schema_version: 1,
+    sensor_id: "geo",
+    fields: {
+      "geo.lat": field("geo.lat", 31.2304, "number"),
+      "geo.lon": field("geo.lon", 121.4737, "number"),
+      "geo.accuracy_m": field("geo.accuracy_m", 80, "number"),
+      "geo.permission": field("geo.permission", "authorized", "enum"),
+      "geo.nearestTag": field("geo.nearestTag", "home", "string"),
+      "geo.placemark": field("geo.placemark", { city: "Shanghai", district: "Jing'an", street: "Nanjing W Rd", formattedAddress: "123 Nanjing W Rd, Shanghai" }, "object"),
+    },
+    collected_at: 1000,
+    stale_after_ms: 1800000,
+    status: "enabled",
+    source: { sensor_id: "geo", source_kind: "builtin" },
+  };
+
+  const rendered = renderDaseinContext({
+    config: { ...baseConfig, sensors: { ...baseConfig.sensors, geo: { ...baseConfig.sensors.geo, enabled: true, agent: true, precision: "city", exactCoordinates: false, exactAddress: false } } },
+    sensorSnapshots: [geoSnapshot],
+    now: 1000,
+  }) as { agent: string | null; omittedKeys: string[] };
+
+  assert.equal(rendered.agent, "[ambient_ctx: loc=Shanghai]");
+  assert.doesNotMatch(rendered.agent ?? "", /placemark|formattedAddress|district|street|accuracy_m|permission|nearestTag|31\.2304|121\.4737|80|authorized|home|Jing'an|Nanjing|123/u);
+  assert.deepEqual(["geo.accuracy_m", "geo.lat", "geo.lon", "geo.nearestTag", "geo.permission"].every((key) => rendered.omittedKeys.includes(key)), true);
+});
+
+test("geo exact placemark and coordinate gates permit only gated exact agent output", async () => {
+  const api = await loadDaseinApi();
+  const renderDaseinContext = requireExportedFunction(api, "renderDaseinContext", "SENSORS-GATE-BLOCKER-001 exact geo privacy gates");
+  const field = (stateKey: string, value: unknown, valueType: string) => ({
+    contract_version: 1,
+    schema_version: 1,
+    sensor_id: "geo",
+    state_key: stateKey,
+    value,
+    value_type: valueType,
+    collected_at: 1000,
+    stale_after_ms: 1800000,
+    status: "enabled",
+    source: { sensor_id: "geo", source_kind: "builtin" },
+  });
+  const geoSnapshot = {
+    contract_version: 1,
+    schema_version: 1,
+    sensor_id: "geo",
+    fields: {
+      "geo.lat": field("geo.lat", 31.2304, "number"),
+      "geo.lon": field("geo.lon", 121.4737, "number"),
+      "geo.accuracy_m": field("geo.accuracy_m", 80, "number"),
+      "geo.permission": field("geo.permission", "authorized", "enum"),
+      "geo.nearestTag": field("geo.nearestTag", "home", "string"),
+      "geo.placemark": field("geo.placemark", { city: "Shanghai", district: "Jing'an", street: "Nanjing W Rd", formattedAddress: "123 Nanjing W Rd, Shanghai" }, "object"),
+    },
+    collected_at: 1000,
+    stale_after_ms: 1800000,
+    status: "enabled",
+    source: { sensor_id: "geo", source_kind: "builtin" },
+  };
+
+  const rendered = renderDaseinContext({
+    config: { ...baseConfig, sensors: { ...baseConfig.sensors, geo: { ...baseConfig.sensors.geo, enabled: true, agent: true, precision: "exact", exactCoordinates: true, exactAddress: true } } },
+    sensorSnapshots: [geoSnapshot],
+    now: 1000,
+  }) as { agent: string | null; omittedKeys: string[] };
+
+  assert.match(rendered.agent ?? "", /lat=31\.2304/u);
+  assert.match(rendered.agent ?? "", /lon=121\.4737/u);
+  assert.match(rendered.agent ?? "", /accuracy_m=80/u);
+  assert.match(rendered.agent ?? "", /loc=123_Nanjing_W_Rd,_Shanghai/u);
+  assert.doesNotMatch(rendered.agent ?? "", /placemark=|formattedAddress|permission=|nearestTag=|authorized|home/u);
+  assert.deepEqual(["geo.nearestTag", "geo.permission"].every((key) => rendered.omittedKeys.includes(key)), true);
+});
+
 test("geo exact coordinates and exact address render only when agent, precision, and exact privacy gates are all true", async () => {
   const api = await loadDaseinApi();
   const renderDaseinContext = requireExportedFunction(api, "renderDaseinContext", "Testing Gate Matrix row: Renderer output contract");
