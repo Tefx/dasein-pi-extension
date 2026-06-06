@@ -207,3 +207,138 @@ test("SettingsList visibility model exposes core, common sensor, simple sensor, 
     assignments: { "external.calendar.agent": true },
   });
 });
+
+const builtinGeoManifest = {
+  description: "builtin geo",
+  declaredInputClasses: ["native_location", "subprocess"],
+  outputFields: [
+    {
+      state_key: "geo.permission",
+      value_type: "string",
+      description: "CoreLocation permission",
+      agentVisibleByDefault: false,
+      uiVisibleByDefault: true,
+    },
+  ],
+  permissions: [{ kind: "macos_location", required: true, reason: "CoreLocation helper" }],
+  remote: {
+    capable: false,
+    contactsNetworkByDefault: false,
+    destinations: [],
+    payloadClasses: [],
+    transmissionCadence: "none",
+    disableControl: "none",
+    description: "none",
+  },
+  backgroundWork: {
+    capable: true,
+    kinds: ["initial_refresh", "recurring_interval"],
+    defaultIntervalMs: 60000,
+    intervalRelationship: "default_interval_sets_effective_interval_unless_overridden",
+    description: "local geo refresh",
+  },
+} satisfies SensorSpec["manifest"];
+
+const geoMetadata: SensorInspectabilityMetadata = {
+  key: "geo",
+  provenance: builtinProvenance,
+  manifest: builtinGeoManifest,
+  backgroundWork: builtinGeoManifest.backgroundWork,
+  effectiveIntervalMs: 60000,
+  manifestDigest: lowerSha256,
+  acknowledgedManifestDigest: null,
+  acknowledgementRequired: false,
+  acknowledgementSatisfied: true,
+  defaultEnabled: false,
+  effectiveEnabled: false,
+};
+
+const geoSpec: SensorSpec = {
+  key: "geo",
+  defaults: baseConfig.sensors.geo,
+  manifest: builtinGeoManifest,
+  fields: {
+    precision: { label: "Location precision", type: "enum", values: ["city", "district", "street", "exact"] },
+    tags: { label: "Location tags", type: "object", actionManaged: true },
+    exactAddress: { label: "Include exact address", type: "boolean" },
+    exactCoordinates: { label: "Include exact coordinates", type: "boolean" },
+  },
+};
+
+test("[expected-red] SettingsList exposes complete common sensor controls and recurring interval controls", () => {
+  const items = buildSettingsListVisibilityModel({
+    config: baseConfig,
+    sensorMetadata: [clockMetadata, geoMetadata],
+    sensorSpecs: [geoSpec],
+    externalStates: [],
+    now: () => 2000,
+  }) as readonly SettingsListVisibilityItem[];
+  const itemIds = ids(items);
+
+  for (const sensorKey of ["clock", "geo"] as const) {
+    for (const commonField of ["enabled", "ui", "agent", "intervalMs", "timeoutMs", "staleAfterMs", "initialRefresh"] as const) {
+      assert.ok(
+        itemIds.includes(`sensors.${sensorKey}.${commonField}`),
+        `missing SettingsList common control sensors.${sensorKey}.${commonField}`,
+      );
+    }
+    assert.ok(itemIds.includes(`sensor.${sensorKey}.metadata.effectiveIntervalMs`));
+    assert.equal(controlById(items, `sensors.${sensorKey}.intervalMs`).valueType, "number");
+  }
+});
+
+test("[expected-red] SettingsList control mutations route through ConfigManager rather than direct patches", () => {
+  const items = buildSettingsListVisibilityModel({
+    config: baseConfig,
+    sensorMetadata: [clockMetadata],
+    sensorSpecs: [],
+    externalStates: [],
+    now: () => 2000,
+  }) as readonly SettingsListVisibilityItem[];
+  const intervalControl = controlById(items, "sensors.clock.intervalMs") as SettingsListControlItem & {
+    readonly mutationBackend?: string;
+  };
+
+  assert.equal(intervalControl.mutationBackend, "ConfigManager");
+  assert.deepEqual(intervalControl.mutationForValue(120000), {
+    backend: "ConfigManager",
+    assignments: { "sensors.clock.intervalMs": 120000 },
+  });
+});
+
+test("[expected-red] SettingsList omits malformed external state while preserving valid ui/agent defaults", () => {
+  const items = buildSettingsListVisibilityModel({
+    config: baseConfig,
+    sensorMetadata: [],
+    sensorSpecs: [],
+    externalStates: [
+      { key: "alerts", ui: "storm watch", agent: null, source: "fixture", updatedAt: 1000, expiresAt: 61000 },
+      { key: "malformed", ui: "line one\nline two", agent: null, source: "fixture", updatedAt: 1000, expiresAt: 61000 },
+      { key: "bad.key", ui: "bad", agent: null, source: "fixture", updatedAt: 1000, expiresAt: 61000 },
+      { key: "expired", ui: "old", agent: null, source: "fixture", updatedAt: 1000, expiresAt: 1000 },
+    ],
+    now: () => 2000,
+  }) as readonly SettingsListVisibilityItem[];
+  const itemIds = ids(items);
+
+  assert.equal(controlById(items, "external.alerts.ui").value, true);
+  assert.equal(controlById(items, "external.alerts.agent").value, false);
+  assert.equal(itemIds.includes("external.malformed.ui"), false);
+  assert.equal(itemIds.includes("external.bad.key.ui"), false);
+  assert.equal(itemIds.includes("external.expired.ui"), false);
+});
+
+test("SettingsList exposes geo exact privacy controls but omits geo tags as a flat control", () => {
+  const items = buildSettingsListVisibilityModel({
+    config: baseConfig,
+    sensorMetadata: [geoMetadata],
+    sensorSpecs: [geoSpec],
+    externalStates: [],
+    now: () => 2000,
+  }) as readonly SettingsListVisibilityItem[];
+  const itemIds = ids(items);
+
+  assert.ok(itemIds.includes("sensors.geo.exactCoordinates"));
+  assert.ok(itemIds.includes("sensors.geo.exactAddress"));
+  assert.equal(itemIds.includes("sensors.geo.tags"), false);
+});

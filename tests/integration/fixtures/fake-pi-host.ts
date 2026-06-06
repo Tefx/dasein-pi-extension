@@ -1,5 +1,42 @@
 export type FakePiMode = "tui" | "rpc" | "json" | "print";
 
+export type FakePiMechanism =
+  | "registerCommand"
+  | "registerFlag"
+  | "context"
+  | "customMessageConversion"
+  | "events"
+  | "setStatus"
+  | "setWidget"
+  | "custom"
+  | "SettingsList"
+  | "session_start"
+  | "session_shutdown"
+  | "input"
+  | "agent_end";
+
+export type FakeEvidenceStatus =
+  | "SOURCE_VERIFIED"
+  | "API_VERIFIED"
+  | "LIVE_SMOKE_PENDING"
+  | "LIVE_SMOKE_VERIFIED";
+
+export type FakePiSupportClassification =
+  | "unavailable"
+  | "below-minimum"
+  | "supported-version-feature-probes-still-required";
+
+export interface FakePiMechanismEvidence {
+  readonly mechanism: FakePiMechanism;
+  readonly evidenceStatuses: readonly FakeEvidenceStatus[];
+  readonly liveSupportClaim: false;
+}
+
+export interface FakeFeatureProbeRecord {
+  readonly mechanism: FakePiMechanism;
+  readonly available: boolean;
+}
+
 export type FakeCommandHandler = (rawArgs: string, context: FakePiContext) => unknown | Promise<unknown>;
 
 export interface FakeCommandRegistration {
@@ -48,6 +85,16 @@ export interface FakeCustomCall {
   readonly optionKeys: readonly string[];
 }
 
+export interface FakeConfigMutationRecord {
+  readonly source: "slash" | "settings";
+  readonly paths: readonly string[];
+}
+
+export interface FakeCleanupRecord {
+  readonly sensorKey: string;
+  readonly timeoutMs: number;
+}
+
 export interface FakePiHostLedger {
   readonly commands: FakeCommandRegistration[];
   readonly flags: FakeFlagRegistration[];
@@ -57,6 +104,9 @@ export interface FakePiHostLedger {
   readonly uiStatusCalls: FakeStatusCall[];
   readonly uiWidgetCalls: FakeWidgetCall[];
   readonly uiCustomCalls: FakeCustomCall[];
+  readonly featureProbes: FakeFeatureProbeRecord[];
+  readonly configMutations: FakeConfigMutationRecord[];
+  readonly cleanupCalls: FakeCleanupRecord[];
 }
 
 export interface FakePiUiApi {
@@ -76,9 +126,12 @@ export interface FakePiEventBus {
 }
 
 export interface FakePiExtensionApi {
+  readonly version: string | null;
+  readonly binaryPath: string | null;
   registerCommand(name: string, options: Record<string, unknown>): void;
   registerFlag(name: string, options: { readonly type: string }): void;
   getFlag(name: string): string | undefined;
+  probeFeature(mechanism: FakePiMechanism): boolean;
   on(eventName: string, handler: FakeLifecycleHandler): void;
   readonly events: FakePiEventBus;
 }
@@ -87,6 +140,15 @@ export interface FakePiHostFixture {
   readonly pi: FakePiExtensionApi;
   readonly context: FakePiContext;
   readonly ledger: FakePiHostLedger;
+  readonly minimumPiVersion: "0.78.1";
+  readonly evidence: readonly FakePiMechanismEvidence[];
+}
+
+export interface FakePiHostOptions {
+  readonly piVersion?: string | null;
+  readonly binaryPath?: string | null;
+  readonly unavailableMechanisms?: readonly FakePiMechanism[];
+  readonly customAvailable?: boolean;
 }
 
 const optionKeys = (value: Record<string, unknown> | undefined): readonly string[] =>
@@ -95,9 +157,29 @@ const optionKeys = (value: Record<string, unknown> | undefined): readonly string
 const commandHandler = (value: unknown): FakeCommandHandler | null =>
   typeof value === "function" ? value as FakeCommandHandler : null;
 
+const versionParts = (version: string): readonly number[] =>
+  version.split(".").map((part) => Number.parseInt(part, 10));
+
+export const classifyFakePiSupport = (version: string | null): FakePiSupportClassification => {
+  if (version === null) return "unavailable";
+  const [major = 0, minor = 0, patch = 0] = versionParts(version);
+  if (major < 0 || (major === 0 && minor < 78) || (major === 0 && minor === 78 && patch < 1)) {
+    return "below-minimum";
+  }
+  return "supported-version-feature-probes-still-required";
+};
+
+const fakeMechanismEvidence = (): readonly FakePiMechanismEvidence[] => [
+  { mechanism: "registerCommand", evidenceStatuses: ["SOURCE_VERIFIED", "LIVE_SMOKE_PENDING"], liveSupportClaim: false },
+  { mechanism: "registerFlag", evidenceStatuses: ["SOURCE_VERIFIED", "LIVE_SMOKE_PENDING"], liveSupportClaim: false },
+  { mechanism: "custom", evidenceStatuses: ["API_VERIFIED", "LIVE_SMOKE_PENDING"], liveSupportClaim: false },
+  { mechanism: "SettingsList", evidenceStatuses: ["API_VERIFIED", "LIVE_SMOKE_PENDING"], liveSupportClaim: false },
+];
+
 export const createFakePiHost = (
   mode: FakePiMode = "tui",
   flags: Readonly<Record<string, string | undefined>> = {},
+  options: FakePiHostOptions = {},
 ): FakePiHostFixture => {
   const ledger: FakePiHostLedger = {
     commands: [],
@@ -108,7 +190,12 @@ export const createFakePiHost = (
     uiStatusCalls: [],
     uiWidgetCalls: [],
     uiCustomCalls: [],
+    featureProbes: [],
+    configMutations: [],
+    cleanupCalls: [],
   };
+  const unavailableMechanisms = new Set(options.unavailableMechanisms ?? []);
+  const customAvailable = options.customAvailable ?? !unavailableMechanisms.has("custom");
 
   const context: FakePiContext = {
     mode,
@@ -120,6 +207,9 @@ export const createFakePiHost = (
         ledger.uiWidgetCalls.push({ slot, value });
       },
       async custom(_componentFactory, options) {
+        if (!customAvailable) {
+          throw new Error("fake Pi ctx.ui.custom unavailable");
+        }
         ledger.uiCustomCalls.push({ optionKeys: optionKeys(options) });
         return undefined;
       },
@@ -127,6 +217,8 @@ export const createFakePiHost = (
   };
 
   const pi: FakePiExtensionApi = {
+    version: options.piVersion ?? "0.78.1",
+    binaryPath: options.binaryPath ?? "/opt/homebrew/bin/pi",
     registerCommand(name, options) {
       ledger.commands.push({
         name,
@@ -141,6 +233,11 @@ export const createFakePiHost = (
     },
     getFlag(name) {
       return flags[name];
+    },
+    probeFeature(mechanism) {
+      const available = !unavailableMechanisms.has(mechanism);
+      ledger.featureProbes.push({ mechanism, available });
+      return available;
     },
     on(eventName, handler) {
       ledger.lifecycleHandlers.push({ eventName, handler });
@@ -158,7 +255,27 @@ export const createFakePiHost = (
     },
   };
 
-  return { pi, context, ledger };
+  return {
+    pi,
+    context,
+    ledger,
+    minimumPiVersion: "0.78.1",
+    evidence: fakeMechanismEvidence(),
+  };
+};
+
+export const convertFakeCustomMessageToLlmUserMessage = (message: unknown): { readonly role: "user"; readonly content: string } => {
+  if (typeof message !== "object" || message === null || Array.isArray(message)) {
+    throw new TypeError("CustomMessage must be an object");
+  }
+  const record = message as Record<string, unknown>;
+  if (record.role !== "custom" || record.customType !== "dasein" || record.display !== false) {
+    throw new TypeError("CustomMessage must be hidden dasein custom content");
+  }
+  if (typeof record.content !== "string" || typeof record.timestamp !== "number") {
+    throw new TypeError("CustomMessage must include string content and numeric timestamp");
+  }
+  return { role: "user", content: record.content };
 };
 
 export const invokeFakeCommand = async (
