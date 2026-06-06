@@ -11942,75 +11942,75 @@ phases:
       cleanup evidence.
 
       '
-    verification: '- [ ] Black-box tests/commands use documented package scripts,
+    verification: '- [x] Black-box tests/commands use documented package scripts,
       slash commands, launch flag, config files, and event payloads only.
 
-      - [ ] Evidence includes spec-exact minimal fixtures for config, external events,
+      - [x] Evidence includes spec-exact minimal fixtures for config, external events,
       and slash/launch command formats.
 
-      - [ ] Evidence shows successful public paths and at least one invalid input
+      - [x] Evidence shows successful public paths and at least one invalid input
       per surface fails clearly without mutation.
 
-      - [ ] Any live-environment blockers are reported separately from fake-host/public
+      - [x] Any live-environment blockers are reported separately from fake-host/public
       CI proof.
 
-      - [ ] Black-box verification observes public status payload/version reporting
+      - [x] Black-box verification observes public status payload/version reporting
       or exact environment blockers for `minimumPiVersion: "0.78.1"` and current Pi
       version.
 
-      - [ ] Black-box verification invokes literal bare `/dasein` and proves TUI SettingsList
+      - [x] Black-box verification invokes literal bare `/dasein` and proves TUI SettingsList
       behavior plus non-TUI help/status fallback from public docs only.
 
-      - [ ] Black-box verification observes documented SettingsList controls for `enabled`,
+      - [x] Black-box verification observes documented SettingsList controls for `enabled`,
       `ui`, `agent`, `intervalMs`, `timeoutMs`, `staleAfterMs`, and `initialRefresh`
       where the public surface is available.
 
-      - [ ] Black-box verification observes public `/dasein status` and `/dasein reload`
+      - [x] Black-box verification observes public `/dasein status` and `/dasein reload`
       outputs/data for `effectiveConfigVersion`, `launchArgsApplied`, `diskConfigLoaded`,
       `launchReappliedPaths`, and `runtimeOverriddenPaths` or exact public-surface
       blockers.
 
-      - [ ] Black-box verification attempts invalid/dotted/expired/malformed external
+      - [x] Black-box verification attempts invalid/dotted/expired/malformed external
       inputs and observes no SettingsList controls for them, while valid external
       controls still render where public surface is available.
 
-      - [ ] Black-box verification observes public behavior or exact blockers for
+      - [x] Black-box verification observes public behavior or exact blockers for
       `sensors.geo.exactCoordinates` and `sensors.geo.exactAddress` controls/output
       gates.
 
-      - [ ] Black-box verification exercises public config/command paths for `core.maxAgentChars`
+      - [x] Black-box verification exercises public config/command paths for `core.maxAgentChars`
       boundary values and `core.injectedLabel` regex accept/reject cases or exact
       blockers.
 
-      - [ ] Black-box verification exercises public geo tag commands for `radius_m`
+      - [x] Black-box verification exercises public geo tag commands for `radius_m`
       bounds, `GeoTagListPayload`, and coordinate redaction using `exactCoordinates`
       or exact blockers.
 
-      - [ ] Black-box verification observes public status/sensors/SettingsList metadata
+      - [x] Black-box verification observes public status/sensors/SettingsList metadata
       or exact blockers for all five risky sensor inspectability fields.
 
-      - [ ] Black-box verification observes public/fake/live evidence or exact blockers
+      - [x] Black-box verification observes public/fake/live evidence or exact blockers
       for hidden CustomMessage fields and LLM user-message conversion.
 
-      - [ ] Black-box verification observes public failure/persistence behavior or
+      - [x] Black-box verification observes public failure/persistence behavior or
       exact blockers for atomic write fsync/rename/no-partial-change semantics.
 
-      - [ ] Black-box verification attempts U+2028 and U+2029 external event payload
+      - [x] Black-box verification attempts U+2028 and U+2029 external event payload
       strings and observes rejection without state mutation or exact blockers.
 
-      - [ ] Black-box verification observes native helper stdout/stderr `16KiB` cap
+      - [x] Black-box verification observes native helper stdout/stderr `16KiB` cap
       behavior or exact blocker.
 
-      - [ ] Post-fix black-box verification launches from a cwd different from the
+      - [x] Post-fix black-box verification launches from a cwd different from the
       extension root and observes geo helper behavior does not resolve from cwd.
 
-      - [ ] Post-fix black-box verification exercises duplicate user sensor candidates
+      - [x] Post-fix black-box verification exercises duplicate user sensor candidates
       and observes load errors without duplicate active sensors.
 
-      - [ ] Post-fix black-box verification observes `/dasein reload` reports non-empty/exact
+      - [x] Post-fix black-box verification observes `/dasein reload` reports non-empty/exact
       `launchReappliedPaths` when launch overlays are reapplied.
 
-      - [ ] Post-fix black-box verification invokes public `/dasein lapse reset` through
+      - [x] Post-fix black-box verification invokes public `/dasein lapse reset` through
       fake-host and live Pi wrapper path where available, observing persisted and
       in-memory lapse timestamp clearing instead of `unknown-sensor-action`.'
     evidence_template: "## refs Read Confirmation (MANDATORY)\nFor each exact refs\
