@@ -1122,76 +1122,76 @@ phases:
       explicit as static/contract/runtime fake proof, not broad injector no-I/O.
 
       '
-    verification: '- [ ] Test files are limited to tests/ and fixtures/helpers and
+    verification: '- [x] Test files are limited to tests/ and fixtures/helpers and
       cite the exact Technical Design gate matrix rows they implement.
 
-      - [ ] Expected-red evidence lists exposed gaps for config, command, sensor runtime/loader,
+      - [x] Expected-red evidence lists exposed gaps for config, command, sensor runtime/loader,
       external events, renderer, and injector no-I/O.
 
-      - [ ] Spec-derived minimal fixtures cover documented config/event/command formats
+      - [x] Spec-derived minimal fixtures cover documented config/event/command formats
       without convenience-only fields.
 
-      - [ ] Product implementation files are not modified beyond importing contract
+      - [x] Product implementation files are not modified beyond importing contract
       stubs needed for compilation.
 
-      - [ ] Expected-red command tests explicitly cover `/dasein help` parsing, routing,
+      - [x] Expected-red command tests explicitly cover `/dasein help` parsing, routing,
       result typing, and deterministic output.
 
-      - [ ] Expected-red status command tests assert `minimumPiVersion: "0.78.1"`,
+      - [x] Expected-red status command tests assert `minimumPiVersion: "0.78.1"`,
       `piVersion` capture/null behavior, mechanism evidence status lists, and below-minimum/unavailable
       classifications.
 
-      - [ ] Expected-red bounding box explicitly includes `tests/unit/commands-status.test.ts`
+      - [x] Expected-red bounding box explicitly includes `tests/unit/commands-status.test.ts`
       and `tests/unit/commands-sensors.test.ts`.
 
-      - [ ] `tests/unit/commands-status.test.ts` expected-red assertions cover `/dasein
+      - [x] `tests/unit/commands-status.test.ts` expected-red assertions cover `/dasein
       status` payload: `piVersion`, `minimumPiVersion`, Pi mechanism evidence statuses,
       config/state paths, active/disabled sensors, hidden contributors, permissions,
       sensor metadata, load/status errors, and durable lapse health.
 
-      - [ ] `tests/unit/commands-sensors.test.ts` expected-red assertions cover builtin/user-added/load-failed
+      - [x] `tests/unit/commands-sensors.test.ts` expected-red assertions cover builtin/user-added/load-failed
       records, provenance, manifest permissions/input/output metadata, remote/background
       behavior, effectiveIntervalMs, manifestDigest, acknowledgement, forcedDisabledReason,
       and trusted-local-code warning.
 
-      - [ ] Expected-red command tests explicitly assert `/dasein status` fields `effectiveConfigVersion`,
+      - [x] Expected-red command tests explicitly assert `/dasein status` fields `effectiveConfigVersion`,
       `launchArgsApplied`, and `diskConfigLoaded`.
 
-      - [ ] Expected-red command/reload tests explicitly assert reload payload/result
+      - [x] Expected-red command/reload tests explicitly assert reload payload/result
       fields `launchReappliedPaths` and `runtimeOverriddenPaths` for success and keep-old
       failure scenarios.
 
-      - [ ] Expected-red config/schema tests explicitly assert `sensors.geo.exactCoordinates`
+      - [x] Expected-red config/schema tests explicitly assert `sensors.geo.exactCoordinates`
       and `sensors.geo.exactAddress` defaults, boolean validation, and exact-output
       gating requirements.
 
-      - [ ] Expected-red config tests assert `core.maxAgentChars` accepts 40/default/2000
+      - [x] Expected-red config tests assert `core.maxAgentChars` accepts 40/default/2000
       and rejects below range, above range, and non-integers.
 
-      - [ ] Expected-red config tests assert `core.injectedLabel` accepts `[A-Za-z0-9_.:-]{1,32}`
+      - [x] Expected-red config tests assert `core.injectedLabel` accepts `[A-Za-z0-9_.:-]{1,32}`
       strings and rejects empty, too-long, whitespace/control, and invalid-character
       labels.
 
-      - [ ] Expected-red status/sensors command tests explicitly assert `acknowledgedManifestDigest`,
+      - [x] Expected-red status/sensors command tests explicitly assert `acknowledgedManifestDigest`,
       `acknowledgementRequired`, `acknowledgementSatisfied`, `defaultEnabled`, and
       `effectiveEnabled` in sensor metadata/risk outputs.
 
-      - [ ] Expected-red injector/context tests assert hidden CustomMessage `display:false`,
+      - [x] Expected-red injector/context tests assert hidden CustomMessage `display:false`,
       `customType:"dasein"`, timestamp shape, and conversion-to-LLM user-message proof
       obligations.
 
-      - [ ] Expected-red renderer tests explicitly assert exactly one render invalidation
+      - [x] Expected-red renderer tests explicitly assert exactly one render invalidation
       timer at the minimum upcoming stale/expires deadline, no timer when no deadlines
       exist, timer-fire stale/expired recompute, and no request-path scheduling/I/O.
 
-      - [ ] Expected-red config/state tests explicitly assert atomic temp-file write,
+      - [x] Expected-red config/state tests explicitly assert atomic temp-file write,
       fsync when available, atomic rename, and failed-write preservation for config.json
       and state.json where applicable.
 
-      - [ ] Expected-red external event tests explicitly assert U+2028 and U+2029
+      - [x] Expected-red external event tests explicitly assert U+2028 and U+2029
       rejection in `agent`, `ui`, and `source` strings without state mutation.
 
-      - [ ] Expected-red renderer tests include adversarial `renderAgent`/`renderUI`
+      - [x] Expected-red renderer tests include adversarial `renderAgent`/`renderUI`
       hooks attempting I/O, refresh/action, config mutation, durable-state access,
       discovery, helper/native import, and final string ownership.
 
