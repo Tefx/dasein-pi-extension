@@ -1660,7 +1660,7 @@ phases:
     agent: frontend-engineer
   - id: core-renderer-injector-external
     name: Complete renderer, injector, and external event intake
-    status: pending
+    status: claimed
     description: 'step_type: implementation
 
       Fill in stub bodies in src/core/renderer.ts, src/core/injector.ts, and src/core/external-events.ts
@@ -1835,6 +1835,8 @@ phases:
     - core-tests
     - core-behavior-guardrails
     agent: frontend-engineer
+    claimed_by: frontend-engineer
+    claimed_at: '2026-06-06T04:28:44.784484+00:00'
   - id: core-command-layer
     name: Complete command parser and core command execution layer
     status: claimed
