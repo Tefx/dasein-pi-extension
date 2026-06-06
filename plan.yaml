@@ -9912,7 +9912,7 @@ phases:
       All seven artifact coverage checklist items proven; blockers none.'
   - id: release-smoke-fix-live-pi-tui-checklist-receipt
     name: Strengthen live Pi TUI smoke checklist receipt coverage
-    status: claimed
+    status: done
     description: 'step_type: implementation
 
       work_type: proof_closure
@@ -10176,6 +10176,71 @@ phases:
     agent: frontend-engineer
     claimed_by: frontend-engineer
     claimed_at: '2026-06-06T08:59:15.108653+00:00'
+    done_at: '2026-06-06T09:10:33.995571+00:00'
+    evidence: '## refs Read Confirmation
+
+      - `docs/TECHNICAL_DESIGN.md#verified-pi-mechanisms` — live support claims require
+      LIVE_SMOKE_VERIFIED; source/API alone cannot ship.
+
+      - `docs/TECHNICAL_DESIGN.md#testing-gate-matrix` — release smoke is `npm run
+      test:smoke` against live Pi TUI/process; ordinary test skips it.
+
+      - `docs/PRD.md#9-4-tui` — TUI must expose status/widget and SettingsList core/common
+      sensor controls and metadata.
+
+      - `CONSTITUTION.md#quality-baselines` — mock tests are not integration proof;
+      black-box liveness evidence takes precedence.
+
+      - `CONSTITUTION.md#ux-and-pi-interaction-red-lines` — UI/Pi mechanisms require
+      real Pi verification with mechanism, version, binary, and artifacts before support
+      claims.
+
+
+      ## Smoke Command Receipt
+
+      - mainline commit: `81df438`; worker commit: `b2018b8a5de61010028934b1ce738a812f4ea3eb`.
+
+      - changed files: `src/index.ts`, `tests/integration/fixtures/fake-pi-host.ts`,
+      `tests/integration/pi-runtime-red.test.ts`, `tests/smoke/contracts/live-pi-smoke-gate-contract.test.ts`.
+
+      - `npm run typecheck` exit 0.
+
+      - `npm test` exit 0; 131 pass.
+
+      - `npm run test:smoke` exit 0; 1 pass.
+
+      - receipt path: `.dasein/live-pi-smoke/latest/checklist_receipt.json`; counts
+      total 11, proven 11, blocked 0.
+
+
+      ## Required Rows / Evidence
+
+      - pi.events set/clear: PROVEN; live `dasein:state:set` received and context
+      contains weather/rain, live `dasein:state:clear` received and context omits
+      weather/rain.
+
+      - lifecycle cleanup: PROVEN; session_start, before_agent_start, agent_end, session_shutdown
+      observed; cleanup called for clock/geo/lapse with 1000ms before UI clear proof.
+
+      - bare `/dasein` outside TUI: PROVEN; literal `/dasein` returned help in print
+      mode with no UI custom calls.
+
+      - SettingsList common controls: PROVEN; enabled/ui/agent/intervalMs/timeoutMs/staleAfterMs/initialRefresh
+      enumerated with expected value types.
+
+      - ctx.ui.custom render path: PROVEN; no provider/model required, rendered Dasein
+      settings/core/clock lines.
+
+      - Prior real Pi boundary, fakeHost false, `/dasein status`, `--dasein`, context
+      conversion, status/widget sentinels, and core.statusEnabled toggle remain PROVEN.
+
+      - no fake-host/source/API-key-only/harness-missing evidence is presented as
+      live proof.
+
+
+      ## checklist_receipt
+
+      All nine checklist receipt coverage items proven; blockers none.'
 - id: finalization
   name: Documentation Sync and Final Deep Review
   status: locked
