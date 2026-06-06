@@ -12611,7 +12611,7 @@ phases:
     agent: gate-reviewer
   - id: finalization-audit-blockers-fix
     name: Fix concurrent finalization audit blockers
-    status: pending
+    status: claimed
     description: 'step_type: implementation
 
       TARGET STATE: One batched remediation closes the four concurrent finalization
@@ -12814,3 +12814,5 @@ phases:
     depends_on:
     - finalization-doc-sync
     agent: frontend-engineer
+    claimed_by: frontend-engineer
+    claimed_at: '2026-06-06T10:25:19.699444+00:00'
