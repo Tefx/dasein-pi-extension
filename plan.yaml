@@ -2322,7 +2322,7 @@ phases:
     agent: integration-verifier
   - id: core-behavior-guardrails
     name: Define behavioral ambient-context guardrails
-    status: claimed
+    status: done
     description: 'step_type: test
 
       step_intent: test_define_red
@@ -2403,6 +2403,65 @@ phases:
     agent: frontend-engineer
     claimed_by: frontend-engineer
     claimed_at: '2026-06-06T04:23:03.617077+00:00'
+    done_at: '2026-06-06T04:28:03.368995+00:00'
+    evidence: 'EXPECTED_RED_ACCEPTED
+
+
+      ## refs Read Confirmation
+
+      - `docs/TECHNICAL_DESIGN.md#testing-gate-matrix` — behavioral row requires `tests/behavior/ambient-context.test.ts`
+      proving ordinary prompt no forced ambient mention, relevant prompt can use enabled
+      fields, disabled fields absent, UI sensitive visibility, malformed publisher
+      rejection.
+
+      - `docs/PRD.md#9-3-agent-injection` — neutral `[ambient_ctx: ...]`, disabled/agent=false
+      omitted, no request-path I/O/refresh, bounded by `core.maxAgentChars`.
+
+      - `docs/PRD.md#9-6-external-state` — rejects malformed/oversized/multiline/control
+      strings; unconfigured keys default UI-visible/agent-hidden.
+
+      - `CONSTITUTION.md#testing-and-gates` — golden rendering tests verify core-owned
+      formatting/order/truncation/renderable views/injection.
+
+
+      step_intent: test_define_red
+
+      expected_result: red
+
+      observed_result: red
+
+      failure_alignment: `npm run typecheck` exits 0; focused behavior test exits
+      1 with 4 tests, 1 pass, 3 fail on missing `injectAmbientContextMessage` and
+      `renderDaseinContext` exports. This matches downstream renderer/injector implementation
+      gaps.
+
+      verdict: PASS
+
+      blockers: []
+
+      product_implementation_files_modified: false
+
+
+      ## artifacts/commit
+
+      - 123f37b `[vectl] step-core-behavior-guardrails completed`
+
+      - Added only `tests/behavior/ambient-context.test.ts`.
+
+
+      ## checklist_receipt
+
+      - Behavior test file defined and cites gate matrix row: PROVEN.
+
+      - Ordinary prompt no forced ambient mention: PROVEN by expected-red assertion.
+
+      - Relevant prompt enabled fields and disabled absent: PROVEN by expected-red
+      assertion.
+
+      - UI/status sensitive visibility and malformed publisher rejection: PROVEN by
+      expected-red assertion.
+
+      - No product implementation changes: PROVEN.'
   - id: core-gate
     name: Gate core broker phase
     status: pending
