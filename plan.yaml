@@ -16115,31 +16115,31 @@ phases:
       Also investigate W-FINAL-001 flake risk: first `npm test` in final gate failed
       ENOENT for lapse async test fixture sensor directory, rerun passed. Fix fixture
       cleanup/isolation if reproducible or evident.'
-    verification: '- [ ] refs confirmation cites status output contract, hidden contributor
+    verification: '- [x] refs confirmation cites status output contract, hidden contributor
       inspectability, lapse controls, and testing/live proof separation.
 
-      - [ ] Production `/dasein status` includes non-empty hidden contributor records
+      - [x] Production `/dasein status` includes non-empty hidden contributor records
       when configured hidden contributors exist, not only fixture defaults.
 
-      - [ ] Production `/dasein status` includes effective lapse collection/persistence/injection
+      - [x] Production `/dasein status` includes effective lapse collection/persistence/injection
       controls: enabled/persist/agent (or exact documented names preserving semantics).
 
-      - [ ] Live smoke/status proof artifacts include the required fields without
+      - [x] Live smoke/status proof artifacts include the required fields without
       changing release gate verdict vocabulary.
 
-      - [ ] Fixture-only tests are supplemented by production-path status assertions
+      - [x] Fixture-only tests are supplemented by production-path status assertions
       for hidden contributors and lapse controls.
 
-      - [ ] W-FINAL-001 ENOENT flake is investigated; either fixed or evidence explains
+      - [x] W-FINAL-001 ENOENT flake is investigated; either fixed or evidence explains
       non-reproducible/non-blocking disposition with test isolation proof.
 
-      - [ ] `npm run typecheck` exits 0 with raw output.
+      - [x] `npm run typecheck` exits 0 with raw output.
 
-      - [ ] Focused status/live-smoke/lapse fixture tests exit 0 with raw output.
+      - [x] Focused status/live-smoke/lapse fixture tests exit 0 with raw output.
 
-      - [ ] `npm test` exits 0 with raw output.
+      - [x] `npm test` exits 0 with raw output.
 
-      - [ ] `npm run test:smoke` exits 0 with raw output.'
+      - [x] `npm run test:smoke` exits 0 with raw output.'
     refs:
     - CONSTITUTION.md
     - docs/PRD.md
