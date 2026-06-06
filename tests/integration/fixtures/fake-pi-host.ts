@@ -132,6 +132,7 @@ export interface FakePiExtensionApi {
   registerFlag(name: string, options: { readonly type: string }): void;
   getFlag(name: string): string | undefined;
   probeFeature(mechanism: FakePiMechanism): boolean;
+  recordCleanup(sensorKey: string, timeoutMs: number): void;
   on(eventName: string, handler: FakeLifecycleHandler): void;
   readonly events: FakePiEventBus;
 }
@@ -238,6 +239,9 @@ export const createFakePiHost = (
       const available = !unavailableMechanisms.has(mechanism);
       ledger.featureProbes.push({ mechanism, available });
       return available;
+    },
+    recordCleanup(sensorKey, timeoutMs) {
+      ledger.cleanupCalls.push({ sensorKey, timeoutMs });
     },
     on(eventName, handler) {
       ledger.lifecycleHandlers.push({ eventName, handler });
