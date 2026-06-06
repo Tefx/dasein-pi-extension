@@ -1835,7 +1835,7 @@ phases:
     agent: frontend-engineer
   - id: core-command-layer
     name: Complete command parser and core command execution layer
-    status: pending
+    status: claimed
     description: 'step_type: implementation
 
       Fill in stub bodies in src/commands/dasein-command.ts and any narrow command
@@ -2015,6 +2015,8 @@ phases:
     - core-tests
     - core-behavior-guardrails
     agent: frontend-engineer
+    claimed_by: frontend-engineer
+    claimed_at: '2026-06-06T04:28:22.023605+00:00'
   - id: core-static-proof
     name: Verify core local behavior and request-path safety
     status: pending
