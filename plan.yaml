@@ -16701,7 +16701,7 @@ phases:
       are reported in evidence.'
 - id: status_detail_control
   name: Status Bar Detail Control
-  status: in_progress
+  status: done
   gate: Settings exposes a status bar detail level without changing quiet default
     or leaking raw ambient context.
   depends_on:
@@ -16709,7 +16709,7 @@ phases:
   steps:
   - id: status-detail-setting
     name: Add status bar detail setting
-    status: claimed
+    status: done
     description: Add a core setting for status bar detail level so users can choose
       quiet/default vs richer visible status. Preserve quiet default and no raw ambient/debug
       context by default. Expose it in SettingsList and slash/config mutation validation.
@@ -16719,3 +16719,15 @@ phases:
       behavior; commands run and outputs.
     claimed_by: llm-agent-expert
     claimed_at: '2026-06-06T17:47:38.089885+00:00'
+    done_at: '2026-06-06T19:30:32.148568+00:00'
+    evidence: 'Implemented and verified status detail control and related UI polish.
+      Evidence: core.statusDetail supports quiet|summary|diagnostic in src/core/config.ts
+      and src/core/types.ts; status formatting moved to src/ui/status-format.ts; quiet
+      normal state returns no footer text; summary/diagnostic filter raw timestamps,
+      geo coordinates/address, debug labels, and injected wrappers; SettingsList exposes
+      core.statusDetail and widget density controls through src/ui/settings-import-contract.ts
+      and src/index.ts. Verification run: npm run release:check passed (typecheck,
+      npm test 166/166, test:native 3 passed/1 skipped, package:check passed with
+      35 packed files, test:smoke 3/3); after fixing live-smoke Constitution refs,
+      npm run test:smoke passed 3/3 again and regenerated .dasein/live-pi-smoke/latest/checklist_receipt.json
+      with total=11 proven=11 blocked=0; git diff --check produced no output.'
