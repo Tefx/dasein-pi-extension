@@ -3811,7 +3811,7 @@ phases:
       visible, sibling search clear.'
   - id: core-gate-b4-external-default-retest
     name: Retest B4 external default agent visibility
-    status: claimed
+    status: done
     description: 'step_type: verification
 
       step_intent: retest_green
@@ -3980,6 +3980,62 @@ phases:
     agent: integration-verifier
     claimed_by: integration-verifier
     claimed_at: '2026-06-06T05:32:52.895103+00:00'
+    done_at: '2026-06-06T05:35:55.739283+00:00'
+    evidence: '## refs Read Confirmation
+
+      - `CONSTITUTION.md#privacy-and-safety-laws` — builtin/external state human-visible
+      when enabled; injected fields traceable; Dasein must not inject hidden fields.
+
+      - `docs/PRD.md#9-6-external-state` — external publishers cannot force agent
+      injection; unconfigured keys UI-visible and agent-hidden by default.
+
+      - `docs/TECHNICAL_DESIGN.md#core-contracts` — unconfigured external defaults
+      `{ui:true, agent:false}`.
+
+      - `docs/TECHNICAL_DESIGN.md#testing-gate-matrix` — CI requires typecheck/npm
+      test; renderer/external rows cover visibility and agent exposure.
+
+
+      verdict: PASS
+
+      blockers: []
+
+      gate_open_allowed: true
+
+
+      ## Command Evidence
+
+      - `npm run typecheck` exit 0.
+
+      - `npm test` exit 0; 27 discovered files; 78 pass, 0 fail/skipped.
+
+      - `npm run test:file -- tests/unit/renderer.test.ts tests/unit/external-events.test.ts
+      tests/unit/injector.test.ts tests/behavior/ambient-context.test.ts` exit 0;
+      17 pass, 0 fail/skipped.
+
+      - Inline renderer probe exit 0: unconfigured external `weather` produced status/UI
+      value with `(agent hidden)`, `omittedKeys=[external:weather]`, `agentContainsExternalSecret=false`;
+      explicit `external.weather.agent=true` included `weather=secret-agent-value`
+      in agent string.
+
+
+      ## Probe Closure Register
+
+      - B1: CLOSED — typecheck green.
+
+      - B2: CLOSED — ordinary npm test green with full discovery.
+
+      - B3: CLOSED — focused renderer/external/injector/behavior tests green and prior
+      SettingsList proof stands.
+
+      - B4: CLOSED — runtime probe proves unconfigured external agent payload omitted;
+      explicit agent=true remains visible.
+
+
+      ## checklist_receipt
+
+      All seven B4 retest checklist items proven. Live Pi TUI smoke remains release-scope
+      and non-intersecting with this ordinary core retest.'
 - id: sensors
   name: Builtin Sensors and Native Helper
   status: locked
