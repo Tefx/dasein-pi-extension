@@ -8198,13 +8198,12 @@ phases:
 
       - [ ] `npm test` passes with raw stdout/stderr and excludes live Pi smoke.
 
-      - [ ] `npm run test:native` passes on macOS or skips with explicit non-macOS
-      reason and raw stdout/stderr.
+      - [ ] `npm run test:native` passes on macOS with raw stdout/stderr showing both
+      `tests/native/contracts/native-gate-contract.test.ts` and `tests/native/macos-location-helper.test.ts`
+      were discovered/executed, or skips only with an explicit non-macOS reason.
 
       - [ ] Static/package checks confirm zero non-Pi runtime dependencies and no
-      request-path forbidden imports.
-
-      '
+      request-path forbidden imports.'
     evidence_template: "## refs Read Confirmation (MANDATORY)\nFor each exact refs\
       \ entry listed on this step, provide a key passage or `NOT READ: <reason>`.\n\
       Machine-checkable refs inventory generated from this step refs:\n- `docs/TECHNICAL_DESIGN.md#testing-gate-matrix`\
@@ -8243,6 +8242,7 @@ phases:
     - docs/PRD.md#8-non-functional-requirements
     depends_on:
     - system-wiring-stub-replacement
+    - system-wiring-native-test-discovery-fix
     agent: integration-verifier
     claimed_by: integration-verifier
     claimed_at: '2026-06-06T07:48:13.726648+00:00'
