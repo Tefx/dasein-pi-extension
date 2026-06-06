@@ -12434,7 +12434,7 @@ phases:
       All 21 checklist items proven and toggled. Blockers: none.'
   - id: finalization-gate
     name: Final deep review gate
-    status: pending
+    status: claimed
     description: 'step_type: gate
 
       verification_scope: full-plan-check
@@ -12931,6 +12931,8 @@ phases:
     - finalization-arch-spec-blockers-retest
     - finalization-sensor-action-lapse-durable-blockers-retest
     agent: gate-reviewer
+    claimed_by: gate-reviewer
+    claimed_at: '2026-06-06T14:07:03.075651+00:00'
   - id: finalization-audit-blockers-fix
     name: Fix concurrent finalization audit blockers
     status: done
