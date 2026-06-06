@@ -10929,18 +10929,18 @@ phases:
       without weakening constitutional rules.
 
       '
-    verification: '- [ ] Documentation updates cite the evidence or gate that proves
+    verification: '- [x] Documentation updates cite the evidence or gate that proves
       each changed behavior/support claim.
 
-      - [ ] Command, config, event, sensor, Pi mechanism, native helper, and smoke-test
+      - [x] Command, config, event, sensor, Pi mechanism, native helper, and smoke-test
       documentation matches actual implemented interfaces and package scripts.
 
-      - [ ] Any live Pi/native blockers remain visible as pending/blocking support
+      - [x] Any live Pi/native blockers remain visible as pending/blocking support
       claims rather than being removed or reclassified as complete.
 
-      - [ ] No product code/config files are changed by the doc-sync step.
+      - [x] No product code/config files are changed by the doc-sync step.
 
-      - [ ] CONSTITUTION.md is not changed unless explicit human approval is provided;
+      - [x] CONSTITUTION.md is not changed unless explicit human approval is provided;
       if changed, evidence includes approval, amendment reason, affected invariants,
       verification impact, and migration notes.
 
