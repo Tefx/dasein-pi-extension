@@ -16438,7 +16438,7 @@ phases:
   steps:
   - id: ux-polish-docs-plan
     name: Document default UX polish plan
-    status: claimed
+    status: done
     description: 'Update PRD/Technical Design with the concrete default UX plan: quiet
       default visible UI, hidden/low-noise ambient context indicator, summarized status
       bar, common-first SettingsList, diagnostics/debug disclosure, and command feedback
@@ -16455,6 +16455,31 @@ phases:
     agent: general
     claimed_by: general
     claimed_at: '2026-06-06T15:30:15.647198+00:00'
+    done_at: '2026-06-06T15:41:26.913463+00:00'
+    evidence: '## Docs updated
+
+      - `docs/PRD.md`: documents `[ambient_ctx: ...]` as hidden agent context, not
+      default human-facing UI; default TUI footer must be quiet and diagnostics remain
+      on demand.
+
+      - `docs/TECHNICAL_DESIGN.md`: documents default visible status summary (`Dasein
+      · Ready` / degraded summary), common-first SettingsList, diagnostics split,
+      and visible slash command feedback.
+
+
+      ## Verification
+
+      - Docs explain default ambient context visibility/debug disclosure.
+
+      - Docs explain quiet status bar behavior.
+
+      - Docs explain SettingsList common-first vs diagnostic split.
+
+      - Docs preserve inspectability/privacy constraints via `/dasein status`, `/dasein
+      sensors`, and diagnostics.
+
+
+      Commit: 2da6032 `[ux-polish] quiet default visible Dasein UI`.'
   - id: ux-polish-implementation
     name: Implement quiet default UX
     status: pending
