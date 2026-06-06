@@ -2840,7 +2840,7 @@ phases:
     agent: gate-reviewer
   - id: core-static-boundary-fix
     name: Fix core static boundary for config runtime imports
-    status: pending
+    status: claimed
     description: 'step_type: implementation
 
       priority: HIGH
@@ -2982,6 +2982,8 @@ phases:
     depends_on:
     - core-config-state
     agent: frontend-engineer
+    claimed_by: frontend-engineer
+    claimed_at: '2026-06-06T04:51:33.787875+00:00'
   - id: core-static-boundary-retest
     name: Retest core static boundary and ordinary CI
     status: pending
