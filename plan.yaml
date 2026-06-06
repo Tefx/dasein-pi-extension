@@ -5185,40 +5185,40 @@ phases:
       cleanup evidence.
 
       '
-    verification: '- [ ] `npm run test:file -- tests/unit/sensors/clock.test.ts tests/unit/sensors/geo.test.ts
+    verification: '- [x] `npm run test:file -- tests/unit/sensors/clock.test.ts tests/unit/sensors/geo.test.ts
       tests/unit/sensors/lapse.test.ts tests/unit/sensor-loader.test.ts tests/unit/commands-status.test.ts
       tests/unit/commands-sensors.test.ts` passes with raw output.
 
-      - [ ] `npm run test:native -- tests/native/macos-location-helper.test.ts` passes
+      - [x] `npm run test:native -- tests/native/macos-location-helper.test.ts` passes
       or skips with explicit platform reason and raw output.
 
-      - [ ] Behavioral proof register maps every sensors requirement to PROVEN, NEEDS_TEST,
+      - [x] Behavioral proof register maps every sensors requirement to PROVEN, NEEDS_TEST,
       UNPROVEN, BLOCKED, or non-intersecting closure path.
 
-      - [ ] Evidence explicitly states this phase does not satisfy live Pi TUI, dynamic
+      - [x] Evidence explicitly states this phase does not satisfy live Pi TUI, dynamic
       reload, or live CoreLocation release smoke.
 
-      - [ ] Static proof includes first-party/builtin sensor top-level side-effect
+      - [x] Static proof includes first-party/builtin sensor top-level side-effect
       scan for filesystem, subprocess, network, timer, native helper, config, refresh,
       and action execution.
 
-      - [ ] Sensor proof explicitly covers `sensors.geo.exactCoordinates` and `sensors.geo.exactAddress`
+      - [x] Sensor proof explicitly covers `sensors.geo.exactCoordinates` and `sensors.geo.exactAddress`
       positive/negative exact-output cases.
 
-      - [ ] Sensor proof includes raw geo tag command output/tests for `radius_m`
+      - [x] Sensor proof includes raw geo tag command output/tests for `radius_m`
       bounds, `GeoTagListPayload`, and `exactCoordinates` redaction.
 
-      - [ ] Sensor proof includes raw output for all five exact inspectability fields:
+      - [x] Sensor proof includes raw output for all five exact inspectability fields:
       `acknowledgedManifestDigest`, `acknowledgementRequired`, `acknowledgementSatisfied`,
       `defaultEnabled`, `effectiveEnabled`.
 
-      - [ ] Sensor/native proof raw output explicitly covers timeout `3000ms`, kill
+      - [x] Sensor/native proof raw output explicitly covers timeout `3000ms`, kill
       grace `250ms`, and backoff sequence `1m -> 5m -> 15m`.
 
-      - [ ] Sensor proof includes negative path evidence for `~/.pi/dasein/sensors`
+      - [x] Sensor proof includes negative path evidence for `~/.pi/dasein/sensors`
       ignored/rejected during startup and `/dasein reload`.
 
-      - [ ] Sensor/native proof explicitly includes stdout and stderr `16KiB` cap
+      - [x] Sensor/native proof explicitly includes stdout and stderr `16KiB` cap
       cases.
 
       '
