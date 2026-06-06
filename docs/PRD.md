@@ -226,7 +226,7 @@ The clock sensor must avoid unnecessary verbosity in agent injection.
 
 #### Geo Sensor
 
-The geo sensor provides user-approved location context through a macOS CoreLocation Swift helper.
+The geo sensor provides user-approved location context through a macOS CoreLocation Swift helper run as a local `Dasein Location Helper` app bundle so Location Services can present a clear permission prompt.
 
 Default configuration:
 
@@ -854,7 +854,7 @@ Current evidence note (2026-06-06): ordinary `npm test` covers all-platform unit
 - Enabled builtin sensors run startup refresh where applicable and may run optional interval refresh only according to sensor interval config from the Technical Design.
 - Geo sensor defaults to disabled, UI-visible when available, not agent-visible, and city precision.
 - Geo sensor supports exactly `city`, `district`, `street`, and `exact` precision values.
-- Geo sensor uses the macOS CoreLocation Swift helper only outside the LLM request-path injection path.
+- Geo sensor uses the macOS CoreLocation Swift helper app bundle only outside the LLM request-path injection path.
 - Geo sensor handles denied or unavailable location permission gracefully.
 - Geo tags are stored canonically as `{ lat, lon, radius_m, label? }`.
 - Geo tag rendering uses only the nearest matching tag within `radius_m` by default.
@@ -912,14 +912,14 @@ Initial success metrics are implementation-readiness metrics rather than adoptio
 - Individual Pi mechanisms, including slash command registration, string launch flags, context-hook injection, TUI status/widget/`SettingsList`, `pi.events`, lifecycle hooks, and dynamic `.ts` sensor reload, are governed by the evidence-status table and live smoke gates in `docs/TECHNICAL_DESIGN.md`.
 - Source/API verification alone does not equal release support; release support requires the relevant live smoke gate ledger or documented fail-closed behavior for unavailable mechanisms. Fake-host integration evidence must remain separate from release support claims.
 - macOS CoreLocation for builtin geo sensor, subject to user/system permission. Native helper tests prove helper typecheck, runtime policy, and fail-closed mapping; they do not prove that a permission-blocked host can emit coordinates.
-- Swift compiler or prebuilt helper strategy for builtin geo sensor.
+- Swift compiler or prebuilt app-bundled helper strategy for builtin geo sensor.
 - Local filesystem access to `~/.pi/dasein/`.
 - Dasein extension root access for `<extension_root>/src/sensors/*.ts` in directory/package-form installs.
 - Single-file packaged Dasein install behavior for bundled sensors when no user-editable sensor directory exists.
 
 ## 12. Risks
 
-- macOS CoreLocation permission UX may be confusing if not surfaced clearly in Pi.
+- macOS CoreLocation permission UX may still require clear Pi/user guidance when the local `Dasein Location Helper` app first appears in Location Services.
 - External publishers may send noisy, stale, or overly verbose state.
 - Ambient context could consume excessive tokens if not strictly bounded.
 - Runtime config precedence may confuse users unless `/dasein status` clearly shows effective values and sources.

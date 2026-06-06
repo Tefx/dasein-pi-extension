@@ -224,7 +224,7 @@ const geoSpec: SensorSpec<GeoState, GeoConfig> = {
     outputFields: geoOutputFields,
     permissions: [
       { kind: "macos_location", required: true, reason: "CoreLocation user-approved location" },
-      { kind: "subprocess", required: true, reason: "supervised Swift helper" },
+      { kind: "subprocess", required: true, reason: "supervised app-bundled Swift helper" },
     ],
     remote: {
       capable: false,

@@ -135,7 +135,7 @@ test("geo SensorSpec defaults, exactCoordinates/exactAddress privacy defaults, m
   assert.deepEqual(geo.manifest.declaredInputClasses, ["native_location", "subprocess"]);
   assert.deepEqual(geo.manifest.permissions, [
     { kind: "macos_location", required: true, reason: "CoreLocation user-approved location" },
-    { kind: "subprocess", required: true, reason: "supervised Swift helper" },
+    { kind: "subprocess", required: true, reason: "supervised app-bundled Swift helper" },
   ]);
   assert.equal("renderAgent" in geo, false, "geo SensorSpec publishes typed state only; core owns agent rendering");
   assert.equal("renderUI" in geo, false, "geo SensorSpec publishes typed state only; core owns UI rendering");
@@ -239,7 +239,7 @@ test("geo native helper runtime is configured from extension root instead of pro
   assert.match(source, /supervisor\.refresh\(\{\s*reason:\s*"geo_refresh",\s*manual:\s*false,\s*signal:\s*context\.signal\s*\}\)/su, "geo refresh must pass SensorContext.signal into the native helper supervisor");
   const moduleValue = (await import(`${expectedGeoFile.href}?configured-root=${Date.now()}`)) as {
     configureGeoNativeHelper?: (input: { extensionRoot: string; installMode?: "directory" }) => void;
-    getGeoNativeHelperRuntimePolicy?: () => { helperPathForDirectoryInstall: string; spawnCommand: readonly [string, string, string] };
+    getGeoNativeHelperRuntimePolicy?: () => { helperPathForDirectoryInstall: string; helperAppExecutableForDirectoryInstall: string; spawnCommand: readonly [string, string] };
   };
   assert.equal(typeof moduleValue.configureGeoNativeHelper, "function");
   assert.equal(typeof moduleValue.getGeoNativeHelperRuntimePolicy, "function");
@@ -250,7 +250,8 @@ test("geo native helper runtime is configured from extension root instead of pro
     moduleValue.configureGeoNativeHelper?.({ extensionRoot: "/real-extension-root", installMode: "directory" });
     const policy = moduleValue.getGeoNativeHelperRuntimePolicy?.();
     assert.equal(policy?.helperPathForDirectoryInstall, "/real-extension-root/src/native/macos-location-helper.swift");
-    assert.deepEqual(policy?.spawnCommand, ["swift", "/real-extension-root/src/native/macos-location-helper.swift", "--once"]);
+    assert.equal(policy?.helperAppExecutableForDirectoryInstall, "/real-extension-root/.dasein/native/DaseinLocationHelper.app/Contents/MacOS/DaseinLocationHelper");
+    assert.deepEqual(policy?.spawnCommand, ["/real-extension-root/.dasein/native/DaseinLocationHelper.app/Contents/MacOS/DaseinLocationHelper", "--once"]);
   } finally {
     process.chdir(previousCwd);
   }

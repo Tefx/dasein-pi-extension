@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { existsSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { spawnSync } from "node:child_process";
 import test from "node:test";
 
@@ -7,7 +7,11 @@ import { loadDaseinApi, requireExportedFunction } from "../fixtures/helpers/core
 
 type HelperPolicy = {
   helperPathForDirectoryInstall: string;
-  spawnCommand: readonly ["swift", string, "--once"];
+  helperAppPathForDirectoryInstall: string;
+  helperAppExecutableForDirectoryInstall: string;
+  helperInfoPlistForDirectoryInstall: string;
+  helperBundleIdentifier: string;
+  spawnCommand: readonly [string, "--once"];
   timeoutMs: 3000;
   killGraceMs: 250;
   stdoutLimitBytes: 16384;
@@ -31,13 +35,29 @@ if (process.platform !== "darwin") {
     assert.equal(typecheck.status, 0, `macos-location-helper.swift must typecheck: ${typecheck.stderr || typecheck.stdout}`);
   });
 
+  test("macOS helper source is app-bundle permission aware", () => {
+    const source = readFileSync(helperPath, "utf8");
+
+    assert.match(source, /import AppKit/u, "helper must initialize as an app-bundled process for Location Services attribution");
+    assert.match(source, /NSApplication\.shared/u, "helper must initialize NSApplication before requesting CoreLocation authorization");
+    assert.doesNotMatch(
+      source,
+      /case \.notDetermined:\s*manager\.requestWhenInUseAuthorization\(\)\s*manager\.requestLocation\(\)/u,
+      "helper must wait for authorization callback before requesting location",
+    );
+  });
+
   test("macOS native helper runtime policy exposes timeout, kill grace, caps, and backoff constants", async () => {
     const api = await loadDaseinApi();
     const getMacOSLocationHelperRuntimePolicy = requireExportedFunction(api, "getMacOSLocationHelperRuntimePolicy", "docs/TECHNICAL_DESIGN.md#builtin-sensors native helper cleanup guarantees") as (input: { extensionRoot: string; installMode: "directory" }) => HelperPolicy;
     const policy = getMacOSLocationHelperRuntimePolicy({ extensionRoot: "/extension", installMode: "directory" });
 
     assert.equal(policy.helperPathForDirectoryInstall, "/extension/src/native/macos-location-helper.swift");
-    assert.deepEqual(policy.spawnCommand, ["swift", "/extension/src/native/macos-location-helper.swift", "--once"]);
+    assert.equal(policy.helperAppPathForDirectoryInstall, "/extension/.dasein/native/DaseinLocationHelper.app");
+    assert.equal(policy.helperAppExecutableForDirectoryInstall, "/extension/.dasein/native/DaseinLocationHelper.app/Contents/MacOS/DaseinLocationHelper");
+    assert.equal(policy.helperInfoPlistForDirectoryInstall, "/extension/.dasein/native/DaseinLocationHelper.app/Contents/Info.plist");
+    assert.equal(policy.helperBundleIdentifier, "works.earendil.dasein.location-helper");
+    assert.deepEqual(policy.spawnCommand, ["/extension/.dasein/native/DaseinLocationHelper.app/Contents/MacOS/DaseinLocationHelper", "--once"]);
     assert.equal(policy.timeoutMs, 3000);
     assert.equal(policy.killGraceMs, 250);
     assert.equal(policy.stdoutLimitBytes, 16 * 1024);

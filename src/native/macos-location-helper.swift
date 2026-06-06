@@ -1,3 +1,4 @@
+import AppKit
 import CoreLocation
 import Foundation
 
@@ -61,7 +62,6 @@ private final class LocationOnceDelegate: NSObject, CLLocationManagerDelegate {
             finishFailure(error: "permission_restricted", message: "CoreLocation permission restricted", permission: "restricted")
         case .notDetermined:
             manager.requestWhenInUseAuthorization()
-            manager.requestLocation()
         @unknown default:
             finishFailure(error: "unavailable", message: "Unknown CoreLocation authorization status", permission: "unknown")
         }
@@ -198,6 +198,8 @@ private func emit<T: Encodable>(_ value: T) {
 }
 
 if CommandLine.arguments.dropFirst() == ["--once"] {
+    _ = NSApplication.shared
+    NSApp.setActivationPolicy(.accessory)
     let delegate = LocationOnceDelegate()
     delegate.start()
     CFRunLoopRun()

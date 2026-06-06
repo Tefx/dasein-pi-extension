@@ -1,6 +1,6 @@
-import { spawn } from "node:child_process";
-import { existsSync } from "node:fs";
-import { resolve } from "node:path";
+import { spawn, spawnSync } from "node:child_process";
+import { existsSync, mkdirSync, statSync, writeFileSync } from "node:fs";
+import { join, resolve } from "node:path";
 
 import type { SensorError } from "../core/types.ts";
 
@@ -55,10 +55,18 @@ export interface MacOSLocationHelperRuntimePolicyInput {
   packagedHelperPath?: string | null;
 }
 
+export type MacOSLocationHelperSpawnCommand = readonly [string, "--once"] | readonly ["swift", string, "--once"];
+
 export interface MacOSLocationHelperRuntimePolicy {
   helperPathForDirectoryInstall: string;
+  helperAppPathForDirectoryInstall: string;
+  helperAppExecutableForDirectoryInstall: string;
+  helperInfoPlistForDirectoryInstall: string;
   helperPath: string | null;
-  spawnCommand: readonly ["swift", string, "--once"] | null;
+  helperAppPath: string | null;
+  helperExecutablePath: string | null;
+  helperBundleIdentifier: string;
+  spawnCommand: MacOSLocationHelperSpawnCommand | null;
   timeoutMs: 3000;
   killGraceMs: 250;
   stdoutLimitBytes: 16384;
@@ -104,14 +112,32 @@ const TIMEOUT_MS = 3000 as const;
 const KILL_GRACE_MS = 250 as const;
 const STREAM_LIMIT_BYTES = 16 * 1024 as 16384;
 const BACKOFF_MS = [60_000, 300_000, 900_000] as const;
+const HELPER_BUNDLE_IDENTIFIER = "works.earendil.dasein.location-helper";
+const HELPER_APP_NAME = "DaseinLocationHelper";
+const HELPER_LOCATION_USAGE = "Dasein uses local location only when you explicitly enable or refresh the geo sensor.";
 
 export const getMacOSLocationHelperRuntimePolicy = (input: MacOSLocationHelperRuntimePolicyInput): MacOSLocationHelperRuntimePolicy => {
   const helperPathForDirectoryInstall = resolve(input.extensionRoot, "src", "native", "macos-location-helper.swift");
+  const helperAppPathForDirectoryInstall = resolve(input.extensionRoot, ".dasein", "native", `${HELPER_APP_NAME}.app`);
+  const helperAppExecutableForDirectoryInstall = join(helperAppPathForDirectoryInstall, "Contents", "MacOS", HELPER_APP_NAME);
+  const helperInfoPlistForDirectoryInstall = join(helperAppPathForDirectoryInstall, "Contents", "Info.plist");
   const helperPath = input.installMode === "directory" ? helperPathForDirectoryInstall : input.packagedHelperPath ?? null;
+  const helperAppPath = input.installMode === "directory" ? helperAppPathForDirectoryInstall : null;
+  const helperExecutablePath = input.installMode === "directory" ? helperAppExecutableForDirectoryInstall : input.packagedHelperPath ?? null;
   return {
     helperPathForDirectoryInstall,
+    helperAppPathForDirectoryInstall,
+    helperAppExecutableForDirectoryInstall,
+    helperInfoPlistForDirectoryInstall,
     helperPath,
-    spawnCommand: helperPath === null ? null : ["swift", helperPath, "--once"],
+    helperAppPath,
+    helperExecutablePath,
+    helperBundleIdentifier: HELPER_BUNDLE_IDENTIFIER,
+    spawnCommand: helperExecutablePath === null
+      ? null
+      : input.installMode === "directory"
+        ? [helperExecutablePath, "--once"]
+        : ["swift", helperExecutablePath, "--once"],
     timeoutMs: TIMEOUT_MS,
     killGraceMs: KILL_GRACE_MS,
     stdoutLimitBytes: STREAM_LIMIT_BYTES,
@@ -162,6 +188,59 @@ export const mapMacOSLocationHelperOutput = (input: unknown): MacOSLocationHelpe
   }
 };
 
+const directoryInstallHelperNeedsBuild = (policy: MacOSLocationHelperRuntimePolicy): boolean => {
+  if (!existsSync(policy.helperAppExecutableForDirectoryInstall) || !existsSync(policy.helperInfoPlistForDirectoryInstall)) return true;
+  try {
+    return statSync(policy.helperPathForDirectoryInstall).mtimeMs > statSync(policy.helperAppExecutableForDirectoryInstall).mtimeMs;
+  } catch {
+    return true;
+  }
+};
+
+const helperInfoPlist = (policy: MacOSLocationHelperRuntimePolicy): string => `<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>CFBundleDevelopmentRegion</key><string>en</string>
+  <key>CFBundleExecutable</key><string>${HELPER_APP_NAME}</string>
+  <key>CFBundleIdentifier</key><string>${policy.helperBundleIdentifier}</string>
+  <key>CFBundleInfoDictionaryVersion</key><string>6.0</string>
+  <key>CFBundleName</key><string>Dasein Location Helper</string>
+  <key>CFBundlePackageType</key><string>APPL</string>
+  <key>CFBundleShortVersionString</key><string>0.0.0</string>
+  <key>CFBundleVersion</key><string>1</string>
+  <key>LSMinimumSystemVersion</key><string>13.0</string>
+  <key>LSUIElement</key><true/>
+  <key>NSLocationUsageDescription</key><string>${HELPER_LOCATION_USAGE}</string>
+  <key>NSLocationWhenInUseUsageDescription</key><string>${HELPER_LOCATION_USAGE}</string>
+</dict>
+</plist>
+`;
+
+const spawnFailureMessage = (label: string, result: ReturnType<typeof spawnSync>): string => {
+  if (result.error !== undefined) return `${label}: ${result.error.message}`;
+  const output = `${result.stderr?.toString() ?? ""}${result.stdout?.toString() ?? ""}`.trim();
+  return output.length > 0 ? `${label}: ${output}` : `${label}: exited with status ${result.status ?? "null"} signal ${result.signal ?? "null"}`;
+};
+
+const prepareDirectoryInstallHelperAppBundle = (policy: MacOSLocationHelperRuntimePolicy): { ok: true } | { ok: false; kind: SensorError["kind"]; message: string } => {
+  if (process.platform !== "darwin") return { ok: false, kind: "helper-unavailable", message: "macOS location helper app bundle can only be prepared on macOS" };
+  if (!existsSync(policy.helperPathForDirectoryInstall)) return { ok: false, kind: "helper-unavailable", message: "macOS location helper Swift source is unavailable" };
+  if (!directoryInstallHelperNeedsBuild(policy)) return { ok: true };
+
+  mkdirSync(join(policy.helperAppPathForDirectoryInstall, "Contents", "MacOS"), { recursive: true });
+  writeFileSync(policy.helperInfoPlistForDirectoryInstall, helperInfoPlist(policy), "utf8");
+
+  const swiftc = existsSync("/usr/bin/swiftc") ? "/usr/bin/swiftc" : "swiftc";
+  const build = spawnSync(swiftc, [policy.helperPathForDirectoryInstall, "-o", policy.helperAppExecutableForDirectoryInstall], { encoding: "utf8", maxBuffer: STREAM_LIMIT_BYTES });
+  if (build.status !== 0) return { ok: false, kind: "process", message: spawnFailureMessage("macOS location helper app build failed", build) };
+
+  const sign = spawnSync("codesign", ["--force", "--deep", "--sign", "-", policy.helperAppPathForDirectoryInstall], { encoding: "utf8", maxBuffer: STREAM_LIMIT_BYTES });
+  if (sign.status !== 0) return { ok: false, kind: "process", message: spawnFailureMessage("macOS location helper app codesign failed", sign) };
+
+  return { ok: true };
+};
+
 export const runMacOSLocationHelperOnce = async (input: RunMacOSLocationHelperOnceInput): Promise<MacOSLocationHelperMapping> => {
   if (input.reason === "request-path") return errorMapping("helper-unavailable", "macOS location helper must not be spawned from request-path injection");
   if (input.signal?.aborted === true) return errorMapping("timeout", "macOS location helper refresh was aborted before spawn");
@@ -169,6 +248,14 @@ export const runMacOSLocationHelperOnce = async (input: RunMacOSLocationHelperOn
   const helperExists = input.helperExists ?? existsSync;
   if (policy.helperPath === null || policy.spawnCommand === null || !helperExists(policy.helperPath)) {
     return errorMapping("helper-unavailable", "macOS location helper path is unavailable; failing closed without spawn");
+  }
+  if (input.installMode === "directory") {
+    const prepared = prepareDirectoryInstallHelperAppBundle(policy);
+    if (!prepared.ok) return errorMapping(prepared.kind, prepared.message);
+  }
+  const executablePath = input.installMode === "directory" ? policy.spawnCommand[0] : policy.helperPath;
+  if (executablePath === null || !helperExists(executablePath)) {
+    return errorMapping("helper-unavailable", "macOS location helper executable is unavailable; failing closed without spawn");
   }
   const result = await runBoundedProcess(policy.spawnCommand, policy, {
     signal: input.signal,
@@ -231,14 +318,14 @@ interface RunBoundedProcessOptions {
 }
 
 const runBoundedProcess = async (
-  command: readonly ["swift", string, "--once"],
+  command: MacOSLocationHelperSpawnCommand,
   policy: MacOSLocationHelperRuntimePolicy,
   options: RunBoundedProcessOptions = {},
 ): Promise<{ ok: true; stdout: string } | { ok: false; kind: SensorError["kind"]; message: string }> =>
   await new Promise((resolvePromise) => {
     let child: ReturnType<typeof spawn>;
     try {
-      child = spawn(command[0], [command[1], command[2]], { stdio: ["ignore", "pipe", "pipe"], windowsHide: true });
+      child = spawn(command[0], command.slice(1), { stdio: ["ignore", "pipe", "pipe"], windowsHide: true });
     } catch (error) {
       resolvePromise({ ok: false, kind: "process", message: error instanceof Error ? error.message : String(error) });
       return;
