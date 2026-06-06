@@ -9056,7 +9056,7 @@ phases:
       All six dynamic reload checklist items proven.'
   - id: release-smoke-native-helper
     name: Run native helper live smoke or explicit skip/blocker report
-    status: claimed
+    status: done
     description: 'step_type: verification
 
       verification_scope: full-plan-check
@@ -9183,6 +9183,65 @@ phases:
     agent: integration-verifier
     claimed_by: integration-verifier
     claimed_at: '2026-06-06T09:49:57.654357+00:00'
+    done_at: '2026-06-06T09:53:57.351183+00:00'
+    evidence: '## refs Read Confirmation
+
+      - `docs/TECHNICAL_DESIGN.md#testing-gate-matrix` — macOS native helper gate
+      is darwin-only; verifies Swift helper typecheck, 3000ms timeout, 16KiB caps,
+      typed error mapping, no orphan helper.
+
+      - `docs/PRD.md#8-2-privacy` — geo defaults disabled/agent-hidden/city precision;
+      exact geo requires explicit agent=true, precision=exact, and exact gates.
+
+      - `docs/TECHNICAL_DESIGN.md#builtin-sensors` — geo uses supervised macOS CoreLocation
+      helper; permission denied maps to SensorError.kind permission; exact coordinates/address
+      require exact gates.
+
+      - `docs/TECHNICAL_DESIGN.md#error-model` — helper constants: timeout 3000ms,
+      stdout/stderr 16KiB, kill grace 250ms, retry backoff 1m->5m->15m; permission/process/timeout/parse
+      map to typed geo states.
+
+
+      headline: PASS_WITH_DEBT
+
+      verdict: PASS
+
+      blockers: []
+
+
+      ## Commands
+
+      - `npm run test:native` exit 0; native discovery found 2 files; 3 tests, 2 pass,
+      1 explicit scaffold-contract skip.
+
+      - live `runMacOSLocationHelperOnce({reason:''live_smoke''})` exit 0; elapsed
+      2518ms; returned typed `permission` error (`kCLErrorDomain error 1`); no helper
+      process before/after.
+
+      - `npm run test:file -- tests/unit/sensors/geo.test.ts` exit 0; 5 pass.
+
+
+      ## Classification
+
+      - Platform: darwin; `swift` and `xcrun` available.
+
+      - Native helper live executable path verified through typed permission error
+      and cleanup.
+
+      - Authorized coordinate success path NOT claimed because CoreLocation permission
+      unavailable; exact blocker/skip recorded.
+
+      - Runtime policy verified: timeout 3000ms, kill grace 250ms, stdout/stderr 16384,
+      backoff 60000/300000/900000.
+
+      - Privacy proof: geo defaults and exact gates prevent lat/lon/address disclosure;
+      live output returned no coordinates and evidence redacted sensitive fields.
+
+
+      ## checklist_receipt
+
+      All seven native helper checklist items proven or explicitly permission-blocked
+      without false support claim.'
   - id: release-smoke-support-claim-ledger
     name: Verify support-claim ledger and live/fake evidence separation
     status: pending
