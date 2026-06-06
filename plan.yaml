@@ -15505,7 +15505,7 @@ phases:
       on live smoke artifacts.'
   - id: finalization-sensor-action-lapse-durable-blockers-fix
     name: Fix sensor action namespace and lapse durable-write finalization blockers
-    status: claimed
+    status: done
     description: 'step_type: implementation
 
       work_type: defect_repair
@@ -15762,6 +15762,75 @@ phases:
     agent: frontend-engineer
     claimed_by: frontend-engineer
     claimed_at: '2026-06-06T13:45:23.065437+00:00'
+    done_at: '2026-06-06T14:01:11.293545+00:00'
+    evidence: '## refs Read Confirmation
+
+      - CONSTITUTION.md — sensors may not mutate unrelated configuration; request/context
+      paths must not block on disk IO; live support claims require live smoke.
+
+      - docs/TECHNICAL_DESIGN.md — sensor action mutations are restricted to `sensors.<sensorKey>.*`;
+      lapse observations commit memory then enqueue/coalesce durable writes after
+      event return; durable write errors surface in status; status evidence can use
+      LIVE_SMOKE_VERIFIED for proven ledgers.
+
+
+      ## Blocker Resolution Report
+
+      - B1_SENSOR_ACTION_NAMESPACE_ESCAPE: production sensor action route validates
+      proposal paths against caller sensorKey before ConfigManager commit. Malicious
+      `core.agentInjectionEnabled=false` and other-sensor paths reject; valid own
+      `sensors.<key>.*` proposal succeeds and persists with scoped paths only.
+
+      - B2_LAPSE_EVENT_HANDLER_AWAITS_DURABLE_WRITE: lifecycle handlers commit memory/render
+      state synchronously and schedule/coalesce durable writes asynchronously after
+      handler return; shutdown/reset flush as needed; async durable write failures
+      surface in `/dasein status` without blocking event return.
+
+      - W1_STATUS_PAYLOAD_UNDERCLAIMS_LIVE_SMOKE: status payload mechanism evidence
+      now uses `LIVE_SMOKE_VERIFIED`/PROVEN wording from release ledger; release smoke
+      gate vocabulary unchanged.
+
+
+      ## Commits
+
+      - Worker commit: ccd855274abc5ed78a6dee1c052fe58d2e1d77ea.
+
+      - Main commit: b43b4dc.
+
+
+      ## Commands
+
+      - `npm run typecheck` exit 0.
+
+      - Focused B1/B2/W1 command exit 0; 17 pass.
+
+      - `npm test` exit 0; 155 pass.
+
+      - `npm run test:smoke` exit 0; 3 pass.
+
+
+      ## Proof Fields
+
+      - B1 namespace rejection/own namespace: PROVEN by `tests/integration/sensor-action-namespace.test.ts`
+      and ConfigMutationProposal namespace tests.
+
+      - B1 no unscoped proposal path: grep reports no unscoped production path; scoped
+      call at `src/index.ts:853`.
+
+      - B2 handler return before write: PROVEN by `tests/integration/lapse-persistence-async.test.ts`
+      for before_agent_start/input/agent_end behavior.
+
+      - B2 coalesced latest write: PROVEN by rapid observation/latest timestamp test.
+
+      - B2 async write errors: PROVEN by `/dasein status` durable error surfacing
+      test.
+
+      - W1: PROVEN by `tests/unit/commands-status.test.ts`.
+
+
+      ## checklist_receipt
+
+      All twelve checklist items proven and toggled. Blockers: none.'
   - id: finalization-sensor-action-lapse-durable-blockers-retest
     name: Retest sensor action namespace and async lapse persistence blockers
     status: pending
