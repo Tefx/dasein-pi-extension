@@ -9821,31 +9821,31 @@ phases:
       and hidden message append, not lifecycle/input hooks. 3. Existing green artifacts
       for binary boundary, status/widget, and SettingsList remain present after strengthening
       coverage.</risk_probes>'
-    verification: '- [ ] `npm run test:smoke` is run and raw stdout/stderr plus artifact
+    verification: '- [x] `npm run test:smoke` is run and raw stdout/stderr plus artifact
       directory path are included.
 
-      - [ ] Artifact coverage proves literal bare `/dasein` command registration and
+      - [x] Artifact coverage proves literal bare `/dasein` command registration and
       live invocation, including the exact registered command name, exact invoked
       slash text, live Pi process boundary, and observed result/effect.
 
-      - [ ] Artifact coverage proves literal `--dasein` flag registration/parsing,
+      - [x] Artifact coverage proves literal `--dasein` flag registration/parsing,
       including launch argv with `--dasein`, parsed value from the live host path,
       and observed effect/effective configuration or an exact blocker.
 
-      - [ ] Artifact coverage proves context injection through the Pi `context` hook,
+      - [x] Artifact coverage proves context injection through the Pi `context` hook,
       including before/after message counts, appended hidden Dasein CustomMessage
       fields (`display:false`, `customType:"dasein"`, deterministic timestamp shape),
       and conversion to an LLM user message.
 
-      - [ ] The existing proven artifacts for real Pi binary boundary, `fakeHost false`,
+      - [x] The existing proven artifacts for real Pi binary boundary, `fakeHost false`,
       status/widget rendering, and SettingsList interaction/persistence remain present
       and are not weakened.
 
-      - [ ] `checklist_receipt.json` or equivalent machine-readable artifact contains
+      - [x] `checklist_receipt.json` or equivalent machine-readable artifact contains
       `slashCommandProof`, `launchFlagProof`, and `contextHookProof` fields with PASS/BLOCKED
       statuses and exact blocker text for any environment-only gap.
 
-      - [ ] No fake-host, source-only, or API-key-enumeration evidence is presented
+      - [x] No fake-host, source-only, or API-key-enumeration evidence is presented
       as live registration/invocation/parsing/context proof.'
     evidence_template: "## refs Read Confirmation (MANDATORY)\nFor each ref in this\
       \ step:\n- docs/TECHNICAL_DESIGN.md#verified-pi-mechanisms — <key passage or\
