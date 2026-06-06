@@ -129,7 +129,7 @@ const configForSensor = (config: Readonly<DaseinConfig>, sensorId: SensorKey): R
 
 const configForExternal = (config: Readonly<DaseinConfig>, key: string): Readonly<ExternalStateConfig> => ({
   ui: config.external[key]?.ui ?? true,
-  agent: config.external[key]?.agent ?? true,
+  agent: config.external[key]?.agent ?? false,
 });
 
 const sanitizeSensorField = (sensorId: SensorKey, key: string, value: unknown): SensorStateField | null => {

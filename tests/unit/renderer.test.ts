@@ -7,7 +7,11 @@ test("renderer deterministically orders renderOrder sensors, remaining sensors, 
   const api = await loadDaseinApi();
   const renderDaseinContext = requireExportedFunction(api, "renderDaseinContext", "Testing Gate Matrix row: Renderer output contract");
   const rendered = renderDaseinContext({
-    config: { ...baseConfig, core: { ...baseConfig.core, renderOrder: ["external:weather", "clock"] } },
+    config: {
+      ...baseConfig,
+      core: { ...baseConfig.core, renderOrder: ["external:weather", "clock"] },
+      external: { weather: { ui: true, agent: true } },
+    },
     sensorSnapshots: [clockSnapshot()],
     externalStates: [{ key: "weather", agent: "dry", ui: "dry", source: "fixture", updatedAt: 1000, expiresAt: 61000 }],
     now: 1000,
@@ -20,6 +24,24 @@ test("renderer deterministically orders renderOrder sensors, remaining sensors, 
     omittedKeys: [],
     truncated: false,
   });
+});
+
+test("unconfigured external keys stay UI-visible but hidden from the agent string", async () => {
+  const api = await loadDaseinApi();
+  const renderDaseinContext = requireExportedFunction(api, "renderDaseinContext", "Testing Gate Matrix row: Renderer output contract");
+  const rendered = renderDaseinContext({
+    config: baseConfig,
+    sensorSnapshots: [clockSnapshot()],
+    externalStates: [{ key: "weather", agent: "secret-agent-value", ui: "human weather", source: "fixture", updatedAt: 1000, expiresAt: 61000 }],
+    now: 1000,
+  }) as { agent: string | null; status: string | null; widgetLines: string[] | null; omittedKeys: string[]; truncated: boolean };
+
+  assert.equal(rendered.agent, "[ambient_ctx: time=Fri_14:32+08]");
+  assert.doesNotMatch(rendered.agent ?? "", /weather|secret-agent-value/u);
+  assert.match(rendered.status ?? "", /weather human weather \(agent hidden\)/u);
+  assert.deepEqual(rendered.widgetLines?.includes("weather human weather (agent hidden)"), true);
+  assert.deepEqual(rendered.omittedKeys.includes("external:weather"), true);
+  assert.equal(rendered.truncated, false);
 });
 
 test("render invalidation scheduler creates exactly one timer at min stale/expires deadline and none without deadlines", async () => {
