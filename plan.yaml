@@ -9244,7 +9244,7 @@ phases:
       without false support claim.'
   - id: release-smoke-support-claim-ledger
     name: Verify support-claim ledger and live/fake evidence separation
-    status: claimed
+    status: done
     description: 'step_type: verification
 
       verification_scope: full-plan-check
@@ -9417,6 +9417,80 @@ phases:
     agent: spec-verifier
     claimed_by: spec-verifier
     claimed_at: '2026-06-06T09:54:08.971263+00:00'
+    done_at: '2026-06-06T10:01:16.904472+00:00'
+    evidence: '## refs Read Confirmation
+
+      - `docs/TECHNICAL_DESIGN.md#verified-pi-mechanisms` — SOURCE/API are not live
+      proof; LIVE_SMOKE_VERIFIED requires live Pi process.
+
+      - `docs/TECHNICAL_DESIGN.md#testing-gate-matrix` — `npm run test:smoke` requires
+      live Pi TUI/process; fake API cannot satisfy release smoke.
+
+      - `CONSTITUTION.md#ux-and-pi-interaction-red-lines` — UI/Pi support claims require
+      live verification and evidence.
+
+      - `CONSTITUTION.md#testing-and-gates` — mock tests are not integration proof;
+      live Pi smoke required before support claims.
+
+      - `docs/TECHNICAL_DESIGN.md#data-flow` — startup/context/TUI rendering/shutdown
+      obligations define live mechanism rows.
+
+
+      headline: PASS
+
+      verdict: PASS
+
+      blockers: []
+
+
+      ## Commands
+
+      - `npm run test:smoke` exit 0; live Pi and dynamic reload smoke passed.
+
+      - `npm run test:native` exit 0; darwin native tests passed with one explicit
+      contract skip.
+
+      - `npm run test:file -- tests/unit/commands-status.test.ts tests/unit/sensors/geo.test.ts`
+      exit 0; 9 pass.
+
+      - git status clean; no vectl or file edits.
+
+
+      ## Support-claim ledger
+
+      - Pi binary/version/minimum: PROVEN via `.dasein/live-pi-smoke/latest/environment.json`
+      and receipt.
+
+      - below-minimum/unavailable classification: PROVEN via commands-status unit
+      tests.
+
+      - `/dasein` command and `--dasein` flag: PROVEN via slash-command and launch-flag
+      live artifacts.
+
+      - context hidden CustomMessage (`display:false`, `customType:dasein`, timestamp)
+      and LLM conversion: PROVEN via context-injection proof.
+
+      - `pi.events` set/clear: PROVEN via event-bus proof.
+
+      - `ctx.ui.setStatus`, `setWidget`, `ctx.ui.custom`, SettingsList render/persistence:
+      PROVEN via TUI, custom, and SettingsList artifacts.
+
+      - lifecycle `session_start`, `session_shutdown`, `input`, `before_agent_start`,
+      `agent_end`, and 1000ms cleanup/UI clear: PROVEN via lifecycle cleanup proof.
+
+      - fake-host/API/source-only separation: PROVEN via no-fake-host artifact and
+      tests.
+
+      - native helper typecheck/runtime policy and permission-block coordinate behavior:
+      PROVEN via native tests and geo unit tests; coordinate success not claimed without
+      permission.
+
+      - dynamic reload: PROVEN via `.dasein/dynamic-reload-smoke/latest/*` artifacts.
+
+
+      ## checklist_receipt
+
+      All ten support-claim ledger checklist items proven; blockers none.'
   - id: release-smoke-gate
     name: Gate live Pi and native release smoke
     status: pending
