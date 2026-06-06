@@ -16706,3 +16706,14 @@ phases:
     or leaking raw ambient context.
   depends_on:
   - geo_permission_helper
+  steps:
+  - id: status-detail-setting
+    name: Add status bar detail setting
+    status: pending
+    description: Add a core setting for status bar detail level so users can choose
+      quiet/default vs richer visible status. Preserve quiet default and no raw ambient/debug
+      context by default. Expose it in SettingsList and slash/config mutation validation.
+    verification: npm run typecheck; focused settings/runtime tests; npm test. Tests
+      prove default remains quiet and SettingsList exposes the detail control.
+    evidence_template: Config field added; SettingsList control; status rendering
+      behavior; commands run and outputs.
