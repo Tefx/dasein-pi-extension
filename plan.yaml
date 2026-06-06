@@ -11116,7 +11116,20 @@ phases:
       for valid configured/live external keys and absent for invalid/dotted/expired/malformed
       external inputs.
 
-      '
+      - [ ] Post-fix wiring audit verifies `src/sensors/geo.ts` helper supervision
+      no longer derives helper location from `process.cwd()` and is rooted in the
+      real extension runtime/configured root.
+
+      - [ ] Post-fix wiring audit verifies duplicate sensor candidate loadErrors produce
+      all-or-no-admit or keep-safe startup behavior and cannot leave duplicate user
+      sensors active.
+
+      - [ ] Post-fix wiring audit verifies reload `launchReappliedPaths` are passed
+      from ConfigManager reload through `src/index.ts` lifecycle/public result wiring.
+
+      - [ ] Post-fix wiring audit confirms the `/dasein lapse reset` action is registered/reachable
+      through the production command/sensor action path rather than falling through
+      to `unknown-sensor-action`.'
     evidence_template: "## refs Read Confirmation (MANDATORY)\nFor each exact refs\
       \ entry listed on this step, provide a key passage or `NOT READ: <reason>`.\n\
       Machine-checkable refs inventory generated from this step refs:\n- `docs/TECHNICAL_DESIGN.md#module-structure`\
@@ -11171,7 +11184,7 @@ phases:
     - CONSTITUTION.md#testing-and-gates
     - docs/TECHNICAL_DESIGN.md#human-ui-rendering
     depends_on:
-    - finalization-doc-sync
+    - finalization-audit-blockers-fix
     agent: wiring-auditor
   - id: finalization-full-spec-conformance
     name: Full spec conformance audit
