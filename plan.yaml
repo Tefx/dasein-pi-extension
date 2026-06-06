@@ -1913,41 +1913,41 @@ phases:
       fields where those surfaces expose sensor metadata.
 
       '
-    verification: '- [ ] `npm run test:file -- tests/unit/command-parser.test.ts tests/unit/command-result.test.ts
+    verification: '- [x] `npm run test:file -- tests/unit/command-parser.test.ts tests/unit/command-result.test.ts
       tests/unit/commands-status.test.ts tests/unit/commands-sensors.test.ts` passes
       with raw output.
 
-      - [ ] Evidence covers quoted value parsing, invalid escape/unterminated quote,
+      - [x] Evidence covers quoted value parsing, invalid escape/unterminated quote,
       finite numeric grammar, booleans, duplicate canonical paths, short aliases,
       external paths, and launch parsing reuse.
 
-      - [ ] Evidence covers deterministic status/sensors/reload/set/apply/sensor-action
+      - [x] Evidence covers deterministic status/sensors/reload/set/apply/sensor-action
       result objects and messages.
 
-      - [ ] Evidence proves parse/path errors do not mutate runtime config or disk
+      - [x] Evidence proves parse/path errors do not mutate runtime config or disk
       config.
 
-      - [ ] Evidence explicitly covers `/dasein help` parser routing, deterministic
+      - [x] Evidence explicitly covers `/dasein help` parser routing, deterministic
       message/data shape, and no config/disk mutation.
 
-      - [ ] Evidence proves `help` is treated as a reserved core command and cannot
+      - [x] Evidence proves `help` is treated as a reserved core command and cannot
       be shadowed by a sensor action.
 
-      - [ ] Evidence proves `/dasein status` payload includes `minimumPiVersion: "0.78.1"`,
+      - [x] Evidence proves `/dasein status` payload includes `minimumPiVersion: "0.78.1"`,
       current `piVersion` or null, and mechanism evidenceStatuses without false support
       claims.
 
-      - [ ] `tests/unit/commands-status.test.ts` and `tests/unit/commands-sensors.test.ts`
+      - [x] `tests/unit/commands-status.test.ts` and `tests/unit/commands-sensors.test.ts`
       are treated as protected expected-red tests and pass with raw output after implementation.
 
-      - [ ] Evidence proves `/dasein status` result data includes `effectiveConfigVersion`,
+      - [x] Evidence proves `/dasein status` result data includes `effectiveConfigVersion`,
       `launchArgsApplied`, and `diskConfigLoaded` with concrete observed values.
 
-      - [ ] Evidence proves `/dasein reload` result data includes `launchReappliedPaths`
+      - [x] Evidence proves `/dasein reload` result data includes `launchReappliedPaths`
       and `runtimeOverriddenPaths` with concrete observed values in success and failure/keep-old
       cases.
 
-      - [ ] Evidence proves `/dasein status` and `/dasein sensors` payloads expose
+      - [x] Evidence proves `/dasein status` and `/dasein sensors` payloads expose
       `acknowledgedManifestDigest`, `acknowledgementRequired`, `acknowledgementSatisfied`,
       `defaultEnabled`, and `effectiveEnabled` for user-added/risky sensors.
 
