@@ -4757,7 +4757,7 @@ phases:
     agent: ios-developer
   - id: sensors-manifest-risk
     name: Complete user-added sensor manifest and risk loading behavior
-    status: pending
+    status: claimed
     description: 'step_type: implementation
 
       TARGET STATE: User-added local sensors loaded through the core loader expose
@@ -4876,6 +4876,8 @@ phases:
     depends_on:
     - sensors-tests
     agent: frontend-engineer
+    claimed_by: frontend-engineer
+    claimed_at: '2026-06-06T05:53:52.590582+00:00'
   - id: sensors-local-proof
     name: Verify builtin sensors and native helper local gates
     status: pending
