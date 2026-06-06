@@ -2644,7 +2644,7 @@ phases:
       - No product implementation changes: PROVEN.'
   - id: core-gate
     name: Gate core broker phase
-    status: pending
+    status: claimed
     description: 'step_type: gate
 
       verification_scope: phase-check
@@ -2838,6 +2838,8 @@ phases:
     - core-behavior-guardrails
     - core-static-boundary-retest
     agent: gate-reviewer
+    claimed_by: gate-reviewer
+    claimed_at: '2026-06-06T05:01:52.513749+00:00'
   - id: core-static-boundary-fix
     name: Fix core static boundary for config runtime imports
     status: done
