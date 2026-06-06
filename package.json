@@ -1,0 +1,29 @@
+{
+  "name": "dasein-pi-extension",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Contract-only scaffold for the Dasein Pi ambient context broker extension.",
+  "dependencies": {},
+  "peerDependencies": {
+    "@earendil-works/pi-coding-agent": "*",
+    "@earendil-works/pi-tui": "*"
+  },
+  "pi": {
+    "extensions": [
+      "./index.ts"
+    ]
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "node --import tsx --test tests/unit/**/*.test.ts tests/integration/**/*.test.ts tests/behavior/**/*.test.ts tests/static/**/*.test.ts",
+    "test:file": "node --import tsx --test",
+    "test:native": "node --import tsx --test tests/native/**/*.test.ts",
+    "test:smoke": "node --import tsx --test tests/smoke/**/*.test.ts"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2"
+  }
+}
