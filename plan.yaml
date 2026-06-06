@@ -5765,27 +5765,27 @@ phases:
       coordinates, formattedAddress) cannot bypass `renderAgent` through generic fallback.
       3. Verify positive exact cases still render only through the documented exact-coordinate
       and exact-address gates.</risk_probes>'
-    verification: '- [ ] refs confirmation includes key passages from PRD privacy,
+    verification: '- [x] refs confirmation includes key passages from PRD privacy,
       TD builtin geo privacy gates, TD renderer output contract, and Constitution
       privacy/sensor laws.
 
-      - [ ] Renderer-level regression test reproduces the reported leak using normalized
+      - [x] Renderer-level regression test reproduces the reported leak using normalized
       `geo.placemark` with city/district/street/formattedAddress, `geo.accuracy_m`,
       `geo.permission`, `geo.nearestTag`, `geo.lat`, and `geo.lon` fields under `precision=city`,
       `agent=true`, `exactAddress=false`, and `exactCoordinates=false`.
 
-      - [ ] Regression proves agent output does not contain placemark JSON, city,
+      - [x] Regression proves agent output does not contain placemark JSON, city,
       district, street, formattedAddress, raw coordinates, accuracy, permission, or
       nearestTag when the exact gates are false.
 
-      - [ ] Regression proves exact coordinates appear only when `agent=true + precision=exact
+      - [x] Regression proves exact coordinates appear only when `agent=true + precision=exact
       + exactCoordinates=true`, and exact address text appears only when `agent=true
       + precision=exact + exactAddress=true`.
 
-      - [ ] Focused tests pass for renderer and geo privacy paths with raw output
+      - [x] Focused tests pass for renderer and geo privacy paths with raw output
       pasted.
 
-      - [ ] Existing sensors local proof surfaces are not broadened or weakened; changed
+      - [x] Existing sensors local proof surfaces are not broadened or weakened; changed
       files stay within the declared bounding box or include explicit deviation rationale.'
     evidence_template: "## refs Read Confirmation (MANDATORY)\nFor each ref in this\
       \ step:\n- `docs/PRD.md#8-2-privacy` — <key passage>\n- `docs/TECHNICAL_DESIGN.md#builtin-sensors`\
