@@ -11185,6 +11185,7 @@ phases:
     - docs/TECHNICAL_DESIGN.md#human-ui-rendering
     depends_on:
     - finalization-audit-blockers-fix
+    - finalization-reload-launch-path-failure-branches-retest
     agent: wiring-auditor
     claimed_by: wiring-auditor
     claimed_at: '2026-06-06T10:38:55.917149+00:00'
