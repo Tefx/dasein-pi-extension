@@ -9583,45 +9583,45 @@ phases:
       or corrupting disposable runtime resources.
 
       '
-    verification: '- [ ] All release_smoke steps are complete with refs confirmations
+    verification: '- [x] All release_smoke steps are complete with refs confirmations
       and checklist receipts.
 
-      - [ ] Gate decision basis reviews live Pi TUI, dynamic reload, native helper,
+      - [x] Gate decision basis reviews live Pi TUI, dynamic reload, native helper,
       and support-claim ledger evidence rows.
 
-      - [ ] Any BLOCKED/SKIPPED live item has exact environment/permission/command
+      - [x] Any BLOCKED/SKIPPED live item has exact environment/permission/command
       closure path and is not represented as live support.
 
-      - [ ] Final gate verdict is OPEN, OPEN_WITH_LIVE_SUPPORT_PENDING, or BLOCKED
+      - [x] Final gate verdict is OPEN, OPEN_WITH_LIVE_SUPPORT_PENDING, or BLOCKED
       with explicit blockers and required actions.
 
-      - [ ] Gate decision basis reviews live launch flag parsing, event publishing,
+      - [x] Gate decision basis reviews live launch flag parsing, event publishing,
       lifecycle observation, and hidden context conversion evidence or exact blockers.
 
-      - [ ] Gate decision basis reviews minimum/current Pi version evidence and confirms
+      - [x] Gate decision basis reviews minimum/current Pi version evidence and confirms
       below-minimum/unavailable versions do not produce false support claims.
 
-      - [ ] Gate decision basis reviews literal bare `/dasein` live SettingsList opening/fallback
+      - [x] Gate decision basis reviews literal bare `/dasein` live SettingsList opening/fallback
       evidence or exact blockers.
 
-      - [ ] Evidence template and final gate verdict vocabulary use exactly OPEN,
+      - [x] Evidence template and final gate verdict vocabulary use exactly OPEN,
       OPEN_WITH_LIVE_SUPPORT_PENDING, or BLOCKED, with OPEN_WITH_LIVE_SUPPORT_PENDING
       allowed only under explicit live-support-pending safety conditions.
 
-      - [ ] Gate decision basis reviews `ctx.ui.custom` live/support-ledger evidence
+      - [x] Gate decision basis reviews `ctx.ui.custom` live/support-ledger evidence
       separately from SettingsList evidence.
 
-      - [ ] Gate decision basis reviews native helper constants `3000ms`, `250ms`,
+      - [x] Gate decision basis reviews native helper constants `3000ms`, `250ms`,
       and `1m -> 5m -> 15m` where live/native smoke can execute or exact blockers
       where it cannot.
 
-      - [ ] Gate decision basis reviews live/support-ledger evidence for hidden CustomMessage
+      - [x] Gate decision basis reviews live/support-ledger evidence for hidden CustomMessage
       fields and conversion-to-LLM proof.
 
-      - [ ] Gate decision basis reviews `session_start`, `session_shutdown`, and `1000ms`
+      - [x] Gate decision basis reviews `session_start`, `session_shutdown`, and `1000ms`
       cleanup timeout live/support-ledger evidence.
 
-      - [ ] Evidence records serialized execution assumptions and confirms disposable
+      - [x] Evidence records serialized execution assumptions and confirms disposable
       runtime/config/extension/native resources are cleaned up before the next release-smoke
       step consumes them.
 
