@@ -2194,7 +2194,7 @@ phases:
       inspectability fields.'
   - id: core-static-proof
     name: Verify core local behavior and request-path safety
-    status: claimed
+    status: skipped
     description: 'step_type: verification
 
       verification_scope: local-check
@@ -2499,6 +2499,7 @@ phases:
     agent: integration-verifier
     claimed_by: integration-verifier
     claimed_at: '2026-06-06T04:42:57.604119+00:00'
+    skipped_reason: superseded
   - id: core-behavior-guardrails
     name: Define behavioral ambient-context guardrails
     status: done
