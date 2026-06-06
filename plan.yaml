@@ -6866,41 +6866,41 @@ phases:
       fields where those surfaces expose sensor metadata.
 
       '
-    verification: '- [ ] `npm run test:file -- tests/unit/settings-list.test.ts tests/integration/pi-extension.test.ts`
+    verification: '- [x] `npm run test:file -- tests/unit/settings-list.test.ts tests/integration/pi-extension.test.ts`
       passes with raw output.
 
-      - [ ] Observable fake-host evidence shows status text, widget lines, and SettingsList
+      - [x] Observable fake-host evidence shows status text, widget lines, and SettingsList
       controls/content for core toggles, sensor common/simple fields, external visibility,
       and user-added metadata.
 
-      - [ ] Evidence proves TUI surfaces omit disabled/ui-hidden/expired contributors
+      - [x] Evidence proves TUI surfaces omit disabled/ui-hidden/expired contributors
       while keeping privacy-sensitive status inspectable.
 
-      - [ ] Evidence proves SettingsList change path enters the FIFO config mutation
+      - [x] Evidence proves SettingsList change path enters the FIFO config mutation
       queue and persists only the canonical changed path.
 
-      - [ ] Observable SettingsList evidence shows `enabled`, `ui`, `agent`, `intervalMs`,
+      - [x] Observable SettingsList evidence shows `enabled`, `ui`, `agent`, `intervalMs`,
       `timeoutMs`, `staleAfterMs`, and `initialRefresh` controls for loaded sensors.
 
-      - [ ] Evidence proves visible recurring interval controls mutate via ConfigManager
+      - [x] Evidence proves visible recurring interval controls mutate via ConfigManager
       and persist only validated canonical paths.
 
-      - [ ] Evidence proves literal bare `/dasein` in TUI mode opens SettingsList/configuration
+      - [x] Evidence proves literal bare `/dasein` in TUI mode opens SettingsList/configuration
       UI, not a generic status/help command.
 
-      - [ ] Observable SettingsList evidence proves invalid external keys, dotted
+      - [x] Observable SettingsList evidence proves invalid external keys, dotted
       keys, expired external state, and malformed external events do not create controls.
 
-      - [ ] Observable SettingsList evidence includes a valid external key baseline
+      - [x] Observable SettingsList evidence includes a valid external key baseline
       for `external.<key>.ui` and `external.<key>.agent` controls.
 
-      - [ ] SettingsList evidence shows `sensors.geo.exactCoordinates` and `sensors.geo.exactAddress`
+      - [x] SettingsList evidence shows `sensors.geo.exactCoordinates` and `sensors.geo.exactAddress`
       boolean controls where geo simple fields are rendered.
 
-      - [ ] Evidence is collected after `pi-runtime-extension-wiring` completes so
+      - [x] Evidence is collected after `pi-runtime-extension-wiring` completes so
       SettingsList/bare `/dasein` proof uses the real Pi wiring path.
 
-      - [ ] SettingsList evidence shows user-added sensor inspectability fields `acknowledgedManifestDigest`,
+      - [x] SettingsList evidence shows user-added sensor inspectability fields `acknowledgedManifestDigest`,
       `acknowledgementRequired`, `acknowledgementSatisfied`, `defaultEnabled`, and
       `effectiveEnabled` before risky enablement controls.
 
