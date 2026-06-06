@@ -8874,7 +8874,7 @@ phases:
       All 18 release-smoke-live-pi-tui checklist items proven.'
   - id: release-smoke-dynamic-reload
     name: Run live Pi dynamic sensor reload smoke
-    status: claimed
+    status: done
     description: 'step_type: verification
 
       verification_scope: full-plan-check
@@ -8991,6 +8991,69 @@ phases:
     agent: client-runtime-verifier
     claimed_by: client-runtime-verifier
     claimed_at: '2026-06-06T09:45:06.074744+00:00'
+    done_at: '2026-06-06T09:49:34.313514+00:00'
+    evidence: '## refs Read Confirmation
+
+      - `docs/TECHNICAL_DESIGN.md#sensor-loading-and-reload` — directory/package reload
+      scans `<extension_root>/src/sensors/*.ts`, cache-busts imports, never replaces
+      active registry on invalid candidates, and retains load failures for sensors/status.
+
+      - `docs/TECHNICAL_DESIGN.md#testing-gate-matrix` — dynamic reload release smoke
+      requires live Pi process, not fake API proof.
+
+      - `docs/PRD.md#7-11-sensor-reload` — reload failure keeps last-known-good config,
+      sensors, runtime-overridden paths, rendered context, and reports errors.
+
+      - `docs/PRD.md#9-7-sensor-loading-and-reload` — user-added sensors load from
+      `src/sensors` and invalid candidates report errors without replacing active
+      runtime.
+
+      - `CONSTITUTION.md#testing-and-gates` — mock tests are not live proof; Pi extension
+      boundary must be verified against real runtime/binary.
+
+
+      headline: PASS
+
+      verdict: PASS
+
+      blockers: []
+
+
+      ## Command
+
+      - `npm run test:smoke -- tests/smoke/pi-dynamic-reload.test.ts` exit 0; 3 pass,
+      0 fail.
+
+      - Pi binary `/opt/homebrew/bin/pi`, version `0.78.1`, host boundary `live-pi-process-not-fake-host`.
+
+
+      ## Artifacts
+
+      - `.dasein/dynamic-reload-smoke/latest/checklist_receipt.json`.
+
+      - `.dasein/dynamic-reload-smoke/latest/dynamic-reload-proof.json`.
+
+
+      ## Coverage
+
+      - user-added sensor discovery from `<extension_root>/src/sensors/*.ts`: PROVEN.
+
+      - `/dasein reload` cache-bust changed module v1 -> v2: PROVEN (`cacheBustManifestV2=true`,
+      `renderedContextAfterChangeHasV2=true`).
+
+      - invalid replacement fails safely: PROVEN (`invalidReloadResult=''dasein reload:
+      failed; kept previous state''`, import error kind).
+
+      - old registry/rendered context preserved and load errors visible in status/sensors:
+      PROVEN.
+
+      - no fake-host conflation; disposable extension/HOME fixtures removed; worktree
+      clean: PROVEN.
+
+
+      ## checklist_receipt
+
+      All six dynamic reload checklist items proven.'
   - id: release-smoke-native-helper
     name: Run native helper live smoke or explicit skip/blocker report
     status: pending
