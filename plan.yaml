@@ -11054,7 +11054,7 @@ phases:
       All five finalization-doc-sync checklist items proven.'
   - id: finalization-full-wiring-audit
     name: Full wiring and reachability audit
-    status: claimed
+    status: done
     description: 'step_type: audit
 
       verification_scope: full-plan-check
@@ -11184,6 +11184,69 @@ phases:
     agent: wiring-auditor
     claimed_by: wiring-auditor
     claimed_at: '2026-06-06T12:32:39.809906+00:00'
+    done_at: '2026-06-06T12:41:46.684631+00:00'
+    evidence: '## refs Read Confirmation
+
+      - docs/TECHNICAL_DESIGN.md#module-structure — root shim delegates to `src/index.ts`;
+      `src/index.ts` is real composition entrypoint.
+
+      - docs/TECHNICAL_DESIGN.md#command-design — `/dasein` command grammar and sensor-action
+      routing are the public command path.
+
+      - docs/TECHNICAL_DESIGN.md#configuration-files — config/state are under ~/.pi/dasein;
+      runtime mutations use canonical config paths and reload preserves metadata.
+
+      - CONSTITUTION.md#testing-and-gates — mock tests are not live support proof;
+      gates require appropriate static/runtime proof.
+
+      - docs/TECHNICAL_DESIGN.md#human-ui-rendering — status/widget/SettingsList controls
+      and valid external controls are required human surfaces.
+
+
+      ## Wiring Audit Verdict
+
+      status: SUCCESS; headline: PASS; verdict: PASS; blockers: none.
+
+
+      ## Evidence
+
+      - `npm run typecheck` exit 0 in audit worktree.
+
+      - Orphan exports: PROVEN; no production orphan command/module path found, and
+      deliberate package contract surfaces remain traced.
+
+      - Command/action trace: PROVEN; root `index.ts` -> `src/index.ts` -> `pi.registerFlag/registerCommand/on/events`
+      -> broker methods -> core modules.
+
+      - Config fields consumed: PROVEN; ConfigManager validates/consumes config, slash/UI/sensor
+      proposals apply through ConfigManager, sensor runtime consumes timeout/interval/stale/initialRefresh.
+
+      - No stubs/write-only fields: PROVEN; prior render hooks/orphan lapse seam removed,
+      no production NotImplemented/stub/write-only fields found.
+
+      - SettingsList common controls: PROVEN; `enabled`, `ui`, `agent`, `intervalMs`,
+      `timeoutMs`, `staleAfterMs`, `initialRefresh` trace to ConfigManager/runtime
+      consumers.
+
+      - External valid/live only: PROVEN; SettingsList filters valid external snapshots/live
+      keys, invalid/dotted/expired/malformed omitted.
+
+      - Geo helper root: PROVEN; configured from EXTENSION_ROOT to native helper path,
+      not cwd.
+
+      - Duplicate startup: PROVEN; session_start/initialize memoization and duplicate
+      loadErrors keep failed duplicates inactive.
+
+      - Reload launchReappliedPaths: PROVEN; ConfigManager metadata -> index reload
+      -> lifecycle -> public command result.
+
+      - `/dasein lapse reset`: PROVEN; production command path reaches reset and clears
+      memory/durable state.
+
+
+      ## checklist_receipt
+
+      All ten wiring checklist items proven and toggled. Blockers: none.'
   - id: finalization-full-spec-conformance
     name: Full spec conformance audit
     status: pending
