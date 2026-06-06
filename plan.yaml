@@ -10433,24 +10433,24 @@ phases:
       registry, effective config, rendered context, and surfaced load errors after
       invalid replacement. 3. Verify status/sensors expose loadErrors without leaking
       exception text into final injected context.</risk_probes>'
-    verification: '- [ ] Targeted code/tests demonstrate that `/dasein reload` cache-busts
+    verification: '- [x] Targeted code/tests demonstrate that `/dasein reload` cache-busts
       changed `src/sensors/*.ts` modules and updates manifest/rendered context from
       v1 to v2.
 
-      - [ ] Targeted code/tests demonstrate invalid replacement sensor reload fails
+      - [x] Targeted code/tests demonstrate invalid replacement sensor reload fails
       or is scoped-failure, preserves previous registry/config/rendered context, and
       surfaces SensorLoadError/loadErrors in `/dasein status` and `/dasein sensors`.
 
-      - [ ] `npm run typecheck` exits 0 with raw stdout/stderr captured.
+      - [x] `npm run typecheck` exits 0 with raw stdout/stderr captured.
 
-      - [ ] `npm test` exits 0 with raw stdout/stderr captured.
+      - [x] `npm test` exits 0 with raw stdout/stderr captured.
 
-      - [ ] `npm run test:smoke -- tests/smoke/pi-dynamic-reload.test.ts` or the documented
+      - [x] `npm run test:smoke -- tests/smoke/pi-dynamic-reload.test.ts` or the documented
       live Pi equivalent using `/opt/homebrew/bin/pi` v0.78.1 exits 0 and proves cacheBustManifestV2=true,
       renderedContextAfterChangeHasV2=true, invalidReloadFails=true or scoped failure,
       and invalidLoadErrorsReportedInSensorsOrStatus=true.
 
-      - [ ] Evidence confirms disposable live sensor fixtures are cleaned up and no
+      - [x] Evidence confirms disposable live sensor fixtures are cleaned up and no
       persistent user config/product docs are mutated outside the fix scope.'
     evidence_template: '## refs Read Confirmation (MANDATORY)
 
