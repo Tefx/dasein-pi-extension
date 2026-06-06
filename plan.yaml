@@ -5108,7 +5108,7 @@ phases:
       All six manifest-risk checklist items proven.'
   - id: sensors-local-proof
     name: Verify builtin sensors and native helper local gates
-    status: claimed
+    status: done
     description: 'step_type: verification
 
       verification_scope: phase-check
@@ -5324,6 +5324,87 @@ phases:
     agent: integration-verifier
     claimed_by: integration-verifier
     claimed_at: '2026-06-06T06:16:39.776382+00:00'
+    done_at: '2026-06-06T06:21:16.609538+00:00'
+    evidence: '## refs Read Confirmation
+
+      - `docs/TECHNICAL_DESIGN.md#testing-gate-matrix` — typecheck and ordinary npm
+      test are CI gates; builtin contracts target sensors unit files; native gate
+      platform-specific.
+
+      - `CONSTITUTION.md#testing-and-gates` — mocks are not integration proof; request-path
+      injection static checks forbid disk/network/subprocess/dynamic import/sensor/config
+      mutation.
+
+      - `docs/PRD.md#9-5-builtin-sensors` — clock/geo/lapse only; geo exact precision;
+      lapse persists only latest previous timestamps.
+
+      - `docs/PRD.md#9-7-sensor-loading-and-reload` — load only `<extension_root>/src/sensors/*.ts`;
+      do not load `~/.pi/dasein/sensors`.
+
+      - `docs/TECHNICAL_DESIGN.md#builtin-sensors` — exact geo gates; native constants
+      3000ms/250ms/16KiB and backoff.
+
+      - `docs/TECHNICAL_DESIGN.md#core-contracts` — risky user sensors forced disabled
+      unless matching acknowledgedManifestDigest.
+
+      - `docs/TECHNICAL_DESIGN.md#command-result-and-output-contract` — status/sensors
+      expose manifestDigest/acknowledgement/forcedDisabled metadata.
+
+      - `docs/PRD.md#7-2-sensor-model` — LLM injection path must never trigger refresh/filesystem/network/location
+      subprocess/fresh computation.
+
+      - `CONSTITUTION.md#extension-and-sensor-laws` — builtins limited to clock/geo/lapse;
+      user-added sensors only explicit local files.
+
+
+      verdict: PASS
+
+      blockers: []
+
+
+      ## Command Evidence
+
+      - `npm ci` exit 0 in isolated worktree.
+
+      - `npm run typecheck` exit 0.
+
+      - ordinary `npm test` exit 0; 31 files discovered; 94 pass, 0 fail/skipped.
+
+      - focused sensors gate exit 0; 29 pass, 0 fail/skipped.
+
+      - `npm run test:native -- tests/native/macos-location-helper.test.ts` exit 0;
+      2 pass, 1 explicit placeholder skip.
+
+      - targeted static scan exit 0: injector imports only types; native constants
+      TIMEOUT_MS=3000, KILL_GRACE_MS=250, BACKOFF_MS=[60000,300000,900000]; negative
+      `~/.pi/dasein/sensors` rule present; geo redaction present.
+
+
+      ## behavioral_proof_register
+
+      - builtin tests green: PROVEN.
+
+      - native helper pass/skip explicit: PROVEN.
+
+      - no request-path side-effect regressions: PROVEN.
+
+      - manifest/risk exact fields: PROVEN.
+
+      - negative sensor dir rule: PROVEN.
+
+      - geo exactCoordinates/exactAddress and tag redaction: PROVEN.
+
+      - native constants and stdout/stderr 16KiB caps: PROVEN.
+
+      - B1/B2/B3/B4 no regression: PROVEN.
+
+      - Live Pi TUI/dynamic reload/live CoreLocation release smoke: not claimed; downstream
+      release-scope gate.
+
+
+      ## checklist_receipt
+
+      All 11 local proof checklist items proven.'
   - id: sensors-gate
     name: Gate builtin sensors and native helper
     status: pending
