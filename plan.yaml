@@ -9493,7 +9493,7 @@ phases:
       All ten support-claim ledger checklist items proven; blockers none.'
   - id: release-smoke-gate
     name: Gate live Pi and native release smoke
-    status: pending
+    status: claimed
     description: 'step_type: gate
 
       verification_scope: full-plan-check
@@ -9727,6 +9727,8 @@ phases:
     - release-smoke-dynamic-reload
     - release-smoke-native-helper
     agent: gate-reviewer
+    claimed_by: gate-reviewer
+    claimed_at: '2026-06-06T10:01:28.741693+00:00'
   - id: release-smoke-fix-live-pi-tui-smoke
     name: Fix live Pi TUI smoke runner and proof artifacts
     status: done
