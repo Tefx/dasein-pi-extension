@@ -7065,7 +7065,7 @@ phases:
       All 12 pi-runtime-tui-surfaces checklist items proven.'
   - id: pi-runtime-client-proof
     name: Verify fake-host client/runtime liveness for Pi surfaces
-    status: claimed
+    status: done
     description: 'step_type: verification
 
       verification_scope: phase-check
@@ -7292,6 +7292,45 @@ phases:
     agent: client-runtime-verifier
     claimed_by: client-runtime-verifier
     claimed_at: '2026-06-06T07:23:30.850750+00:00'
+    done_at: '2026-06-06T07:27:53.214041+00:00'
+    evidence: '## refs Read Confirmation
+
+      - Verified refs: Pi mechanism fake/API evidence not live proof; test matrix
+      file-scoped commands; slash commands/TUI surfaces; quality baseline mock !=
+      integration; human UI rendering; builtin sensors; data-flow.
+
+
+      verdict: PASS
+
+      blockers: []
+
+
+      ## Runtime proof
+
+      - `npm run typecheck` exit 0.
+
+      - `npm run test:file -- tests/integration/pi-extension.test.ts tests/unit/settings-list.test.ts`
+      exit 0; 21 pass.
+
+      - Fake-host liveness probe captured `/dasein` command/flag, lifecycle handlers,
+      events, hidden CustomMessage display:false/customType:dasein and LLM user conversion,
+      status/widget, SettingsList custom call, cleanup timeout 1000ms, liveSupportClaim=false.
+
+      - SettingsList probe captured metadata before enable, common controls, external
+      valid controls, invalid/expired/complex omissions, geo exact controls, and safe
+      mutation assignment including acknowledgedManifestDigest.
+
+
+      ## behavioral_proof_register
+
+      status_widget/settings_list/context_custom/external_event/slash_behavior/lifecycle_builtin_sensors/live_support_claim
+      all PASS; remaining live Pi/TUI/native release obligations deferred to release_smoke.
+
+
+      ## checklist_receipt
+
+      All 11 pi-runtime-client-proof checklist items proven; no repository/product
+      mutation performed by verifier.'
   - id: pi-runtime-spec-conformance
     name: Verify Pi runtime spec conformance
     status: claimed
