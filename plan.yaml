@@ -5624,7 +5624,7 @@ phases:
     agent: gate-reviewer
   - id: sensors-renderer-geo-privacy-fix
     name: Fix core renderer geo privacy leak
-    status: claimed
+    status: done
     description: 'step_type: implementation
 
       work_type: defect_repair
@@ -5813,6 +5813,63 @@ phases:
     agent: frontend-engineer
     claimed_by: frontend-engineer
     claimed_at: '2026-06-06T06:29:58.137101+00:00'
+    done_at: '2026-06-06T06:36:46.959389+00:00'
+    evidence: '## refs Read Confirmation
+
+      - `docs/PRD.md#8-2-privacy` — geo defaults and exact geo agent injection require
+      explicit opt-in; exact address/coordinates independently gated.
+
+      - `docs/TECHNICAL_DESIGN.md#builtin-sensors` — exact coordinate output requires
+      agent=true, precision=exact, exactCoordinates=true; exact address requires agent=true,
+      precision=exact, exactAddress=true and helper placemark/address fields.
+
+      - `docs/TECHNICAL_DESIGN.md#testing-gate-matrix` — renderer contract must degrade
+      geo unavailable/stale/placemark-missing without fabricating exact details; builtin
+      geo tests validate privacy gates.
+
+      - `CONSTITUTION.md#privacy-and-safety-laws` — sensitive data only injected when
+      traceable to configured, human-visible controls; privacy enforced in core.
+
+      - `CONSTITUTION.md#extension-and-sensor-laws` — only typed envelope fields enter
+      core; core discards raw fields and sensor-owned final strings.
+
+
+      ## Files changed / commit
+
+      - Mainline squash commit: `3df550c` (worker commit `1913fd1252a5257a7da4698b83c6c909fb838495`).
+
+      - Changed: `src/core/renderer.ts`, `tests/unit/renderer.test.ts`.
+
+
+      ## Repro Closure
+
+      - failure_id: SENSORS-GATE-BLOCKER-001.
+
+      - before: `[ambient_ctx: accuracy_m=80; nearestTag=home; permission=authorized;
+      placemark={...formattedAddress...}]` at city precision/exact false.
+
+      - after repro: `agent: [ambient_ctx: loc=Shanghai]`, omitted `geo.accuracy_m`,
+      `geo.lat`, `geo.lon`, `geo.nearestTag`, `geo.permission`; leaked=false.
+
+      - Sensitive field inventory: raw placemark JSON, city/district/street/formattedAddress,
+      raw coordinates, accuracy, permission, nearestTag suppressed when exact gates
+      false; exact coordinates/address only with explicit exact gates.
+
+
+      ## Verification
+
+      - Mainline `npm run typecheck` exit 0.
+
+      - Mainline `npm test` exit 0; 97 pass, 0 fail/skipped.
+
+      - Mainline focused `npm run test:file -- tests/unit/renderer.test.ts tests/unit/sensors/geo.test.ts`
+      exit 0; 14 pass, 0 fail/skipped.
+
+
+      ## checklist_receipt
+
+      All six geo privacy fix checklist items proven. Changed files stayed within
+      declared bounding box.'
   - id: sensors-renderer-geo-privacy-retest
     name: Retest core renderer geo privacy closure
     status: pending
