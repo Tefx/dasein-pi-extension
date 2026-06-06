@@ -10896,7 +10896,7 @@ phases:
   steps:
   - id: finalization-doc-sync
     name: Sync documentation with implemented behavior and evidence ledger
-    status: claimed
+    status: done
     description: 'step_type: implementation
 
       TARGET STATE: Project docs match implemented behavior, support-claim status,
@@ -10991,6 +10991,65 @@ phases:
     agent: doc-reviewer
     claimed_by: doc-reviewer
     claimed_at: '2026-06-06T10:07:55.051963+00:00'
+    done_at: '2026-06-06T10:16:54.902582+00:00'
+    evidence: '## refs Read Confirmation
+
+      - `CONSTITUTION.md#documentation-requirements` — docs must separate API/source-verified
+      candidates from release-supported Pi mechanisms with live evidence.
+
+      - `CONSTITUTION.md#ux-and-pi-interaction-red-lines` — support claims require
+      live mechanism/version/binary/evidence, not source/API alone.
+
+      - `CONSTITUTION.md#constitution-version-and-amendment-lifecycle` — no constitution
+      amendment needed; constraints unchanged.
+
+      - `docs/TECHNICAL_DESIGN.md#verified-pi-mechanisms` — evidence statuses preserve
+      support-claim separation and now cite live smoke/dynamic reload artifacts.
+
+      - `docs/TECHNICAL_DESIGN.md#testing-gate-matrix` — ordinary `npm test` is separate
+      from `test:native` and `test:smoke` release gates.
+
+      - `docs/PRD.md#9-acceptance-criteria` — acceptance now records live smoke ledgers,
+      zero blockers, native permission caveat, and no coordinate overclaim.
+
+
+      ## Changed files
+
+      - `docs/TECHNICAL_DESIGN.md`
+
+      - `docs/PRD.md`
+
+      - No product code/config files changed; `CONSTITUTION.md` unchanged.
+
+
+      ## Evidence ledger summary
+
+      - live Pi smoke: `.dasein/live-pi-smoke/latest/checklist_receipt.json`, Pi `/opt/homebrew/bin/pi`
+      0.78.1, 11/11 proven, 0 blocked.
+
+      - dynamic reload smoke: `.dasein/dynamic-reload-smoke/latest/checklist_receipt.json`,
+      cache bust/invalid-reload preservation all true.
+
+      - native helper caveat: typecheck/runtime policy/permission fail-closed documented;
+      permission-granted coordinate success not overclaimed.
+
+
+      ## Commands
+
+      - `npm run typecheck` exit 0.
+
+      - `npm test` exit 0; 133 pass.
+
+      - `npm run test:native` exit 0; 2 pass, 1 explicit skip.
+
+      - `npm run test:smoke` exit 0; 2 pass.
+
+      - `git diff --check HEAD~1..HEAD` no output.
+
+
+      ## checklist_receipt
+
+      All five finalization-doc-sync checklist items proven.'
   - id: finalization-full-wiring-audit
     name: Full wiring and reachability audit
     status: pending
