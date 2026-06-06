@@ -8324,16 +8324,16 @@ phases:
       has all live-only obligations explicitly carried forward.</risk_probes>
 
       '
-    verification: '- [ ] All system_wiring steps are complete with refs confirmations
+    verification: '- [x] All system_wiring steps are complete with refs confirmations
       and checklist receipts.
 
-      - [ ] Gate decision basis confirms no production-wired placeholders/stubs remain
+      - [x] Gate decision basis confirms no production-wired placeholders/stubs remain
       without an accepted non-production justification.
 
-      - [ ] Fake-host E2E proof, native test discovery proof, and ordinary CI proof
+      - [x] Fake-host E2E proof, native test discovery proof, and ordinary CI proof
       are present; live Pi/native smoke is not claimed and remains owned by release_smoke.
 
-      - [ ] Final gate verdict is OPEN or BLOCKED with explicit blockers and required
+      - [x] Final gate verdict is OPEN or BLOCKED with explicit blockers and required
       actions.'
     evidence_template: "## refs Read Confirmation (MANDATORY)\nFor each exact refs\
       \ entry listed on this step, provide a key passage or `NOT READ: <reason>`.\n\
