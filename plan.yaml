@@ -5621,6 +5621,195 @@ phases:
     agent: gate-reviewer
     claimed_by: gate-reviewer
     claimed_at: '2026-06-06T06:21:27.389727+00:00'
+  - id: sensors-renderer-geo-privacy-fix
+    name: Fix core renderer geo privacy leak
+    status: pending
+    description: 'step_type: implementation
+
+      work_type: defect_repair
+
+      failure_id: SENSORS-GATE-BLOCKER-001
+
+
+      TARGET STATE: Core renderer output cannot leak raw geo placemark, exact address/street/district/city
+      details, accuracy, permission, nearestTag, raw coordinates, or any future sensitive
+      geo field through the generic `label=value` sensor-field fallback. Geo agent
+      output must come only from privacy-gated geo render fragments or an equivalent
+      geo-specific renderer allowlist that enforces `sensors.geo.agent`, `sensors.geo.precision`,
+      `sensors.geo.exactCoordinates`, and `sensors.geo.exactAddress` exactly as PRD/TD
+      require.
+
+
+      BOUNDING BOX / TOUCH PATHS:
+
+      - `src/core/renderer.ts` — renderer generic sensor-field fallback and geo field
+      gating.
+
+      - `src/sensors/geo.ts` — geo renderAgent fragments and field semantics only
+      if needed to keep a single privacy authority.
+
+      - `tests/unit/renderer.test.ts` — renderer-level regression coverage for the
+      leak.
+
+      - `tests/unit/sensors/geo.test.ts` — focused geo privacy tests only if geo render
+      fragments change.
+
+
+      UPSTREAM ARTIFACTS:
+
+      - `sensors-geo-actions` — geo exact privacy gates and geo render fragment behavior
+      are PROTECTED.
+
+      - `sensors-local-proof` — existing B1-B4/native/manifest-risk evidence is PROTECTED
+      and must not regress.
+
+
+      ISSUE TO FIX:
+
+      - `src/sensors/geo.ts` publishes `geo.placemark` as a normalized object field.
+
+      - `src/core/renderer.ts` currently gates only `geo.lat`, `geo.lon`, and `geo.formattedAddress`;
+      other geo fields can pass through generic agent fallback as `label=value`.
+
+      - Inline repro that must close: `agent: [ambient_ctx: accuracy_m=80; nearestTag=home;
+      permission=authorized; placemark={"city":"Shanghai","district":"Jing''an","street":"Nanjing
+      W Rd","formattedAddress":"123 Nanjing W Rd, Shanghai"}]` under `precision=city`,
+      `exactAddress=false`, and `exactCoordinates=false`.
+
+
+      CONSTRAINTS:
+
+      - Do NOT weaken UI visibility for human-facing geo status unless a cited spec
+      requires it; this fix targets agent injection privacy.
+
+      - Do NOT remove typed-state envelope fields from storage merely to hide renderer
+      output; storage normalization remains contract-owned.
+
+      - Do NOT broaden exact output. Exact coordinates require `sensors.geo.agent
+      === true`, `sensors.geo.precision === "exact"`, and `sensors.geo.exactCoordinates
+      === true`. Exact address text requires `sensors.geo.agent === true`, `sensors.geo.precision
+      === "exact"`, and `sensors.geo.exactAddress === true`.
+
+      - Do NOT convert geo privacy into hardcoded one-case string filtering; the regression
+      must cover current and sibling sensitive geo fields.
+
+      - Do NOT touch native helper supervision, sensor loading, config mutation, or
+      Pi runtime wiring.
+
+
+      REQUIREMENT-TO-CHECKLIST TRACEABILITY MATRIX:
+
+      | requirement_id | source_ref + key passage | obligation | owning_step_id |
+      checklist_item | evidence_field | status | non_intersection_or_escalation |
+
+      | GEO-PRIV-001 | docs/PRD.md#8-2-privacy — sensitive data must not be injected
+      unless sensor enabled and `agent=true`; exact geo requires explicit exact gates
+      | No exact or sensitive geo data in agent string unless gates pass | sensors-renderer-geo-privacy-fix
+      | renderer-level regression proves blocked fields absent with exact gates false
+      | repro_closure.blocked_output | OWNED | intersects sensors-gate |
+
+      | GEO-PRIV-002 | docs/TECHNICAL_DESIGN.md#builtin-sensors — exact coordinates/address
+      have separate exact gates | Coordinates and exact address output require their
+      independent gates | sensors-renderer-geo-privacy-fix | positive and negative
+      tests cover exactCoordinates/exactAddress independently | gate_matrix | OWNED
+      | intersects sensors-gate |
+
+      | GEO-PRIV-003 | CONSTITUTION.md#privacy-and-safety-laws — Dasein must not collect
+      or inject hidden fields | Generic renderer fallback must not inject raw sensitive
+      geo fields | sensors-renderer-geo-privacy-fix | sensitive-field denylist/allowlist
+      coverage includes placemark/accuracy/permission/nearestTag | sensitive_field_inventory
+      | OWNED | intersects sensors-gate |
+
+
+      ## Completion Criteria (stub exclusion)
+
+      This is an IMPLEMENTATION step. Stub-only completion is NOT acceptable. Each
+      deliverable MUST contain substantive logic that processes normalized renderer
+      inputs and produces outputs that vary based on config gates and field identity.
+
+
+      ## Gate Preview (what sensors-gate WILL reject)
+
+      1. Any `geo.placemark`, city, district, street, formatted address, lat/lon,
+      accuracy, permission, or nearestTag appearing in agent output when exact gates
+      are false.
+
+      2. A fix that only hides `geo.placemark` while sibling sensitive geo fields
+      still use generic fallback.
+
+      3. A fix that removes human UI inspectability or typed-state storage fields
+      instead of fixing agent rendering.
+
+      4. A regression test that only exercises `src/sensors/geo.ts` renderAgent and
+      misses `src/core/renderer.ts` generic fallback.
+
+
+      ## Systemic search / grep hints
+
+      - Search for geo fallback paths and tests: `grep -R "geo\\.placemark\|geo\\.accuracy_m\|geo\\.permission\|geo\\.nearestTag\|geo\\.formattedAddress\|geo\\.lat\|geo\\.lon"
+      src tests -n`
+
+      - Search for generic sensor agent fallback: `grep -R "agentPart\|labelForField\|shouldRenderGeoAgentField\|formatAgentValue"
+      src/core tests/unit/renderer.test.ts -n`
+
+
+      <side_effect_budget>Allowed: focused renderer/geo implementation and tests for
+      agent-output privacy. Forbidden: weakening UI/status visibility, storage envelope
+      normalization, geo action semantics, native helper behavior, sensor manifest/risk
+      behavior, package dependencies, Pi runtime wiring, or config mutation semantics.</side_effect_budget>
+
+      <risk_probes>1. Verify city/district/street data cannot leak through object-valued
+      `geo.placemark` even when `sensors.geo.agent=true` but exact gates are false.
+      2. Verify sibling sensitive fields (`geo.accuracy_m`, `geo.permission`, `geo.nearestTag`,
+      coordinates, formattedAddress) cannot bypass `renderAgent` through generic fallback.
+      3. Verify positive exact cases still render only through the documented exact-coordinate
+      and exact-address gates.</risk_probes>'
+    verification: '- [ ] refs confirmation includes key passages from PRD privacy,
+      TD builtin geo privacy gates, TD renderer output contract, and Constitution
+      privacy/sensor laws.
+
+      - [ ] Renderer-level regression test reproduces the reported leak using normalized
+      `geo.placemark` with city/district/street/formattedAddress, `geo.accuracy_m`,
+      `geo.permission`, `geo.nearestTag`, `geo.lat`, and `geo.lon` fields under `precision=city`,
+      `agent=true`, `exactAddress=false`, and `exactCoordinates=false`.
+
+      - [ ] Regression proves agent output does not contain placemark JSON, city,
+      district, street, formattedAddress, raw coordinates, accuracy, permission, or
+      nearestTag when the exact gates are false.
+
+      - [ ] Regression proves exact coordinates appear only when `agent=true + precision=exact
+      + exactCoordinates=true`, and exact address text appears only when `agent=true
+      + precision=exact + exactAddress=true`.
+
+      - [ ] Focused tests pass for renderer and geo privacy paths with raw output
+      pasted.
+
+      - [ ] Existing sensors local proof surfaces are not broadened or weakened; changed
+      files stay within the declared bounding box or include explicit deviation rationale.'
+    evidence_template: "## refs Read Confirmation (MANDATORY)\nFor each ref in this\
+      \ step:\n- `docs/PRD.md#8-2-privacy` — <key passage>\n- `docs/TECHNICAL_DESIGN.md#builtin-sensors`\
+      \ — <key passage>\n- `docs/TECHNICAL_DESIGN.md#testing-gate-matrix` — <key passage\
+      \ for renderer output contract/builtin contracts>\n- `CONSTITUTION.md#privacy-and-safety-laws`\
+      \ — <key passage>\n- `CONSTITUTION.md#extension-and-sensor-laws` — <key passage>\n\
+      \n## Repro Closure\n- failure_id: SENSORS-GATE-BLOCKER-001\n- before_leak_summary:\
+      \ <paste or summarize failing inline repro>\n- blocked_output: <actual agent\
+      \ output after fix for city precision / exact false>\n- forbidden_terms_checked:\
+      \ <placemark/city/district/street/formattedAddress/lat/lon/accuracy/permission/nearestTag>\n\
+      \n## Commands\n- command: <focused renderer/geo command>\n- raw_stdout: |\n\
+      \    <paste output>\n- exit_code: <code>\n\n## Sensitive Field Inventory\n|\
+      \ field | expected agent behavior when exact gates false | evidence |\n| ---\
+      \ | --- | --- |\n| geo.placemark | absent | <test/assertion> |\n| geo.formattedAddress\
+      \ | absent | <test/assertion> |\n| geo.lat / geo.lon | absent | <test/assertion>\
+      \ |\n| geo.accuracy_m | absent | <test/assertion> |\n| geo.permission | absent\
+      \ | <test/assertion> |\n| geo.nearestTag | absent unless deliberately emitted\
+      \ by geo renderAgent under allowed coarse tag semantics; otherwise absent from\
+      \ generic fallback | <test/assertion> |\n\n## Deviation Record\n- changed_files:\
+      \ <list>\n- deviations_from_bounding_box: <none or rationale>\n- protected_surfaces_preserved:\
+      \ <geo actions/native/manifest-risk/local proof>"
+    depends_on:
+    - sensors-local-proof
+    - sensors-geo-actions
+    agent: frontend-engineer
 - id: pi_runtime
   name: Pi Runtime, Commands, and TUI Surfaces
   status: locked
