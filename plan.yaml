@@ -15093,7 +15093,7 @@ phases:
       based on live smoke artifacts.'
   - id: finalization-arch-spec-blockers-retest
     name: Retest architecture/spec final audit blockers (A1 A2 S1 S2)
-    status: pending
+    status: claimed
     description: 'step_type: test
 
       step_intent: retest_green
@@ -15280,3 +15280,5 @@ phases:
     depends_on:
     - finalization-arch-spec-blockers-fix
     agent: integration-verifier
+    claimed_by: integration-verifier
+    claimed_at: '2026-06-06T13:13:57.836854+00:00'
