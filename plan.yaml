@@ -4574,7 +4574,7 @@ phases:
       All four clock/lapse checklist items proven.'
   - id: sensors-geo-actions
     name: Complete geo sensor and geo tag actions
-    status: claimed
+    status: done
     description: 'step_type: implementation
 
       Fill in stub bodies in src/sensors/geo.ts per core contracts and sensors-tests.
@@ -4710,6 +4710,64 @@ phases:
     agent: frontend-engineer
     claimed_by: frontend-engineer
     claimed_at: '2026-06-06T06:10:01.316863+00:00'
+    done_at: '2026-06-06T06:16:30.515703+00:00'
+    evidence: '## refs Read Confirmation
+
+      - `docs/PRD.md#8-2-privacy` — geo defaults disabled/agent false/precision city;
+      exact geo agent injection requires explicit exact privacy gates.
+
+      - `CONSTITUTION.md#privacy-and-safety-laws` — injected fields must be traceable;
+      hidden fields forbidden; remote/network sensors opt-in; agents must not modify
+      config.
+
+      - `docs/TECHNICAL_DESIGN.md#builtin-sensors` — geo tag actions canonical `{lat,lon,radius_m,label?}`,
+      radius_m 1..100000, sorted `GeoTagListPayload`, no refresh/state/helper reads
+      during tag list, coordinate visibility only with exact gates.
+
+      - `docs/TECHNICAL_DESIGN.md#error-model` — typed SensorError for timeout/permission/unavailable/process/parse/helper-unavailable.
+
+      - `docs/PRD.md#7-functional-requirements` — injection renders current in-memory
+      readings only; no request-path refresh/filesystem/network/helper work; geo tag
+      add may refresh through sensor action path only.
+
+
+      ## Files changed / commit
+
+      - Mainline squash commit: `5a4b53b` (worker commit `542cd83a13aa4450e11725f1a000554a6b5dbe55`).
+
+      - Changed: `src/sensors/geo.ts`.
+
+
+      ## Verification
+
+      - Mainline `npm run typecheck` exit 0.
+
+      - Mainline `npm run test:file -- tests/unit/sensors/geo.test.ts tests/unit/sensors/clock.test.ts
+      tests/unit/sensors/lapse.test.ts` exit 0; 13 pass, 0 fail/skipped.
+
+
+      ## Proof
+
+      - Exact coordinates require `agent=true + precision=exact + exactCoordinates=true`;
+      tag-list coordinates use same gate.
+
+      - Exact address requires `agent=true + precision=exact + exactAddress=true`;
+      no address fabricated when helper address absent.
+
+      - Tag list returns typed `GeoTagListPayload`, sorts names lexicographically,
+      redacts coordinates unless all exact coordinate gates pass, and does not refresh/helper/state-read.
+
+      - Tag add validates radius_m integer 1..100000 and requires fresh fix; tag remove
+      returns deletePaths and missing tags fail without mutation.
+
+      - Nearest tag ties resolve distance then lexicographic name; stale/unavailable
+      render degradation is source/test proven; helper mapping remains typed and off
+      request path.
+
+
+      ## checklist_receipt
+
+      All eight geo-actions checklist items proven.'
   - id: sensors-native-helper
     name: Complete macOS CoreLocation helper supervision
     status: done
