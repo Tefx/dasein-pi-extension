@@ -16731,3 +16731,10 @@ phases:
       35 packed files, test:smoke 3/3); after fixing live-smoke Constitution refs,
       npm run test:smoke passed 3/3 again and regenerated .dasein/live-pi-smoke/latest/checklist_receipt.json
       with total=11 proven=11 blocked=0; git diff --check produced no output.'
+- id: minimal_ui
+  name: Minimal UI Simplification
+  status: pending
+  gate: Widget product surface removed; agent inspect command added; idle null suppressed
+    and documented; tests pass.
+  depends_on:
+  - status_detail_control
