@@ -16223,7 +16223,7 @@ phases:
       All ten checklist items proven and toggled. Blockers: none.'
   - id: finalization-status-output-contract-blocker-retest
     name: Retest final status output contract blocker
-    status: claimed
+    status: done
     description: 'step_type: verification
 
       Independently retest B-FINAL-001 status output contract blocker and W-FINAL-001
@@ -16273,3 +16273,58 @@ phases:
     agent: integration-verifier
     claimed_by: integration-verifier
     claimed_at: '2026-06-06T14:45:37.567445+00:00'
+    done_at: '2026-06-06T14:54:23.449239+00:00'
+    evidence: '## refs Read Confirmation
+
+      - CONSTITUTION.md: request-path safety, privacy boundaries, and testing/live
+      evidence requirements confirmed.
+
+      - docs/PRD.md:303-307,591,779-780,795-796,852-854 status/support contract requirements
+      confirmed.
+
+      - docs/TECHNICAL_DESIGN.md:30-35,1275-1279,1380-1391,1466-1467,2163-2171,2217,2257,2264
+      status output/lapse/live proof contracts confirmed.
+
+      - Source/test refs inspected: `src/index.ts`, `src/commands/dasein-command.ts`,
+      `tests/integration/status-output-contract.test.ts`, `tests/integration/fixtures/isolated-extension.ts`,
+      `tests/smoke/contracts/live-pi-smoke-gate-contract.test.ts`.
+
+
+      ## Independent Retest Commands
+
+      - `npm run typecheck` exit 0.
+
+      - Focused command `npm run test:file -- tests/integration/status-output-contract.test.ts
+      tests/integration/lapse-persistence-async.test.ts tests/unit/commands-status.test.ts
+      tests/smoke/contracts/live-pi-smoke-gate-contract.test.ts` exit 0; 9 pass.
+
+      - `npm test` exit 0; 156 pass.
+
+      - `npm run test:native` exit 0; 2 pass, 1 skipped accepted native future gate.
+
+      - `npm run test:smoke` exit 0; 3 pass.
+
+
+      ## Behavioral Proof Register
+
+      - B-FINAL-001: PROVEN. Production runtime `/dasein status` integration asserts
+      hiddenContributors for disabled geo and agent-hidden clock/lapse with sensorMetadata;
+      status exposes effectiveLapseControls; live Pi smoke artifact includes hiddenContributors.geo
+      and effectiveLapseControls while live receipt proves hostBoundary live-pi-process-not-fake-host
+      and 11/11 proven.
+
+      - W-FINAL-001: PROVEN. Shared fixture copy skips transient `.dasein-reload-*`;
+      focused integration/full non-native/smoke suites passed with no fixture-isolation
+      flake.
+
+
+      ## no_mutation_proof
+
+      No vectl use; no tracked diffs/staged diffs; smoke regenerated ignored `.dasein/`
+      artifacts only.
+
+
+      ## checklist_receipt
+
+      All eleven checklist items proven and toggled. Blockers: none. Overall recommendation
+      PASS.'
