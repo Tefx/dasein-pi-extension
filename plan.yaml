@@ -8194,15 +8194,15 @@ phases:
       release_smoke/finalization.</risk_probes>
 
       '
-    verification: '- [ ] `npm run typecheck` passes with raw stdout/stderr.
+    verification: '- [x] `npm run typecheck` passes with raw stdout/stderr.
 
-      - [ ] `npm test` passes with raw stdout/stderr and excludes live Pi smoke.
+      - [x] `npm test` passes with raw stdout/stderr and excludes live Pi smoke.
 
-      - [ ] `npm run test:native` passes on macOS with raw stdout/stderr showing both
+      - [x] `npm run test:native` passes on macOS with raw stdout/stderr showing both
       `tests/native/contracts/native-gate-contract.test.ts` and `tests/native/macos-location-helper.test.ts`
       were discovered/executed, or skips only with an explicit non-macOS reason.
 
-      - [ ] Static/package checks confirm zero non-Pi runtime dependencies and no
+      - [x] Static/package checks confirm zero non-Pi runtime dependencies and no
       request-path forbidden imports.'
     evidence_template: "## refs Read Confirmation (MANDATORY)\nFor each exact refs\
       \ entry listed on this step, provide a key passage or `NOT READ: <reason>`.\n\
