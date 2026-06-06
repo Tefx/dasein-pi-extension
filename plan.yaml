@@ -13978,7 +13978,7 @@ phases:
       All eight retest checklist items proven and toggled. Blockers: none.'
   - id: finalization-wiring-blackbox-blockers-fix
     name: Fix wiring and live-smoke finalization blockers
-    status: pending
+    status: claimed
     description: 'step_type: implementation
 
       work_type: defect_repair
@@ -14259,6 +14259,8 @@ phases:
     - finalization-reload-launch-path-failure-branches-retest
     - finalization-external-state-sensor-runtime-blockers-retest
     agent: frontend-engineer
+    claimed_by: frontend-engineer
+    claimed_at: '2026-06-06T12:04:32.810506+00:00'
   - id: finalization-wiring-blackbox-blockers-retest
     name: Retest wiring and live-smoke finalization blockers
     status: pending
