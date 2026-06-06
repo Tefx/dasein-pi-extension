@@ -16429,7 +16429,7 @@ phases:
       PASS.'
 - id: ux_polish
   name: Default UX Polish
-  status: pending
+  status: in_progress
   gate: 'Default Dasein UI is quiet by default: status bar is summarized, SettingsList
     starts with common controls, diagnostics remain available on demand, and slash
     command feedback is visible in TUI.'
@@ -16438,7 +16438,7 @@ phases:
   steps:
   - id: ux-polish-docs-plan
     name: Document default UX polish plan
-    status: pending
+    status: claimed
     description: 'Update PRD/Technical Design with the concrete default UX plan: quiet
       default visible UI, hidden/low-noise ambient context indicator, summarized status
       bar, common-first SettingsList, diagnostics/debug disclosure, and command feedback
@@ -16453,6 +16453,8 @@ phases:
 
       - [ ] docs preserve inspectability and local Pi privacy constraints.'
     agent: general
+    claimed_by: general
+    claimed_at: '2026-06-06T15:30:15.647198+00:00'
   - id: ux-polish-implementation
     name: Implement quiet default UX
     status: pending
