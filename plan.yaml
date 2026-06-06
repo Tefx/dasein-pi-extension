@@ -15504,3 +15504,260 @@ phases:
       All ten checklist items proven and toggled. Blockers: none. No live Pi support
       claim was made from fake-host/mock/native-supervisor evidence; live claims rely
       on live smoke artifacts.'
+  - id: finalization-sensor-action-lapse-durable-blockers-fix
+    name: Fix sensor action namespace and lapse durable-write finalization blockers
+    status: pending
+    description: 'step_type: implementation
+
+      work_type: defect_repair
+
+      agent_source: project
+
+      closure_step: true
+
+
+      TARGET STATE:
+
+      One batched TypeScript remediation closes finalization blockers `B1_SENSOR_ACTION_NAMESPACE_ESCAPE`
+      and `B2_LAPSE_EVENT_HANDLER_AWAITS_DURABLE_WRITE`, and handles warning `W1_STATUS_PAYLOAD_UNDERCLAIMS_LIVE_SMOKE`
+      only if safe without weakening exact release-smoke vocabulary.
+
+
+      BOUNDING BOX / TOUCH PATHS:
+
+      - `src/index.ts` — `runSensorAction`, `applyProposal`, `observePiLifecycle`,
+      `statusResult`, status error plumbing, and any lifecycle event handler wiring.
+
+      - `src/core/config.ts` — `ConfigManager.applyRuntimeProposal` or proposal-routing
+      API so proposals are namespace-checked with the calling `sensorKey` before persistence/commit.
+
+      - `src/core/types.ts` — only if public/internal ConfigManager or proposal types
+      must carry caller namespace/status-error semantics.
+
+      - `src/core/state.ts` and `src/core/state-io.ts` — only if durable lapse scheduling/coalescing
+      needs a reusable state-writer seam; preserve atomic write behavior.
+
+      - `src/sensors/lapse.ts` — only for in-memory lapse observation semantics, not
+      durable I/O in the event/request handler path.
+
+      - Tests: add/update focused coverage in existing adjacent suites such as `tests/unit/config.test.ts`,
+      `tests/unit/config-queue.test.ts`, `tests/unit/state-file.test.ts`, `tests/unit/commands-status.test.ts`,
+      `tests/integration/pi-extension.test.ts`, `tests/integration/lapse-reset-public-command.test.ts`,
+      `tests/smoke/contracts/live-pi-smoke-gate-contract.test.ts`, or a new focused
+      test file if that is the smallest clean seam.
+
+
+      REQUIREMENT-TO-CHECKLIST TRACEABILITY MATRIX:
+
+      | requirement_id | source_ref + key passage | obligation | owning_step_id |
+      checklist_item | evidence_field | status | non_intersection_or_escalation |
+
+      | --- | --- | --- | --- | --- | --- | --- | --- |
+
+      | B1_SENSOR_ACTION_NAMESPACE_ESCAPE | docs/TECHNICAL_DESIGN.md#core-contracts/sensor-spec:
+      sensor actions may return proposed config mutation only inside `sensors.<sensorKey>.*`;
+      Constitution says sensors must not mutate config directly | Route every sensor
+      action proposal through a namespace-enforcing path that receives the caller
+      `sensorKey` before ConfigManager persistence/commit; malicious `core.agentInjectionEnabled=false`
+      or any non-`sensors.<sensorKey>.*` proposal must be rejected without runtime/disk
+      mutation. | finalization-sensor-action-lapse-durable-blockers-fix | B1 namespace
+      enforcement checklist | `B1_namespace_rejection_and_valid_own_namespace` | OWNED
+      | Blocks finalization-gate because it violates sensor/config boundary and privacy
+      laws. |
+
+      | B2_LAPSE_EVENT_HANDLER_AWAITS_DURABLE_WRITE | docs/TECHNICAL_DESIGN.md#core-contracts/sensor-spec:
+      observations update in-memory state only and enqueue/coalesce async durable
+      write after event handling returned; State Store says failed writes surface
+      status error | Lapse observation handlers for `before_agent_start`, `input`,
+      and `agent_end` must synchronously commit memory/renderable state, return before
+      durable `state.json` write begins/completes, later coalesce/write durable lapse
+      state, and surface async write errors in status. | finalization-sensor-action-lapse-durable-blockers-fix
+      | B2 async durable write checklist | `B2_handler_return_before_write_and_status_error`
+      | OWNED | Blocks finalization-gate because it violates request/event-path no-I/O
+      and durable-state status semantics. |
+
+      | W1_STATUS_PAYLOAD_UNDERCLAIMS_LIVE_SMOKE | docs/TECHNICAL_DESIGN.md#verified-pi-mechanisms:
+      LIVE_SMOKE_PENDING vs LIVE_SMOKE_VERIFIED vocabulary and release ledger rows;
+      command result status payload contains evidenceStatuses | If safe, align status
+      payload/final artifacts so proven live-smoke rows are not underclaimed as `LIVE_SMOKE_PENDING`;
+      if not changed, document why exact release-smoke vocabulary and artifacts remain
+      correct and no release claim is weakened. | finalization-sensor-action-lapse-durable-blockers-fix
+      | W1 should-fix status wording checklist | `W1_status_payload_disposition` |
+      OWNED | Should-fix only; must not destabilize B1/B2 or exact vocabulary constraints.
+      |
+
+
+      BLOCKERS TO FIX (ALL of these, not just the first):
+
+      - B1: `src/index.ts` currently applies `result.mutation` from any sensor action
+      and `manager.applyRuntimeProposal(proposal)` lacks caller namespace enforcement.
+      Use the caller sensor key at the proposal mediation point before ConfigManager
+      commit. Reject non-own namespace assignments and deletePaths, including `core.agentInjectionEnabled=false`,
+      without mutating runtime config or disk config. Preserve valid own-namespace
+      proposals such as `sensors.<key>.*` where applicable.
+
+      - B2: `observePiLifecycle` currently awaits `persistLapseAfterObservation`;
+      `persistLapseAfterObservation` creates the durable store and awaits `writeLapse`.
+      Change lifecycle observation to memory-commit synchronously, schedule/coalesce
+      the durable lapse write after `before_agent_start`/`input`/`agent_end` handler
+      return, and expose async write failures in `/dasein status`/status errors. Do
+      not move durable I/O into the LLM request construction path.
+
+      - W1: If safe in the same bounded slice, clarify status wording or payload construction
+      so final status artifacts do not underclaim live-smoke rows that are already
+      `PROVEN`. Do not replace exact allowed values (`SOURCE_VERIFIED`, `API_VERIFIED`,
+      `LIVE_SMOKE_PENDING`, `LIVE_SMOKE_VERIFIED`) with new vocabulary.
+
+
+      GREP HINTS / SIBLING SEARCH:
+
+      - `grep -rn "applyRuntimeProposal\|result\.mutation\|mutationApplied" src tests
+      --include=''*.ts''`
+
+      - `grep -rn "persistLapseAfterObservation\|writeLapse\|state.json" src tests
+      --include=''*.ts''`
+
+      - `grep -rn "before_agent_start\|agent_end\|\"input\"" src tests --include=''*.ts''`
+
+      - `grep -rn "LIVE_SMOKE_PENDING\|LIVE_SMOKE_VERIFIED\|evidenceStatuses" src
+      tests docs --include=''*.ts'' --include=''*.md''`
+
+
+      ## Gate Preview (what finalization-gate WILL reject)
+
+      1. A sensor action proposal that can mutate `core.*`, another sensor namespace,
+      or any path outside `sensors.<callingSensorKey>.*`.
+
+      2. Namespace checks that run only in tests or a dead helper while `src/index.ts`
+      still commits unscoped proposals.
+
+      3. Event handlers that await durable `state.json` writes before returning, or
+      tests that only prove the write eventually happens without proving return-before-write.
+
+      4. Async durable write failures swallowed without status/status-error visibility.
+
+      5. Status/live-smoke wording that underclaims or overclaims proven live rows,
+      or invents vocabulary outside the documented release-smoke status set.
+
+
+      <side_effect_budget>Allowed: targeted TypeScript source/test edits needed for
+      B1/B2 and safe W1 disposition inside the bounding box. Forbidden: editing `.vectl/worktrees/**`,
+      changing `CONSTITUTION.md`, adding runtime npm dependencies, broad config redesign,
+      weakening config precedence, allowing sensors to mutate config directly, adding
+      request/event-path durable I/O, or making false live Pi support claims.</side_effect_budget>
+
+      <risk_probes>1. Does every production proposal path carry the caller `sensorKey`
+      into enforcement before ConfigManager commit, including delete tombstones? 2.
+      Can tests prove event handler return happens before durable write begins, not
+      merely before it completes? 3. Does status/live-smoke wording preserve the exact
+      evidence vocabulary while matching current release-ledger proof?</risk_probes>
+
+
+      ## Completion Criteria (stub exclusion)
+
+      This is an IMPLEMENTATION step. Stub-only completion is NOT acceptable. Each
+      deliverable MUST contain substantive logic that processes its inputs and produces
+      outputs that vary based on those inputs; a dead helper or test-only namespace
+      check does not satisfy B1.'
+    verification: '- [ ] refs confirmation cites key passages for sensor-action namespace
+      limits, lifecycle observation async durable-write rule, durable write error
+      surfacing, status evidence vocabulary, and Constitution sensor/config/request-path
+      boundaries.
+
+      - [ ] B1 malicious sensor action proposal containing `core.agentInjectionEnabled=false`
+      or another non-`sensors.<sensorKey>.*` path is rejected before ConfigManager
+      persistence/commit and leaves runtime config plus disk config unchanged.
+
+      - [ ] B1 valid own-namespace sensor action proposal under `sensors.<sensorKey>.*`
+      succeeds where applicable and reports deterministic `updatedPaths`/`deletedPaths`
+      only inside that namespace.
+
+      - [ ] B1 sibling search proves no production path still calls unscoped `manager.applyRuntimeProposal(proposal)`
+      or applies `result.mutation` without the caller `sensorKey` namespace check.
+
+      - [ ] B2 `before_agent_start`, `input`, and `agent_end` observation handlers
+      commit memory/renderable lapse state synchronously and return before durable
+      `state.json` write begins or completes.
+
+      - [ ] B2 coalesced asynchronous durable write eventually persists the latest
+      lapse timestamps without losing the latest event when multiple observations
+      occur rapidly.
+
+      - [ ] B2 asynchronous durable write failure is surfaced in `/dasein status`/status
+      errors without blocking the event handler return path.
+
+      - [ ] W1 is either safely corrected so status payload/final artifacts do not
+      underclaim live-smoke `PROVEN` rows, or evidence records a precise non-blocking
+      disposition preserving exact documented vocabulary.
+
+      - [ ] `npm run typecheck` exits 0 with raw stdout/stderr captured.
+
+      - [ ] Focused tests for B1/B2, and W1 if changed, exit 0 with raw stdout/stderr
+      captured.
+
+      - [ ] `npm test` exits 0 with raw stdout/stderr captured.
+
+      - [ ] `npm run test:smoke` exits 0 or reports exact environment blockers without
+      false live support overclaim.'
+    evidence_template: '## refs Read Confirmation (MANDATORY)
+
+      For each ref in this step:
+
+      - <filename/section> — <key passage or `NOT READ: <reason>`>
+
+
+      ## Blocker Resolution Report
+
+      - B1_SENSOR_ACTION_NAMESPACE_ESCAPE: <what changed, production call path, caller
+      sensorKey enforcement point>
+
+      - B2_LAPSE_EVENT_HANDLER_AWAITS_DURABLE_WRITE: <memory commit, async/coalesced
+      write scheduling, error surfacing>
+
+      - W1_STATUS_PAYLOAD_UNDERCLAIMS_LIVE_SMOKE: <fixed/disposition and vocabulary
+      preservation>
+
+
+      ## Requirement Proof Fields
+
+      - B1_namespace_rejection_and_valid_own_namespace: <malicious rejection + valid
+      own namespace proof>
+
+      - B1_no_unscoped_proposal_path: <grep/import trace>
+
+      - B2_handler_return_before_write_and_status_error: <before_agent_start/input/agent_end
+      timing and failure evidence>
+
+      - B2_coalesced_latest_write: <rapid observation/latest timestamp evidence>
+
+      - W1_status_payload_disposition: <status/live-smoke payload proof or precise
+      non-blocking disposition>
+
+
+      ## Commands
+
+      - `npm run typecheck`: <exit code + raw stdout/stderr>
+
+      - focused B1/B2/W1 tests: <command + exit code + raw stdout/stderr>
+
+      - `npm test`: <exit code + raw stdout/stderr>
+
+      - `npm run test:smoke`: <exit code + raw stdout/stderr or exact environment
+      blocker>
+
+
+      ## checklist_receipt
+
+      - <map each checklist item to satisfied/failed/blocked/unobserved>
+
+
+      ## Residuals
+
+      - blockers: <none or exact blocker>
+
+      - should_fix: <W1 if not safely changed, with non-intersection rationale>
+
+      - live_support_claims: <no overclaim / artifact refs>'
+    depends_on:
+    - finalization-arch-spec-blockers-retest
+    agent: frontend-engineer
