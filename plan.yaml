@@ -110,18 +110,18 @@ phases:
       peer dependency paths.
 
       '
-    verification: '- [ ] Contract artifacts pin package scripts, dependency policy,
+    verification: '- [x] Contract artifacts pin package scripts, dependency policy,
       root shim delegation, and fake Pi host API shape.
 
-      - [ ] No runtime implementation logic is present beyond stubs/types/interfaces.
+      - [x] No runtime implementation logic is present beyond stubs/types/interfaces.
 
-      - [ ] Refs confirmation cites Constitution dependency/entrypoint laws and Technical
+      - [x] Refs confirmation cites Constitution dependency/entrypoint laws and Technical
       Design scaffold contract.
 
-      - [ ] Contract artifacts explicitly name symlinked `~/.pi/agent/extensions/dasein`
+      - [x] Contract artifacts explicitly name symlinked `~/.pi/agent/extensions/dasein`
       load behavior and root `index.ts` shim delegation to `./src/index.ts`.
 
-      - [ ] Contract artifacts explicitly name SettingsList/getSettingsListTheme import
+      - [x] Contract artifacts explicitly name SettingsList/getSettingsListTheme import
       resolution and approved Pi peer dependency placement.
 
       '
