@@ -13,20 +13,21 @@ strategy_ref: Approved architecture_basis from user prompt; Constitution + PRD +
 context: Implementation DAG for greenfield TypeScript Dasein Pi extension using approved
   architecture_basis; work_type=new_capability; style=balanced with runtime/liveness
   gates.
-project_guidance: 'Constitution-bound Dasein rules for all remaining work: keep Dasein
-  a minimal local Pi ambient context broker, not a time/space/plugin marketplace/policy/memory
-  product; use zero arbitrary runtime npm dependencies; core owns typed-state normalization,
-  deterministic ordering, truncation, renderable view models, and final Pi context
-  injection; sensors publish typed state only and MUST NOT own final prompt text,
-  injection order, priority, or configuration mutation; configuration is global-only
-  under ~/.pi/dasein/ with precedence defaults < global disk config < launch args
-  < slash/UI runtime changes, with no project-local or implicit config reads; human-visible
-  UI/SettingsList/status must expose enabled sensors, visibility, and config without
-  hidden priority semantics; external state publishers and builtin sensors have no
-  hidden privilege and unconfigured external keys remain agent-hidden by default;
-  runtime injection is read-only and performs no disk/subprocess/network/dynamic import/sensor
-  refresh/config mutation; mock tests are not integration proof, and live Pi support
-  claims require live Pi smoke or explicit environment-blocker evidence.'
+project_guidance: 'Constitution-bound execution: Dasein is a local Pi ambient context
+  broker, not a policy/memory/plugin marketplace. Preserve zero non-Pi runtime npm
+  dependencies. Core owns typed-state normalization, deterministic ordering, truncation,
+  renderable view models, Pi injection, config mutation mediation, and durable-state/status
+  error reporting. Sensors publish typed state and optional human-invoked actions
+  only; sensors must not mutate config directly or outside `sensors.<sensorKey>.*`.
+  Request construction and context injection paths must be read-only and perform no
+  disk/network/subprocess/dynamic import/sensor refresh/action/cleanup/discovery/config
+  mutation. Config root is only `~/.pi/dasein/` with precedence `defaults < global
+  disk config < launch args < slash/UI runtime changes`; no implicit or project-local
+  config reads. Lapse durable history is bounded to latest timestamps; durable writes
+  must not block request/event handling and write errors must surface in status. Mock/fake-host
+  proof is not live Pi support; release support claims require current live-smoke
+  artifacts and exact vocabulary. CONSTITUTION.md amendments require explicit human
+  approval and evidence.'
 phases:
 - id: scaffold
   name: Scaffold and Contract Foundation
