@@ -13338,7 +13338,7 @@ phases:
       All six retest checklist items proven and toggled. Blockers: none.'
   - id: finalization-external-state-sensor-runtime-blockers-fix
     name: Fix external state visibility and sensor runtime blockers
-    status: pending
+    status: claimed
     description: 'step_type: implementation
 
       agent_source: project
@@ -13603,6 +13603,8 @@ phases:
     depends_on:
     - finalization-reload-launch-path-failure-branches-retest
     agent: frontend-engineer
+    claimed_by: frontend-engineer
+    claimed_at: '2026-06-06T11:26:47.013266+00:00'
   - id: finalization-external-state-sensor-runtime-blockers-retest
     name: Retest external state visibility and sensor runtime blockers
     status: pending
