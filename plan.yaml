@@ -1470,24 +1470,24 @@ phases:
       previous files and active runtime unchanged.
 
       '
-    verification: '- [ ] `npm run test:file -- tests/unit/config.test.ts tests/unit/config-atomicity.test.ts
+    verification: '- [x] `npm run test:file -- tests/unit/config.test.ts tests/unit/config-atomicity.test.ts
       tests/unit/config-queue.test.ts tests/unit/state-file.test.ts` passes with raw
       output.
 
-      - [ ] Main-path evidence proves defaults < disk < launch < runtime and canonical
+      - [x] Main-path evidence proves defaults < disk < launch < runtime and canonical
       patch persistence.
 
-      - [ ] Failure-path evidence proves malformed disk/state fallback, all-or-nothing
+      - [x] Failure-path evidence proves malformed disk/state fallback, all-or-nothing
       apply, failed write no-commit behavior, and reload runtime-overridden path preservation.
 
-      - [ ] Grep/import evidence shows no project-local config reads, cwd walkups,
+      - [x] Grep/import evidence shows no project-local config reads, cwd walkups,
       or request-path config mutation routes.
 
-      - [ ] Evidence proves deterministic validation for `core.maxAgentChars` integer
+      - [x] Evidence proves deterministic validation for `core.maxAgentChars` integer
       range `40..2000` and `core.injectedLabel` regex `[A-Za-z0-9_.:-]{1,32}` with
       accept/reject cases.
 
-      - [ ] Evidence proves config/state atomic writes use same-directory temp file,
+      - [x] Evidence proves config/state atomic writes use same-directory temp file,
       fsync when available, atomic rename, and failed-write no-change behavior for
       disk and active runtime.
 
