@@ -5936,23 +5936,23 @@ phases:
       the renderer generic fallback cannot leak newly added or object-valued geo fields.
       3. Confirm existing B1-B4/native/manifest-risk proofs remain non-regressed by
       the full ordinary suite.</risk_probes>'
-    verification: '- [ ] `npm run typecheck` passes with raw output.
+    verification: '- [x] `npm run typecheck` passes with raw output.
 
-      - [ ] `npm test` passes with raw output.
+      - [x] `npm test` passes with raw output.
 
-      - [ ] Focused command passes with raw output: `npm run test:file -- tests/unit/renderer.test.ts
+      - [x] Focused command passes with raw output: `npm run test:file -- tests/unit/renderer.test.ts
       tests/unit/sensors/geo.test.ts tests/unit/sensors/clock.test.ts tests/unit/sensors/lapse.test.ts
       tests/unit/sensor-runtime.test.ts`.
 
-      - [ ] Repro closure register includes the original failing inline shape and
+      - [x] Repro closure register includes the original failing inline shape and
       post-fix agent output proving `geo.placemark`, city, district, street, formattedAddress,
       lat/lon, accuracy, permission, and nearestTag do not inject unless the documented
       exact gates pass.
 
-      - [ ] Positive exact-gate proof confirms exact coordinate output and exact address
+      - [x] Positive exact-gate proof confirms exact coordinate output and exact address
       output remain independently gated and still work when their gates pass.
 
-      - [ ] Behavioral proof register marks SENSORS-GATE-BLOCKER-001 as PROVEN closed
+      - [x] Behavioral proof register marks SENSORS-GATE-BLOCKER-001 as PROVEN closed
       or reports remaining blocker with exact command/output and closure path.'
     evidence_template: '## refs Read Confirmation (MANDATORY)
 
