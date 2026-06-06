@@ -3062,6 +3062,98 @@ phases:
     depends_on:
     - core-static-proof
     agent: frontend-engineer
+  - id: core-static-boundary-retest
+    name: Retest core static boundary and ordinary CI
+    status: pending
+    description: 'step_type: test
+
+      step_intent: retest_green
+
+      expected_result: green
+
+      verification_scope: local-check
+
+      PROOF ARTIFACT: Independent retest after `core-static-boundary-fix` to prove
+      B1 is closed and ordinary CI/core gate intersection is resolved or has a new
+      explicit blocker disposition.
+
+
+      As an INDEPENDENT TESTER (`integration-verifier`), validate from a fresh perspective
+      that the fix restores the core contract/static boundary without weakening tests
+      and preserves focused core behavior.
+
+
+      Required commands/evidence:
+
+      - `npm run typecheck`
+
+      - ordinary `npm test`
+
+      - the focused core matrix previously reported as 49 passing
+
+      - explicit static proof that `src/core/config.ts` no longer violates the contract/static
+      import boundary
+
+
+      Behavioral proof register required: requirement_ref, behavior_claim, runtime_proof_expected,
+      evidence_ref, status, closure_path, gate_decision_basis for B1 and any remaining
+      ordinary-CI blocker.
+
+
+      <side_effect_budget>Allowed: read-only command execution, source/test inspection,
+      and evidence report. Forbidden: editing files, weakening tests, marking checklists,
+      or treating focused-matrix success as a substitute for ordinary `npm test`.</side_effect_budget>
+
+      <risk_probes>1. Confirm ordinary `npm test` is green, not just focused tests.
+      2. Confirm the contract test remains meaningful and was not weakened. 3. Confirm
+      config/state behavior did not regress while resolving static imports.</risk_probes>'
+    verification: '- [ ] `npm run typecheck` passes with raw stdout/stderr and exit
+      code.
+
+      - [ ] Ordinary `npm test` passes with raw stdout/stderr and exit code, or any
+      remaining failure is reported as a new blocker with exact owner/disposition.
+
+      - [ ] Focused core matrix passes with raw stdout/stderr and includes the previously
+      passing core coverage scope.
+
+      - [ ] Static boundary proof shows `src/core/config.ts` no longer imports `node:fs`,
+      `node:fs/promises`, `node:path`, or equivalent runtime implementation dependencies.
+
+      - [ ] Retest evidence confirms `tests/unit/contracts/core-contracts.test.ts`
+      was not weakened and still enforces the contract/static boundary.
+
+      - [ ] Behavioral proof register closes B1 as PROVEN or identifies the exact
+      unresolved blocker and closure path.'
+    evidence_template: "## Verification Report\n**Tester**: integration-verifier (independent\
+      \ of implementation)\n**Scope**: B1 core static boundary retest after `core-static-boundary-fix`\n\
+      **Independence Level**: L1\n**Timestamp**: <ISO 8601>\n\n### refs Read Confirmation\
+      \ (MANDATORY)\nFor each ref in this step:\n- tests/unit/contracts/core-contracts.test.ts\
+      \ — key passage or \"NOT READ: <reason>\"\n- src/core/config.ts — key passage\
+      \ or \"NOT READ: <reason>\"\n- docs/TECHNICAL_DESIGN.md#core-contracts — key\
+      \ passage or \"NOT READ: <reason>\"\n- CONSTITUTION.md#testing-and-gates — key\
+      \ passage or \"NOT READ: <reason>\"\n\n## Command Evidence (raw outputs required)\n\
+      ### Typecheck\n- command: npm run typecheck\n- exit_code: <code>\n- raw_stdout_stderr:\
+      \ |\n    <paste raw output>\n\n### Ordinary CI Test\n- command: npm test\n-\
+      \ exit_code: <code>\n- raw_stdout_stderr: |\n    <paste raw output>\n\n### Focused\
+      \ Core Matrix\n- command: <exact focused core matrix command(s)>\n- exit_code:\
+      \ <code>\n- raw_stdout_stderr: |\n    <paste raw output>\n\n## Static Boundary\
+      \ Proof\n- command_or_scan: <exact grep/test/source-inspection command>\n- raw_output:\
+      \ |\n    <paste raw output>\n- result: <PASS/FAIL>\n\n## Contract Test Integrity\n\
+      - evidence that `tests/unit/contracts/core-contracts.test.ts` still enforces\
+      \ runtime dependency/import purity: <key assertion or diff/source excerpt>\n\
+      \n## Behavioral Proof Register\n| requirement_ref | behavior_claim | runtime_proof_expected\
+      \ | evidence_ref | status | closure_path | gate_decision_basis |\n| --- | ---\
+      \ | --- | --- | --- | --- | --- |\n| B1/core-static-boundary | `src/core/config.ts`\
+      \ is contract-static and runtime FS/path implementation is outside the contract-scanned\
+      \ module | ordinary `npm test` plus explicit import scan | <evidence ref> |\
+      \ PROVEN/NEEDS_TEST/UNPROVEN/BLOCKED | <closure path> | <OPEN/BLOCK basis> |\n\
+      \n## Headline\n- [ ] PASS: B1 closed and ordinary CI/core gate can proceed.\n\
+      - [ ] PASS_WITH_DEBT: B1 closed; only explicit non-blocking debt remains with\
+      \ non-intersection rationale.\n- [ ] FAIL: B1 or another ordinary-CI/core-gate\
+      \ blocker remains."
+    depends_on:
+    - core-static-boundary-fix
+    agent: integration-verifier
 - id: sensors
   name: Builtin Sensors and Native Helper
   status: locked
