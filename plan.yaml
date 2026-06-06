@@ -5407,7 +5407,7 @@ phases:
       All 11 local proof checklist items proven.'
   - id: sensors-gate
     name: Gate builtin sensors and native helper
-    status: pending
+    status: claimed
     description: 'step_type: gate
 
       verification_scope: phase-check
@@ -5619,6 +5619,8 @@ phases:
     - sensors-native-helper
     - sensors-manifest-risk
     agent: gate-reviewer
+    claimed_by: gate-reviewer
+    claimed_at: '2026-06-06T06:21:27.389727+00:00'
 - id: pi_runtime
   name: Pi Runtime, Commands, and TUI Surfaces
   status: locked
