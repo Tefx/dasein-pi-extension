@@ -13057,3 +13057,162 @@ phases:
     depends_on:
     - finalization-audit-blockers-fix
     agent: frontend-engineer
+  - id: finalization-reload-launch-path-failure-branches-retest
+    name: Retest reload launch path metadata failure branches
+    status: pending
+    description: 'step_type: test
+
+      step_intent: retest_green
+
+      expected_result: green
+
+      verification_scope: full-plan-check
+
+      PROOF ARTIFACT: Independent retest proving the B1 reload failure-branch metadata
+      regression is closed before the final wiring audit and black-box verification
+      proceed.
+
+
+      As an INDEPENDENT TESTER (`integration-verifier`), validate from a fresh perspective
+      that `/dasein reload` retains launch overlay metadata when reload failure branches
+      keep the old runtime state.
+
+
+      SCOPE:
+
+      - Public/fake-host `/dasein reload` path and command output.
+
+      - Forced sensor candidate/registry failure.
+
+      - Forced ConfigManager/config reload failure.
+
+      - Launch flags that include at least one non-runtime-overridden launch path
+      and at least one runtime-overridden path if the harness can express both.
+
+
+      REQUIREMENT-TO-CHECKLIST TRACEABILITY MATRIX:
+
+      | requirement_id | source_ref + key passage | obligation | owning_step_id |
+      checklist_item | evidence_field | status | non_intersection_or_escalation |
+
+      | --- | --- | --- | --- | --- | --- | --- | --- |
+
+      | RLP-RT-1 | docs/TECHNICAL_DESIGN.md#sensor-loading-and-reload/manual-reload
+      | Sensor-load failure fake-host reload proof retains non-runtime-overridden
+      launch paths. | finalization-reload-launch-path-failure-branches-retest | Sensor-load
+      failure focused retest passes with raw output. | sensor_failure_retest | OWNED
+      | Required before final wiring/black-box rerun. |
+
+      | RLP-RT-2 | docs/TECHNICAL_DESIGN.md#configuration-files | Config reload failure
+      fake-host reload proof retains non-runtime-overridden launch paths. | finalization-reload-launch-path-failure-branches-retest
+      | Config-reload failure focused retest passes with raw output. | config_failure_retest
+      | OWNED | Required before final wiring/black-box rerun. |
+
+      | RLP-RT-3 | CONSTITUTION.md#testing-and-gates | Runtime/public evidence, not
+      mock-only claims, must prove extension integration behavior. | finalization-reload-launch-path-failure-branches-retest
+      | Evidence includes exact commands/stdout and distinguishes focused fake-host
+      proof from full npm test proof. | command_receipts | OWNED | Blocks finalization
+      gate if missing. |
+
+
+      This retest is expected GREEN after `finalization-reload-launch-path-failure-branches-fix`.
+      Finding a remaining failure is a successful discovery outcome but must be reported
+      as BLOCKED with exact reproduction.
+
+
+      <side_effect_budget>Allowed: read-only test execution and report, plus temporary
+      harness artifacts if the existing test runner requires them. Forbidden: product
+      code edits, plan edits, docs edits, or accepting success-path-only reload evidence.</side_effect_budget>
+
+      <risk_probes>1. The retest exercises failure branches, not only successful reload.
+      2. Launch metadata is checked through public command/result output, not just
+      internal object construction. 3. Runtime-overridden paths are excluded while
+      non-runtime-overridden launch paths remain reported.</risk_probes>'
+    verification: '- [ ] `npm run typecheck` exits 0 in the retest environment.
+
+      - [ ] Focused `/dasein reload` fake-host test with launch flags plus forced
+      sensor-load/registry failure passes and raw output shows retained non-runtime-overridden
+      `launchReappliedPaths`.
+
+      - [ ] Focused `/dasein reload` fake-host test with launch flags plus forced
+      ConfigManager/config reload failure passes and raw output shows retained non-runtime-overridden
+      `launchReappliedPaths`.
+
+      - [ ] Retest evidence confirms runtime-overridden launch paths are not included
+      in `launchReappliedPaths`.
+
+      - [ ] `npm test` exits 0 with raw stdout/stderr, or any failure is classified
+      with exact non-intersection/blocking disposition for finalization.
+
+      - [ ] Retest report states that downstream `finalization-full-wiring-audit`
+      and `finalization-black-box-verification` are dependency-ordered after this
+      retest in plan state.'
+    evidence_template: '## refs Read Confirmation (MANDATORY)
+
+      For each ref in this step:
+
+      - docs/TECHNICAL_DESIGN.md#sensor-loading-and-reload/manual-reload — <key passage>
+
+      - docs/TECHNICAL_DESIGN.md#configuration-files — <key passage>
+
+      - CONSTITUTION.md#testing-and-gates — <key passage>
+
+
+      ## Verification Report
+
+      **Tester**: integration-verifier (independent of frontend-engineer)
+
+      **Scope**: reload failure-branch launch metadata retest
+
+      **Independence Level**: L1/L2 seam-level integration
+
+
+      ## Commands
+
+      - typecheck_command: `npm run typecheck`
+
+      - typecheck_stdout: <paste raw output>
+
+      - focused_test_command: <exact command>
+
+      - focused_test_stdout: <paste raw output>
+
+      - npm_test_command: `npm test`
+
+      - npm_test_stdout: <paste raw output>
+
+
+      ## Behavioral Proof Register
+
+      | requirement_ref | behavior_claim | runtime_proof_expected | evidence_ref |
+      status | closure_path | gate_decision_basis |
+
+      | --- | --- | --- | --- | --- | --- | --- |
+
+      | RLP-RT-1 | Sensor-load failure branch preserves launchReappliedPaths | focused
+      fake-host /dasein reload forced sensor failure | <artifact> | PROVEN/UNPROVEN/BLOCKED
+      | <path> | final wiring + black-box |
+
+      | RLP-RT-2 | Config reload failure branch preserves launchReappliedPaths | focused
+      fake-host /dasein reload forced config failure | <artifact> | PROVEN/UNPROVEN/BLOCKED
+      | <path> | final wiring + black-box |
+
+      | RLP-RT-3 | Runtime-overridden paths excluded | focused command/result assertion
+      | <artifact> | PROVEN/UNPROVEN/BLOCKED | <path> | final gate |
+
+
+      ## Headline
+
+      - [ ] PASS: B1 closed and full npm test/typecheck evidence is green.
+
+      - [ ] PASS_WITH_DEBT: B1 closed; unrelated debt has explicit non-intersection.
+
+      - [ ] FAIL: B1 remains or proof is incomplete.
+
+
+      ## checklist_receipt
+
+      - <each checklist item satisfied/failed/blocked/unobserved>'
+    depends_on:
+    - finalization-reload-launch-path-failure-branches-fix
+    agent: integration-verifier
