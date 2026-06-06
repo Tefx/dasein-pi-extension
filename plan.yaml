@@ -8174,7 +8174,7 @@ phases:
       All five checklist items proven; no product/docs/code mutation in verifier worktree.'
   - id: system-wiring-ordinary-ci
     name: Verify ordinary CI closure without live Pi smoke
-    status: claimed
+    status: done
     description: 'step_type: verification
 
       verification_scope: full-plan-check
@@ -8246,6 +8246,59 @@ phases:
     agent: integration-verifier
     claimed_by: integration-verifier
     claimed_at: '2026-06-06T08:00:50.122278+00:00'
+    done_at: '2026-06-06T08:03:18.765258+00:00'
+    evidence: '## refs Read Confirmation
+
+      - `docs/TECHNICAL_DESIGN.md#testing-gate-matrix` — `npm test` excludes live
+      Pi TUI smoke; `test:native` is native/macOS gate; `test:smoke` is separate release
+      smoke.
+
+      - `CONSTITUTION.md#testing-and-gates` — mock/fake tests are not live integration
+      proof; live Pi smoke required before release support claims.
+
+      - `CONSTITUTION.md#quality-baselines` — static request-path checks and typed
+      boundaries are required; mock-only coverage is not live proof.
+
+      - `docs/PRD.md#8-non-functional-requirements` — request path must avoid disk/network/location/subprocess
+      I/O; failures degrade visibly.
+
+
+      ## Commands
+
+      - `npm run typecheck` exit 0: `tsc --noEmit`.
+
+      - `npm test` exit 0: non-native discovery roots `tests/unit,tests/integration,tests/behavior,tests/static`;
+      131 pass, 0 fail/skipped; live smoke excluded.
+
+      - `npm run test:native` exit 0: native discovery `platform=darwin roots=tests/native
+      files=2`, discovered both `tests/native/contracts/native-gate-contract.test.ts`
+      and `tests/native/macos-location-helper.test.ts`; helper assertions passed;
+      3 tests, 2 pass, 1 explicit scaffold contract skip.
+
+      - `npm run test:smoke` exit 0: one explicit live Pi smoke release-gate skip.
+
+      - Static package/no-request-io focused check exit 0; 12 pass.
+
+      - Verifier worktree git status clean; no product mutations.
+
+
+      ## behavioral_proof_register
+
+      - ordinary CI closure without live Pi smoke: PROVEN.
+
+      - npm test excludes live Pi smoke: PROVEN.
+
+      - macOS native discovery finds both required files and helper assertions pass:
+      PROVEN.
+
+      - zero runtime dependencies and no request-path forbidden imports: PROVEN.
+
+      - live Pi runtime behavior: UNPROVEN and intentionally deferred to release_smoke.
+
+
+      ## checklist_receipt
+
+      All four system-wiring-ordinary-ci checklist items proven.'
   - id: system-wiring-gate
     name: Gate system wiring and ordinary CI
     status: pending
