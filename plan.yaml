@@ -16236,33 +16236,33 @@ phases:
       not only command formatter fixtures. 2. Hidden contributor/lapse control fields
       must survive live smoke artifact capture. 3. Any rerun-only flake must be classified
       with evidence, not ignored.</risk_probes>'
-    verification: '- [ ] refs confirmation cites status output contract, hidden contributor
+    verification: '- [x] refs confirmation cites status output contract, hidden contributor
       inspectability, lapse controls, and testing/live proof separation.
 
-      - [ ] Independent proof shows production `/dasein status` includes hidden contributor
+      - [x] Independent proof shows production `/dasein status` includes hidden contributor
       records and disabled contributor inspectability when applicable.
 
-      - [ ] Independent proof shows production `/dasein status` includes effective
+      - [x] Independent proof shows production `/dasein status` includes effective
       lapse enabled/persist/agent controls.
 
-      - [ ] Independent proof shows live smoke/status artifact includes required fields
+      - [x] Independent proof shows live smoke/status artifact includes required fields
       without false live support overclaim and without altering release gate verdict
       vocabulary.
 
-      - [ ] Independent proof addresses W-FINAL-001 flake: repeated/focused lapse
+      - [x] Independent proof addresses W-FINAL-001 flake: repeated/focused lapse
       async tests pass or exact blocker is reported.
 
-      - [ ] `npm run typecheck` exits 0 with raw output.
+      - [x] `npm run typecheck` exits 0 with raw output.
 
-      - [ ] focused status/lapse/live-smoke tests exit 0 with raw output.
+      - [x] focused status/lapse/live-smoke tests exit 0 with raw output.
 
-      - [ ] `npm test` exits 0 with raw output.
+      - [x] `npm test` exits 0 with raw output.
 
-      - [ ] `npm run test:native` exits 0 or accepted skip semantics with raw output.
+      - [x] `npm run test:native` exits 0 or accepted skip semantics with raw output.
 
-      - [ ] `npm run test:smoke` exits 0 with raw output.
+      - [x] `npm run test:smoke` exits 0 with raw output.
 
-      - [ ] Behavioral proof register marks B-FINAL-001 PROVEN and W-FINAL-001 PROVEN
+      - [x] Behavioral proof register marks B-FINAL-001 PROVEN and W-FINAL-001 PROVEN
       or NON_BLOCKING_WITH_EVIDENCE; any BLOCKED row prevents final gate.'
     refs:
     - CONSTITUTION.md
