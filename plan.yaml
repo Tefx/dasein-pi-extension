@@ -7333,7 +7333,7 @@ phases:
       mutation performed by verifier.'
   - id: pi-runtime-spec-conformance
     name: Verify Pi runtime spec conformance
-    status: claimed
+    status: done
     description: 'step_type: verification
 
       verification_scope: phase-check
@@ -7498,6 +7498,61 @@ phases:
     agent: spec-verifier
     claimed_by: spec-verifier
     claimed_at: '2026-06-06T07:23:39.766137+00:00'
+    done_at: '2026-06-06T07:28:04.361767+00:00'
+    evidence: '## refs Read Confirmation
+
+      - Verified refs: minimum Pi 0.78.1/evidence statuses/live smoke separation,
+      command design, human TUI surfaces, acceptance criteria, UX red-lines, and data-flow.
+
+
+      verdict: PASS_WITH_DEBT
+
+      blocking_status: CLOSED
+
+      proof_gap_status: NON_BLOCKING
+
+      blockers: []
+
+
+      ## Commands
+
+      - `npm run typecheck` exit 0.
+
+      - focused tests exit 0; 50 pass.
+
+      - `npm run test:smoke` exit 0 with 1 explicit skip requiring live Pi TUI/process.
+
+      - `npm test` exit 0; 131 pass.
+
+
+      ## requirements_register
+
+      - command_design: CONFORMS with file:line evidence.
+
+      - launch_arg: CONFORMS.
+
+      - lifecycle: CONFORMS.
+
+      - context_injection: CONFORMS.
+
+      - events: CONFORMS.
+
+      - status_widget_settingslist: CONFORMS.
+
+      - fake_vs_live_evidence_separation: CONFORMS.
+
+      - minimum_pi_version_support_classification: CONFORMS.
+
+      - no_live_smoke_overclaim: CONFORMS.
+
+      - live Pi TUI/status/widget/SettingsList and live command/flag/context/event/lifecycle
+      smoke: NEEDS_TEST, release_smoke closure path.
+
+
+      ## checklist_receipt
+
+      All 9 pi-runtime-spec-conformance checklist items proven; fake-host/API evidence
+      explicitly distinguished from live Pi support.'
   - id: pi-runtime-gate
     name: Gate Pi runtime and fake-host surfaces
     status: pending
