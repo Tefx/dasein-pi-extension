@@ -10053,36 +10053,36 @@ phases:
       or SettingsList object construction. 3. Lifecycle cleanup proof distinguishes
       Dasein cleanup, clear-status, and clear-widget ordering/status from generic
       lifecycle log presence.</risk_probes>'
-    verification: '- [ ] `npm run test:smoke` is run and raw stdout/stderr plus `.dasein/live-pi-smoke/latest/`
+    verification: '- [x] `npm run test:smoke` is run and raw stdout/stderr plus `.dasein/live-pi-smoke/latest/`
       artifact paths are included.
 
-      - [ ] Machine-readable checklist receipt maps every `release-smoke-live-pi-tui`
+      - [x] Machine-readable checklist receipt maps every `release-smoke-live-pi-tui`
       checklist item to `PROVEN` or true environment `BLOCKED`/`ENV_BLOCKED`, with
       `evidence_ref`, `blocker`, and `closure_path` fields.
 
-      - [ ] Receipt/artifacts prove live `pi.events` publish/receive for `dasein:state:set`
+      - [x] Receipt/artifacts prove live `pi.events` publish/receive for `dasein:state:set`
       and `dasein:state:clear`, or mark only true environment blockers.
 
-      - [ ] Receipt/artifacts prove `before_agent_start`, `agent_end`, `session_start`,
+      - [x] Receipt/artifacts prove `before_agent_start`, `agent_end`, `session_start`,
       and `session_shutdown` lifecycle behavior plus Dasein cleanup/clear-status/clear-widget
       sequence, or mark only true environment blockers.
 
-      - [ ] Receipt/artifacts prove literal bare `/dasein` outside TUI deterministic
+      - [x] Receipt/artifacts prove literal bare `/dasein` outside TUI deterministic
       fallback/help/status output; `/dasein status` alone is explicitly rejected as
       substitution.
 
-      - [ ] Receipt/artifacts enumerate SettingsList common sensor controls `enabled`,
+      - [x] Receipt/artifacts enumerate SettingsList common sensor controls `enabled`,
       `ui`, `agent`, `intervalMs`, `timeoutMs`, `staleAfterMs`, and `initialRefresh`
       with per-control `PROVEN` or true environment blocker rows.
 
-      - [ ] Receipt/artifacts prove `ctx.ui.custom` invocation/render path for SettingsList
+      - [x] Receipt/artifacts prove `ctx.ui.custom` invocation/render path for SettingsList
       separately from API key presence.
 
-      - [ ] Already-proven smoke evidence remains `PROVEN`: real Pi boundary, fake-host
+      - [x] Already-proven smoke evidence remains `PROVEN`: real Pi boundary, fake-host
       false, `/dasein status`, `--dasein`, context injection conversion, status/widget
       sentinels, and `core.statusEnabled` toggle.
 
-      - [ ] No fake-host, source-only, API-key-enumeration, or harness-missing evidence
+      - [x] No fake-host, source-only, API-key-enumeration, or harness-missing evidence
       is presented as live proof or as a true environment blocker.'
     evidence_template: '## refs Read Confirmation (MANDATORY)
 
