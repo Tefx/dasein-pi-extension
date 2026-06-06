@@ -3181,7 +3181,7 @@ phases:
       weakened, B1 closed.'
   - id: core-gate-blocker-fix
     name: Fix ordinary npm test and SettingsList matrix blockers
-    status: claimed
+    status: done
     description: 'step_type: implementation
 
       agent_source: project
@@ -3334,6 +3334,80 @@ phases:
     agent: frontend-engineer
     claimed_by: frontend-engineer
     claimed_at: '2026-06-06T05:10:52.324717+00:00'
+    done_at: '2026-06-06T05:19:19.173205+00:00'
+    evidence: '## refs Read Confirmation
+
+      - `CONSTITUTION.md#architectural-dogmas` — zero non-Pi runtime deps; Pi extension/UI
+      shell owns SettingsList plumbing; deterministic runtime context.
+
+      - `CONSTITUTION.md#quality-baselines` — typed module boundaries, static request-path
+      import checks, mock tests are not integration proof.
+
+      - `CONSTITUTION.md#testing-and-gates` — ordinary `npm test` gates non-native
+      behavior; live Pi smoke separate; static/unit no-I/O checks required.
+
+      - `docs/TECHNICAL_DESIGN.md#implementation-scaffold` — `npm test` must run full
+      non-native non-smoke TS suite and `npm run test:file -- <files>` remains explicit.
+
+      - `docs/TECHNICAL_DESIGN.md#testing-gate-matrix` — `npm test` skips live Pi
+      TUI smoke; SettingsList visibility names `tests/unit/settings-list.test.ts`.
+
+      - `src/ui/settings-import-contract.ts` — SettingsList resolves from `@earendil-works/pi-tui`;
+      getSettingsListTheme from Pi coding-agent peer.
+
+
+      ## Files changed / commit
+
+      - Commit: worker `69825e93fb309f9b61baa9e883fb80a3fd201d44`; mainline squash
+      `73fb9ab`.
+
+      - Changed: `package.json`, `scripts/run-non-native-tests.mjs`, `src/ui/settings-import-contract.ts`,
+      `tests/static/contracts/scaffold-package-contract.test.ts`, `tests/static/package-json.test.ts`,
+      `tests/unit/settings-list.test.ts`.
+
+
+      ## B2 Ordinary npm test remediation
+
+      - `npm test` now runs `node scripts/run-non-native-tests.mjs`, avoiding shell
+      glob misses.
+
+      - Mainline `npm test` output: discovery roots `tests/unit,tests/integration,tests/behavior,tests/static`;
+      files=27; explicitly listed top-level `tests/unit/config.test.ts`, `tests/unit/renderer.test.ts`,
+      `tests/static/no-request-io.test.ts`, and `tests/unit/settings-list.test.ts`;
+      tests 77, pass 77, fail 0, skipped 0.
+
+      - Worker explicit discovery proof: `find` count 27 files; explicit `npm run
+      test:file -- $(find ...)` passed 77 tests.
+
+
+      ## B3 SettingsList proof
+
+      - Added `tests/unit/settings-list.test.ts`.
+
+      - Coverage includes inspectability metadata before risky enable controls; remote/payload/cadence/disable/background/interval/manifest
+      digest visibility; risky enable mutation writes `enabled:true` and matching
+      `acknowledgedManifestDigest`; core/common/simple/live external controls; invalid/expired/object/map-like
+      external rows omitted.
+
+      - Focused mainline command `npm run test:file -- tests/unit/settings-list.test.ts
+      tests/static/package-json.test.ts tests/static/contracts/scaffold-package-contract.test.ts`
+      passed 12/12.
+
+
+      ## Mainline verification
+
+      - `npm run typecheck` exit 0.
+
+      - `npm test` exit 0, 77 pass.
+
+      - focused package/settings-list tests exit 0, 12 pass.
+
+
+      ## checklist_receipt
+
+      All five checklist items proven: robust ordinary npm test runner, raw discovery/count
+      proof, concrete SettingsList test, matrix row addressed, no runtime deps/live/native/B1
+      regressions introduced.'
   - id: core-gate-blocker-retest
     name: Retest core gate blockers B2 and B3
     status: pending
