@@ -9716,7 +9716,7 @@ phases:
       All six live Pi TUI smoke fix checklist items proven; blockers none.'
   - id: release-smoke-fix-live-pi-tui-artifact-coverage
     name: Strengthen live Pi TUI smoke artifact coverage
-    status: pending
+    status: claimed
     description: 'step_type: implementation
 
       work_type: proof_closure
@@ -9868,6 +9868,8 @@ phases:
     depends_on:
     - release-smoke-fix-live-pi-tui-smoke
     agent: frontend-engineer
+    claimed_by: frontend-engineer
+    claimed_at: '2026-06-06T08:42:21.109176+00:00'
 - id: finalization
   name: Documentation Sync and Final Deep Review
   status: locked
