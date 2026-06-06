@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import test from "node:test";
@@ -10,6 +10,7 @@ import {
   invokeFakeLifecycle,
   type FakePiHostFixture,
 } from "./fixtures/fake-pi-host.ts";
+import { copyRepositorySourceTree } from "./fixtures/isolated-extension.ts";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
 const scratchRoot = join(repoRoot, ".dasein", "lapse-persistence-async-tests");
@@ -50,7 +51,7 @@ const createIsolatedExtensionFixture = (homeKind: "directory" | "file" = "direct
   mkdirSync(extensionRoot, { recursive: true });
   if (homeKind === "directory") mkdirSync(home, { recursive: true });
   else writeFileSync(home, "not a directory", "utf8");
-  cpSync(join(repoRoot, "src"), sourceRoot, { recursive: true });
+  copyRepositorySourceTree(sourceRoot);
   return {
     root,
     home,
