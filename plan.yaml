@@ -8322,7 +8322,7 @@ phases:
     agent: gate-reviewer
   - id: system-wiring-native-test-discovery-fix
     name: Make native test discovery include root native tests
-    status: claimed
+    status: done
     description: 'step_type: implementation
 
       tags: [ci, native-test-discovery]
@@ -8407,6 +8407,27 @@ phases:
     agent: frontend-engineer
     claimed_by: frontend-engineer
     claimed_at: '2026-06-06T07:55:50.315010+00:00'
+    done_at: '2026-06-06T08:00:40.126346+00:00'
+    evidence: "## refs Read Confirmation\n- `docs/TECHNICAL_DESIGN.md#testing-gate-matrix`\
+      \ — ordinary CI is typecheck/npm test; live Pi TUI smoke is separate; native\
+      \ gate is macOS-specific with explicit non-macOS skip only.\n- `CONSTITUTION.md#testing-and-gates`\
+      \ — fake/mock tests are not live integration proof; live Pi smoke required before\
+      \ release support claims; static/unit gates prove boundaries.\n- `CONSTITUTION.md#quality-baselines`\
+      \ — typed module boundaries and static request-path import checks are required;\
+      \ black-box liveness evidence takes precedence for extension integration claims.\n\
+      \n## Native Test Discovery Receipt\n- platform: `darwin` / macOS ARM64.\n- mainline\
+      \ commit: `6c3c92e`; worker commit: `c6b86a6ad0e44d09a2bebe78c7c808287cf51971`.\n\
+      - files changed: `package.json`, new `scripts/run-native-tests.mjs`, static\
+      \ package contract tests.\n- `npm run test:native` exit 0 and now prints deterministic\
+      \ discovery:\n  - `dasein native test discovery: platform=darwin roots=tests/native\
+      \ files=2`\n  - `tests/native/contracts/native-gate-contract.test.ts`: discovered/executed;\
+      \ one explicit scaffold-contract skip remains.\n  - `tests/native/macos-location-helper.test.ts`:\
+      \ discovered/executed; two helper assertions passed, not skipped on macOS.\n\
+      - no live smoke separation break: native runner only discovers `tests/native`;\
+      \ `tests/smoke` remains separate.\n\n## Ordinary CI Receipt\n- `npm run typecheck`\
+      \ exit 0.\n- `npm test` exit 0; 131 pass, 0 fail/skipped.\n- `npm run test:native`\
+      \ exit 0; 3 tests, 2 pass, 1 explicit contract skip.\n\n## checklist_receipt\n\
+      All four native discovery checklist items proven."
 - id: release_smoke
   name: Live Pi and Native Release Smoke
   status: locked
