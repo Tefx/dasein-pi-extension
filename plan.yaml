@@ -12783,6 +12783,7 @@ phases:
     - finalization-black-box-verification
     - finalization-doc-sync
     - finalization-full-wiring-audit
+    - finalization-arch-spec-blockers-retest
     agent: gate-reviewer
   - id: finalization-audit-blockers-fix
     name: Fix concurrent finalization audit blockers
