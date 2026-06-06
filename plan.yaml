@@ -16636,7 +16636,7 @@ phases:
       was also migrated to before_agent_start systemPrompt proof and passes.'
 - id: geo_permission_helper
   name: macOS Geo Permission Helper
-  status: pending
+  status: in_progress
   gate: Geo helper can trigger/participate in macOS Location Services permission flow
     without exposing exact location by default.
   depends_on:
@@ -16644,7 +16644,7 @@ phases:
   steps:
   - id: geo-permission-app-helper
     name: Add app-bundled macOS location helper path
-    status: pending
+    status: claimed
     description: 'Implement a bounded macOS .app bundle helper/probe path so CoreLocation
       requests are attributed to an app with a location usage description instead
       of swift-frontend/raw CLI. Preserve Dasein privacy defaults: exact coordinates/address
@@ -16656,3 +16656,5 @@ phases:
       Do not claim live location success unless helper returns ok:true on this host.
     evidence_template: Files changed; helper/app-bundle behavior; privacy defaults
       preserved; commands run and outputs; unresolved live permission state.
+    claimed_by: llm-agent-expert
+    claimed_at: '2026-06-06T17:08:18.562183+00:00'
