@@ -856,20 +856,20 @@ phases:
       and must not rely on broad config-validation wording.
 
       '
-    verification: '- [ ] Contract artifacts define the exact DaseinConfig, ConfigManager,
+    verification: '- [x] Contract artifacts define the exact DaseinConfig, ConfigManager,
       SensorSpec, SensorSnapshot, ExternalState, RenderedContext, and DaseinCommandResult
       surfaces from the refs without implementation logic.
 
-      - [ ] Contract artifacts preserve core-as-broker boundaries: sensors publish
+      - [x] Contract artifacts preserve core-as-broker boundaries: sensors publish
       typed state, core normalizes/renders, Pi shell owns UI plumbing.
 
-      - [ ] Contract evidence includes an authority trace from each cited requirement
+      - [x] Contract evidence includes an authority trace from each cited requirement
       row to a concrete exported type/signature/stub.
 
-      - [ ] No runtime dependency, disk I/O implementation, sensor refresh, or Pi
+      - [x] No runtime dependency, disk I/O implementation, sensor refresh, or Pi
       registration logic is shipped by this contract step.
 
-      - [ ] Contract artifacts explicitly pin `core.maxAgentChars` as integer `40..2000`
+      - [x] Contract artifacts explicitly pin `core.maxAgentChars` as integer `40..2000`
       and `core.injectedLabel` regex `[A-Za-z0-9_.:-]{1,32}`.
 
       '
