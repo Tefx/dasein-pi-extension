@@ -225,7 +225,7 @@ phases:
       placement: PROVEN.'
   - id: scaffold-tests
     name: Define expected-red scaffold and fake-host tests
-    status: claimed
+    status: done
     description: 'step_type: test
 
       step_intent: test_define_red
@@ -308,6 +308,69 @@ phases:
     agent: frontend-engineer
     claimed_by: frontend-engineer
     claimed_at: '2026-06-06T03:33:25.659186+00:00'
+    done_at: '2026-06-06T03:40:31.938267+00:00'
+    evidence: 'EXPECTED_RED_ACCEPTED
+
+
+      ## refs Read Confirmation
+
+      - `CONSTITUTION.md` — Dasein must load from `~/.pi/agent/extensions/dasein`;
+      zero non-Pi runtime npm dependencies.
+
+      - `docs/PRD.md` — symlinked Dasein project install; SettingsList TUI surface;
+      source/API proof is not live release support.
+
+      - `docs/TECHNICAL_DESIGN.md` — package scripts, empty runtime dependencies,
+      Pi peer dependencies, root shim delegation, symlinked load, SettingsList/getSettingsListTheme
+      resolution, and fake Pi host tests.
+
+
+      step_intent: test_define_red
+
+      expected_result: red
+
+      observed_result: red
+
+      failure_alignment: `npm test` fails exactly on the intended gap: symlinked `~/.pi/agent/extensions/dasein/index.ts`
+      loads default export as `object`, not expected Pi extension factory `function`;
+      fake-host registration assertion is blocked by same gap.
+
+      verdict: PASS
+
+      blockers: []
+
+      product_implementation_files_modified: false
+
+
+      ## artifacts/commit
+
+      - 1344559 `[vectl] step-scaffold-tests completed`
+
+      - Added only `tests/integration/contracts/fake-pi-host-entrypoint.test.ts`,
+      `tests/integration/fixtures/fake-pi-host.ts`, and `tests/static/contracts/scaffold-package-contract.test.ts`.
+
+
+      ## mainline expected-red receipt
+
+      - `npm run typecheck` → exit 0.
+
+      - `npm test` → exit 1 as intended; 17 tests, 15 pass, 2 fail; failure signature
+      includes `scaffold.entrypoint must export a Pi extension factory when loaded
+      through ~/.pi/agent/extensions/dasein/index.ts`, actual `object`, expected `function`.
+
+
+      ## checklist_receipt
+
+      - Test scope limited to tests/ and fake fixtures plus contract stubs: PROVEN.
+
+      - Expected-red output exposes missing scaffold behavior: PROVEN.
+
+      - Tests assert root shim delegation, required npm scripts, dependency policy,
+      fake-host recording shape: PROVEN.
+
+      - Tests assert symlinked load and root shim delegation exactly: PROVEN.
+
+      - Tests assert SettingsList/getSettingsListTheme approved Pi peer path: PROVEN.'
   - id: scaffold-complete
     name: Complete package scaffold and fake-host harness
     status: pending
