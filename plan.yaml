@@ -4446,7 +4446,7 @@ phases:
       included; no product implementation modified.'
   - id: sensors-clock-lapse
     name: Complete clock and lapse sensors
-    status: pending
+    status: claimed
     description: 'step_type: implementation
 
       Fill in stub bodies in src/sensors/clock.ts and src/sensors/lapse.ts per core
@@ -4521,6 +4521,8 @@ phases:
     depends_on:
     - sensors-tests
     agent: frontend-engineer
+    claimed_by: frontend-engineer
+    claimed_at: '2026-06-06T05:53:33.824715+00:00'
   - id: sensors-geo-actions
     name: Complete geo sensor and geo tag actions
     status: pending
