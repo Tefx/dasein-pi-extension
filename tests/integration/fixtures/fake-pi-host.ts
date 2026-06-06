@@ -13,6 +13,7 @@ export type FakePiMechanism =
   | "session_start"
   | "session_shutdown"
   | "input"
+  | "before_agent_start"
   | "agent_end";
 
 export type FakeEvidenceStatus =

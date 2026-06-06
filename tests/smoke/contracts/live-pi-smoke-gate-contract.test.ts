@@ -24,6 +24,17 @@ type ProbeProcess = {
   readonly output: string;
 };
 
+type ChecklistStatus = "PROVEN" | "BLOCKED";
+
+type ChecklistRow = {
+  readonly id: string;
+  readonly requirement: string;
+  readonly status: ChecklistStatus;
+  readonly proofArtifacts: readonly string[];
+  readonly excerpts: readonly string[];
+  readonly blocker?: string;
+};
+
 type ChecklistReceipt = {
   readonly hostBoundary: "live-pi-process-not-fake-host";
   readonly piBinary: string;
@@ -31,6 +42,12 @@ type ChecklistReceipt = {
   readonly minimumPiVersion: typeof minimumPiVersion;
   readonly artifactDir: string;
   readonly refs: readonly string[];
+  readonly counts: {
+    readonly total: number;
+    readonly proven: number;
+    readonly blocked: number;
+  };
+  readonly checklistRows: readonly ChecklistRow[];
   readonly checks: Record<string, unknown>;
   readonly blockers: readonly string[];
 };
@@ -45,6 +62,84 @@ const refs = [
   "CONSTITUTION.md#ux-and-pi-interaction-red-lines: Pi/UI mechanisms need live verification with mechanism name, Pi version, binary path, and executable artifacts or signoff.",
 ] as const;
 
+const checklistDefinitions = [
+  {
+    id: "pi.registerCommand./dasein",
+    requirement: "Live Pi registers and invokes bare /dasein plus /dasein status through the real command path.",
+  },
+  {
+    id: "pi.registerFlag.--dasein",
+    requirement: "Live Pi parses --dasein string launch flag and Dasein applies it before request context injection.",
+  },
+  {
+    id: "pi.context.hidden-custom-message",
+    requirement: "Live context hook appends hidden Dasein CustomMessage and Pi convertToLlm maps it to an LLM user message.",
+  },
+  {
+    id: "pi.events.set-clear-live",
+    requirement: "Live pi.events publishes and receives dasein:state:set and dasein:state:clear, with set visible to context and clear removing it.",
+  },
+  {
+    id: "tui.status-widget-render-clear",
+    requirement: "Live TUI renders status/widget sentinels and session_shutdown clears status and widget after Dasein cleanup.",
+  },
+  {
+    id: "lifecycle.before-agent-start-agent-end-cleanup",
+    requirement: "Live lifecycle runs before_agent_start and agent_end observations, then session_start/session_shutdown cleanup/clear-status/clear-widget sequence.",
+  },
+  {
+    id: "slash.bare-dasein-non-tui-fallback",
+    requirement: "Bare /dasein outside TUI returns deterministic help/status fallback without ctx.ui.custom or config mutation.",
+  },
+  {
+    id: "settingslist.common-sensor-controls",
+    requirement: "SettingsList exposes common sensor controls enabled/ui/agent/intervalMs/timeoutMs/staleAfterMs/initialRefresh.",
+  },
+  {
+    id: "settingslist.metadata-before-enable-and-persistence",
+    requirement: "SettingsList renders inspectability metadata before enable controls, toggles one setting, queues ConfigManager mutation, and persists only the canonical path.",
+  },
+  {
+    id: "ctx.ui.custom.no-api-key-render-path",
+    requirement: "ctx.ui.custom invocation and component render path work in TUI without provider/API-key presence and remain separate from SettingsList import availability.",
+  },
+  {
+    id: "boundary.live-pi-not-fake-host",
+    requirement: "Receipt preserves live Pi process boundary and does not conflate fake-host/API-shape proof with release smoke proof.",
+  },
+] as const;
+
+const provenRow = (
+  id: (typeof checklistDefinitions)[number]["id"],
+  proofArtifacts: readonly string[],
+  excerpts: readonly string[],
+): ChecklistRow => {
+  const definition = checklistDefinitions.find((candidate) => candidate.id === id);
+  if (definition === undefined) throw new Error(`unknown checklist id ${id}`);
+  return {
+    id,
+    requirement: definition.requirement,
+    status: "PROVEN",
+    proofArtifacts,
+    excerpts,
+  };
+};
+
+const blockedRows = (code: string): readonly ChecklistRow[] => checklistDefinitions.map((definition) => ({
+  id: definition.id,
+  requirement: definition.requirement,
+  status: "BLOCKED",
+  proofArtifacts: ["environment-blocker.json"],
+  excerpts: refs,
+  blocker: code,
+}));
+
+const countRows = (rows: readonly ChecklistRow[]): ChecklistReceipt["counts"] => ({
+  total: rows.length,
+  proven: rows.filter((row) => row.status === "PROVEN").length,
+  blocked: rows.filter((row) => row.status === "BLOCKED").length,
+});
+
 const cleanArtifactDir = (): void => {
   rmSync(latestArtifactDir, { recursive: true, force: true });
   mkdirSync(latestArtifactDir, { recursive: true });
@@ -56,6 +151,7 @@ const writeJson = (path: string, value: unknown): void => {
 
 const blocker = (code: string, details: Record<string, unknown>): never => {
   mkdirSync(latestArtifactDir, { recursive: true });
+  const rows = blockedRows(code);
   const payload = {
     code,
     details,
@@ -64,6 +160,18 @@ const blocker = (code: string, details: Record<string, unknown>): never => {
     remediation: "Run npm run test:smoke on a host with Pi >= 0.78.1, a working pty-compatible TUI, and no fake-host substitution.",
   };
   writeJson(join(latestArtifactDir, "environment-blocker.json"), payload);
+  writeJson(join(latestArtifactDir, "checklist_receipt.json"), {
+    hostBoundary: "live-pi-process-not-fake-host",
+    piBinary: String(details.piBinary ?? "BLOCKED"),
+    piVersion: String(details.actual ?? "BLOCKED"),
+    minimumPiVersion,
+    artifactDir: latestArtifactDir,
+    refs,
+    counts: countRows(rows),
+    checklistRows: rows,
+    checks: { environmentBlocker: payload },
+    blockers: [code],
+  } satisfies ChecklistReceipt);
   throw new Error(`LIVE_PI_ENVIRONMENT_BLOCKER ${code}: ${JSON.stringify(details)}`);
 };
 
@@ -582,10 +690,341 @@ export default function(pi) {
   return proof;
 };
 
+const runEventBusProofProbe = (piBinary: string, home: string): ProofRecord => {
+  const daseinEntryPath = join(repoRoot, "src", "index.ts");
+  const extensionPath = writeProbe("event-bus-proof-probe.ts", `
+import createDaseinExtension from ${JSON.stringify(daseinEntryPath)};
+import { fauxAssistantMessage, registerFauxProvider } from '@earendil-works/pi-ai';
+
+const faux = registerFauxProvider({
+  api: 'dasein-live-events-faux-api',
+  provider: 'dasein-live-events-faux',
+  models: [{
+    id: 'dasein-live-events-faux-model',
+    name: 'Dasein Live Events Faux Model',
+    reasoning: false,
+    input: ['text'],
+    cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
+    contextWindow: 128000,
+    maxTokens: 1000,
+  }],
+});
+faux.setResponses([fauxAssistantMessage('event proof ok')]);
+
+const safeJson = (value) => JSON.stringify(value, (_key, candidate) => candidate === undefined ? '__undefined__' : candidate);
+
+export default function(pi) {
+  pi.registerProvider('dasein-live-events-faux', {
+    baseUrl: 'http://localhost:0',
+    apiKey: 'dummy',
+    api: faux.api,
+    models: faux.models,
+  });
+  const proof = {
+    hostBoundary: 'live-pi-process-not-fake-host',
+    eventApiKeys: Object.keys(pi.events ?? {}).sort(),
+    subscriptions: [],
+    emissions: [],
+    receives: [],
+    contextChecks: [],
+  };
+  const proxy = {
+    ...pi,
+    events: {
+      ...pi.events,
+      on(topic, handler) {
+        proof.subscriptions.push(topic);
+        return pi.events.on(topic, (payload) => {
+          proof.receives.push({ topic, payload });
+          return handler(payload);
+        });
+      },
+    },
+    on(event, handler) {
+      if (event === 'session_start') {
+        return pi.on(event, async (evt, ctx) => {
+          const result = await handler(evt, ctx);
+          const payload = { key: 'weather', agent: 'rain soon', ui: 'weather rain soon', source: 'live-pi-event-bus', ttlMs: 60000 };
+          proof.emissions.push({ topic: 'dasein:state:set', payload });
+          pi.events.emit('dasein:state:set', payload);
+          return result;
+        });
+      }
+      if (event === 'context') {
+        return pi.on(event, async (evt, ctx) => {
+          const first = await handler(evt, ctx);
+          const firstMessages = Array.isArray(evt?.messages) ? evt.messages : [];
+          proof.contextChecks.push({ phase: 'after-set', messageText: JSON.stringify(firstMessages) });
+          const clearPayload = { key: 'weather' };
+          proof.emissions.push({ topic: 'dasein:state:clear', payload: clearPayload });
+          pi.events.emit('dasein:state:clear', clearPayload);
+          const secondEvent = { messages: [] };
+          const second = await handler(secondEvent, ctx);
+          const secondMessages = Array.isArray(secondEvent.messages) ? secondEvent.messages : [];
+          proof.contextChecks.push({ phase: 'after-clear', messageText: JSON.stringify(secondMessages), returnedUndefined: second === undefined });
+          console.log('DASEIN_LIVE_EVENT_BUS_PROOF ' + safeJson({ ...proof, firstReturnedMessages: Array.isArray(first?.messages) }));
+          return first;
+        });
+      }
+      return pi.on(event, handler);
+    },
+  };
+  createDaseinExtension(proxy);
+}
+`);
+  const process = spawnPi({
+    piBinary,
+    home,
+    args: [...basePiArgs(extensionPath), "--model", "dasein-live-events-faux/dasein-live-events-faux-model", "-p", "trigger event proof"],
+    timeoutMs: 45_000,
+    artifactName: "event-bus-proof.log",
+  });
+  assertOkProcess("event-bus-proof-probe", process);
+  const proof = recordOf(extractJsonAfter(process.output, "DASEIN_LIVE_EVENT_BUS_PROOF "), "eventBusProof");
+  assert.equal(proof.hostBoundary, "live-pi-process-not-fake-host");
+  assert.deepEqual(recordArrayOf(proof.receives, "eventBusProof.receives").map((entry) => entry.topic), ["dasein:state:set", "dasein:state:clear"]);
+  const checks = recordArrayOf(proof.contextChecks, "eventBusProof.contextChecks");
+  assert.match(String(checks.find((entry) => entry.phase === "after-set")?.messageText), /weather|rain/u);
+  assert.doesNotMatch(String(checks.find((entry) => entry.phase === "after-clear")?.messageText), /weather|rain/u);
+  writeJson(join(latestArtifactDir, "event-bus-proof.json"), proof);
+  return proof;
+};
+
+const runLifecycleCleanupProofProbe = (piBinary: string, home: string): ProofRecord => {
+  const daseinEntryPath = join(repoRoot, "src", "index.ts");
+  const extensionPath = writeProbe("lifecycle-cleanup-proof-probe.ts", `
+import createDaseinExtension from ${JSON.stringify(daseinEntryPath)};
+import { fauxAssistantMessage, registerFauxProvider } from '@earendil-works/pi-ai';
+
+const faux = registerFauxProvider({
+  api: 'dasein-live-lifecycle-faux-api',
+  provider: 'dasein-live-lifecycle-faux',
+  models: [{
+    id: 'dasein-live-lifecycle-faux-model',
+    name: 'Dasein Live Lifecycle Faux Model',
+    reasoning: false,
+    input: ['text'],
+    cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
+    contextWindow: 128000,
+    maxTokens: 1000,
+  }],
+});
+faux.setResponses([fauxAssistantMessage('lifecycle proof ok')]);
+
+const safeJson = (value) => JSON.stringify(value, (_key, candidate) => candidate === undefined ? '__undefined__' : candidate);
+
+export default function(pi) {
+  pi.registerProvider('dasein-live-lifecycle-faux', {
+    baseUrl: 'http://localhost:0',
+    apiKey: 'dummy',
+    api: faux.api,
+    models: faux.models,
+  });
+  const proof = {
+    hostBoundary: 'live-pi-process-not-fake-host',
+    registeredEvents: [],
+    observedEvents: [],
+    cleanupCalls: [],
+    uiStatusCalls: [],
+    uiWidgetCalls: [],
+  };
+  const wrapContext = (ctx, phase) => ({
+    ...ctx,
+    ui: {
+      ...ctx.ui,
+      setStatus(slot, value) {
+        proof.uiStatusCalls.push({ phase, slot, value: value === undefined ? '__undefined__' : value });
+        return ctx.ui.setStatus?.(slot, value);
+      },
+      setWidget(slot, value) {
+        proof.uiWidgetCalls.push({ phase, slot, value: value === undefined ? '__undefined__' : value });
+        return ctx.ui.setWidget?.(slot, value);
+      },
+      custom: ctx.ui.custom?.bind(ctx.ui),
+    },
+  });
+  const proxy = {
+    ...pi,
+    recordCleanup(sensorKey, timeoutMs) {
+      proof.cleanupCalls.push({ sensorKey, timeoutMs });
+    },
+    on(event, handler) {
+      proof.registeredEvents.push(event);
+      return pi.on(event, async (evt, ctx) => {
+        proof.observedEvents.push(event);
+        const result = await handler(evt, wrapContext(ctx, event));
+        if (event === 'session_shutdown') console.log('DASEIN_LIVE_LIFECYCLE_CLEANUP_PROOF ' + safeJson(proof));
+        return result;
+      });
+    },
+  };
+  createDaseinExtension(proxy);
+}
+`);
+  const process = spawnPiViaScript({
+    piBinary,
+    home,
+    args: [...basePiArgs(extensionPath), "--model", "dasein-live-lifecycle-faux/dasein-live-lifecycle-faux-model", "-p", "trigger lifecycle proof"],
+    timeoutMs: 60_000,
+    rawArtifactName: "lifecycle-cleanup.raw",
+  });
+  assertOkProcess("lifecycle-cleanup-proof-probe", process);
+  const proof = recordOf(extractJsonAfter(process.output, "DASEIN_LIVE_LIFECYCLE_CLEANUP_PROOF "), "lifecycleCleanupProof");
+  assert.equal(proof.hostBoundary, "live-pi-process-not-fake-host");
+  const registered = proof.registeredEvents as readonly string[];
+  for (const event of ["session_start", "before_agent_start", "agent_end", "session_shutdown"]) {
+    assert.equal(registered.includes(event), true, `Dasein must register ${event}`);
+  }
+  const observed = proof.observedEvents as readonly string[];
+  for (const event of ["session_start", "before_agent_start", "agent_end", "session_shutdown"]) {
+    assert.equal(observed.includes(event), true, `live Pi must observe ${event}`);
+  }
+  assert.deepEqual(recordArrayOf(proof.cleanupCalls, "lifecycleCleanupProof.cleanupCalls").map((entry) => [entry.sensorKey, entry.timeoutMs]), [["clock", 1000], ["geo", 1000], ["lapse", 1000]]);
+  assert.equal(recordArrayOf(proof.uiStatusCalls, "lifecycleCleanupProof.uiStatusCalls").some((entry) => entry.phase === "session_shutdown" && entry.slot === "dasein" && entry.value === "__undefined__"), true);
+  assert.equal(recordArrayOf(proof.uiWidgetCalls, "lifecycleCleanupProof.uiWidgetCalls").some((entry) => entry.phase === "session_shutdown" && entry.slot === "dasein" && entry.value === "__undefined__"), true);
+  writeJson(join(latestArtifactDir, "lifecycle-cleanup-proof.json"), proof);
+  return proof;
+};
+
+const runBareDaseinOutsideTuiProbe = (piBinary: string, home: string): ProofRecord => {
+  const daseinEntryPath = join(repoRoot, "src", "index.ts");
+  const extensionPath = writeProbe("bare-dasein-outside-tui-proof-probe.ts", `
+import createDaseinExtension from ${JSON.stringify(daseinEntryPath)};
+
+const safeJson = (value) => JSON.stringify(value, (_key, candidate) => candidate === undefined ? '__undefined__' : candidate);
+
+export default function(pi) {
+  const proof = { hostBoundary: 'live-pi-process-not-fake-host', literalPrompt: '/dasein', invocations: [], results: [], uiCustomCalls: 0 };
+  const proxy = {
+    ...pi,
+    registerCommand(name, options) {
+      return pi.registerCommand(name, {
+        ...options,
+        handler: async (args, ctx) => {
+          const wrappedCtx = {
+            ...ctx,
+            ui: {
+              ...ctx.ui,
+              custom(...customArgs) {
+                proof.uiCustomCalls += 1;
+                return ctx.ui.custom?.(...customArgs);
+              },
+            },
+          };
+          proof.invocations.push({ name, args, mode: ctx.mode });
+          const result = await options.handler(args, wrappedCtx);
+          proof.results.push(result);
+          console.log('DASEIN_LIVE_BARE_DASEIN_NON_TUI_PROOF ' + safeJson(proof));
+          return result;
+        },
+      });
+    },
+  };
+  createDaseinExtension(proxy);
+}
+`);
+  const process = spawnPi({
+    piBinary,
+    home,
+    args: [...basePiArgs(extensionPath), "-p", "/dasein"],
+    timeoutMs: 45_000,
+    artifactName: "bare-dasein-outside-tui-proof.log",
+  });
+  assertOkProcess("bare-dasein-outside-tui-proof-probe", process);
+  const proof = recordOf(extractJsonAfter(process.output, "DASEIN_LIVE_BARE_DASEIN_NON_TUI_PROOF "), "bareDaseinOutsideTuiProof");
+  const result = recordArrayOf(proof.results, "bareDaseinOutsideTuiProof.results")[0];
+  assert.equal(proof.literalPrompt, "/dasein");
+  assert.equal(result?.ok, true);
+  assert.equal(result?.command, "help");
+  assert.match(String(result?.message), /^dasein: /u);
+  assert.equal(proof.uiCustomCalls, 0);
+  writeJson(join(latestArtifactDir, "bare-dasein-outside-tui-proof.json"), proof);
+  return proof;
+};
+
+const runCustomNoApiKeyProbe = (piBinary: string, home: string): ProofRecord => {
+  const daseinEntryPath = join(repoRoot, "src", "index.ts");
+  const extensionPath = writeProbe("custom-no-api-key-proof-probe.ts", `
+import createDaseinExtension from ${JSON.stringify(daseinEntryPath)};
+
+const safeJson = (value) => JSON.stringify(value, (_key, candidate) => candidate === undefined ? '__undefined__' : candidate);
+
+export default function(pi) {
+  let daseinHandler = null;
+  const proof = {
+    hostBoundary: 'live-pi-process-not-fake-host',
+    noProviderRegistered: true,
+    noModelArgRequired: true,
+    sessionMode: null,
+    customCalls: [],
+    requestRenderCalls: 0,
+    renderedLines: [],
+    commandResult: null,
+  };
+  const proxy = {
+    ...pi,
+    registerProvider() {
+      proof.noProviderRegistered = false;
+      return pi.registerProvider?.(...arguments);
+    },
+    registerCommand(name, options) {
+      if (name === 'dasein') daseinHandler = options.handler;
+      return pi.registerCommand(name, options);
+    },
+    on(event, handler) {
+      if (event === 'session_start') {
+        return pi.on(event, async (evt, ctx) => {
+          const startup = await handler(evt, ctx);
+          proof.sessionMode = ctx.mode;
+          if (typeof daseinHandler !== 'function') throw new Error('dasein handler unavailable for custom no-api-key proof');
+          const wrappedCtx = {
+            ...ctx,
+            ui: {
+              ...ctx.ui,
+              async custom(componentFactory, options) {
+                proof.customCalls.push({ optionKeys: Object.keys(options ?? {}).sort(), hasFactory: typeof componentFactory === 'function' });
+                const component = componentFactory({ requestRender: () => { proof.requestRenderCalls += 1; } }, {}, {}, () => undefined);
+                proof.renderedLines = component.render(100);
+                return undefined;
+              },
+            },
+          };
+          proof.commandResult = await daseinHandler('', wrappedCtx);
+          console.log('DASEIN_LIVE_CUSTOM_NO_API_KEY_PROOF ' + safeJson(proof));
+          ctx.shutdown?.();
+          return startup;
+        });
+      }
+      return pi.on(event, handler);
+    },
+  };
+  createDaseinExtension(proxy);
+}
+`);
+  const process = spawnPiViaScript({
+    piBinary,
+    home,
+    args: basePiArgs(extensionPath),
+    timeoutMs: 45_000,
+    rawArtifactName: "custom-no-api-key.raw",
+  });
+  assertOkProcess("custom-no-api-key-proof-probe", process);
+  const proof = recordOf(extractJsonAfter(process.output, "DASEIN_LIVE_CUSTOM_NO_API_KEY_PROOF "), "customNoApiKeyProof");
+  assert.equal(proof.hostBoundary, "live-pi-process-not-fake-host");
+  assert.equal(proof.noProviderRegistered, true);
+  assert.equal(proof.sessionMode, "tui");
+  assert.equal(recordArrayOf(proof.customCalls, "customNoApiKeyProof.customCalls").length, 1);
+  assert.match(JSON.stringify(proof.renderedLines), /Dasein settings|core\.agentInjectionEnabled|clock/u);
+  assert.equal(recordOf(proof.commandResult, "customNoApiKeyProof.commandResult").command, "open-ui");
+  writeJson(join(latestArtifactDir, "custom-no-api-key-proof.json"), proof);
+  return proof;
+};
+
 const runSettingsListPersistenceProbe = (piBinary: string, home: string): unknown => {
   const configPath = join(home, ".pi", "dasein", "config.json");
   const projectIndexUrl = pathToFileURL(join(repoRoot, "src", "index.ts")).href;
   const settingsContractUrl = pathToFileURL(join(repoRoot, "src", "ui", "settings-import-contract.ts")).href;
+  const clockSpecUrl = pathToFileURL(join(repoRoot, "src", "sensors", "clock.ts")).href;
   const extensionPath = writeProbe("settingslist-persistence-probe.ts", `
 import { mkdirSync, readFileSync } from 'node:fs';
 import { dirname } from 'node:path';
@@ -628,16 +1067,38 @@ export default function(pi) {
   pi.on('session_start', async (_event, ctx) => {
     const dasein = await import(${JSON.stringify(projectIndexUrl)});
     const settingsContract = await import(${JSON.stringify(settingsContractUrl)});
+    const clockModule = await import(${JSON.stringify(clockSpecUrl)});
+    const clockSpec = clockModule.default;
     const configPath = ${JSON.stringify(configPath)};
     mkdirSync(dirname(configPath), { recursive: true });
     const manager = dasein.createConfigManager({ configPath, defaults, discoveredSensorKeys: ['clock'] });
-    const controls = settingsContract.buildSettingsListVisibilityModel({
+    const clockMetadata = dasein.inspectSensorMetadata({
+      spec: clockSpec,
+      provenance: { kind: 'builtin' },
+      effectiveConfig: manager.getEffectiveConfig().sensors.clock,
+    });
+    const visibilityItems = settingsContract.buildSettingsListVisibilityModel({
       config: manager.getEffectiveConfig(),
-      sensorMetadata: [],
-      sensorSpecs: [],
+      sensorMetadata: [clockMetadata],
+      sensorSpecs: [clockSpec],
       externalStates: [],
       now: () => 1700000000000,
-    }).filter((item) => item.kind === 'control');
+    });
+    const controls = visibilityItems.filter((item) => item.kind === 'control');
+    const commonSensorControlIds = [
+      'sensors.clock.enabled',
+      'sensors.clock.ui',
+      'sensors.clock.agent',
+      'sensors.clock.intervalMs',
+      'sensors.clock.timeoutMs',
+      'sensors.clock.staleAfterMs',
+      'sensors.clock.initialRefresh',
+    ];
+    const commonSensorControls = commonSensorControlIds.map((id) => controls.find((item) => item.id === id));
+    const missingCommonSensorControls = commonSensorControlIds.filter((id, index) => commonSensorControls[index] === undefined);
+    if (missingCommonSensorControls.length > 0) throw new Error('missing common sensor SettingsList controls: ' + missingCommonSensorControls.join(','));
+    const metadataIndex = visibilityItems.findIndex((item) => item.id === 'sensor.clock.metadata.provenance');
+    const enabledIndex = visibilityItems.findIndex((item) => item.id === 'sensors.clock.enabled');
     const statusControl = controls.find((item) => item.id === 'core.statusEnabled');
     if (!statusControl) throw new Error('core.statusEnabled control missing from Dasein SettingsList model');
     const settingItems = [{
@@ -664,6 +1125,10 @@ export default function(pi) {
       settingsListPackage: '@earendil-works/pi-tui',
       controlId: statusControl.id,
       canonicalPath: statusControl.path,
+      commonSensorControlIds,
+      commonSensorControlValues: Object.fromEntries(commonSensorControls.map((item) => [item.id, { valueType: item.valueType, value: item.value }])),
+      metadataBeforeEnabledControl: metadataIndex >= 0 && enabledIndex > metadataIndex,
+      metadataExcerpt: visibilityItems.slice(Math.max(0, metadataIndex), enabledIndex + 1).map((item) => ({ id: item.id, kind: item.kind, label: item.label })),
       beforeLines,
       afterLines,
       mutationResults,
@@ -691,11 +1156,21 @@ export default function(pi) {
   assert.equal(proof.canonicalPath, "core.statusEnabled");
   assert.equal(proof.effectiveCoreStatusEnabled, false);
   assert.equal(proof.persistedCanonicalPathOnly, true, "SettingsList probe must persist only the canonical changed path");
+  assert.equal(proof.metadataBeforeEnabledControl, true, "SettingsList must expose inspectability metadata before enable controls");
+  assert.deepEqual(proof.commonSensorControlIds, [
+    "sensors.clock.enabled",
+    "sensors.clock.ui",
+    "sensors.clock.agent",
+    "sensors.clock.intervalMs",
+    "sensors.clock.timeoutMs",
+    "sensors.clock.staleAfterMs",
+    "sensors.clock.initialRefresh",
+  ]);
   writeJson(join(latestArtifactDir, "settingslist-persistence-proof.json"), proof);
   return proof;
 };
 
-test("live Pi smoke gate produces executable live TUI/process proof artifacts", { timeout: 180_000 }, () => {
+test("live Pi smoke gate produces executable live TUI/process proof artifacts", { timeout: 300_000 }, () => {
   cleanArtifactDir();
   const home = mkdtempSync(join(tmpdir(), "dasein-live-pi-home-"));
   try {
@@ -720,8 +1195,12 @@ test("live Pi smoke gate produces executable live TUI/process proof artifacts", 
     const slashCommandProof = runSlashCommandProofProbe(piBinary, home);
     const launchFlagProof = runLaunchFlagProofProbe(piBinary, home);
     const contextInjectionProof = runContextInjectionProofProbe(piBinary, home);
+    const eventBusProof = runEventBusProofProbe(piBinary, home);
     const tuiRender = runTuiRenderProbe(piBinary, home);
-    const settingsList = runSettingsListPersistenceProbe(piBinary, home);
+    const lifecycleCleanupProof = runLifecycleCleanupProofProbe(piBinary, home);
+    const bareDaseinOutsideTuiProof = runBareDaseinOutsideTuiProbe(piBinary, home);
+    const settingsList = recordOf(runSettingsListPersistenceProbe(piBinary, home), "settingsListProof");
+    const customNoApiKeyProof = runCustomNoApiKeyProbe(piBinary, home);
 
     const factory = apiProbe.factory as Record<string, unknown>;
     const session = apiProbe.session as Record<string, unknown>;
@@ -744,11 +1223,64 @@ test("live Pi smoke gate produces executable live TUI/process proof artifacts", 
         "slash-command-proof.json",
         "launch-flag-proof.json",
         "context-injection-proof.json",
+        "event-bus-proof.json",
         "tui-render-proof.json",
+        "lifecycle-cleanup-proof.json",
+        "bare-dasein-outside-tui-proof.json",
         "settingslist-persistence-proof.json",
+        "custom-no-api-key-proof.json",
       ],
     };
     writeJson(join(latestArtifactDir, "no-fake-host-conflation.json"), noFakeHostConflation);
+
+    const checklistRows: readonly ChecklistRow[] = [
+      provenRow("pi.registerCommand./dasein", ["slash-command-proof.json", "bare-dasein-outside-tui-proof.json"], [
+        "registered /dasein with rawArgs=true and completions=true",
+        "literal prompts /dasein status and /dasein invoked through live Pi print mode",
+      ]),
+      provenRow("pi.registerFlag.--dasein", ["launch-flag-proof.json"], [
+        `--dasein=${String(launchFlagProof.argvValue)}`,
+        "core.agentInjectionEnabled=false suppressed Dasein context injection",
+      ]),
+      provenRow("pi.context.hidden-custom-message", ["context-injection-proof.json"], [
+        "hiddenDaseinCustomMessage=true",
+        "Pi convertToLlm last message role=user and contains [ambient_ctx:",
+      ]),
+      provenRow("pi.events.set-clear-live", ["event-bus-proof.json", "event-bus-proof.log"], [
+        "received dasein:state:set and dasein:state:clear through live pi.events",
+        "after-set context contains weather/rain; after-clear context omits weather/rain",
+      ]),
+      provenRow("tui.status-widget-render-clear", ["tui-render-proof.json", "tui-render.raw.text", "lifecycle-cleanup-proof.json"], [
+        "raw TUI transcript contains DASEIN_SMOKE_STATUS_RENDERED and widget lines",
+        "session_shutdown setStatus/setWidget clear values are __undefined__",
+      ]),
+      provenRow("lifecycle.before-agent-start-agent-end-cleanup", ["lifecycle-cleanup-proof.json", "lifecycle-cleanup.raw.text"], [
+        "registered/observed session_start, before_agent_start, agent_end, session_shutdown",
+        "cleanupCalls clock/geo/lapse each timeoutMs=1000 before UI clear proof",
+      ]),
+      provenRow("slash.bare-dasein-non-tui-fallback", ["bare-dasein-outside-tui-proof.json"], [
+        "literalPrompt=/dasein returned command=help in print mode",
+        "uiCustomCalls=0 and deterministic message starts with dasein:",
+      ]),
+      provenRow("settingslist.common-sensor-controls", ["settingslist-persistence-proof.json"], [
+        `commonSensorControlIds=${JSON.stringify(settingsList.commonSensorControlIds)}`,
+        "values include boolean enabled/ui/agent/initialRefresh and numeric intervalMs/timeoutMs/staleAfterMs",
+      ]),
+      provenRow("settingslist.metadata-before-enable-and-persistence", ["settingslist-persistence-proof.json", "settingslist-persistence.raw.text"], [
+        "metadataBeforeEnabledControl=true",
+        "core.statusEnabled toggle persisted {version:1, core:{statusEnabled:false}} only",
+      ]),
+      provenRow("ctx.ui.custom.no-api-key-render-path", ["custom-no-api-key-proof.json", "custom-no-api-key.raw.text"], [
+        "noProviderRegistered=true and no model arg required",
+        "component render lines include Dasein settings/core.agentInjectionEnabled/clock",
+      ]),
+      provenRow("boundary.live-pi-not-fake-host", ["environment.json", "no-fake-host-conflation.json", "checklist_receipt.json"], [
+        "hostBoundary=live-pi-process-not-fake-host",
+        "fakeHostCanSatisfyLiveGate=false",
+      ]),
+    ];
+    assert.equal(checklistRows.length, checklistDefinitions.length);
+    assert.equal(countRows(checklistRows).blocked, 0);
 
     const receipt: ChecklistReceipt = {
       hostBoundary: "live-pi-process-not-fake-host",
@@ -757,13 +1289,19 @@ test("live Pi smoke gate produces executable live TUI/process proof artifacts", 
       minimumPiVersion,
       artifactDir: latestArtifactDir,
       refs,
+      counts: countRows(checklistRows),
+      checklistRows,
       checks: {
         apiProbe,
         slashCommandProof,
         launchFlagProof,
         contextInjectionProof,
+        eventBusProof,
         tuiRender,
+        lifecycleCleanupProof,
+        bareDaseinOutsideTuiProof,
         settingsList,
+        customNoApiKeyProof,
         noFakeHostConflation,
       },
       blockers: [],

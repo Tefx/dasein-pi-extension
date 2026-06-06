@@ -462,7 +462,7 @@ class DaseinAmbientContextBroker {
     return { messages: result.messages };
   }
 
-  async observePiLifecycle(kind: "input" | "agent_end", event: unknown, context: DaseinPiExtensionContext): Promise<void> {
+  async observePiLifecycle(kind: "input" | "before_agent_start" | "agent_end", event: unknown, context: DaseinPiExtensionContext): Promise<void> {
     await this.initialize();
     const observedAt = observedAtFromEvent(event);
     const observation: SensorObservationEvent = { kind, observedAt, turnId: turnIdFromEvent(event, observedAt) };
@@ -945,6 +945,7 @@ export const createDaseinExtension: DaseinPiExtensionFactory = (pi) => {
   pi.on("session_start", (_event, context) => broker.startup(context));
   pi.on("session_shutdown", (_event, context) => broker.shutdown(context));
   pi.on("input", (event, context) => broker.observePiLifecycle("input", event, context));
+  pi.on("before_agent_start", (event, context) => broker.observePiLifecycle("before_agent_start", event, context));
   pi.on("agent_end", (event, context) => broker.observePiLifecycle("agent_end", event, context));
 
   pi.events?.on?.("dasein:state:set", (payload) => broker.setExternal(payload));

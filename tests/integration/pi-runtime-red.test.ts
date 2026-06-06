@@ -122,12 +122,13 @@ test("[expected-red] Pi version status captures minimum/current/classification i
   assert.equal(host.ledger.featureProbes.length, 0, "version capture must not be collapsed into API probe evidence");
 });
 
-test("[expected-red] Pi lifecycle wiring registers startup, shutdown, request, input, and agent-end hooks", async () => {
+test("[expected-red] Pi lifecycle wiring registers startup, shutdown, request, input, before-agent-start, and agent-end hooks", async () => {
   const host = await registerInFakeHost();
   const eventNames = host.ledger.lifecycleHandlers.map((handler) => handler.eventName).sort();
 
   assert.deepEqual(eventNames, [
     "agent_end",
+    "before_agent_start",
     "context",
     "input",
     "session_shutdown",
@@ -238,9 +239,10 @@ test("[expected-red] builtin clock/geo/lapse wiring starts sensors and routes la
   const host = await registerInFakeHost();
 
   await invokeFakeLifecycle(host, "session_start");
-  await invokeFakeLifecycle(host, "input", { text: "hello", timestamp: 1_000 });
-  await invokeFakeLifecycle(host, "agent_end", { timestamp: 4_000 });
-  await invokeFakeLifecycle(host, "input", { text: "again", timestamp: 10_000 });
+  await invokeFakeLifecycle(host, "input", { text: "hello", timestamp: 1_000, turnId: "turn-1" });
+  await invokeFakeLifecycle(host, "before_agent_start", { timestamp: 1_001, turnId: "turn-1" });
+  await invokeFakeLifecycle(host, "agent_end", { timestamp: 4_000, turnId: "turn-1" });
+  await invokeFakeLifecycle(host, "input", { text: "again", timestamp: 10_000, turnId: "turn-2" });
 
   const renderedStatus = host.ledger.uiStatusCalls.map((call) => call.value ?? "").join("\n");
   const renderedWidget = host.ledger.uiWidgetCalls.map((call) => call.value).join("\n");
