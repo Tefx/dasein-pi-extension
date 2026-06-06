@@ -7884,7 +7884,7 @@ phases:
       All 12 pi-runtime-gate checklist items proven.'
 - id: system_wiring
   name: System Wiring and Ordinary CI Closure
-  status: pending
+  status: in_progress
   gate: No production stubs remain in entrypoints, ordinary CI gates pass, and fake-host
     end-to-end path reaches real modules.
   context: Connect module implementations through the real entrypoint and prove end-to-end
@@ -7894,7 +7894,7 @@ phases:
   steps:
   - id: system-wiring-stub-replacement
     name: Replace placeholders and production stubs with real modules
-    status: pending
+    status: claimed
     description: 'step_type: implementation
 
       tags: [integration]
@@ -7971,6 +7971,8 @@ phases:
     - docs/TECHNICAL_DESIGN.md#implementation-scaffold
     - CONSTITUTION.md#architectural-dogmas
     agent: frontend-engineer
+    claimed_by: frontend-engineer
+    claimed_at: '2026-06-06T07:32:16.426654+00:00'
   - id: system-wiring-e2e-fake-host
     name: Verify end-to-end fake-host flow through real modules
     status: pending
