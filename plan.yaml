@@ -533,15 +533,15 @@ phases:
       <risk_probes>1. npm test does not require live Pi. 2. test:smoke is present
       but not part of ordinary npm test. 3. package/static assertions distinguish
       peerDependencies from runtime dependencies.</risk_probes>'
-    verification: '- [ ] Raw output from npm run typecheck or exact scaffold blocker
+    verification: '- [x] Raw output from npm run typecheck or exact scaffold blocker
       is captured.
 
-      - [ ] Raw output from targeted scaffold/static/fake-host tests is captured.
+      - [x] Raw output from targeted scaffold/static/fake-host tests is captured.
 
-      - [ ] Report classifies any failures with closure path and confirms no live
+      - [x] Report classifies any failures with closure path and confirms no live
       support claim is inferred.
 
-      - [ ] Independent proof includes exact symlinked `~/.pi/agent/extensions/dasein`
+      - [x] Independent proof includes exact symlinked `~/.pi/agent/extensions/dasein`
       load, root shim delegation, and SettingsList/getSettingsListTheme import resolution
       evidence.
 
