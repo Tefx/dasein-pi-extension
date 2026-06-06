@@ -8825,7 +8825,7 @@ phases:
     - CONSTITUTION.md#ux-and-pi-interaction-red-lines
     - docs/TECHNICAL_DESIGN.md#data-flow
     depends_on:
-    - release-smoke-fix-live-pi-tui-smoke
+    - release-smoke-fix-live-pi-tui-artifact-coverage
     agent: client-runtime-verifier
   - id: release-smoke-dynamic-reload
     name: Run live Pi dynamic sensor reload smoke
