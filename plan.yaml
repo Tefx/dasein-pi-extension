@@ -3180,6 +3180,159 @@ phases:
       All retest checklist items proven: typecheck green, ordinary npm test green,
       focused core matrix green, config static boundary restored, contract test not
       weakened, B1 closed.'
+  - id: core-gate-blocker-fix
+    name: Fix ordinary npm test and SettingsList matrix blockers
+    status: pending
+    description: 'step_type: implementation
+
+      agent_source: project
+
+      work_type: defect_repair
+
+      provenance: core-gate blockers B2/B3
+
+      TARGET STATE:
+
+      The core gate blockers B2 and B3 are remediated in one batched change. Ordinary
+      `npm test` is a robust all-platform non-native full-suite gate on the target
+      shell, and the Technical Design SettingsList matrix target has either concrete
+      test ownership/proof or an explicit authoritative DEFERRED disposition that
+      cannot intersect the core gate.
+
+
+      REQUIREMENT TRACEABILITY MATRIX:
+
+      | requirement_id | source_ref + key passage | obligation | owning_step_id |
+      checklist_item | evidence_field | status | non_intersection_or_escalation |
+
+      |---|---|---|---|---|---|---|---|
+
+      | B2.ordinary-npm-full-suite | docs/TECHNICAL_DESIGN.md#testing-gate-matrix
+      — ordinary non-native full-suite `npm test` gates every platform and skips live
+      Pi TUI smoke | `npm test` must discover/run every non-native `.test.ts` file
+      across unit, integration, behavior, and static tests on the target shell | core-gate-blocker-fix
+      | `npm test` robust full-suite runner/script updated | `ordinary_npm_test_raw_output`,
+      `non_native_discovery_count`, `coverage_delta` | OWNED | n/a |
+
+      | B3.settings-list-matrix | docs/TECHNICAL_DESIGN.md#testing-gate-matrix — External
+      state intake and SettingsList visibility names `tests/unit/settings-list.test.ts`
+      | SettingsList visibility target must be proven by a concrete test, or deferred
+      only with authoritative non-intersection and a concrete downstream owner | core-gate-blocker-fix
+      | SettingsList target proof or explicit non-intersecting deferral recorded |
+      `settings_list_test_or_deferral`, `settings_list_command_output`, `deferral_authority`
+      | OWNED | If deferred, must cite `pi-runtime-tests` or later concrete step and
+      explain why the current core gate is not affected despite the matrix row. |
+
+      | B1.static-boundary | core gate failure evidence — B1 is closed by `core-static-boundary-retest`
+      | Do not regress the closed static-boundary blocker while fixing B2/B3 | core-gate-blocker-retest
+      | Gate blocker closure register includes B1 already closed | `blocker_closure_register`
+      | DEFERRED | Closed by existing retest; retest must confirm no regression. |
+
+
+      BOUNDING BOX:
+
+      - `package.json`
+
+      - optional deterministic non-native test runner script under `scripts/` or `tests/`
+      if shell-safe glob avoidance is needed
+
+      - `tests/unit/settings-list.test.ts`
+
+      - `src/ui/settings-import-contract.ts` only as an authority/negative-scope anchor;
+      it currently declares no SettingsList rendering or interaction logic
+
+      - any minimal test fixtures required to exercise SettingsList visibility without
+      live Pi smoke
+
+
+      CONSTRAINTS:
+
+      - Do not add arbitrary runtime npm dependencies; Constitution requires dependency-light
+      implementation and Technical Design-approved Pi peer dependencies only.
+
+      - Do not make ordinary `npm test` require live Pi TUI, native helper, or release
+      smoke.
+
+      - Do not silently mark B3 out-of-scope. A deferral is acceptable only with explicit
+      authority, owning step id, and non-intersection rationale; otherwise add a concrete
+      test target.
+
+      - Preserve `npm run test:file`, `npm run typecheck`, `npm run test:native`,
+      and `npm run test:smoke` command semantics.
+
+      - This is an IMPLEMENTATION step; stub-only completion or evidence-only narrative
+      is not acceptable.
+
+
+      ## Gate Preview (what the gate WILL reject)
+
+      1. `npm test` output showing fewer non-native test files/tests than explicit
+      discovery.
+
+      2. Shell glob patterns that miss top-level `tests/unit/*.test.ts` or `tests/static/*.test.ts`
+      on the target shell.
+
+      3. SettingsList matrix target left absent, merely mentioned, or deferred without
+      concrete owner plus non-intersection proof.
+
+      4. A fix that passes `npm run test:file` but does not prove ordinary `npm test`
+      as the gate command.
+
+
+      <side_effect_budget>Allowed: update test script/runner, add SettingsList unit
+      test or authoritative deferral artifact, and adjust test fixtures. Forbidden:
+      adding runtime dependencies, weakening package peer dependency/static contract,
+      requiring live Pi smoke in ordinary npm test, or changing product behavior unrelated
+      to B2/B3.</side_effect_budget>
+
+      <risk_probes>1. Does explicit test discovery enumerate exactly the files ordinary
+      `npm test` runs? 2. Does SettingsList proof cover the Technical Design matrix
+      target rather than only import resolution? 3. Does the remediation preserve
+      the closed B1 request-path/static-boundary blocker?</risk_probes>'
+    verification: '- [ ] `npm test` robustly runs the all-platform non-native full
+      suite on the target shell without relying on shell globs that miss top-level
+      tests.
+
+      - [ ] Evidence includes raw `npm test` output and explicit discovery/count proof
+      for non-native `.test.ts` files and tests.
+
+      - [ ] `tests/unit/settings-list.test.ts` is added with SettingsList visibility
+      coverage, OR an authoritative DEFERRED disposition cites the owning downstream
+      step and proves non-intersection with the core gate.
+
+      - [ ] SettingsList proof/disposition explicitly addresses the External state
+      intake and SettingsList visibility row in `docs/TECHNICAL_DESIGN.md#testing-gate-matrix`.
+
+      - [ ] No runtime dependencies, live-smoke requirements, native-helper requirements,
+      or B1 static-boundary regressions are introduced.'
+    evidence_template: "## refs Read Confirmation (MANDATORY)\nFor each ref in this\
+      \ step:\n- CONSTITUTION.md#architectural-dogmas — <key passage>\n- CONSTITUTION.md#quality-baselines\
+      \ — <key passage>\n- CONSTITUTION.md#testing-and-gates — <key passage>\n- docs/TECHNICAL_DESIGN.md#implementation-scaffold\
+      \ — <key passage>\n- docs/TECHNICAL_DESIGN.md#testing-gate-matrix — <key passage>\n\
+      - src/ui/settings-import-contract.ts — <key passage or NOT READ: reason>\n\n\
+      ## B2 Ordinary npm test remediation\n- script_or_runner_changed: <package.json\
+      \ script and optional runner path>\n- ordinary_npm_test_command: npm test\n\
+      - ordinary_npm_test_raw_output: |\n  <paste raw stdout/stderr>\n- non_native_discovery_command:\
+      \ <explicit enumeration command>\n- non_native_discovery_count: <files/tests\
+      \ counted>\n- coverage_delta: <prove ordinary npm test now includes top-level\
+      \ unit/static tests such as config, renderer, no-request-io>\n\n## B3 SettingsList\
+      \ matrix disposition\n- disposition: TEST_ADDED | DEFERRED_WITH_NON_INTERSECTION\n\
+      - settings_list_test_path: <tests/unit/settings-list.test.ts or n/a>\n- settings_list_command_output:\
+      \ |\n  <paste raw output or n/a>\n- deferral_authority: <source + owning step\
+      \ id + why non-intersecting, required if deferred>\n\n## Checklist receipt\n\
+      - B2 ordinary npm full-suite: SATISFIED/FAILED/BLOCKED + evidence ref\n- B3\
+      \ SettingsList matrix target: SATISFIED/FAILED/BLOCKED + evidence ref\n- B1\
+      \ static-boundary preservation: SATISFIED/FAILED/BLOCKED + evidence ref"
+    depends_on:
+    - core-contracts
+    - core-tests
+    - core-config-state
+    - core-sensor-runtime-loader
+    - core-renderer-injector-external
+    - core-command-layer
+    - core-behavior-guardrails
+    - core-static-boundary-retest
+    agent: frontend-engineer
 - id: sensors
   name: Builtin Sensors and Native Helper
   status: locked
