@@ -6186,7 +6186,7 @@ phases:
   steps:
   - id: pi-runtime-tests
     name: Define expected-red Pi runtime and fake-host integration tests
-    status: claimed
+    status: done
     description: 'step_type: test
 
       step_intent: test_define_red
@@ -6457,6 +6457,71 @@ phases:
     agent: frontend-engineer
     claimed_by: frontend-engineer
     claimed_at: '2026-06-06T06:47:07.226526+00:00'
+    done_at: '2026-06-06T07:01:02.425760+00:00'
+    evidence: 'step_intent: test_define_red
+
+      expected_result: red
+
+      observed_result: red
+
+      failure_alignment: aligned — repaired expected-red suites fail on absent Pi
+      runtime/settings wiring, not syntax/type errors.
+
+      product_files_modified: false
+
+
+      ## refs Read Confirmation
+
+      - `docs/TECHNICAL_DESIGN.md#verified-pi-mechanisms` — fake/API evidence is not
+      live TUI proof; live smoke remains required for Pi commands/flags/context/events/status/widget/custom
+      UI/lifecycle.
+
+      - `docs/TECHNICAL_DESIGN.md#data-flow` — startup registers flags/commands/events/lifecycle;
+      context appends hidden CustomMessage.
+
+      - `docs/TECHNICAL_DESIGN.md#testing-gate-matrix` — fake-host proves API shape
+      but cannot claim live support.
+
+      - `docs/PRD.md#7-10-human-tui-surfaces` — status footer, widget, SettingsList
+      are required TUI surfaces.
+
+      - `CONSTITUTION.md#ux-and-pi-interaction-red-lines` — Pi/UI mechanisms require
+      live verification before release support claim.
+
+      - `docs/TECHNICAL_DESIGN.md#human-ui-rendering` — status/widget and SettingsList
+      controls in TUI mode.
+
+      - `docs/TECHNICAL_DESIGN.md#builtin-sensors` — builtin clock/geo/lapse inspectability/runtime
+      behavior required.
+
+
+      ## Files changed / commit
+
+      - Mainline commit: `275a8ad`; repaired worker commit `edbf7bc29fa56bac756bef64e7a3c880f6fc8611`
+      plus conflict resolution.
+
+      - Changed tests/fixtures only: `tests/integration/fixtures/fake-pi-host.ts`,
+      `tests/integration/pi-runtime-red.test.ts`, `tests/unit/settings-list.test.ts`.
+
+
+      ## Command evidence
+
+      - `npm run typecheck` exit 0.
+
+      - `npm run test:file -- tests/integration/pi-runtime-red.test.ts tests/unit/settings-list.test.ts`
+      exit 1 as expected-red; 21 tests, 6 pass, 15 fail aligned to absent runtime/settings
+      integration.
+
+      - `npm run test:file -- tests/integration/contracts/fake-pi-host-entrypoint.test.ts`
+      exit 0; 3 pass.
+
+
+      ## checklist_receipt
+
+      All 16 pi-runtime-tests checklist items proven after repair: lifecycle/commands/context/events/status/widget/SettingsList,
+      evidence status separation, minimum version classification, TUI/non-TUI bare
+      `/dasein`, SettingsList controls/mutations/external baselines, ctx.ui.custom
+      fail-closed, hidden CustomMessage conversion, session cleanup 1000ms.'
   - id: pi-runtime-extension-wiring
     name: Complete Pi entrypoint, hooks, commands, flag, and events wiring
     status: pending
