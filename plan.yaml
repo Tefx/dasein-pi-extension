@@ -6524,7 +6524,7 @@ phases:
       fail-closed, hidden CustomMessage conversion, session cleanup 1000ms.'
   - id: pi-runtime-extension-wiring
     name: Complete Pi entrypoint, hooks, commands, flag, and events wiring
-    status: claimed
+    status: done
     description: 'step_type: implementation
 
       tags: [integration]
@@ -6715,6 +6715,68 @@ phases:
     agent: frontend-engineer
     claimed_by: frontend-engineer
     claimed_at: '2026-06-06T07:01:14.146514+00:00'
+    done_at: '2026-06-06T07:10:53.067999+00:00'
+    evidence: '## refs Read Confirmation
+
+      - `docs/TECHNICAL_DESIGN.md#verified-pi-mechanisms` — command/flag/context/events/status/widget/custom
+      APIs are source/API verified; live smoke remains pending and fake-host must
+      not claim live support.
+
+      - `docs/PRD.md#7-7-launch-argument` — `--dasein` accepts comma-separated runtime
+      overlay assignments.
+
+      - `docs/PRD.md#7-8-slash-commands` — `/dasein` commands and sensor routing required;
+      bare `/dasein` opens TUI or falls back outside TUI.
+
+      - `docs/TECHNICAL_DESIGN.md#data-flow` — startup registers flag/command, session_start,
+      context hidden CustomMessage, TUI status/widget guarded, shutdown clears UI.
+
+      - `docs/TECHNICAL_DESIGN.md#testing-gate-matrix` — fake-host integration verifies
+      registration, launch flag, context, events, status/widget, lifecycle, fake-vs-live
+      evidence separation.
+
+
+      ## Files changed / commit
+
+      - Mainline commits: `a8d7c56` runtime wiring and `76106c5` required `pi-extension.test.ts`
+      entrypoint.
+
+      - Worker final commit: `4638d7d875c82352a176869e5f1474133d088b02`.
+
+      - Changed: `src/index.ts`, `tests/integration/fixtures/fake-pi-host.ts`, `tests/integration/pi-extension.test.ts`.
+
+
+      ## Verification
+
+      - `npm run typecheck` exit 0.
+
+      - `npm run test:file -- tests/integration/pi-extension.test.ts` exit 0; 15 pass,
+      0 fail/skipped.
+
+      - `npm run test:file -- tests/integration/pi-runtime-red.test.ts tests/integration/contracts/fake-pi-host-entrypoint.test.ts`
+      exit 0; 18 pass.
+
+      - grep for `_Runtime*`/`_Stub*`/`_Placeholder*` in src/tests integration: clean.
+
+
+      ## Proof
+
+      - Source→sink paths covered: command registration, flag parsing, context injection,
+      events, lifecycle observations, TUI guarded calls.
+
+      - evidenceStatuses non-empty and no `LIVE_SMOKE_VERIFIED` from fake-host.
+
+      - startup probes/fail-closed status and Pi version minimum/current/below/unavailable
+      classification proven separately from feature probes.
+
+      - bare `/dasein` TUI/non-TUI no mutation; ctx.ui.custom availability/fail-closed;
+      hidden CustomMessage display:false/customType:dasein/timestamp and LLM user
+      conversion; session start/shutdown cleanup timeout 1000ms.
+
+
+      ## checklist_receipt
+
+      All 10 pi-runtime-extension-wiring checklist items proven.'
   - id: pi-runtime-tui-surfaces
     name: Complete status, widget, and SettingsList runtime surfaces
     status: pending
