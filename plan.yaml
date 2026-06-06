@@ -12712,27 +12712,27 @@ phases:
       not remain active after duplicate-key loadErrors. 3. Public command/reload outputs
       must preserve exact observable fields and mutate only documented lapse/reset
       state.</risk_probes>'
-    verification: '- [ ] `npm run typecheck` exits 0 after the fixes.
+    verification: '- [x] `npm run typecheck` exits 0 after the fixes.
 
-      - [ ] `npm test` exits 0 after the fixes.
+      - [x] `npm test` exits 0 after the fixes.
 
-      - [ ] `npm run test:smoke` exits 0 after the fixes.
+      - [x] `npm run test:smoke` exits 0 after the fixes.
 
-      - [ ] Focused geo helper probe/test proves helper supervisor extensionRoot comes
+      - [x] Focused geo helper probe/test proves helper supervisor extensionRoot comes
       from real runtime/configured extension root, not `process.cwd()`, including
       a different-cwd launch case.
 
-      - [ ] Focused duplicate-sensor startup probe/test proves duplicate-key loadErrors
+      - [x] Focused duplicate-sensor startup probe/test proves duplicate-key loadErrors
       do not leave duplicate user sensors active and errors are surfaced.
 
-      - [ ] Focused reload probe/test proves `launchReappliedPaths` from ConfigManager
+      - [x] Focused reload probe/test proves `launchReappliedPaths` from ConfigManager
       reload reaches `/dasein reload` output/result after launch overlays reapply.
 
-      - [ ] Focused lapse reset probe/test proves fake-host and live Pi wrapper public
+      - [x] Focused lapse reset probe/test proves fake-host and live Pi wrapper public
       `/dasein lapse reset` path clears both in-memory and persisted lapse timestamps
       and no longer returns `unknown-sensor-action`.
 
-      - [ ] Evidence includes sibling-search notes for related helper-root, sensor-loader
+      - [x] Evidence includes sibling-search notes for related helper-root, sensor-loader
       duplicate, reload-result, and lapse-action paths so the fix is not single-call-site
       only.'
     evidence_template: '## refs Read Confirmation (MANDATORY)
