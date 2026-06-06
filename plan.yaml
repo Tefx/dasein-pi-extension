@@ -2850,6 +2850,15 @@ phases:
       `node:fs/promises`, and `node:path`.
 
 
+      DEPENDENCY SHAPE:
+
+      This remediation step intentionally depends on the completed implementation
+      step that introduced/intersects B1 (`core-config-state`), not on the failed
+      verifier `core-static-proof`. The failed verifier cannot complete while its
+      passing checklist is false, so depending on it would deadlock remediation. `core-static-boundary-retest`
+      owns post-fix verification.
+
+
       TARGET STATE:
 
       The core contract/static boundary is restored without weakening tests. `src/core/config.ts`
@@ -2970,7 +2979,7 @@ phases:
       \ test\n- raw_stdout_stderr: |\n    <paste raw output>\n- exit_code: <code>\n\
       - disposition: <B1 closed; any remaining blocker with owner or NONE>"
     depends_on:
-    - core-static-proof
+    - core-config-state
     agent: frontend-engineer
   - id: core-static-boundary-retest
     name: Retest core static boundary and ordinary CI
