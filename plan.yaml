@@ -10886,7 +10886,7 @@ phases:
       All six dynamic reload fix checklist items proven; blockers none.'
 - id: finalization
   name: Documentation Sync and Final Deep Review
-  status: pending
+  status: in_progress
   gate: Final gate opens only with doc sync, full conformance, wiring, architecture,
     black-box, and evidence-ledger closure.
   context: Synchronize docs with implementation evidence and run independent final
@@ -10896,7 +10896,7 @@ phases:
   steps:
   - id: finalization-doc-sync
     name: Sync documentation with implemented behavior and evidence ledger
-    status: pending
+    status: claimed
     description: 'step_type: implementation
 
       TARGET STATE: Project docs match implemented behavior, support-claim status,
@@ -10989,6 +10989,8 @@ phases:
     - docs/PRD.md#9-acceptance-criteria
     - CONSTITUTION.md#constitution-version-and-amendment-lifecycle
     agent: doc-reviewer
+    claimed_by: doc-reviewer
+    claimed_at: '2026-06-06T10:07:55.051963+00:00'
   - id: finalization-full-wiring-audit
     name: Full wiring and reachability audit
     status: pending
