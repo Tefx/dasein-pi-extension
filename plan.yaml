@@ -7884,7 +7884,7 @@ phases:
       All 12 pi-runtime-gate checklist items proven.'
 - id: system_wiring
   name: System Wiring and Ordinary CI Closure
-  status: in_progress
+  status: done
   gate: No production stubs remain in entrypoints, ordinary CI gates pass, and fake-host
     end-to-end path reaches real modules.
   context: Connect module implementations through the real entrypoint and prove end-to-end
@@ -8301,7 +8301,7 @@ phases:
       All four system-wiring-ordinary-ci checklist items proven.'
   - id: system-wiring-gate
     name: Gate system wiring and ordinary CI
-    status: claimed
+    status: done
     description: 'step_type: gate
 
       verification_scope: full-plan-check
@@ -8377,6 +8377,80 @@ phases:
     agent: gate-reviewer
     claimed_by: gate-reviewer
     claimed_at: '2026-06-06T08:03:27.674282+00:00'
+    done_at: '2026-06-06T08:07:23.956273+00:00'
+    evidence: '## refs Read Confirmation
+
+      - `CONSTITUTION.md#testing-and-gates` — mocks/fake-host proof is not live integration
+      proof; live Pi smoke must precede support claims; static no-I/O/import checks
+      required.
+
+      - `docs/TECHNICAL_DESIGN.md#testing-gate-matrix` — `npm test` excludes live
+      Pi smoke; fake Pi API strategy is ordinary CI only; native and smoke gates are
+      separate.
+
+      - `docs/TECHNICAL_DESIGN.md#verified-pi-mechanisms` — fake host proves API/source
+      shape only; live Pi mechanisms remain release-gate evidence.
+
+
+      headline: PASS_WITH_DEBT
+
+      verdict: PASS
+
+      gate_open_allowed: true
+
+      blockers: []
+
+
+      ## Commands
+
+      - `npm run typecheck` exit 0.
+
+      - `npm test` exit 0; deterministic non-native discovery, 131 pass.
+
+      - `npm run test:native` exit 0; deterministic native discovery on darwin, 2
+      files discovered, 2 pass/1 explicit contract skip.
+
+      - Focused fake-host/entrypoint/static/no-request-io suite exit 0; 26 pass.
+
+      - `npm run test:smoke` exit 0; explicit live Pi release-gate skip.
+
+      - Static production scan: no production placeholder/stub/no-op/not-implemented
+      markers; only allowed live-smoke enum/contract boundary hits.
+
+
+      ## gate_decision_basis
+
+      - Root shim delegates only: `index.ts` exports from `./src/index.ts`.
+
+      - `src/index.ts` imports/composes real core, commands, sensors, UI, event, lifecycle,
+      and injector modules.
+
+      - Fake-host E2E path proves symlinked load, API registration, lifecycle/events/context,
+      commands, TUI surfaces, and no live support claim.
+
+      - Ordinary CI is green and deterministic including native discovery.
+
+      - Live Pi/TUI/native release smoke remains owned by `release_smoke`; no live
+      support is claimed here.
+
+
+      ## risk_probes
+
+      - production stubs/placeholder wiring: PASS.
+
+      - root shim -> real modules: PASS.
+
+      - fake-host e2e path: PASS.
+
+      - deterministic ordinary/native CI: PASS.
+
+      - live Pi claim boundary: PASS_WITH_DEBT, non-blocking because release_smoke
+      owns it and support is not claimed.
+
+
+      ## checklist_receipt
+
+      All four system-wiring-gate checklist items proven. Gate OPEN.'
   - id: system-wiring-native-test-discovery-fix
     name: Make native test discovery include root native tests
     status: done
@@ -8487,7 +8561,7 @@ phases:
       All four native discovery checklist items proven."
 - id: release_smoke
   name: Live Pi and Native Release Smoke
-  status: locked
+  status: pending
   gate: Live smoke evidence exists or reports exact environment blockers; release
     support claims are not made from fake-host tests alone.
   context: Separate live Pi/native release evidence from ordinary CI by probing real
