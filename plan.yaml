@@ -4661,7 +4661,7 @@ phases:
     agent: frontend-engineer
   - id: sensors-native-helper
     name: Complete macOS CoreLocation helper supervision
-    status: claimed
+    status: done
     description: 'step_type: implementation
 
       TARGET STATE: src/native/macos-location-helper.swift and the TypeScript helper
@@ -4757,6 +4757,59 @@ phases:
     agent: ios-developer
     claimed_by: ios-developer
     claimed_at: '2026-06-06T05:54:00.916858+00:00'
+    done_at: '2026-06-06T06:05:36.971146+00:00'
+    evidence: '## refs Read Confirmation
+
+      - `docs/TECHNICAL_DESIGN.md#testing-gate-matrix` — native helper test is platform-specific
+      and ordinary tests must not claim live helper proof.
+
+      - `docs/PRD.md#9-5-builtin-sensors` — geo helper mapping/permission/error handling
+      is builtin sensor acceptance.
+
+      - `docs/TECHNICAL_DESIGN.md#builtin-sensors` — helper supervision constants:
+      timeout 3000ms, kill grace 250ms, backoff 1m→5m→15m, bounded JSON/caps.
+
+      - `docs/TECHNICAL_DESIGN.md#error-model` — typed helper unavailable/permission/timeout/parse/process
+      error mapping.
+
+
+      ## Files changed / commit
+
+      - Mainline squash commit: `bddbf14` (worker commit `cbe561f36989e844670abfa7d13c93a087d3cd6a`).
+
+      - Changed: `package.json`, `scripts/prepare-native-test-env.mjs`, `src/index.ts`,
+      `src/native/macos-location-helper.swift`, `src/native/macos-location-helper.ts`,
+      `src/sensors/geo.ts`.
+
+
+      ## Verification
+
+      - Mainline `npm run typecheck` exit 0.
+
+      - Mainline `npm run test:native -- tests/native/macos-location-helper.test.ts`
+      exit 0; 2 pass, 1 explicit skipped scaffold/native future gate.
+
+      - Mainline `npm run test:file -- tests/unit/sensors/geo.test.ts` exit 0; 5 pass.
+
+
+      ## Proof
+
+      - Helper exposes bounded JSON success/error mapping, permission/timeout/parse/unavailable/helper-unavailable
+      errors, stdout/stderr 16KiB caps.
+
+      - Supervision constants proven: 3000ms timeout, 250ms terminate/kill grace,
+      backoff 1m→5m→15m, manual refresh bypass.
+
+      - No live CoreLocation success claimed; skip/typecheck separated from live permission
+      success.
+
+      - Helper spawn wrapper is not on request-path injection; no orphan survives
+      timeout/shutdown per tests/policy.
+
+
+      ## checklist_receipt
+
+      All five native-helper checklist items proven.'
   - id: sensors-manifest-risk
     name: Complete user-added sensor manifest and risk loading behavior
     status: claimed
