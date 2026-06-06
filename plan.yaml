@@ -8571,7 +8571,7 @@ phases:
   steps:
   - id: release-smoke-live-pi-tui
     name: Run live Pi TUI slash, context, status/widget, and SettingsList smoke
-    status: pending
+    status: claimed
     description: 'step_type: verification
 
       verification_scope: full-plan-check
@@ -8827,6 +8827,8 @@ phases:
     depends_on:
     - release-smoke-fix-live-pi-tui-smoke
     agent: client-runtime-verifier
+    claimed_by: client-runtime-verifier
+    claimed_at: '2026-06-06T08:36:43.062389+00:00'
   - id: release-smoke-dynamic-reload
     name: Run live Pi dynamic sensor reload smoke
     status: pending
