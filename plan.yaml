@@ -3082,22 +3082,22 @@ phases:
       <risk_probes>1. Confirm ordinary `npm test` is green, not just focused tests.
       2. Confirm the contract test remains meaningful and was not weakened. 3. Confirm
       config/state behavior did not regress while resolving static imports.</risk_probes>'
-    verification: '- [ ] `npm run typecheck` passes with raw stdout/stderr and exit
+    verification: '- [x] `npm run typecheck` passes with raw stdout/stderr and exit
       code.
 
-      - [ ] Ordinary `npm test` passes with raw stdout/stderr and exit code, or any
+      - [x] Ordinary `npm test` passes with raw stdout/stderr and exit code, or any
       remaining failure is reported as a new blocker with exact owner/disposition.
 
-      - [ ] Focused core matrix passes with raw stdout/stderr and includes the previously
+      - [x] Focused core matrix passes with raw stdout/stderr and includes the previously
       passing core coverage scope.
 
-      - [ ] Static boundary proof shows `src/core/config.ts` no longer imports `node:fs`,
+      - [x] Static boundary proof shows `src/core/config.ts` no longer imports `node:fs`,
       `node:fs/promises`, `node:path`, or equivalent runtime implementation dependencies.
 
-      - [ ] Retest evidence confirms `tests/unit/contracts/core-contracts.test.ts`
+      - [x] Retest evidence confirms `tests/unit/contracts/core-contracts.test.ts`
       was not weakened and still enforces the contract/static boundary.
 
-      - [ ] Behavioral proof register closes B1 as PROVEN or identifies the exact
+      - [x] Behavioral proof register closes B1 as PROVEN or identifies the exact
       unresolved blocker and closure path.'
     evidence_template: "## Verification Report\n**Tester**: integration-verifier (independent\
       \ of implementation)\n**Scope**: B1 core static boundary retest after `core-static-boundary-fix`\n\
