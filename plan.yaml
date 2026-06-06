@@ -225,7 +225,7 @@ phases:
       placement: PROVEN.'
   - id: scaffold-tests
     name: Define expected-red scaffold and fake-host tests
-    status: pending
+    status: claimed
     description: 'step_type: test
 
       step_intent: test_define_red
@@ -306,6 +306,8 @@ phases:
     depends_on:
     - scaffold-contracts
     agent: frontend-engineer
+    claimed_by: frontend-engineer
+    claimed_at: '2026-06-06T03:33:25.659186+00:00'
   - id: scaffold-complete
     name: Complete package scaffold and fake-host harness
     status: pending
