@@ -14351,7 +14351,7 @@ phases:
       All ten checklist items proven and toggled. Blockers: none.'
   - id: finalization-wiring-blackbox-blockers-retest
     name: Retest wiring and live-smoke finalization blockers
-    status: pending
+    status: claimed
     description: 'step_type: test
 
       step_intent: retest_green
@@ -14489,3 +14489,5 @@ phases:
     depends_on:
     - finalization-wiring-blackbox-blockers-fix
     agent: integration-verifier
+    claimed_by: integration-verifier
+    claimed_at: '2026-06-06T12:28:12.535185+00:00'
