@@ -3039,7 +3039,7 @@ phases:
       behavior preserved, ordinary npm test green.'
   - id: core-static-boundary-retest
     name: Retest core static boundary and ordinary CI
-    status: pending
+    status: claimed
     description: 'step_type: test
 
       step_intent: retest_green
@@ -3129,6 +3129,8 @@ phases:
     depends_on:
     - core-static-boundary-fix
     agent: integration-verifier
+    claimed_by: integration-verifier
+    claimed_at: '2026-06-06T04:58:33.772947+00:00'
 - id: sensors
   name: Builtin Sensors and Native Helper
   status: locked
