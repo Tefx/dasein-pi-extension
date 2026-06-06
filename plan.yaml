@@ -5624,7 +5624,7 @@ phases:
     agent: gate-reviewer
   - id: sensors-renderer-geo-privacy-fix
     name: Fix core renderer geo privacy leak
-    status: pending
+    status: claimed
     description: 'step_type: implementation
 
       work_type: defect_repair
@@ -5811,6 +5811,8 @@ phases:
     - sensors-local-proof
     - sensors-geo-actions
     agent: frontend-engineer
+    claimed_by: frontend-engineer
+    claimed_at: '2026-06-06T06:29:58.137101+00:00'
   - id: sensors-renderer-geo-privacy-retest
     name: Retest core renderer geo privacy closure
     status: pending
