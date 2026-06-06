@@ -8119,7 +8119,7 @@ phases:
     agent: integration-verifier
   - id: system-wiring-ordinary-ci
     name: Verify ordinary CI closure without live Pi smoke
-    status: pending
+    status: claimed
     description: 'step_type: verification
 
       verification_scope: full-plan-check
@@ -8189,6 +8189,8 @@ phases:
     depends_on:
     - system-wiring-stub-replacement
     agent: integration-verifier
+    claimed_by: integration-verifier
+    claimed_at: '2026-06-06T07:48:13.726648+00:00'
   - id: system-wiring-gate
     name: Gate system wiring and ordinary CI
     status: pending
