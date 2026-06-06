@@ -800,7 +800,7 @@ phases:
   steps:
   - id: core-contracts
     name: Define core broker contracts
-    status: claimed
+    status: done
     description: 'step_type: contract
 
       contract_purity: ENFORCED
@@ -917,6 +917,73 @@ phases:
     agent: frontend-engineer
     claimed_by: frontend-engineer
     claimed_at: '2026-06-06T03:59:24.773665+00:00'
+    done_at: '2026-06-06T04:08:53.828418+00:00'
+    evidence: '## refs Read Confirmation
+
+      - `CONSTITUTION.md#architectural-dogmas` — core broker boundary; typed state;
+      core owns normalization/order/truncation/injection; config precedence exact.
+
+      - `CONSTITUTION.md#extension-and-sensor-laws` — exact sensor envelope fields;
+      sensors cannot own prompt text/order; core drops fields outside envelope.
+
+      - `docs/TECHNICAL_DESIGN.md#core-contracts` — DaseinConfig/ConfigManager/SensorSpec/SensorSnapshot/ExternalState/RenderedContext/reload/validation
+      shapes.
+
+      - `docs/TECHNICAL_DESIGN.md#rendering-contract` — renderer input/output and
+      deterministic order requirements.
+
+      - `docs/TECHNICAL_DESIGN.md#command-design` — parsed command/result contracts
+      before Pi text formatting.
+
+      - `docs/PRD.md#7-functional-requirements` — in-memory ambient state broker,
+      separate LLM/UI/settings render paths, external event validation, in-memory
+      request injection.
+
+
+      ## artifacts/commit
+
+      - bf9e077 `[vectl] step-core-contracts completed`
+
+      - Added core contract/stub files under `src/core/*`, command contract `src/commands/dasein-command.ts`,
+      and `tests/unit/contracts/core-contracts.test.ts`.
+
+
+      ## mainline final-state verification
+
+      - `npm run typecheck` → exit 0.
+
+      - `npm test` → exit 0; 21 tests, 21 pass, 0 fail.
+
+      - `npm run test:native` → exit 0; 1 skipped.
+
+      - `npm run test:smoke` → exit 0; 1 skipped.
+
+
+      ## authority_trace
+
+      - core.config: `DaseinConfig`, `ConfigManager`, mutation/reload results, `CORE_MAX_AGENT_CHARS_CONSTRAINT`,
+      `CORE_INJECTED_LABEL_CONSTRAINT`; boundary tests accept 40/default/2000 and
+      reject 39/2001/non-integers, invalid labels.
+
+      - core.sensor_state: `SensorSpec`, `SensorSnapshot`, `SensorStateField`, `DaseinStateStore`,
+      envelope constants.
+
+      - core.render_command: `RenderedContext`, renderer/injector contracts, parsed
+      command/result contracts.
+
+
+      ## checklist_receipt
+
+      - Exact required surfaces defined without implementation logic: PROVEN.
+
+      - Core-as-broker boundaries preserved: PROVEN.
+
+      - Authority trace maps requirement rows to concrete exports: PROVEN.
+
+      - No runtime dependency/disk I/O/sensor refresh/Pi registration logic shipped:
+      PROVEN by no-runtime static scan and unchanged runtime dependency policy.
+
+      - `core.maxAgentChars` and `core.injectedLabel` constraints pinned: PROVEN.'
   - id: core-tests
     name: Define expected-red core proof suite
     status: pending
