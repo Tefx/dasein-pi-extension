@@ -3694,18 +3694,18 @@ phases:
       changes agent visibility semantics, not only test strings or probe output formatting.
       3. Verify UI-visible default remains true while agent-visible default becomes
       false.</risk_probes>'
-    verification: '- [ ] `src/core/renderer.ts` treats absent `config.external[key]`
+    verification: '- [x] `src/core/renderer.ts` treats absent `config.external[key]`
       agent visibility as `false`, not `true`.
 
-      - [ ] Focused tests prove an unconfigured external key with an agent payload
+      - [x] Focused tests prove an unconfigured external key with an agent payload
       is omitted from the rendered/injected agent string.
 
-      - [ ] Focused tests prove `external.<key>.agent=true` still renders the external
+      - [x] Focused tests prove `external.<key>.agent=true` still renders the external
       agent payload.
 
-      - [ ] Focused tests prove unconfigured external UI remains visible by default.
+      - [x] Focused tests prove unconfigured external UI remains visible by default.
 
-      - [ ] Sibling search evidence shows no remaining external visibility fallback
+      - [x] Sibling search evidence shows no remaining external visibility fallback
       defaults unconfigured agent exposure to visible.'
     evidence_template: '## refs Read Confirmation (MANDATORY)
 
