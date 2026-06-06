@@ -9482,7 +9482,7 @@ phases:
     agent: gate-reviewer
   - id: release-smoke-fix-live-pi-tui-smoke
     name: Fix live Pi TUI smoke runner and proof artifacts
-    status: claimed
+    status: done
     description: 'step_type: implementation
 
       work_type: defect_repair
@@ -9650,6 +9650,70 @@ phases:
     agent: frontend-engineer
     claimed_by: frontend-engineer
     claimed_at: '2026-06-06T08:21:43.360887+00:00'
+    done_at: '2026-06-06T08:36:32.187862+00:00'
+    evidence: '## refs Read Confirmation
+
+      - `tests/smoke/contracts/live-pi-smoke-gate-contract.test.ts` — now uses `hostBoundary:
+      live-pi-process-not-fake-host`, real Pi binary discovery, environment-blocker
+      artifacts, TUI probes, rendered status/widget transcript, SettingsList persistence
+      proof, and fake-host exclusion fields.
+
+      - `package.json` — `test:smoke` runs `node --import tsx --test tests/smoke/**/*.test.ts`;
+      ordinary `test` remains non-native discovery.
+
+      - `src/index.ts` — TUI mode uses `ctx.ui.setStatus`, `setWidget`, and `custom`
+      SettingsList; settings changes route via canonical mutation and republish.
+
+      - `src/ui/settings-import-contract.ts` — `SettingsList` and theme resolve through
+      approved Pi peer dependencies and expose core/sensor/external controls.
+
+      - `src/commands/dasein-command.ts` — status evidence distinguishes SOURCE/API/LIVE_SMOKE_PENDING/LIVE_SMOKE_VERIFIED.
+
+      - `docs/TECHNICAL_DESIGN.md#verified-pi-mechanisms` — live smoke means observed
+      in a live Pi process; source/API is not live proof.
+
+      - `docs/TECHNICAL_DESIGN.md#testing-gate-matrix` — `npm run test:smoke` is release
+      smoke requiring live Pi TUI/process; fake API cannot satisfy support claims.
+
+      - `docs/PRD.md#9-4-tui` — status footer, widget, and SettingsList controls are
+      required TUI surfaces.
+
+      - `CONSTITUTION.md#quality-baselines` — mock tests are not integration proof;
+      black-box liveness evidence takes precedence.
+
+      - `CONSTITUTION.md#ux-and-pi-interaction-red-lines` — Pi/UI mechanisms require
+      real Pi extension load or live Pi binary path before release support claims.
+
+
+      ## Smoke Runner Fix Receipt
+
+      - mainline commit: `e9e5461`; worker commit: `8d77a6d2d1cb2dbe24209201df48dbc69e67634d`.
+
+      - changed file: `tests/smoke/contracts/live-pi-smoke-gate-contract.test.ts`.
+
+      - artifacts generated under `.dasein/live-pi-smoke/latest/`: `checklist_receipt.json`,
+      `api-signature-probe.log`, `tui-render.raw`, `tui-render.raw.text`, `tui-render-proof.json`,
+      `settingslist-persistence-proof.json`.
+
+      - SettingsList proof toggled `core.statusEnabled` true -> false and persisted
+      disposable canonical config `{version:1, core:{statusEnabled:false}}`.
+
+      - no fake-host/live conflation: proof records live Pi process boundary and `fakeHostCanSatisfyLiveGate:
+      false`.
+
+
+      ## Verification
+
+      - `npm run typecheck` exit 0.
+
+      - `npm test` exit 0; 131 pass.
+
+      - `npm run test:smoke` exit 0; live Pi smoke gate passed, 1 pass, 0 skipped.
+
+
+      ## checklist_receipt
+
+      All six live Pi TUI smoke fix checklist items proven; blockers none.'
 - id: finalization
   name: Documentation Sync and Final Deep Review
   status: locked
