@@ -8021,7 +8021,7 @@ phases:
       All four system-wiring-stub-replacement checklist items proven.'
   - id: system-wiring-e2e-fake-host
     name: Verify end-to-end fake-host flow through real modules
-    status: pending
+    status: claimed
     description: 'step_type: verification
 
       verification_scope: full-plan-check
@@ -8117,6 +8117,8 @@ phases:
     depends_on:
     - system-wiring-stub-replacement
     agent: integration-verifier
+    claimed_by: integration-verifier
+    claimed_at: '2026-06-06T07:48:30.647645+00:00'
   - id: system-wiring-ordinary-ci
     name: Verify ordinary CI closure without live Pi smoke
     status: claimed
