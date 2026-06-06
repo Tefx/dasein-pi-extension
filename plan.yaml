@@ -3894,26 +3894,26 @@ phases:
       key is absent. 2. Verify explicit opt-in still appears so the fix did not over-suppress
       external state. 3. Verify ordinary test/typecheck success plus focused renderer/external/injector/behavior
       coverage, not sampled proof only.</risk_probes>'
-    verification: '- [ ] `npm run typecheck` exits successfully with raw stdout/stderr
+    verification: '- [x] `npm run typecheck` exits successfully with raw stdout/stderr
       evidence.
 
-      - [ ] Ordinary `npm test` exits successfully with raw stdout/stderr evidence
+      - [x] Ordinary `npm test` exits successfully with raw stdout/stderr evidence
       and no B1/B2/B3 regression.
 
-      - [ ] Focused renderer/external tests prove unconfigured external agent payload
+      - [x] Focused renderer/external tests prove unconfigured external agent payload
       is omitted from agent context.
 
-      - [ ] Focused renderer/external tests prove explicit `external.<key>.agent=true`
+      - [x] Focused renderer/external tests prove explicit `external.<key>.agent=true`
       still appears in agent context.
 
-      - [ ] Focused renderer/external tests prove unconfigured external UI remains
+      - [x] Focused renderer/external tests prove unconfigured external UI remains
       visible by default.
 
-      - [ ] Focused injector/behavior proof or equivalent runtime probe shows the
+      - [x] Focused injector/behavior proof or equivalent runtime probe shows the
       previous `[ambient_ctx: weather=secret-agent-value]` leakage is closed for an
       unconfigured external key.
 
-      - [ ] Probe closure register marks B4 PROVEN or BLOCKED and records B1/B2/B3
+      - [x] Probe closure register marks B4 PROVEN or BLOCKED and records B1/B2/B3
       as still closed with evidence refs.'
     evidence_template: '## refs Read Confirmation (MANDATORY)
 
