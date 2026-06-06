@@ -986,7 +986,7 @@ phases:
       - `core.maxAgentChars` and `core.injectedLabel` constraints pinned: PROVEN.'
   - id: core-tests
     name: Define expected-red core proof suite
-    status: claimed
+    status: done
     description: 'step_type: test
 
       step_intent: test_define_red
@@ -1341,6 +1341,77 @@ phases:
     agent: frontend-engineer
     claimed_by: frontend-engineer
     claimed_at: '2026-06-06T04:09:09.495688+00:00'
+    done_at: '2026-06-06T04:22:43.496454+00:00'
+    evidence: 'EXPECTED_RED_ACCEPTED
+
+
+      ## refs Read Confirmation
+
+      - `docs/TECHNICAL_DESIGN.md#testing-gate-matrix` — exact core test target files
+      and ordinary gates; live smoke separate.
+
+      - `docs/TECHNICAL_DESIGN.md#core-contracts` — config precedence, validation
+      boundaries, external string rejection, atomic writes, typed envelope.
+
+      - `docs/TECHNICAL_DESIGN.md#rendering-contract` — deterministic order, core-owned
+      final strings/truncation, one invalidation timer, hook purity.
+
+      - `docs/TECHNICAL_DESIGN.md#command-design` — `/dasein help` core command, reserved
+      routing precedence, assignment/value grammar.
+
+      - `CONSTITUTION.md#testing-and-gates` — unit/static gates for config precedence,
+      request no-I/O, typed envelope, core-owned rendering.
+
+      - `docs/PRD.md#9-acceptance-criteria` / `#9-6-external-state` — reload failure
+      keeps old state; external malformed input rejected without mutation.
+
+      - Additional Technical Design refs read for command result/output, builtin sensors,
+      verified Pi mechanisms, and data flow.
+
+
+      step_intent: test_define_red
+
+      expected_result: red
+
+      observed_result: red
+
+      failure_alignment: `npm run typecheck` exits 0, while targeted core suite exits
+      1 with 45 tests, 2 pass, 43 fail on declared missing product behavior exports
+      such as `parseDaseinCommand`, `createConfigManager`, `renderDaseinContext`,
+      `injectAmbientContextMessage`, loader/runtime/external-event functions. Static
+      no-request-io tests pass. This matches the pre-implementation gap.
+
+      verdict: PASS
+
+      blockers: []
+
+      product_implementation_files_modified: false
+
+
+      ## artifacts/commit
+
+      - a552a03 `[vectl] step-core-tests completed`
+
+      - Added only `tests/**`: core fixtures, unit tests, behavior/static no-request-io
+      coverage.
+
+
+      ## mainline expected-red receipt
+
+      - `npm run typecheck` → exit 0.
+
+      - targeted `npm run test:file -- ...core suite...` → exit 1; expected red; 45
+      tests, 2 pass, 43 fail. Representative failures include `parseDaseinCommand
+      must be exported`, `createConfigManager must be exported`, `renderDaseinContext
+      must be exported`, and `injectAmbientContextMessage must be exported`.
+
+
+      ## checklist_receipt
+
+      - All 20 required checklist obligations were proven in the worker receipt: gate-matrix
+      test files, expected-red gap ledger, minimal fixtures, no product code changes,
+      help/status/sensors/reload/geo/config/injector/renderer/atomic/external-event/risky-sensor
+      assertions, and adversarial render hook purity coverage.'
   - id: core-config-state
     name: Complete config manager and state store logic
     status: pending
