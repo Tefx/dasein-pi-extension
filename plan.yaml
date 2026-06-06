@@ -3410,7 +3410,7 @@ phases:
       regressions introduced.'
   - id: core-gate-blocker-retest
     name: Retest core gate blockers B2 and B3
-    status: claimed
+    status: done
     description: 'step_type: verification
 
       step_intent: retest_green
@@ -3522,6 +3522,72 @@ phases:
     agent: integration-verifier
     claimed_by: integration-verifier
     claimed_at: '2026-06-06T05:19:30.174182+00:00'
+    done_at: '2026-06-06T05:22:33.144136+00:00'
+    evidence: '## refs Read Confirmation
+
+      - `CONSTITUTION.md#testing-and-gates` — mock tests not integration proof; static/unit
+      checks verify config/no project-local config; live Pi smoke remains release
+      gate.
+
+      - `docs/TECHNICAL_DESIGN.md#implementation-scaffold` — `npm run typecheck`,
+      ordinary all-platform non-native `npm test`, and file-scoped `npm run test:file
+      -- <files>` semantics.
+
+      - `docs/TECHNICAL_DESIGN.md#testing-gate-matrix` — CI requires typecheck and
+      ordinary non-native full-suite `npm test`; SettingsList visibility target includes
+      `tests/unit/settings-list.test.ts`.
+
+      - `src/ui/settings-import-contract.ts` — SettingsList/getSettingsListTheme peer
+      imports and plain-data visibility model; no live rendering/mounting in this
+      file.
+
+
+      verdict: PASS
+
+      blockers: []
+
+      gate_open_allowed: true
+
+
+      ## Command Evidence
+
+      - `npm run typecheck` exit 0 (`tsc --noEmit`).
+
+      - `npm test` exit 0; discovery output enumerated 27 non-native test files including
+      top-level unit/static files and `tests/unit/settings-list.test.ts`; 77 tests,
+      77 pass, 0 fail, 0 skipped.
+
+      - explicit discovery/all-file run: filesystem non-native `.test.ts` count=27;
+      npm test discovery count=27; includes top-level `tests/unit/config.test.ts`,
+      static tests, and settings-list; explicit `npm run test:file -- $files` passed
+      77 tests.
+
+      - `npm run test:file -- tests/unit/settings-list.test.ts` exit 0; 2 tests passed.
+
+
+      ## SettingsList Matrix Target
+
+      - disposition: TEST_PROVEN.
+
+      - Proof: `tests/unit/settings-list.test.ts` passes and covers inspectability
+      metadata before risky enable controls plus core/common/simple/live external
+      controls.
+
+
+      ## blocker_closure_register
+
+      - B1: CLOSED; no regression observed; typecheck and retest pass.
+
+      - B2: CLOSED; ordinary `npm test` discovery covers all 27 non-native files and
+      passes.
+
+      - B3: CLOSED; SettingsList file exists and passes file-scoped proof.
+
+
+      ## checklist_receipt
+
+      All five retest checklist items proven. Live Pi TUI smoke remains a separate
+      release-scope gate and does not intersect this ordinary non-native retest.'
 - id: sensors
   name: Builtin Sensors and Native Helper
   status: locked
