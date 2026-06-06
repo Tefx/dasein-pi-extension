@@ -13195,23 +13195,23 @@ phases:
       2. Launch metadata is checked through public command/result output, not just
       internal object construction. 3. Runtime-overridden paths are excluded while
       non-runtime-overridden launch paths remain reported.</risk_probes>'
-    verification: '- [ ] `npm run typecheck` exits 0 in the retest environment.
+    verification: '- [x] `npm run typecheck` exits 0 in the retest environment.
 
-      - [ ] Focused `/dasein reload` fake-host test with launch flags plus forced
+      - [x] Focused `/dasein reload` fake-host test with launch flags plus forced
       sensor-load/registry failure passes and raw output shows retained non-runtime-overridden
       `launchReappliedPaths`.
 
-      - [ ] Focused `/dasein reload` fake-host test with launch flags plus forced
+      - [x] Focused `/dasein reload` fake-host test with launch flags plus forced
       ConfigManager/config reload failure passes and raw output shows retained non-runtime-overridden
       `launchReappliedPaths`.
 
-      - [ ] Retest evidence confirms runtime-overridden launch paths are not included
+      - [x] Retest evidence confirms runtime-overridden launch paths are not included
       in `launchReappliedPaths`.
 
-      - [ ] `npm test` exits 0 with raw stdout/stderr, or any failure is classified
+      - [x] `npm test` exits 0 with raw stdout/stderr, or any failure is classified
       with exact non-intersection/blocking disposition for finalization.
 
-      - [ ] Retest report states that downstream `finalization-full-wiring-audit`
+      - [x] Retest report states that downstream `finalization-full-wiring-audit`
       and `finalization-black-box-verification` are dependency-ordered after this
       retest in plan state.'
     evidence_template: '## refs Read Confirmation (MANDATORY)
