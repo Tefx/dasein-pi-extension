@@ -373,7 +373,7 @@ phases:
       - Tests assert SettingsList/getSettingsListTheme approved Pi peer path: PROVEN.'
   - id: scaffold-complete
     name: Complete package scaffold and fake-host harness
-    status: claimed
+    status: done
     description: 'step_type: implementation
 
       Fill in stub bodies and scaffold files per scaffold-contracts and scaffold-tests.
@@ -456,6 +456,65 @@ phases:
     agent: frontend-engineer
     claimed_by: frontend-engineer
     claimed_at: '2026-06-06T03:40:53.338807+00:00'
+    done_at: '2026-06-06T03:49:33.631806+00:00'
+    evidence: '## refs Read Confirmation
+
+      - `CONSTITUTION.md` — Dasein loadable from `~/.pi/agent/extensions/dasein`;
+      zero non-Pi runtime npm dependencies; local/dependency-light boundary.
+
+      - `docs/PRD.md` — ambient context broker, not time/space plugin; source/API
+      verification is not release support.
+
+      - `docs/TECHNICAL_DESIGN.md` — root `index.ts` delegates to `./src/index.ts`;
+      npm scripts/fake Pi host/static gates are normative scaffold gates.
+
+
+      ## protected artifacts and deviations
+
+      - Reviewed scaffold-contracts/scaffold-tests artifacts: `package.json`, `tsconfig.json`,
+      `index.ts`, `src/index.ts`, `src/contracts/*.ts`, `src/ui/settings-import-contract.ts`,
+      protected scaffold tests and fake-host fixture.
+
+      - Deviations accepted: corrected prior test/contract errors around default export
+      factory expectation and split approved Pi peer resolution (`SettingsList` from
+      pi-tui, `getSettingsListTheme` from pi-coding-agent). No style/preference deviations.
+
+
+      ## artifacts/commit
+
+      - bde222c `[vectl] step-scaffold-complete completed`
+
+      - Changed `src/index.ts`, settings/peer contract declarations, and tests to
+      implement and verify minimal Pi extension factory scaffold.
+
+
+      ## mainline final-state verification
+
+      - `npm run typecheck` → exit 0.
+
+      - `npm test` → exit 0; 17 tests, 17 pass, 0 fail.
+
+      - `npm run test:native` → exit 0; 1 skipped future native gate, 0 fail.
+
+      - `npm run test:smoke` → exit 0; 1 skipped live Pi release gate, 0 fail.
+
+      - symlink/import proof script → exit 0; default export type `function`, `dependencies`
+      `{}`, Pi peers `@earendil-works/pi-coding-agent` and `@earendil-works/pi-tui`
+      with `*`.
+
+
+      ## checklist_receipt
+
+      - Required npm scripts exist with Technical Design command shapes: PROVEN.
+
+      - Root index.ts delegates to ./src/index.ts and does no extra work: PROVEN.
+
+      - Package dependency policy and fake host tests pass: PROVEN.
+
+      - Symlinked load reaches root shim and delegates to ./src/index.ts: PROVEN.
+
+      - SettingsList/getSettingsListTheme import resolution works from symlinked extension
+      load shape: PROVEN.'
   - id: scaffold-static-proof
     name: Verify scaffold static and fake-host foundation
     status: pending
