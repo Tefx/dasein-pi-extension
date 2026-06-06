@@ -12111,6 +12111,7 @@ phases:
     - finalization-audit-blockers-fix
     - finalization-reload-launch-path-failure-branches-retest
     - finalization-external-state-sensor-runtime-blockers-retest
+    - finalization-wiring-blackbox-blockers-retest
     agent: blind-tester
     claimed_by: blind-tester
     claimed_at: '2026-06-06T11:49:23.334562+00:00'
