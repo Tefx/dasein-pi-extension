@@ -14746,7 +14746,7 @@ phases:
       All eleven checklist items proven and toggled. Blockers: none.'
   - id: finalization-arch-spec-blockers-fix
     name: Fix architecture and spec final audit blockers (A1 A2 S1 S2)
-    status: claimed
+    status: done
     description: 'step_type: implementation
 
       work_type: defect_repair
@@ -15009,6 +15009,88 @@ phases:
     agent: frontend-engineer
     claimed_by: frontend-engineer
     claimed_at: '2026-06-06T12:54:19.414448+00:00'
+    done_at: '2026-06-06T13:13:46.534114+00:00'
+    evidence: '## refs Read Confirmation
+
+      - CONSTITUTION.md#architectural-dogmas — config precedence defaults < disk <
+      launch < slash/UI runtime; deterministic renderOrder first, remaining sensors
+      lexicographic.
+
+      - CONSTITUTION.md#performance-laws — request-path injection consumes already-available
+      in-memory typed state only.
+
+      - CONSTITUTION.md#extension-and-sensor-laws — user-added sensors load explicitly,
+      publish typed state, and core controls injection ordering.
+
+      - CONSTITUTION.md#testing-and-gates — tests must verify renderOrder, all-or-keep-old
+      reload, no request-path IO; live support claims require live smoke.
+
+      - docs/PRD.md#9-7-sensor-loading-and-reload — `/dasein reload` rescans src/sensors/*.ts,
+      restarts enabled sensors, startup-refreshes, invalid candidates keep previous
+      state.
+
+      - docs/TECHNICAL_DESIGN.md#sensor-loading-and-reload — manual reload rebuilds
+      defaults/effective config with candidate specs and commits only if candidate
+      steps pass.
+
+      - docs/TECHNICAL_DESIGN.md#builtin-sensors — geo cleanup timeout terminates
+      then force kills; shutdown aborts active geo refresh before cleanup.
+
+      - docs/TECHNICAL_DESIGN.md#core-contracts — default widgetEnabled false and
+      renderOrder [clock,lapse,geo].
+
+      - docs/TECHNICAL_DESIGN.md#rendering-contract — renderer uses configured renderOrder
+      first and appends remaining sensors lexicographically.
+
+      - docs/TECHNICAL_DESIGN.md#testing-gate-matrix — gates include typecheck, npm
+      test, focused reload/runtime/renderer tests, live smoke.
+
+
+      ## Blocker Closure Evidence
+
+      - A1: ConfigManager.reloadDisk accepts candidate defaults/discoveredSensorKeys/sensorSpecs
+      and commits only after successful validation; reload path builds candidate defaults
+      from newly scanned entries. Focused integration proves late sensor added after
+      startup is listed, enabled, and rendered after reload. Failure-path tests preserve
+      previous registry/effective config/defaults/sensor runtimes/rendered state/overlays.
+
+      - A2: lifecycle shutdown calls helper abort, terminate, waits helperKillGraceMs,
+      then kill before cleanup; geo native helper supervisor exposes controls; geo
+      refresh passes context.signal. Tests verify order and signal propagation without
+      live/native overclaim.
+
+      - S1: default `core.widgetEnabled` false; no-config/no-launch fake host startup
+      emits no widget unless explicitly enabled.
+
+      - S2: default renderOrder pinned to [clock,lapse,geo]; renderer fallback appends
+      remaining sensors lexicographically.
+
+
+      ## Commits
+
+      - Worker commit: 9cf023b90714ffe352fbe0a2a35f4001f897f860.
+
+      - Main commit: 0b1eeae.
+
+
+      ## Commands
+
+      - `npm run typecheck` exit 0.
+
+      - `npm run test:file -- tests/integration/manual-reload-late-sensor.test.ts
+      tests/unit/lifecycle.test.ts tests/unit/sensors/geo.test.ts tests/unit/renderer.test.ts
+      tests/integration/pi-runtime-red.test.ts` exit 0; 36 pass.
+
+      - `npm test` exit 0; 150 pass.
+
+      - `npm run test:smoke` exit 0; 3 pass.
+
+
+      ## checklist_receipt
+
+      All nine checklist items proven and toggled. Blockers: none. No live Pi support
+      claim was made from fake-host/mock/native-supervisor tests; live support remains
+      based on live smoke artifacts.'
   - id: finalization-arch-spec-blockers-retest
     name: Retest architecture/spec final audit blockers (A1 A2 S1 S2)
     status: pending
