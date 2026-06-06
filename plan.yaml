@@ -12114,6 +12114,7 @@ phases:
     - docs/PRD.md#9-6-external-state
     depends_on:
     - finalization-audit-blockers-fix
+    - finalization-reload-launch-path-failure-branches-retest
     agent: blind-tester
     claimed_by: blind-tester
     claimed_at: '2026-06-06T10:39:04.343231+00:00'
