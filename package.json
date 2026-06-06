@@ -16,7 +16,7 @@
   },
   "scripts": {
     "typecheck": "tsc --noEmit",
-    "test": "node --import tsx --test tests/unit/**/*.test.ts tests/integration/**/*.test.ts tests/behavior/**/*.test.ts tests/static/**/*.test.ts",
+    "test": "node scripts/run-non-native-tests.mjs",
     "test:file": "node --import tsx --test",
     "test:native": "node --import tsx --test tests/native/**/*.test.ts",
     "test:smoke": "node --import tsx --test tests/smoke/**/*.test.ts"

@@ -59,10 +59,14 @@ test("package scaffold keeps zero runtime dependencies and approved Pi peers onl
 
 test("required npm scripts preserve the Technical Design command shapes", () => {
   assert.equal(packageJson.scripts?.typecheck, "tsc --noEmit");
-  assert.equal(
-    packageJson.scripts?.test,
-    "node --import tsx --test tests/unit/**/*.test.ts tests/integration/**/*.test.ts tests/behavior/**/*.test.ts tests/static/**/*.test.ts",
-  );
+  assert.equal(packageJson.scripts?.test, "node scripts/run-non-native-tests.mjs");
+  const testRunner = readText("scripts/run-non-native-tests.mjs");
+  for (const requiredRoot of ["tests/unit", "tests/integration", "tests/behavior", "tests/static"]) {
+    assert.match(testRunner, new RegExp(requiredRoot));
+  }
+  assert.doesNotMatch(testRunner, /tests\/(native|smoke)/u);
+  assert.match(testRunner, /--import", "tsx", "--test"/u);
+  assert.match(testRunner, /endsWith\("\.test\.ts"\)/u);
   assert.equal(packageJson.scripts?.["test:file"], "node --import tsx --test");
   assert.equal(packageJson.scripts?.["test:native"], "node --import tsx --test tests/native/**/*.test.ts");
   assert.equal(packageJson.scripts?.["test:smoke"], "node --import tsx --test tests/smoke/**/*.test.ts");
