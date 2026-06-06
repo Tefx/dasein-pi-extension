@@ -8561,7 +8561,7 @@ phases:
       All four native discovery checklist items proven."
 - id: release_smoke
   name: Live Pi and Native Release Smoke
-  status: pending
+  status: in_progress
   gate: Live smoke evidence exists or reports exact environment blockers; release
     support claims are not made from fake-host tests alone.
   context: Separate live Pi/native release evidence from ordinary CI by probing real
@@ -8571,7 +8571,7 @@ phases:
   steps:
   - id: release-smoke-live-pi-tui
     name: Run live Pi TUI slash, context, status/widget, and SettingsList smoke
-    status: pending
+    status: claimed
     description: 'step_type: verification
 
       verification_scope: full-plan-check
@@ -8825,6 +8825,8 @@ phases:
     - CONSTITUTION.md#ux-and-pi-interaction-red-lines
     - docs/TECHNICAL_DESIGN.md#data-flow
     agent: client-runtime-verifier
+    claimed_by: client-runtime-verifier
+    claimed_at: '2026-06-06T08:07:44.743365+00:00'
   - id: release-smoke-dynamic-reload
     name: Run live Pi dynamic sensor reload smoke
     status: pending
