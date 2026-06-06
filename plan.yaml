@@ -1414,7 +1414,7 @@ phases:
       assertions, and adversarial render hook purity coverage.'
   - id: core-config-state
     name: Complete config manager and state store logic
-    status: pending
+    status: claimed
     description: 'step_type: implementation
 
       Fill in stub bodies in src/core/config.ts and src/core/state.ts per core-contracts
@@ -1546,6 +1546,8 @@ phases:
     - core-tests
     - core-behavior-guardrails
     agent: frontend-engineer
+    claimed_by: frontend-engineer
+    claimed_at: '2026-06-06T04:28:37.970857+00:00'
   - id: core-sensor-runtime-loader
     name: Complete sensor loader, runtime, and lifecycle core
     status: pending
