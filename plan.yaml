@@ -9716,7 +9716,7 @@ phases:
       All six live Pi TUI smoke fix checklist items proven; blockers none.'
   - id: release-smoke-fix-live-pi-tui-artifact-coverage
     name: Strengthen live Pi TUI smoke artifact coverage
-    status: claimed
+    status: done
     description: 'step_type: implementation
 
       work_type: proof_closure
@@ -9870,6 +9870,71 @@ phases:
     agent: frontend-engineer
     claimed_by: frontend-engineer
     claimed_at: '2026-06-06T08:42:21.109176+00:00'
+    done_at: '2026-06-06T08:52:14.367458+00:00'
+    evidence: '## refs Read Confirmation
+
+      - `docs/TECHNICAL_DESIGN.md#verified-pi-mechanisms` — live support requires
+      LIVE_SMOKE_VERIFIED; source/API evidence alone is insufficient.
+
+      - `docs/TECHNICAL_DESIGN.md#testing-gate-matrix` — `npm run test:smoke` must
+      run against live Pi TUI/process; fake API cannot satisfy release support.
+
+      - `docs/PRD.md#9-4-tui` — TUI acceptance includes status/footer, widget, SettingsList
+      controls, sensor metadata, and hidden-value omissions.
+
+      - `CONSTITUTION.md#quality-baselines` — mock tests are not integration proof;
+      black-box liveness evidence takes precedence.
+
+      - `CONSTITUTION.md#ux-and-pi-interaction-red-lines` — Pi/UI mechanisms require
+      live real Pi extension/binary evidence with mechanism, version, binary, and
+      artifacts.
+
+
+      ## Smoke Command Receipt
+
+      - mainline commit: `9d31fcd`; worker commit: `5120385b2847ec1c0acaaacfa81d62a0298e7283`.
+
+      - changed file: `tests/smoke/contracts/live-pi-smoke-gate-contract.test.ts`.
+
+      - artifact dir: `.dasein/live-pi-smoke/latest/`.
+
+      - artifacts added/strengthened: `slash-command-proof.json/.log`, `launch-flag-proof.json/.log`,
+      `context-injection-proof.json/.log`, `no-fake-host-conflation.json`, plus prior
+      status/widget and SettingsList artifacts.
+
+
+      ## Required Artifact Coverage
+
+      - slashCommandProof: proves literal `/dasein` registration and invocation with
+      exact registered command/invoked text, live Pi process boundary, and observed
+      status command result.
+
+      - launchFlagProof: proves literal `--dasein` argv, parsed false/effective config
+      effect, and suppressed context injection when disabled.
+
+      - contextInjectionProof: proves Pi context hook before/after counts, appended
+      hidden Dasein CustomMessage (`display:false`, `customType:dasein`) and Pi LLM
+      conversion to user text.
+
+      - existing real Pi binary, fakeHost false, status/widget rendering, and SettingsList
+      persistence proofs preserved.
+
+      - no fake-host/source/API-key-only proof is used as live registration/invocation/parsing/context
+      proof.
+
+
+      ## Verification
+
+      - `npm run typecheck` exit 0.
+
+      - `npm test` exit 0; 131 pass.
+
+      - `npm run test:smoke` exit 0; 1 pass, 0 skipped.
+
+
+      ## checklist_receipt
+
+      All seven artifact coverage checklist items proven; blockers none.'
 - id: finalization
   name: Documentation Sync and Final Deep Review
   status: locked
