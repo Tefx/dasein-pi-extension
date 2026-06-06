@@ -85,6 +85,13 @@ export {
 } from "./core/sensor-loader.ts";
 export { SENSOR_REFRESH_CONTRACT, createSensorRuntime, normalizeSensorRefreshResult, observeLapseLifecycle } from "./core/sensor-runtime.ts";
 export { createDaseinLifecycle, reloadDaseinRuntime } from "./core/lifecycle.ts";
+export type * from "./native/macos-location-helper.ts";
+export {
+  createMacOSLocationHelperSupervisor,
+  getMacOSLocationHelperRuntimePolicy,
+  mapMacOSLocationHelperOutput,
+  runMacOSLocationHelperOnce,
+} from "./native/macos-location-helper.ts";
 
 export interface DaseinPiExtensionApi {
   readonly registerCommand: (name: string, options: Record<string, unknown>) => void;
