@@ -16435,3 +16435,47 @@ phases:
     command feedback is visible in TUI.'
   depends_on:
   - finalization
+  steps:
+  - id: ux-polish-docs-plan
+    name: Document default UX polish plan
+    status: pending
+    description: 'Update PRD/Technical Design with the concrete default UX plan: quiet
+      default visible UI, hidden/low-noise ambient context indicator, summarized status
+      bar, common-first SettingsList, diagnostics/debug disclosure, and command feedback
+      behavior. Clarify that `[ambient_ctx: ...]` is injected agent context, not user-facing
+      status chrome, and should not be visually noisy by default.'
+    verification: '- [ ] docs explain default ambient context visibility and debug
+      disclosure.
+
+      - [ ] docs explain status bar minimal/standard/debug behavior.
+
+      - [ ] docs explain SettingsList common-first vs diagnostics split.
+
+      - [ ] docs preserve inspectability and local Pi privacy constraints.'
+    agent: general
+  - id: ux-polish-implementation
+    name: Implement quiet default UX
+    status: pending
+    description: 'Implement quiet default UX: make command feedback visible in TUI,
+      summarize visible status output, avoid raw ambient context/debug fields in default
+      visible chrome, and reduce SettingsList default surface to common controls while
+      preserving diagnostics via /dasein status and /dasein sensors.'
+    verification: '- [ ] `/dasein status` and `/dasein sensors` produce visible TUI
+      feedback.
+
+      - [ ] default TUI status chrome does not show raw `epoch_ms`, `iso`, `agent_id`,
+      or full ambient debug fields.
+
+      - [ ] default SettingsList first surface is common controls, not 89 raw diagnostic
+      rows.
+
+      - [ ] diagnostics remain available through status/sensors outputs.
+
+      - [ ] npm run typecheck exits 0.
+
+      - [ ] focused UX tests exit 0.
+
+      - [ ] npm test exits 0.'
+    depends_on:
+    - ux-polish-docs-plan
+    agent: general
