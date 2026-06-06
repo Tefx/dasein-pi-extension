@@ -15008,3 +15008,192 @@ phases:
     - finalization-external-state-sensor-runtime-blockers-retest
     - finalization-wiring-blackbox-blockers-retest
     agent: frontend-engineer
+  - id: finalization-arch-spec-blockers-retest
+    name: Retest architecture/spec final audit blockers (A1 A2 S1 S2)
+    status: pending
+    description: 'step_type: test
+
+      step_intent: retest_green
+
+      expected_result: green
+
+      verification_scope: full-plan-check
+
+      agent_source: project
+
+      PROOF ARTIFACT: Independent retest of the batched A1/A2/S1/S2 blocker fix from
+      a fresh perspective. This step verifies the implementation evidence without
+      making live Pi support claims.
+
+
+      SCOPE:
+
+      - A1: manual reload rebuilds effective config/defaults for sensors added after
+      startup and renders a newly added enabled sensor after reload, while invalid
+      reload preserves all-or-keep-old previous state.
+
+      - A2: lifecycle shutdown calls helper abort/terminate/kill hooks per contract/timeout
+      and geo native helper supervision receives and obeys `context.signal` cancellation.
+
+      - S1: default `core.widgetEnabled` is false and fake-host startup without config/launch
+      does not create widget output.
+
+      - S2: default `core.renderOrder` is `["clock","lapse","geo"]` and remaining
+      enabled sensors are appended by deterministic renderer fallback.
+
+
+      INDEPENDENCE:
+
+      Use independent verification as `integration-verifier`; do not rely on implementer
+      summaries. Re-run the exact commands or stronger equivalent focused commands
+      and record raw output.
+
+
+      BEHAVIORAL PROOF REGISTER REQUIRED:
+
+      Each blocker row must include `requirement_ref`, `behavior_claim`, `runtime_proof_expected`,
+      `evidence_ref`, `status`, `closure_path`, and `gate_decision_basis`.
+
+
+      <side_effect_budget>Allowed: read-only verification, test execution, and evidence
+      inspection. Forbidden: product edits, doc edits, updating plan state, or treating
+      fake-host/mock/native-supervisor proof as live Pi support proof.</side_effect_budget>
+
+      <risk_probes>1. Reproduce the final-audit probe shape for A1 and confirm `contextHasLate=true`,
+      not merely that reload returns ok. 2. Check both lifecycle helper hook escalation
+      and geo `context.signal` propagation, because either half can close superficially
+      while the other remains broken. 3. Confirm default behavior from startup/no
+      config/no launch, not only fixture-level defaults.</risk_probes>'
+    verification: '- [ ] refs confirmation cites key passages for all refs relevant
+      to A1/A2/S1/S2.
+
+      - [ ] A1 independent retest reproduces the manual reload late-sensor scenario
+      and proves `reloadOk=true`, late sensor listed/enabled, and `contextHasLate=true`.
+
+      - [ ] A1 independent retest proves reload failure preserves previous effective
+      config/defaults, registry/runtimes, rendered state, and overlays.
+
+      - [ ] A2 independent retest proves shutdown invokes helper `abort`, `terminate`,
+      and `kill` hooks per contract/timeout and preserves cleanup error aggregation.
+
+      - [ ] A2 independent retest proves geo refresh passes `context.signal` to native
+      helper supervision and abort cancels helper work without live overclaim.
+
+      - [ ] S1 independent retest proves default `core.widgetEnabled=false` and no
+      widget is created at fake-host startup with no config/launch.
+
+      - [ ] S2 independent retest proves default `core.renderOrder=["clock","lapse","geo"]`
+      and remaining enabled sensors render through fallback ordering.
+
+      - [ ] Raw output is provided for `npm run typecheck`, focused A1/A2/S1/S2 tests,
+      `npm test`, and `npm run test:smoke`.
+
+      - [ ] Behavioral proof register marks all A1/A2/S1/S2 rows PROVEN or gives explicit
+      blocker closure path; no NEEDS_TEST/UNPROVEN row is bypassed.
+
+      - [ ] Evidence explicitly states no live Pi support claim was made from fake-host/mock/native-supervisor
+      evidence.'
+    evidence_template: '## refs Read Confirmation (MANDATORY)
+
+      For each ref in this step:
+
+      - CONSTITUTION.md#architectural-dogmas — <key passage>
+
+      - CONSTITUTION.md#performance-laws — <key passage>
+
+      - CONSTITUTION.md#extension-and-sensor-laws — <key passage>
+
+      - CONSTITUTION.md#testing-and-gates — <key passage>
+
+      - docs/PRD.md#9-7-sensor-loading-and-reload — <key passage>
+
+      - docs/TECHNICAL_DESIGN.md#sensor-loading-and-reload — <key passage>
+
+      - docs/TECHNICAL_DESIGN.md#builtin-sensors — <key passage>
+
+      - docs/TECHNICAL_DESIGN.md#core-contracts — <key passage>
+
+      - docs/TECHNICAL_DESIGN.md#rendering-contract — <key passage>
+
+      - docs/TECHNICAL_DESIGN.md#testing-gate-matrix — <key passage>
+
+
+      ## Independent Retest Commands
+
+      - npm run typecheck:
+
+      ```text
+
+      <paste raw stdout/stderr and exit code>
+
+      ```
+
+      - Focused A1/A2/S1/S2 tests:
+
+      ```text
+
+      <paste exact commands, raw stdout/stderr, and exit codes>
+
+      ```
+
+      - npm test:
+
+      ```text
+
+      <paste raw stdout/stderr and exit code>
+
+      ```
+
+      - npm run test:smoke:
+
+      ```text
+
+      <paste raw stdout/stderr and exit code>
+
+      ```
+
+
+      ## Behavioral Proof Register
+
+      | requirement_ref | behavior_claim | runtime_proof_expected | evidence_ref |
+      status | closure_path | gate_decision_basis |
+
+      | --- | --- | --- | --- | --- | --- | --- |
+
+      | A1 | Reload rebuilds defaults/effective config for late enabled sensors and
+      preserves all-or-keep-old on failure. | Focused fake-host/runtime probe and
+      failure-path regression. | <test/log ref> | PROVEN/UNPROVEN/BLOCKED | <closure>
+      | <basis> |
+
+      | A2 | Shutdown helper escalation and geo native helper abort-signal propagation
+      are complete. | Focused lifecycle and geo/native supervisor tests. | <test/log
+      ref> | PROVEN/UNPROVEN/BLOCKED | <closure> | <basis> |
+
+      | S1 | Default widget is disabled and fake-host no-config startup creates no
+      widget. | Startup/default regression test. | <test/log ref> | PROVEN/UNPROVEN/BLOCKED
+      | <closure> | <basis> |
+
+      | S2 | Default render order is [clock,lapse,geo] and fallback appends remaining
+      sensors. | Default/fallback rendering regression test. | <test/log ref> | PROVEN/UNPROVEN/BLOCKED
+      | <closure> | <basis> |
+
+
+      ## No Live Overclaim
+
+      - live_pi_claim_made: false
+
+      - fake_host_or_native_supervisor_scope: <state exactly what was and was not
+      proven>
+
+
+      ## Headline
+
+      - [ ] PASS: All A1/A2/S1/S2 rows are PROVEN with raw command evidence.
+
+      - [ ] PASS_WITH_DEBT: Only explicit non-blocking debt remains with non-intersection
+      rationale.
+
+      - [ ] FAIL: Any blocker remains UNPROVEN/BLOCKED or any required command fails.'
+    depends_on:
+    - finalization-arch-spec-blockers-fix
+    agent: integration-verifier
