@@ -10311,6 +10311,245 @@ phases:
       ## checklist_receipt
 
       All nine checklist receipt coverage items proven; blockers none.'
+  - id: release-smoke-fix-dynamic-reload-live-blockers
+    name: Fix live Pi dynamic reload cache bust and invalid replacement blockers
+    status: pending
+    description: 'step_type: implementation
+
+      work_type: defect_repair
+
+      agent_source: project
+
+      TARGET STATE: `/dasein reload` in a live Pi directory/package extension install
+      re-imports changed user-added local `src/sensors/*.ts` modules, updates manifest/rendered
+      context on valid changes, and fails safely for invalid replacements by preserving
+      the previous registry/config/rendered context while surfacing SensorLoadError
+      evidence through `/dasein status` and `/dasein sensors`.
+
+
+      BOUNDING BOX:
+
+      - Primary runtime surfaces: `src/index.ts` reload command path and `src/core/sensor-loader.ts`
+      dynamic import/admission path.
+
+      - Smoke/proof surfaces: `tests/smoke/`, `scripts/`, package `test:smoke` flow,
+      and any existing live Pi smoke runner artifacts.
+
+      - Shared contracts: `src/core/types.ts`, `src/core/rendering.ts`, and command
+      result builders only if required to surface load errors without changing public
+      command semantics.
+
+
+      PROVENANCE / DISPOSITION:
+
+      - provenance: introduced_or_exposed_by_live_release_smoke
+
+      - disposition: blocking-now for `release-smoke-dynamic-reload`, `release-smoke-native-helper`,
+      `release-smoke-support-claim-ledger`, and `release-smoke-gate` because live
+      reload support claims cannot pass while changed modules are stale or invalid
+      replacements are silently accepted.
+
+
+      REQUIREMENT TRACEABILITY MATRIX:
+
+      | requirement_id | source_ref + key passage | obligation | owning_step_id |
+      checklist_item | evidence_field | status | non_intersection_or_escalation |
+
+      | --- | --- | --- | --- | --- | --- | --- | --- |
+
+      | R1 | docs/PRD.md#7-11-sensor-reload + docs/PRD.md#9-7-sensor-loading-and-reload
+      | `/dasein reload` reflects changed user-added local sensor module content in
+      directory/package mode | release-smoke-fix-dynamic-reload-live-blockers | cache-bust
+      checklist item | cache_bust_proof | OWNED | Blocks release smoke until proven
+      |
+
+      | R2 | docs/TECHNICAL_DESIGN.md#sensor-loading-and-reload | changed sensor modules
+      must be cache-busted rather than served from stale import cache | release-smoke-fix-dynamic-reload-live-blockers
+      | cache-bust checklist item | import_cache_strategy_and_test | OWNED | Blocks
+      release smoke until proven |
+
+      | R3 | docs/TECHNICAL_DESIGN.md#sensor-loading-and-reload + CONSTITUTION.md#extension-and-sensor-laws
+      | invalid replacement must not corrupt active registry/config/rendered context
+      | release-smoke-fix-dynamic-reload-live-blockers | invalid reload safety checklist
+      item | old_state_preserved_proof | OWNED | Blocks release smoke until proven
+      |
+
+      | R4 | CONSTITUTION.md#testing-and-gates | live Pi boundary claims require live
+      Pi binary/runtime evidence, not mock-only proof | release-smoke-dynamic-reload
+      | existing dynamic reload smoke checklist | live_smoke_stdout_stderr | OWNED
+      | Retest owns final live proof after this fix |
+
+
+      CONSTRAINTS:
+
+      - Do not introduce file watchers, automatic background reloads, remote sensor
+      loading, marketplace/package install semantics, or new non-Pi runtime npm dependencies.
+
+      - Preserve single-file packaged mode as explicitly unsupported for user-added
+      sensor discovery.
+
+      - Preserve config precedence and runtime override semantics; invalid sensor
+      reload must not clear user runtime changes or durable config.
+
+      - Preserve deterministic render ordering and typed-state envelope filtering;
+      sensors must not own final prompt text or ordering.
+
+      - Keep the fix scoped to dynamic reload admission/cache-busting/error surfacing
+      and its focused tests/smoke proof.
+
+
+      ## Gate Preview (what downstream gate WILL reject)
+
+      1. `/dasein reload` reports ok while changed `live_smoke` manifest/rendered
+      context still shows stale v1 after the file changed to v2.
+
+      2. Invalid replacement sensor is silently accepted, clears old loaded state,
+      or fails without surfacing load errors in `/dasein status` or `/dasein sensors`.
+
+      3. Evidence relies only on fake-host/unit proof and omits the live Pi `/opt/homebrew/bin/pi`
+      dynamic reload smoke transcript.
+
+      4. A fix that appends query strings but does not explain/verify the real Node/tsx
+      import cache behavior for changed `.ts` modules.
+
+
+      ## Completion Criteria (stub exclusion)
+
+      This is an IMPLEMENTATION step. Stub-only completion is NOT acceptable. Each
+      deliverable MUST contain substantive logic that processes changed sensor files
+      and invalid replacement failures differently based on real input; hardcoded
+      smoke responses or fake-host-only paths do not satisfy this step.
+
+
+      <side_effect_budget>Allowed: product code/test/smoke-runner edits required to
+      fix dynamic reload, disposable local sensor fixture under live smoke extension
+      root, and cleanup evidence. Forbidden: production user config pollution, persistent
+      live smoke sensors, automatic watchers, new runtime dependencies, broad redesign
+      of sensor marketplace semantics, or fake-host substitution for live release
+      proof.</side_effect_budget>
+
+      <risk_probes>1. Verify cache busting against the actual runtime loader used
+      by live Pi/tsx, not only a mocked module list. 2. Verify all-or-keep-old semantics:
+      registry, effective config, rendered context, and surfaced load errors after
+      invalid replacement. 3. Verify status/sensors expose loadErrors without leaking
+      exception text into final injected context.</risk_probes>'
+    verification: '- [ ] Targeted code/tests demonstrate that `/dasein reload` cache-busts
+      changed `src/sensors/*.ts` modules and updates manifest/rendered context from
+      v1 to v2.
+
+      - [ ] Targeted code/tests demonstrate invalid replacement sensor reload fails
+      or is scoped-failure, preserves previous registry/config/rendered context, and
+      surfaces SensorLoadError/loadErrors in `/dasein status` and `/dasein sensors`.
+
+      - [ ] `npm run typecheck` exits 0 with raw stdout/stderr captured.
+
+      - [ ] `npm test` exits 0 with raw stdout/stderr captured.
+
+      - [ ] `npm run test:smoke -- tests/smoke/pi-dynamic-reload.test.ts` or the documented
+      live Pi equivalent using `/opt/homebrew/bin/pi` v0.78.1 exits 0 and proves cacheBustManifestV2=true,
+      renderedContextAfterChangeHasV2=true, invalidReloadFails=true or scoped failure,
+      and invalidLoadErrorsReportedInSensorsOrStatus=true.
+
+      - [ ] Evidence confirms disposable live sensor fixtures are cleaned up and no
+      persistent user config/product docs are mutated outside the fix scope.'
+    evidence_template: '## refs Read Confirmation (MANDATORY)
+
+      For each ref in this step:
+
+      - docs/TECHNICAL_DESIGN.md#sensor-loading-and-reload — <key passage or NOT READ:
+      reason>
+
+      - docs/TECHNICAL_DESIGN.md#testing-gate-matrix — <key passage or NOT READ: reason>
+
+      - docs/PRD.md#7-11-sensor-reload — <key passage or NOT READ: reason>
+
+      - docs/PRD.md#9-7-sensor-loading-and-reload — <key passage or NOT READ: reason>
+
+      - CONSTITUTION.md#extension-and-sensor-laws — <key passage or NOT READ: reason>
+
+      - CONSTITUTION.md#testing-and-gates — <key passage or NOT READ: reason>
+
+
+      ## Dynamic Reload Fix Receipt
+
+      - changed_files: <list>
+
+      - cache_bust_strategy: <how changed .ts modules are re-imported in live Pi/tsx
+      runtime>
+
+      - old_state_preserved_strategy: <how invalid reload keeps registry/config/rendered
+      context>
+
+      - load_error_surface: <status/sensors fields proving SensorLoadError visibility>
+
+
+      ## Commands and Raw Output
+
+      - command: npm run typecheck
+
+      - raw_stdout_stderr: <paste>
+
+      - exit_code: <code>
+
+
+      - command: npm test
+
+      - raw_stdout_stderr: <paste>
+
+      - exit_code: <code>
+
+
+      - command: npm run test:smoke -- tests/smoke/pi-dynamic-reload.test.ts OR documented
+      live Pi equivalent
+
+      - pi_binary: /opt/homebrew/bin/pi
+
+      - pi_version: 0.78.1
+
+      - raw_stdout_stderr: <paste>
+
+      - exit_code: <code>
+
+
+      ## Behavioral Proof Fields
+
+      - initial_keys: [clock, geo, lapse]
+
+      - valid_added_sensor_key: live_smoke
+
+      - valid_reload_result: <ok (4 sensors) or equivalent>
+
+      - cacheBustManifestV2: true|false
+
+      - renderedContextAfterChangeHasV2: true|false
+
+      - invalidReloadFails_or_scopedFailure: true|false
+
+      - previousRegistryPreservedAfterInvalid: true|false
+
+      - previousConfigPreservedAfterInvalid: true|false
+
+      - previousRenderedContextPreservedAfterInvalid: true|false
+
+      - invalidLoadErrorsReportedInSensorsOrStatus: true|false
+
+      - cleanup_proof: <fixture removed / disposable config cleaned>
+
+
+      ## Checklist Receipt
+
+      - cache_bust_changed_module: PASS|FAIL|BLOCKED with evidence ref
+
+      - invalid_reload_safe_failure: PASS|FAIL|BLOCKED with evidence ref
+
+      - status_sensors_error_surface: PASS|FAIL|BLOCKED with evidence ref
+
+      - typecheck_npm_test: PASS|FAIL|BLOCKED with evidence ref
+
+      - live_smoke: PASS|FAIL|BLOCKED with evidence ref'
+    depends_on:
+    - release-smoke-live-pi-tui
+    agent: frontend-engineer
 - id: finalization
   name: Documentation Sync and Final Deep Review
   status: locked
