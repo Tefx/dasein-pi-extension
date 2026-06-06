@@ -12585,3 +12585,208 @@ phases:
     - finalization-doc-sync
     - finalization-full-wiring-audit
     agent: gate-reviewer
+  - id: finalization-audit-blockers-fix
+    name: Fix concurrent finalization audit blockers
+    status: pending
+    description: 'step_type: implementation
+
+      TARGET STATE: One batched remediation closes the four concurrent finalization
+      audit blockers before either the full wiring audit or black-box verification
+      reruns.
+
+
+      BOUNDING BOX:
+
+      - src/sensors/geo.ts
+
+      - src/index.ts
+
+      - sensor loading/reload paths used by src/index.ts and ConfigManager
+
+      - lapse command/action handling for `/dasein lapse reset`
+
+      - focused tests/probes under existing test/smoke harness locations
+
+
+      REQUIREMENT-TO-CHECKLIST TRACEABILITY MATRIX:
+
+      | requirement_id | source_ref + key passage | obligation | owning_step_id |
+      checklist_item | evidence_field | status | non_intersection_or_escalation |
+
+      | --- | --- | --- | --- | --- | --- | --- | --- |
+
+      | FIX-B1-GEO-ROOT | docs/TECHNICAL_DESIGN.md#builtin-sensors/geo + CONSTITUTION.md#extension-and-sensor-laws
+      | Native macOS location helper path must be resolved from the real Pi extension
+      root, not process cwd. | finalization-audit-blockers-fix | Geo helper supervisor
+      uses injected/configured extension root from real runtime and never process.cwd()
+      for helper resolution. | geo_helper_root_probe | OWNED | Blocks final wiring
+      and black-box runtime proof. |
+
+      | FIX-B2-DUPLICATE-SENSORS | docs/TECHNICAL_DESIGN.md#sensor-loading-and-reload/startup-scan
+      + docs/PRD.md#9-7-sensor-loading-and-reload | Duplicate sensor candidates/loadErrors
+      must not leave duplicate user sensors active at startup. | finalization-audit-blockers-fix
+      | Startup keeps safe on duplicate-key load errors using all-or-no-admit candidate
+      handling or startup failure behavior that surfaces errors. | duplicate_sensor_startup_probe
+      | OWNED | Blocks final wiring and sensor loading acceptance. |
+
+      | FIX-B3-RELOAD-PATHS | docs/TECHNICAL_DESIGN.md#sensor-loading-and-reload/manual-reload
+      + docs/PRD.md#7-11-sensor-reload | `/dasein reload` must preserve/report launchReappliedPaths
+      returned by ConfigManager reload after launch overlay reapplication. | finalization-audit-blockers-fix
+      | Reload lifecycle/result path passes launchReappliedPaths through src/index.ts
+      to the public reload result. | reload_paths_probe | OWNED | Blocks final black-box
+      status/reload payload proof. |
+
+      | FIX-B4-LAPSE-RESET | docs/TECHNICAL_DESIGN.md#builtin-sensors/lapse-continuity
+      + docs/PRD.md#9-5-builtin-sensors | `/dasein lapse reset` must clear in-memory
+      and persisted lapse timestamps instead of returning unknown-sensor-action. |
+      finalization-audit-blockers-fix | Fake-host and live Pi wrapper public command
+      path accept `/dasein lapse reset` and clear both stores. | lapse_reset_probe
+      | OWNED | Blocks black-box public command acceptance. |
+
+
+      REPAIR CONTRACT:
+
+      - Fix ALL four blockers in this one step; do not split into parallel sibling
+      fix steps.
+
+      - Treat these as blocker-class finalization debt regardless of provenance.
+
+      - Preserve Dasein constitutional boundaries: no project-local config inference,
+      no hidden watchers, no hidden sensor priority, no request-path I/O, and no false
+      live-support claims.
+
+      - For B1, extension root must come from the real runtime/plugin context or explicit
+      runtime configuration; `process.cwd()` is forbidden as helper-root authority.
+
+      - For B2, duplicate sensor loadErrors must produce keep-safe behavior: either
+      no duplicate candidates admitted, or startup blocks/keeps old safe state while
+      surfacing load errors.
+
+      - For B3, do not drop `launchReappliedPaths` between ConfigManager reload and
+      lifecycle/public reload output.
+
+      - For B4, the public fake-host and live-wrapper slash command path must route
+      `lapse reset` to real lapse reset semantics and prove memory + durable timestamp
+      clearing.
+
+
+      ## Completion Criteria (stub exclusion)
+
+      This is an IMPLEMENTATION step. Stub-only completion is NOT acceptable. Each
+      deliverable MUST contain substantive logic that processes its inputs and produces
+      outputs that vary based on those inputs. Private stub classes (`_Runtime*`,
+      `_Stub*`, `_Placeholder*`) do not satisfy this requirement.
+
+
+      <side_effect_budget>Allowed: production TypeScript fixes and focused tests/probes
+      for the four listed blockers. Forbidden: editing plan.yaml directly, changing
+      CONSTITUTION.md, weakening specs/docs to match broken behavior, replacing runtime
+      proof with mocks only, or introducing new runtime npm dependencies.</side_effect_budget>
+
+      <risk_probes>1. Launch from a cwd different from the extension root and verify
+      geo helper path still resolves correctly. 2. Duplicate sensor candidates must
+      not remain active after duplicate-key loadErrors. 3. Public command/reload outputs
+      must preserve exact observable fields and mutate only documented lapse/reset
+      state.</risk_probes>'
+    verification: '- [ ] `npm run typecheck` exits 0 after the fixes.
+
+      - [ ] `npm test` exits 0 after the fixes.
+
+      - [ ] `npm run test:smoke` exits 0 after the fixes.
+
+      - [ ] Focused geo helper probe/test proves helper supervisor extensionRoot comes
+      from real runtime/configured extension root, not `process.cwd()`, including
+      a different-cwd launch case.
+
+      - [ ] Focused duplicate-sensor startup probe/test proves duplicate-key loadErrors
+      do not leave duplicate user sensors active and errors are surfaced.
+
+      - [ ] Focused reload probe/test proves `launchReappliedPaths` from ConfigManager
+      reload reaches `/dasein reload` output/result after launch overlays reapply.
+
+      - [ ] Focused lapse reset probe/test proves fake-host and live Pi wrapper public
+      `/dasein lapse reset` path clears both in-memory and persisted lapse timestamps
+      and no longer returns `unknown-sensor-action`.
+
+      - [ ] Evidence includes sibling-search notes for related helper-root, sensor-loader
+      duplicate, reload-result, and lapse-action paths so the fix is not single-call-site
+      only.'
+    evidence_template: '## refs Read Confirmation (MANDATORY)
+
+      For each ref in this step:
+
+      - docs/TECHNICAL_DESIGN.md#builtin-sensors/geo — <key passage or NOT READ: reason>
+
+      - docs/TECHNICAL_DESIGN.md#sensor-loading-and-reload/startup-scan — <key passage
+      or NOT READ: reason>
+
+      - docs/TECHNICAL_DESIGN.md#sensor-loading-and-reload/manual-reload — <key passage
+      or NOT READ: reason>
+
+      - docs/TECHNICAL_DESIGN.md#builtin-sensors/lapse-continuity — <key passage or
+      NOT READ: reason>
+
+      - docs/PRD.md#9-5-builtin-sensors — <key passage or NOT READ: reason>
+
+      - docs/PRD.md#9-7-sensor-loading-and-reload — <key passage or NOT READ: reason>
+
+      - CONSTITUTION.md#testing-and-gates — <key passage or NOT READ: reason>
+
+
+      ## Batched Fix Receipt
+
+      - files_changed: <list>
+
+      - typecheck_command: npm run typecheck
+
+      - typecheck_raw_output: <paste>
+
+      - typecheck_exit_code: <code>
+
+      - unit_command: npm test
+
+      - unit_raw_output: <paste>
+
+      - unit_exit_code: <code>
+
+      - smoke_command: npm run test:smoke
+
+      - smoke_raw_output: <paste>
+
+      - smoke_exit_code: <code>
+
+
+      ## Blocker Proof Fields
+
+      - geo_helper_root_probe: <command/probe, raw output, cwd-vs-extension-root proof>
+
+      - duplicate_sensor_startup_probe: <command/probe, raw output, active candidate/loadErrors
+      proof>
+
+      - reload_paths_probe: <command/probe, raw output showing launchReappliedPaths>
+
+      - lapse_reset_probe: <command/probe, raw output showing fake-host + live-wrapper
+      path or exact live blocker, memory + persisted clearing>
+
+
+      ## Sibling Search / Regression Notes
+
+      - helper_root_search: <grep/search output>
+
+      - duplicate_sensor_search: <grep/search output>
+
+      - reload_result_search: <grep/search output>
+
+      - lapse_action_search: <grep/search output>
+
+
+      ## Headline
+
+      - [ ] PASS: all four blockers fixed with required command and focused proof
+      receipts.
+
+      - [ ] FAIL: any blocker remains, any command fails, or proof is mock-only where
+      public/runtime evidence is required.'
+    depends_on:
+    - finalization-doc-sync
+    agent: frontend-engineer
