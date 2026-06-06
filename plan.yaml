@@ -15147,34 +15147,34 @@ phases:
       and geo `context.signal` propagation, because either half can close superficially
       while the other remains broken. 3. Confirm default behavior from startup/no
       config/no launch, not only fixture-level defaults.</risk_probes>'
-    verification: '- [ ] refs confirmation cites key passages for all refs relevant
+    verification: '- [x] refs confirmation cites key passages for all refs relevant
       to A1/A2/S1/S2.
 
-      - [ ] A1 independent retest reproduces the manual reload late-sensor scenario
+      - [x] A1 independent retest reproduces the manual reload late-sensor scenario
       and proves `reloadOk=true`, late sensor listed/enabled, and `contextHasLate=true`.
 
-      - [ ] A1 independent retest proves reload failure preserves previous effective
+      - [x] A1 independent retest proves reload failure preserves previous effective
       config/defaults, registry/runtimes, rendered state, and overlays.
 
-      - [ ] A2 independent retest proves shutdown invokes helper `abort`, `terminate`,
+      - [x] A2 independent retest proves shutdown invokes helper `abort`, `terminate`,
       and `kill` hooks per contract/timeout and preserves cleanup error aggregation.
 
-      - [ ] A2 independent retest proves geo refresh passes `context.signal` to native
+      - [x] A2 independent retest proves geo refresh passes `context.signal` to native
       helper supervision and abort cancels helper work without live overclaim.
 
-      - [ ] S1 independent retest proves default `core.widgetEnabled=false` and no
+      - [x] S1 independent retest proves default `core.widgetEnabled=false` and no
       widget is created at fake-host startup with no config/launch.
 
-      - [ ] S2 independent retest proves default `core.renderOrder=["clock","lapse","geo"]`
+      - [x] S2 independent retest proves default `core.renderOrder=["clock","lapse","geo"]`
       and remaining enabled sensors render through fallback ordering.
 
-      - [ ] Raw output is provided for `npm run typecheck`, focused A1/A2/S1/S2 tests,
+      - [x] Raw output is provided for `npm run typecheck`, focused A1/A2/S1/S2 tests,
       `npm test`, and `npm run test:smoke`.
 
-      - [ ] Behavioral proof register marks all A1/A2/S1/S2 rows PROVEN or gives explicit
+      - [x] Behavioral proof register marks all A1/A2/S1/S2 rows PROVEN or gives explicit
       blocker closure path; no NEEDS_TEST/UNPROVEN row is bypassed.
 
-      - [ ] Evidence explicitly states no live Pi support claim was made from fake-host/mock/native-supervisor
+      - [x] Evidence explicitly states no live Pi support claim was made from fake-host/mock/native-supervisor
       evidence.'
     evidence_template: '## refs Read Confirmation (MANDATORY)
 
