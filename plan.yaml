@@ -16701,7 +16701,7 @@ phases:
       are reported in evidence.'
 - id: status_detail_control
   name: Status Bar Detail Control
-  status: pending
+  status: in_progress
   gate: Settings exposes a status bar detail level without changing quiet default
     or leaking raw ambient context.
   depends_on:
@@ -16709,7 +16709,7 @@ phases:
   steps:
   - id: status-detail-setting
     name: Add status bar detail setting
-    status: pending
+    status: claimed
     description: Add a core setting for status bar detail level so users can choose
       quiet/default vs richer visible status. Preserve quiet default and no raw ambient/debug
       context by default. Expose it in SettingsList and slash/config mutation validation.
@@ -16717,3 +16717,5 @@ phases:
       prove default remains quiet and SettingsList exposes the detail control.
     evidence_template: Config field added; SettingsList control; status rendering
       behavior; commands run and outputs.
+    claimed_by: llm-agent-expert
+    claimed_at: '2026-06-06T17:47:38.089885+00:00'
