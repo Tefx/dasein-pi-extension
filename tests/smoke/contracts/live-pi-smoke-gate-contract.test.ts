@@ -498,7 +498,13 @@ export default function(pi) {
   const results = recordArrayOf(proof.results, "slashCommandProof.results");
   assert.equal(registrations.some((entry) => entry.name === "dasein" && entry.literalRegistered === "/dasein" && entry.rawArgs === true && entry.completions === true), true);
   assert.equal(invocations.some((entry) => entry.name === "dasein" && entry.literalInvoked === "/dasein" && entry.args === "status" && entry.mode === "print"), true);
-  assert.equal(results.some((entry) => entry.ok === true && entry.command === "status"), true);
+  const statusResult = results.find((entry) => entry.ok === true && entry.command === "status");
+  assert.ok(statusResult, "live /dasein status must return a successful status command result");
+  const statusData = recordOf(statusResult.data, "slashCommandProof.status.data");
+  const hiddenContributors = recordArrayOf(statusData.hiddenContributors, "slashCommandProof.status.data.hiddenContributors");
+  assert.equal(hiddenContributors.some((entry) => entry.key === "geo" && entry.hiddenReason === "disabled" && recordOf(entry.sensorMetadata, "geo hidden contributor metadata").key === "geo"), true, "live /dasein status must keep disabled geo inspectable through hiddenContributors");
+  const lapseControls = recordOf(statusData.effectiveLapseControls, "slashCommandProof.status.data.effectiveLapseControls");
+  assert.deepEqual(lapseControls, { enabled: true, persist: true, agent: true, agentFields: ["user_idle"] });
   writeJson(join(latestArtifactDir, "slash-command-proof.json"), proof);
   return proof;
 };

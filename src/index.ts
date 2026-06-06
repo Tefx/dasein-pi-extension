@@ -22,6 +22,8 @@ import {
   type DaseinStatusError,
   type PiMechanismError,
   type PiMechanismEvidenceStatus,
+  type StatusContributorData,
+  type StatusEffectiveLapseControls,
   type StatusPermissionData,
 } from "./commands/dasein-command.ts";
 import { createConfigManager } from "./core/config.ts";
@@ -456,6 +458,36 @@ const permissionForSensor = (entry: SensorRegistryEntry, snapshot: SensorSnapsho
     health,
     checkedAt: snapshot?.collected_at ?? null,
     ...(snapshot?.error === undefined ? {} : { error: snapshot.error }),
+  };
+};
+
+const hiddenReasonForSensor = (config: Readonly<SensorConfig>): StatusContributorData["hiddenReason"] | null => {
+  if (config.enabled !== true) return "disabled";
+  if (config.ui !== true) return "ui-hidden";
+  if (config.agent !== true) return "agent-hidden";
+  return null;
+};
+
+const hiddenReasonForExternal = (
+  config: Readonly<{ ui: boolean; agent: boolean }>,
+  snapshot: Readonly<ExternalStateSnapshot>,
+  now: number,
+): StatusContributorData["hiddenReason"] | null => {
+  if (now > snapshot.expiresAt) return "expired";
+  if (config.ui !== true) return "ui-hidden";
+  if (config.agent !== true) return "agent-hidden";
+  return null;
+};
+
+const stringArray = (value: unknown): string[] => Array.isArray(value) ? value.filter((item): item is string => typeof item === "string") : [];
+
+const effectiveLapseControlsFor = (config: Readonly<DaseinConfig>): StatusEffectiveLapseControls => {
+  const lapseConfig = config.sensors.lapse;
+  return {
+    enabled: lapseConfig?.enabled === true,
+    persist: lapseConfig?.persist === true,
+    agent: lapseConfig?.agent === true,
+    agentFields: stringArray(lapseConfig?.agentFields).sort(),
   };
 };
 
@@ -991,18 +1023,55 @@ class DaseinAmbientContextBroker {
     }));
   }
 
+  private hiddenContributors(sensorMetadata: readonly SensorInspectabilityMetadata[], now: number): StatusContributorData[] {
+    const metadataByKey = new Map(sensorMetadata.map((item) => [item.key, item]));
+    const sensorContributors = this.entries.flatMap((entry): StatusContributorData[] => {
+      const config = this.config.sensors[entry.spec.key] ?? entry.spec.defaults;
+      const hiddenReason = hiddenReasonForSensor(config);
+      if (hiddenReason === null) return [];
+      const metadata = metadataByKey.get(entry.spec.key);
+      return [{
+        key: entry.spec.key,
+        kind: "sensor",
+        enabled: config.enabled === true,
+        uiVisible: config.ui === true,
+        agentVisible: config.agent === true,
+        hiddenReason,
+        ...(metadata === undefined ? {} : { sensorMetadata: metadata }),
+      }];
+    });
+    const externalContributors = this.stateStore.listExternalStates().flatMap((external): StatusContributorData[] => {
+      const config = this.config.external[external.key] ?? { ui: true, agent: false };
+      const hiddenReason = hiddenReasonForExternal(config, external, now);
+      if (hiddenReason === null) return [];
+      return [{
+        key: external.key,
+        kind: "external",
+        enabled: now <= external.expiresAt,
+        uiVisible: config.ui === true,
+        agentVisible: config.agent === true,
+        hiddenReason,
+      }];
+    });
+    return [...sensorContributors, ...externalContributors].sort((left, right) => `${left.kind}:${left.key}`.localeCompare(`${right.kind}:${right.key}`));
+  }
+
   private statusResult(): DaseinCommandResult {
     const support = classifyPiSupport(this.pi.version ?? null);
+    const now = Date.now();
     const rendered = this.stateStore.getRenderedContext();
+    const sensorMetadata = this.sensorMetadata();
     const result = buildStatusCommandResult({
       piVersion: this.pi.version ?? null,
       configPath: CONFIG_PATH,
       statePath: STATE_PATH,
       activeSensors: this.entries.filter((entry) => this.config.sensors[entry.spec.key]?.enabled === true).map((entry) => entry.spec.key),
       disabledSensors: this.entries.filter((entry) => this.config.sensors[entry.spec.key]?.enabled !== true).map((entry) => entry.spec.key),
+      hiddenContributors: this.hiddenContributors(sensorMetadata, now),
+      effectiveLapseControls: effectiveLapseControlsFor(this.config),
       rendered: { omittedKeys: rendered.omittedKeys, truncated: rendered.truncated },
-      permissions: this.entries.map((entry) => permissionForSensor(entry, this.stateStore.getSensorSnapshot(entry.spec.key), Date.now())),
-      sensorMetadata: this.sensorMetadata(),
+      permissions: this.entries.map((entry) => permissionForSensor(entry, this.stateStore.getSensorSnapshot(entry.spec.key), now)),
+      sensorMetadata,
       loadErrors: this.loadErrors,
       statusErrors: this.statusErrors,
       launchArgsApplied: this.launchArgsApplied,

@@ -279,6 +279,7 @@ export const expectedStatusData = (configPath = "~/.pi/dasein/config.json", stat
       hiddenReason: "disabled",
     },
   ],
+  effectiveLapseControls: { enabled: true, persist: true, agent: true, agentFields: ["user_idle"] },
   rendered: { omittedKeys: ["geo"], truncated: false },
   permissions: [
     {

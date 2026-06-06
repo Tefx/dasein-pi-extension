@@ -149,6 +149,13 @@ export interface StatusPermissionData {
   error?: SensorError;
 }
 
+export interface StatusEffectiveLapseControls {
+  enabled: boolean;
+  persist: boolean;
+  agent: boolean;
+  agentFields: string[];
+}
+
 export interface StatusCommandData {
   piVersion: string | null;
   minimumPiVersion: "0.78.1";
@@ -164,6 +171,7 @@ export interface StatusCommandData {
   activeSensors: SensorKey[];
   disabledSensors: SensorKey[];
   hiddenContributors: StatusContributorData[];
+  effectiveLapseControls: StatusEffectiveLapseControls;
   rendered: Pick<RenderedContext, "omittedKeys" | "truncated">;
   permissions: StatusPermissionData[];
   sensorMetadata: SensorInspectableMetadata[];
@@ -272,6 +280,7 @@ export interface BuildStatusCommandResultOptions {
   activeSensors?: SensorKey[];
   disabledSensors?: SensorKey[];
   hiddenContributors?: StatusContributorData[];
+  effectiveLapseControls?: StatusEffectiveLapseControls;
   permissions?: StatusPermissionData[];
   sensorMetadata?: SensorInspectableMetadata[];
   loadErrors?: SensorLoadError[];
@@ -857,6 +866,7 @@ export const buildStatusCommandResult = (options: BuildStatusCommandResultOption
     activeSensors: options.activeSensors ?? [],
     disabledSensors: options.disabledSensors ?? [],
     hiddenContributors: options.hiddenContributors ?? [],
+    effectiveLapseControls: options.effectiveLapseControls ?? { enabled: false, persist: false, agent: false, agentFields: [] },
     rendered: options.rendered ?? { omittedKeys: [], truncated: false },
     permissions: options.permissions ?? [],
     sensorMetadata: options.sensorMetadata ?? [],

@@ -17,6 +17,7 @@ test("/dasein status returns Pi version support, mechanism evidence statuses, co
   assert.equal(result.data.configPath, "/tmp/config.json");
   assert.equal(result.data.statePath, "/tmp/state.json");
   assert.equal(result.data.effectiveConfigVersion, 1);
+  assert.deepEqual(result.data.effectiveLapseControls, { enabled: false, persist: false, agent: false, agentFields: [] });
   assert.equal(result.data.launchArgsApplied, false);
   assert.equal(result.data.diskConfigLoaded, false);
   assert.ok(result.data.piMechanisms.length > 0);
@@ -57,6 +58,7 @@ test("/dasein status exposes active/disabled sensors, hidden contributors, permi
   assert.deepEqual(result.data.activeSensors, ["clock", "lapse"]);
   assert.deepEqual(result.data.disabledSensors, ["geo", "weather"]);
   assert.match(JSON.stringify(result.data.hiddenContributors), /disabled|agent-hidden|weather/u);
+  assert.deepEqual(result.data.effectiveLapseControls, { enabled: true, persist: true, agent: true, agentFields: ["user_idle"] });
   assert.match(JSON.stringify(result.data.permissions), /not_determined|missing|disabled/u);
   assert.deepEqual(result.data.rendered, { omittedKeys: ["geo"], truncated: false });
   assert.deepEqual(result.data.loadErrors, []);
