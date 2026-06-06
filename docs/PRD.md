@@ -601,10 +601,9 @@ Command behavior:
 - Invalid paths or values must produce clear errors without partially corrupting runtime config or disk config.
 
 ### 7.9 Agent Context Injection
+Dasein must inject ambient context into the LLM agent only from pre-rendered in-memory state. Agent spacetime awareness is the primary product goal, so `core.agentInjectionEnabled` remains enabled by default; human-facing UI is secondary and must stay quieter than the model instruction channel.
 
-Dasein must inject ambient context into the LLM agent only from in-memory state.
-
-The injected string must:
+The injected context must:
 
 - be short;
 - be deterministic;
@@ -616,17 +615,20 @@ The injected string must:
 - omit external state values with per-key `agent=false`, including the unconfigured external key default;
 - omit sensitive details unless explicitly enabled;
 - omit stale readings or mark them stale according to render config and sensor render behavior;
-- avoid branding-heavy labels.
+- avoid branding-heavy labels;
+- enter the model through Pi's per-turn system/developer prompt path, not through a user-role message.
 
 The injection path must not perform sensor refresh work, filesystem reads, network calls, CoreLocation/helper subprocess calls, or other fresh computation. It must render only the current in-memory readings and external state.
 
-The default injection label must be neutral:
+Dasein must append ambient context during `before_agent_start` by returning an updated `systemPrompt`. Pi may serialize that system prompt to provider-native `developer` or `system` messages according to provider compatibility, but Dasein must not inject ambient context as a `CustomMessage` or other message that Pi `convertToLlm()` serializes as `role:"user"`.
+
+The renderer's canonical diagnostic label remains neutral:
 
 ```text
 [ambient_ctx: local_time=14:32; user_idle=4m]
 ```
 
-This string is hidden agent context, not default human-facing UI. Dasein must not show raw `[ambient_ctx: ...]` text in the default TUI status footer, editor-adjacent chrome, or default settings surface. The raw injected payload may appear only in explicit diagnostics/debug proof paths.
+That string is a renderer/debug representation, not default human-facing UI and not a transcript message. Dasein must not show raw `[ambient_ctx: ...]` text in the default TUI status footer, editor-adjacent chrome, default settings surface, or user-message transcript. Raw renderer payload may appear only in explicit diagnostics/debug proof paths.
 
 The default label must not be:
 
@@ -813,11 +815,12 @@ Current evidence note (2026-06-06): ordinary `npm test` covers all-platform unit
 - `/dasein lapse reset` clears in-memory lapse state and persisted lapse timestamps, does not change config, and reports the result clearly.
 
 ### 9.3 Agent Injection
-
-- Agent injection uses neutral label `[ambient_ctx: ...]` by default.
+- Agent injection remains enabled by default because agent spacetime awareness is Dasein's primary purpose.
+- Agent injection uses Pi's per-turn system prompt path (`before_agent_start.systemPrompt`) so providers receive the context as system/developer instructions according to Pi provider compatibility.
+- Agent injection must not use `CustomMessage`, hidden `display:false` messages, or any other default path that Pi `convertToLlm()` serializes as `role:"user"`.
 - Agent injection does not use `[Dasein: ...]` by default.
 - Agent injection does not include default priority semantics.
-- Agent injection performs no disk I/O, network I/O, location lookup, or subprocess execution during the request path.
+- Agent injection performs no disk I/O, network I/O, location lookup, or subprocess execution during request construction.
 - Agent injection does not trigger sensor refresh work and renders only current in-memory readings.
 - Agent injection omits stale readings or marks them stale according to render config.
 - Agent injection omits sensors where `enabled=false` or `agent=false`.
@@ -826,6 +829,7 @@ Current evidence note (2026-06-06): ordinary `npm test` covers all-platform unit
 - Agent injection output is deterministic for identical in-memory state.
 - Agent injection output is bounded by `core.maxAgentChars`, default `240` characters.
 - Agent injection remains valid if one sensor fails.
+- Default visible transcript and TUI surfaces do not show the ambient context block unless the user explicitly asks for diagnostics/status output.
 
 ### 9.4 TUI
 
