@@ -9912,7 +9912,7 @@ phases:
       All seven artifact coverage checklist items proven; blockers none.'
   - id: release-smoke-fix-live-pi-tui-checklist-receipt
     name: Strengthen live Pi TUI smoke checklist receipt coverage
-    status: pending
+    status: claimed
     description: 'step_type: implementation
 
       work_type: proof_closure
@@ -10174,6 +10174,8 @@ phases:
     depends_on:
     - release-smoke-fix-live-pi-tui-artifact-coverage
     agent: frontend-engineer
+    claimed_by: frontend-engineer
+    claimed_at: '2026-06-06T08:59:15.108653+00:00'
 - id: finalization
   name: Documentation Sync and Final Deep Review
   status: locked
