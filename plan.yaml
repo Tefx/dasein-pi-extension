@@ -4251,39 +4251,39 @@ phases:
       fallback, or reload path may treat `~/.pi/dasein/sensors` as a sensor directory.
 
       '
-    verification: '- [ ] Test files are limited to tests/native and tests/unit/sensors
+    verification: '- [x] Test files are limited to tests/native and tests/unit/sensors
       plus focused fixtures.
 
-      - [ ] Expected-red evidence covers clock precision, geo defaults/privacy/tags/helper
+      - [x] Expected-red evidence covers clock precision, geo defaults/privacy/tags/helper
       mapping, lapse observe/persistence/reset, and risky user-added sensor acknowledgement
       behavior.
 
-      - [ ] Native helper test definition includes macOS-only execution and explicit
+      - [x] Native helper test definition includes macOS-only execution and explicit
       non-macOS skip reason.
 
-      - [ ] No product sensor/native implementation files are modified by this test-definition
+      - [x] No product sensor/native implementation files are modified by this test-definition
       step.
 
-      - [ ] Expected-red tests/static checks cover first-party/builtin sensor top-level
+      - [x] Expected-red tests/static checks cover first-party/builtin sensor top-level
       side-effect bans: no filesystem, subprocess, network, timer, native helper,
       config, refresh, or action side effects at import time.
 
-      - [ ] Expected-red geo sensor tests explicitly name `sensors.geo.exactCoordinates`
+      - [x] Expected-red geo sensor tests explicitly name `sensors.geo.exactCoordinates`
       and `sensors.geo.exactAddress` and cover positive/negative exact coordinate/address
       output gates.
 
-      - [ ] Expected-red geo tag tests assert `radius_m` integer bounds `1..100000`,
+      - [x] Expected-red geo tag tests assert `radius_m` integer bounds `1..100000`,
       `GeoTagListPayload` shape, and coordinate redaction controlled by `sensors.geo.exactCoordinates`.
 
-      - [ ] Expected-red loader/risk tests explicitly assert `acknowledgedManifestDigest`,
+      - [x] Expected-red loader/risk tests explicitly assert `acknowledgedManifestDigest`,
       `acknowledgementRequired`, `acknowledgementSatisfied`, `defaultEnabled`, and
       `effectiveEnabled` for safe, remote/network, recurring/background, and both-risk
       user-added sensors.
 
-      - [ ] Expected-red native helper tests explicitly assert timeout `3000ms`, kill
+      - [x] Expected-red native helper tests explicitly assert timeout `3000ms`, kill
       grace `250ms`, and backoff sequence `1m -> 5m -> 15m`.
 
-      - [ ] Expected-red loader tests assert `~/.pi/dasein/sensors` is ignored/rejected
+      - [x] Expected-red loader tests assert `~/.pi/dasein/sensors` is ignored/rejected
       and only `<extension_root>/src/sensors/*.ts` is scanned in directory/package
       mode.
 
