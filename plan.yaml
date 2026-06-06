@@ -7150,42 +7150,42 @@ phases:
       HOME/config root, changed paths, and cleanup/reset proof.
 
       '
-    verification: '- [ ] Fake-host launch command/test is recorded exactly with raw
+    verification: '- [x] Fake-host launch command/test is recorded exactly with raw
       output and surface captures.
 
-      - [ ] Runtime evidence shows literal bare `/dasein` output plus separately named
+      - [x] Runtime evidence shows literal bare `/dasein` output plus separately named
       context hook injection, pi.events state update/clear, status/widget updates,
       and SettingsList content.
 
-      - [ ] One safe documented interaction mutates a setting through the fake-host
+      - [x] One safe documented interaction mutates a setting through the fake-host
       UI path and shows canonical persistence delegation.
 
-      - [ ] Proof explicitly labels remaining live Pi/TUI/native obligations as deferred
+      - [x] Proof explicitly labels remaining live Pi/TUI/native obligations as deferred
       to release_smoke, not satisfied here.
 
-      - [ ] Runtime proof captures status payload with `piVersion`, `minimumPiVersion:
+      - [x] Runtime proof captures status payload with `piVersion`, `minimumPiVersion:
       "0.78.1"`, and Pi mechanism evidenceStatuses; below-minimum/unavailable cases
       have closure paths or fixtures.
 
-      - [ ] Runtime proof invokes literal bare `/dasein` and captures TUI SettingsList
+      - [x] Runtime proof invokes literal bare `/dasein` and captures TUI SettingsList
       opening plus non-TUI help/status fallback; `/dasein status` or `/dasein help`
       alone is insufficient.
 
-      - [ ] Client runtime proof captures SettingsList common controls `enabled`,
+      - [x] Client runtime proof captures SettingsList common controls `enabled`,
       `ui`, `agent`, `intervalMs`, `timeoutMs`, `staleAfterMs`, and `initialRefresh`,
       including one recurring interval interaction.
 
-      - [ ] Client runtime proof captures negative SettingsList cases for invalid
+      - [x] Client runtime proof captures negative SettingsList cases for invalid
       external keys, dotted keys, expired external state, and malformed external events,
       plus a valid external key baseline.
 
-      - [ ] Client runtime proof captures `sensors.geo.exactCoordinates` and `sensors.geo.exactAddress`
+      - [x] Client runtime proof captures `sensors.geo.exactCoordinates` and `sensors.geo.exactAddress`
       SettingsList controls or exact blockers.
 
-      - [ ] Runtime proof captures hidden CustomMessage `display:false`, `customType:"dasein"`,
+      - [x] Runtime proof captures hidden CustomMessage `display:false`, `customType:"dasein"`,
       timestamp shape, and LLM user-message conversion evidence.
 
-      - [ ] Evidence distinguishes allowed disposable runtime/config mutation from
+      - [x] Evidence distinguishes allowed disposable runtime/config mutation from
       forbidden repository/product/docs/code mutation and includes cleanup/reset proof.
 
       '
