@@ -16528,3 +16528,10 @@ phases:
       \ test` exit 0; 157 pass.\n\n## Checklist receipt\nAll seven implementation\
       \ checklist items proven and toggled. Diagnostics remain available via `/dasein\
       \ status` and `/dasein sensors`; default visible UI is quiet."
+- id: prompt_channel_hardening
+  name: Prompt Channel Hardening
+  status: pending
+  gate: Dasein ambient context is delivered through system/developer prompt semantics,
+    never as a user/custom message fallback.
+  depends_on:
+  - ux_polish
