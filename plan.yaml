@@ -2927,6 +2927,141 @@ phases:
     - core-command-layer
     - core-behavior-guardrails
     agent: gate-reviewer
+  - id: core-static-boundary-fix
+    name: Fix core static boundary for config runtime imports
+    status: pending
+    description: 'step_type: implementation
+
+      priority: HIGH
+
+      Issue source: `core-static-proof` found blocker B1. Ordinary `npm test` exits
+      1 because `tests/unit/contracts/core-contracts.test.ts` asserts `src/core/config.ts
+      must not import runtime dependencies`, while `src/core/config.ts` imports `node:fs`,
+      `node:fs/promises`, and `node:path`.
+
+
+      TARGET STATE:
+
+      The core contract/static boundary is restored without weakening tests. `src/core/config.ts`
+      remains a contract-scanned core module and no longer imports runtime implementation
+      dependencies. Runtime FS/path behavior is moved to a narrow runtime helper/module
+      that is allowed by the architecture, or an explicit architecture deviation is
+      recorded only if relocation is truly impossible. Existing config/state behavior,
+      atomic write semantics, validation semantics, reload behavior, and focused core
+      tests are preserved.
+
+
+      ## Blockers to Fix (ALL of these, not just the first)
+
+      ### B1: Runtime implementation imports in contract-scanned core config module
+
+      - Failing test: `tests/unit/contracts/core-contracts.test.ts` / `new core contract
+      files do not ship runtime dependencies or implementation imports`
+
+      - Violating module: `src/core/config.ts`
+
+      - Runtime imports to remove from that module: `node:fs`, `node:fs/promises`,
+      `node:path`
+
+      - Remediation target: keep config contracts/static core clean while preserving
+      all runtime config behavior through an architecture-allowed narrow runtime helper.
+
+      - Grep/static hint: prove no `node:fs`, `node:fs/promises`, or `node:path` import
+      remains in `src/core/config.ts`; also inspect sibling core contract-scanned
+      modules for the same runtime dependency pattern.
+
+
+      Root Cause vs Symptom:
+
+      - Root cause: runtime persistence concerns leaked into a contract/static core
+      module scanned by the core contract purity test.
+
+      - Symptom: ordinary `npm test` fails although `npm run typecheck` and the focused
+      core matrix pass.
+
+      - Why this fix is not surface-level: the module boundary must be restored rather
+      than weakening or deleting the contract purity assertion.
+
+
+      CONSTRAINTS:
+
+      - Do NOT weaken, delete, skip, rename, or narrow `tests/unit/contracts/core-contracts.test.ts`
+      to hide B1.
+
+      - Preserve config/state behavior already covered by focused tests, including
+      validation, precedence, reload, and atomic write/fsync expectations.
+
+      - Keep public config/state interfaces stable unless an explicit deviation record
+      explains the architecture necessity, impact, and downstream verification implications.
+
+      - Do NOT introduce request-path I/O into injector/renderer/request construction
+      paths.
+
+
+      ## Completion Criteria (stub exclusion)
+
+      This is an IMPLEMENTATION step. Stub-only completion is NOT acceptable. Each
+      deliverable MUST contain substantive logic that preserves config/state behavior
+      and produces outputs that vary based on inputs. Merely replacing imports with
+      placeholders or no-op helpers does not satisfy this step.
+
+
+      <side_effect_budget>Allowed: TypeScript source and test-support updates narrowly
+      required to restore the core static boundary and preserve existing config/state
+      behavior. Forbidden: weakening contract/static tests, changing unrelated sensors/Pi
+      runtime behavior, or bypassing ordinary CI.</side_effect_budget>
+
+      <risk_probes>1. Verify the fix restores module-boundary purity rather than only
+      satisfying one assertion text. 2. Verify config persistence behavior remains
+      equivalent after moving FS/path runtime logic. 3. Verify ordinary `npm test`
+      is the relevant downstream gate intersection and is not dismissed as pre-existing/out-of-scope.</risk_probes>
+
+
+      ## Gate Preview (what the gate WILL reject)
+
+      1. Contract test weakened or skipped instead of boundary restored.
+
+      2. `src/core/config.ts` still imports `node:fs`, `node:fs/promises`, `node:path`,
+      or equivalent runtime FS/path implementation dependencies.
+
+      3. Focused config/state behavior regresses while the static assertion passes.
+
+      4. Evidence omits raw command output or does not show ordinary `npm test` consideration.'
+    verification: '- [ ] B1 is fixed by restoring the core contract/static boundary
+      without weakening `tests/unit/contracts/core-contracts.test.ts`.
+
+      - [ ] `src/core/config.ts` no longer imports `node:fs`, `node:fs/promises`,
+      `node:path`, or equivalent runtime FS/path implementation dependencies.
+
+      - [ ] Runtime FS/path config behavior is relocated to an architecture-allowed
+      narrow runtime helper, or an explicit deviation record explains why relocation
+      was impossible.
+
+      - [ ] Config/state behavior remains preserved under the focused core matrix
+      and relevant config/state tests.
+
+      - [ ] Ordinary `npm test` is run or, if blocked by a new unrelated blocker,
+      the output is captured and the remaining blocker is identified without hiding
+      B1.'
+    evidence_template: "## refs Read Confirmation (MANDATORY)\nFor each ref in this\
+      \ step:\n- tests/unit/contracts/core-contracts.test.ts — key passage or \"NOT\
+      \ READ: <reason>\"\n- src/core/config.ts — key passage or \"NOT READ: <reason>\"\
+      \n- docs/TECHNICAL_DESIGN.md#core-contracts — key passage or \"NOT READ: <reason>\"\
+      \n- CONSTITUTION.md#testing-and-gates — key passage or \"NOT READ: <reason>\"\
+      \n\n## B1 Fix Report\n- root_cause: <why runtime FS/path imports were present\
+      \ in contract-scanned core>\n- remediation: <files changed and boundary restored>\n\
+      - architecture_deviation: <NONE or explicit deviation record with necessity/impact>\n\
+      - tests_weakened: <NO required; explain if any test changed and why it is not\
+      \ weakened>\n\n## Static Boundary Proof\n- command_or_grep: <exact command proving\
+      \ src/core/config.ts has no node:fs/node:fs/promises/node:path imports>\n- raw_output:\
+      \ |\n    <paste raw output>\n\n## Behavior Preservation Proof\n- command: <focused\
+      \ core matrix/config-state command>\n- raw_stdout_stderr: |\n    <paste raw\
+      \ output>\n- exit_code: <code>\n\n## Ordinary CI Intersection\n- command: npm\
+      \ test\n- raw_stdout_stderr: |\n    <paste raw output>\n- exit_code: <code>\n\
+      - disposition: <B1 closed; any remaining blocker with owner or NONE>"
+    depends_on:
+    - core-static-proof
+    agent: frontend-engineer
 - id: sensors
   name: Builtin Sensors and Native Helper
   status: locked
