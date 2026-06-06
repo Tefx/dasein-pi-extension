@@ -16427,3 +16427,11 @@ phases:
 
       All eleven checklist items proven and toggled. Blockers: none. Overall recommendation
       PASS.'
+- id: ux_polish
+  name: Default UX Polish
+  status: pending
+  gate: 'Default Dasein UI is quiet by default: status bar is summarized, SettingsList
+    starts with common controls, diagnostics remain available on demand, and slash
+    command feedback is visible in TUI.'
+  depends_on:
+  - finalization
