@@ -6611,36 +6611,36 @@ phases:
       work and aggregate cleanup errors without blocking request construction.
 
       '
-    verification: '- [ ] `npm run test:file -- tests/integration/pi-extension.test.ts`
+    verification: '- [x] `npm run test:file -- tests/integration/pi-extension.test.ts`
       passes through the fake Pi host with raw output.
 
-      - [ ] Evidence shows source -> sink path for command registration, flag parsing,
+      - [x] Evidence shows source -> sink path for command registration, flag parsing,
       context injection, events, lifecycle observation, and TUI guarded calls.
 
-      - [ ] Evidence statuses remain non-empty lists and do not report LIVE_SMOKE_VERIFIED
+      - [x] Evidence statuses remain non-empty lists and do not report LIVE_SMOKE_VERIFIED
       from fake-host execution.
 
-      - [ ] Grep evidence shows no `_Runtime*`/`_Stub*`/`_Placeholder*` production
+      - [x] Grep evidence shows no `_Runtime*`/`_Stub*`/`_Placeholder*` production
       dependency is introduced as final wiring.
 
-      - [ ] Evidence covers startup feature probes for each required Pi mechanism
+      - [x] Evidence covers startup feature probes for each required Pi mechanism
       and structured fail-closed `/dasein status` reporting when a fake-host mechanism
       is unavailable.
 
-      - [ ] Evidence proves runtime captures current Pi version when available, reports
+      - [x] Evidence proves runtime captures current Pi version when available, reports
       `minimumPiVersion: "0.78.1"`, classifies below-minimum/unavailable versions,
       and still runs separate feature probes.
 
-      - [ ] Evidence proves literal bare `/dasein` is registered/routed and does not
+      - [x] Evidence proves literal bare `/dasein` is registered/routed and does not
       mutate config/state in either TUI or non-TUI mode.
 
-      - [ ] Evidence explicitly probes `ctx.ui.custom`, wires SettingsList through
+      - [x] Evidence explicitly probes `ctx.ui.custom`, wires SettingsList through
       it only when available, and reports fail-closed status when unavailable.
 
-      - [ ] Evidence proves Pi context hook appends hidden CustomMessage with `display:false`,
+      - [x] Evidence proves Pi context hook appends hidden CustomMessage with `display:false`,
       `customType:"dasein"`, timestamp shape, and conversion to LLM user message.
 
-      - [ ] Evidence proves Pi wiring registers/handles `session_start` and `session_shutdown`,
+      - [x] Evidence proves Pi wiring registers/handles `session_start` and `session_shutdown`,
       routes cleanup to core, and preserves `1000ms` per-sensor cleanup timeout.
 
       '
