@@ -13978,7 +13978,7 @@ phases:
       All eight retest checklist items proven and toggled. Blockers: none.'
   - id: finalization-wiring-blackbox-blockers-fix
     name: Fix wiring and live-smoke finalization blockers
-    status: claimed
+    status: done
     description: 'step_type: implementation
 
       work_type: defect_repair
@@ -14261,6 +14261,94 @@ phases:
     agent: frontend-engineer
     claimed_by: frontend-engineer
     claimed_at: '2026-06-06T12:04:32.810506+00:00'
+    done_at: '2026-06-06T12:28:03.590996+00:00'
+    evidence: '## refs Read Confirmation
+
+      - CONSTITUTION.md#architectural-dogmas — sensors publish typed state; core owns
+      normalization/rendering/Pi injection; sensors do not format final prompt text.
+
+      - CONSTITUTION.md#testing-and-gates — live Pi smoke required for release support
+      claims; schema/golden tests verify typed-state envelope and no sensor-owned
+      final prompt formatting.
+
+      - docs/TECHNICAL_DESIGN.md#configuration-files — global config root and precedence
+      defaults < disk < launch < slash/UI runtime changes; runtime mutations patch
+      canonical paths only.
+
+      - docs/TECHNICAL_DESIGN.md#builtin-sensors — clock/geo/lapse enum contracts
+      for precision/agent fields.
+
+      - docs/TECHNICAL_DESIGN.md#human-ui-rendering — SettingsList simple sensor fields
+      are scalar only and UI changes enter the same validated FIFO config queue.
+
+      - docs/TECHNICAL_DESIGN.md#data-flow — sensor refresh normalizes to typed envelope;
+      LLM injection reads only pre-rendered in-memory agent string.
+
+      - docs/PRD.md#9-6-external-state — external publishers cannot force agent injection;
+      unconfigured keys UI-visible and agent-hidden.
+
+      - package.json — `typecheck`, `test`, and `test:smoke` scripts used as verification
+      commands.
+
+      - tests/smoke/contracts/live-pi-smoke-gate-contract.test.ts — live event-bus
+      proof now separates hidden-by-default and configured-visible phases.
+
+
+      ## Blocker Resolution Report
+
+      - W1: removed orphan `createLapsePersistenceController` export/test seam; source
+      grep has no matches and product reset remains `/dasein lapse reset`.
+
+      - W6: ConfigManager now consumes loaded SensorSpec validation and scalar SensorFieldSpec
+      validation; invalid clock/geo/lapse enum assignments fail through public assignment
+      path.
+
+      - W12: SettingsList simple user sensor field controls now emit ConfigManager-backed
+      mutations; user enum/string/number/boolean controls apply through ConfigManager
+      and invalid enum rejects.
+
+      - W2: removed SensorSpec `renderAgent`/`renderUI` and `SensorViewFragment` contracts
+      from core and builtin sensors; core renderer owns final strings from typed state.
+
+      - LIVE smoke: event-bus proof asserts unconfigured external weather remains
+      agent-hidden, then publicly configures `external.weather.agent=true` before
+      expecting weather/rain in agent context; no false live overclaim.
+
+
+      ## Commits
+
+      - Worker commit: 6a229ced77fd97981d2a074f01f47df5d0147151.
+
+      - Main commit: 0ca618c.
+
+
+      ## Commands
+
+      - `npm run typecheck` exit 0.
+
+      - Focused test command exit 0; 38 pass.
+
+      - `npm test` exit 0; 145 pass.
+
+      - `npm run test:smoke` exit 0; 3 pass.
+
+
+      ## Sibling Search Evidence
+
+      - W1: source seam grep has no `createLapsePersistenceController` matches.
+
+      - W2: no source `renderAgent`/`renderUI`/`SensorViewFragment`/render hook matches.
+
+      - W6: `config.ts` consumes sensorSpecs/validateConfig; `index.ts` passes sensorSpecs;
+      builtin sensors retain validateConfig.
+
+      - W12: SettingsList emits `mutationBackend: ConfigManager` and `mutationForValue`
+      config-manager assignments.
+
+
+      ## checklist_receipt
+
+      All ten checklist items proven and toggled. Blockers: none.'
   - id: finalization-wiring-blackbox-blockers-retest
     name: Retest wiring and live-smoke finalization blockers
     status: pending
