@@ -2755,9 +2755,14 @@ phases:
       - [ ] Gate decision basis reviews `core-static-boundary-retest` and confirms
       B1 is PROVEN closed before opening the core gate.
 
+      - [ ] Gate decision basis reviews `core-gate-b4-external-default-retest` and
+      confirms B4 external default agent visibility is PROVEN closed: unconfigured
+      external key is agent-hidden, explicit `external.<key>.agent=true` still appears,
+      unconfigured UI remains visible, and B1/B2/B3 remain closed.
+
       - [ ] No unresolved request-path, config/state, typed envelope, command mutation,
-      external event, or ordinary-CI blocker intersects sensors/pi_runtime/system_wiring
-      gates.
+      external event, renderer visibility, agent injection/privacy, or ordinary-CI
+      blocker intersects sensors/pi_runtime/system_wiring gates.
 
       - [ ] Final gate verdict is OPEN or BLOCKED with explicit blockers and required
       actions.
@@ -2838,6 +2843,7 @@ phases:
     - core-behavior-guardrails
     - core-static-boundary-retest
     - core-gate-blocker-retest
+    - core-gate-b4-external-default-retest
     agent: gate-reviewer
     claimed_by: gate-reviewer
     claimed_at: '2026-06-06T05:22:42.701512+00:00'
