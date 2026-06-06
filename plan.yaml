@@ -790,7 +790,7 @@ phases:
       import resolution: PROVEN.'
 - id: core
   name: Core Broker Contracts and Implementation
-  status: in_progress
+  status: done
   gate: Core broker behavior is contract-defined, tested, implemented, and independently
     verified against request-path and config/state invariants.
   context: Build the functional core contracts and executable core modules for config,
@@ -2644,7 +2644,7 @@ phases:
       - No product implementation changes: PROVEN.'
   - id: core-gate
     name: Gate core broker phase
-    status: claimed
+    status: done
     description: 'step_type: gate
 
       verification_scope: phase-check
@@ -2847,6 +2847,112 @@ phases:
     agent: gate-reviewer
     claimed_by: gate-reviewer
     claimed_at: '2026-06-06T05:36:03.936865+00:00'
+    done_at: '2026-06-06T05:41:58.681970+00:00'
+    evidence: '## refs Read Confirmation
+
+      - `CONSTITUTION.md#testing-and-gates` — mock tests are not integration proof;
+      request-path injector static checks must forbid disk/network/subprocess/dynamic
+      import/sensor/config mutation paths; golden rendering checks prove typed envelope/order/truncation/injection.
+
+      - `docs/TECHNICAL_DESIGN.md#testing-gate-matrix` — typecheck and ordinary non-native
+      `npm test` are core CI gates; live Pi TUI smoke separate release gate; matrix
+      covers config, request-path I/O, status/sensors, renderer, external events,
+      SettingsList, behavior guardrails.
+
+      - `docs/PRD.md#9-acceptance-criteria` — acceptance covers config precedence/persistence,
+      deterministic slash commands, no request-path I/O, bounded injection, TUI visibility,
+      builtin sensors, external-state defaults, reload all-or-keep-old.
+
+      - `docs/TECHNICAL_DESIGN.md#command-result-and-output-contract` — `/dasein`
+      commands return deterministic typed results; status includes minimumPiVersion/mechanism
+      evidence/effectiveConfigVersion/launchArgsApplied/diskConfigLoaded; reload exposes
+      launchReappliedPaths/runtimeOverriddenPaths.
+
+      - `docs/TECHNICAL_DESIGN.md#core-contracts` — defaults include maxAgentChars
+      240, injectedLabel ambient_ctx, external `{ui:true, agent:false}`, config precedence,
+      typed envelopes, atomic writes.
+
+      - `docs/TECHNICAL_DESIGN.md#verified-pi-mechanisms` — minimum Pi version 0.78.1;
+      source/API proof not live support.
+
+      - `docs/TECHNICAL_DESIGN.md#data-flow` — injection reads only pre-rendered in-memory
+      agent string; hidden CustomMessage; guarded TUI; shutdown abort/cleanup.
+
+      - `docs/TECHNICAL_DESIGN.md#rendering-contract` — renderer owns text/order/visibility/stale/sanitization/truncation/omitted
+      keys/timer; unconfigured external not agent-visible.
+
+      - `docs/PRD.md#9-6-external-state` — external set/clear validation, TTL/default
+      expiry, unconfigured keys UI-visible and agent-hidden.
+
+
+      headline: PASS
+
+      verdict: OPEN
+
+      gate_open_allowed: true
+
+      blockers: []
+
+      orchestrator_action_hint: COMPLETE
+
+
+      ## Gate Decision
+
+      GATE OPEN. Core phase B1/B2/B3/B4 remediation is closed; live Pi TUI/smoke is
+      explicitly not claimed and remains release-scope.
+
+
+      ## raw_command_output
+
+      - `npm run typecheck` exit 0.
+
+      - `npm test` exit 0; discovery files=27; includes top-level unit/static and
+      settings-list; 78 pass, 0 fail, 0 skipped.
+
+      - focused core probe exit 0; 46 pass including status/reload, external events,
+      CustomMessage/injector, render invalidation, hook purity.
+
+      - B4 inline probe exit 0: unconfigured agent null/no external secret, status
+      UI visible with `(agent hidden)`, explicit agent=true includes weather secret.
+
+      - static boundary probe exit 0: config.ts has no node fs/path imports; contract
+      test mentions config.ts and has no skip/todo/only.
+
+
+      ## behavioral_proof_register
+
+      - B1 static boundary: PROVEN.
+
+      - B2 ordinary npm full-suite: PROVEN.
+
+      - B3 SettingsList matrix: PROVEN.
+
+      - B4 external default visibility: PROVEN.
+
+      - minimumPiVersion/status/reload exact fields: PROVEN.
+
+      - atomic writes and U+2028/U+2029 rejection: PROVEN.
+
+      - render invalidation and hook purity: PROVEN.
+
+
+      ## blocker_ledger
+
+      - B1: CLOSED/PROVEN.
+
+      - B2: CLOSED/PROVEN.
+
+      - B3: CLOSED/PROVEN.
+
+      - B4: CLOSED/PROVEN.
+
+      - unresolved_downstream_blockers: []
+
+
+      ## checklist_receipt
+
+      All 17 core-gate checklist items proven by the gate evidence and retest closure
+      registers.'
   - id: core-static-boundary-fix
     name: Fix core static boundary for config runtime imports
     status: done
@@ -4040,7 +4146,7 @@ phases:
       and non-intersecting with this ordinary core retest.'
 - id: sensors
   name: Builtin Sensors and Native Helper
-  status: locked
+  status: pending
   gate: Builtin sensors publish typed state, geo helper is bounded/fail-closed, and
     sensor actions obey config mutation and privacy contracts.
   context: Deliver clock, lapse, geo, and macOS helper behavior while preserving the
