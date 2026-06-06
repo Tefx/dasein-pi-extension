@@ -11751,19 +11751,19 @@ phases:
       explicit as static/contract/runtime fake proof, not broad injector no-I/O.
 
       '
-    verification: '- [ ] Review confirms core/sensor/Pi UI boundary direction matches
+    verification: '- [x] Review confirms core/sensor/Pi UI boundary direction matches
       Constitution and architecture basis or lists exact conflicts.
 
-      - [ ] Review inventories module-level mutable state, timers, queues, subprocesses,
+      - [x] Review inventories module-level mutable state, timers, queues, subprocesses,
       and caches with concurrency/cleanup/reset/bounded-growth semantics.
 
-      - [ ] Review confirms lifecycle shutdown aborts sensors/helpers and no request-path
+      - [x] Review confirms lifecycle shutdown aborts sensors/helpers and no request-path
       I/O/race path remains.
 
-      - [ ] Any architecture/concurrency blocker has remediation owner or explicit
+      - [x] Any architecture/concurrency blocker has remediation owner or explicit
       non-intersection evidence for final gate.
 
-      - [ ] Architecture review checks renderer hook purity boundaries and enforceability
+      - [x] Architecture review checks renderer hook purity boundaries and enforceability
       disposition.
 
       '
