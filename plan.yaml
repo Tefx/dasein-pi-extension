@@ -1591,7 +1591,7 @@ phases:
       temp/fsync/rename no-change behavior.'
   - id: core-sensor-runtime-loader
     name: Complete sensor loader, runtime, and lifecycle core
-    status: claimed
+    status: done
     description: 'step_type: implementation
 
       Fill in stub bodies in src/core/sensor-loader.ts, src/core/sensor-runtime.ts,
@@ -1701,6 +1701,50 @@ phases:
     agent: frontend-engineer
     claimed_by: frontend-engineer
     claimed_at: '2026-06-06T04:28:48.452153+00:00'
+    done_at: '2026-06-06T04:42:36.857911+00:00'
+    evidence: '## refs Read Confirmation
+
+      - `CONSTITUTION.md#extension-and-sensor-laws` — explicit/inspectable discovery;
+      user-added sensors are trusted local code at import; core sensor-agnostic; typed-state
+      envelope only; disablement stops collection/injection.
+
+      - `docs/TECHNICAL_DESIGN.md#sensor-loading-and-reload` — directory/package scan
+      vs single-file static registry; default-export SensorSpec; duplicate/reserved
+      key failures; all-or-keep-old reload.
+
+      - `docs/PRD.md#7-2` / `#7-11` — sensor config, remote/recurring disabled until
+      inspection/enablement, reload validates candidate before replacement, failure
+      keeps known-good state, no automatic watcher.
+
+      - `docs/TECHNICAL_DESIGN.md#data-flow` — one active refresh generation, normalized
+      snapshot commits, injection reads pre-rendered memory only, shutdown aborts
+      refreshes and runs concurrent 1000ms cleanup.
+
+
+      ## artifacts/commit
+
+      - 19ffc06 `[vectl] step-core-sensor-runtime-loader completed`
+
+      - Changed `src/core/sensor-loader.ts`, `src/core/sensor-runtime.ts`, `src/core/lifecycle.ts`,
+      `src/index.ts`.
+
+
+      ## mainline final-state verification
+
+      - `npm run typecheck` → exit 0.
+
+      - `npm run test:file -- tests/unit/sensor-loader.test.ts tests/unit/reload.test.ts
+      tests/unit/install-mode.test.ts tests/unit/sensor-runtime.test.ts tests/unit/lifecycle.test.ts`
+      → exit 0; 9 tests, 9 pass.
+
+
+      ## checklist_receipt
+
+      All sensor loader/runtime/lifecycle checklist items proven: default-export validation,
+      duplicate/reserved keys, install modes, all-or-keep-old reload, typed envelope-only
+      snapshots/raw rejection, no request-path I/O/no watcher, 1000ms cleanup timeout,
+      abort active refresh/helper work, aggregate cleanup errors, inspectable load
+      failures, digest acknowledgement invalidation, disabled sensor no refresh/injection.'
   - id: core-renderer-injector-external
     name: Complete renderer, injector, and external event intake
     status: done
