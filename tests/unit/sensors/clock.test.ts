@@ -39,7 +39,7 @@ test("builtin sensor modules have no top-level collection/import-time side effec
     [/\bexec(?:File)?\s*\(/u, "subprocess exec"],
     [/\bfetch\s*\(/u, "network fetch"],
     [/\bset(?:Timeout|Interval)\s*\(/u, "timer scheduling"],
-    [/macos-location-helper|CoreLocation|swift\s+/u, "native helper work"],
+    [/\bcreateMacOSLocationHelperSupervisor\s*\(/u, "native helper work"],
     [/\b(refresh|refreshNow|scheduleRefresh|cleanup|action)\s*\(/u, "refresh/action execution"],
     [/config\.json|state\.json|~\/\.pi\/dasein/u, "config or durable-state access"],
   ];

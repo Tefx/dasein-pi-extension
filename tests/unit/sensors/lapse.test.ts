@@ -2,7 +2,6 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import type { SensorConfig, SensorObservationEvent, SensorSnapshot, SensorSpec, SensorStateField } from "../../../src/index.ts";
-import { loadDaseinApi, requireExportedFunction } from "../../fixtures/helpers/core-fixtures.ts";
 
 type LapseConfig = SensorConfig & { persist: boolean; agentFields: Array<"user_idle" | "agent_idle"> };
 type LapseState = {
@@ -28,6 +27,16 @@ const loadLapseSpec = async (): Promise<SensorSpec<LapseState, LapseConfig>> => 
   assert.equal(typeof moduleValue.default, "object", "src/sensors/lapse.ts must default-export one SensorSpec");
   assert.notEqual(moduleValue.default, null, "src/sensors/lapse.ts default export must not be null");
   return moduleValue.default as SensorSpec<LapseState, LapseConfig>;
+};
+
+const loadLapsePersistenceControllerFactory = async (): Promise<() => LapsePersistenceController> => {
+  const moduleValue = (await import(expectedLapseFile.href)) as { createLapsePersistenceController?: unknown };
+  assert.equal(
+    typeof moduleValue.createLapsePersistenceController,
+    "function",
+    "src/sensors/lapse.ts must export createLapsePersistenceController for lapse persistence/reset contracts",
+  );
+  return moduleValue.createLapsePersistenceController as () => LapsePersistenceController;
 };
 
 const field = (stateKey: string, value: unknown, valueType: SensorStateField["value_type"]): SensorStateField => ({
@@ -116,8 +125,7 @@ test("lapse observe samples input, suppresses duplicate before_agent_start for t
 });
 
 test("lapse persistence gates startup load and observation durable writes independently from collection and agent visibility", async () => {
-  const api = await loadDaseinApi();
-  const createLapsePersistenceController = requireExportedFunction(api, "createLapsePersistenceController", "docs/PRD.md#9-5-builtin-sensors lapse persistence gate") as () => LapsePersistenceController;
+  const createLapsePersistenceController = await loadLapsePersistenceControllerFactory();
   const persistence = createLapsePersistenceController();
   const state: LapsePersistedState = { previous_human_input_at: 10_000, previous_agent_end_at: 18_000 };
 
@@ -137,8 +145,7 @@ test("lapse persistence gates startup load and observation durable writes indepe
 });
 
 test("/dasein lapse reset clears memory and persisted timestamps without changing enabled/persist/agent config", async () => {
-  const api = await loadDaseinApi();
-  const createLapsePersistenceController = requireExportedFunction(api, "createLapsePersistenceController", "docs/TECHNICAL_DESIGN.md#builtin-sensors lapse reset action") as () => LapsePersistenceController;
+  const createLapsePersistenceController = await loadLapsePersistenceControllerFactory();
   const persistence = createLapsePersistenceController();
   const config: LapseConfig = { enabled: true, ui: true, agent: false, intervalMs: 60000, timeoutMs: 2000, staleAfterMs: 120000, initialRefresh: true, persist: false, agentFields: ["user_idle"] };
 
