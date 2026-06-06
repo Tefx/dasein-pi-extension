@@ -11,7 +11,7 @@ import { dirname, join, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 
 import { CORE_RESERVED_COMMAND_WORDS } from "./config.ts";
-import { listTypeScriptFilenames } from "./filesystem-helpers.ts";
+import { createCacheBustedImportTarget, listTypeScriptFilenames, removeCacheBustedImportTarget } from "./filesystem-helpers.ts";
 import type {
   SensorBackgroundWorkDeclaration,
   SensorConfig,
@@ -82,6 +82,7 @@ export interface SensorModuleCandidate {
   filePath: string;
   defaultExport?: unknown;
   namedExport?: unknown;
+  loadError?: SensorLoadError;
 }
 
 export interface LoadSensorRegistryInput {
@@ -173,6 +174,10 @@ export const loadSensorRegistry = async (input: LoadSensorRegistryInput): Promis
       loadErrors.push({ file, kind: "scan", message: "user-added sensors must be loaded only from <extension_root>/src/sensors/*.ts" });
       continue;
     }
+    if (moduleCandidate.loadError !== undefined) {
+      loadErrors.push(moduleCandidate.loadError);
+      continue;
+    }
     const spec = moduleCandidate.defaultExport;
     if (!isRecord(spec)) {
       loadErrors.push({ file, kind: "invalid-spec", message: "sensor module must default-export a SensorSpec" });
@@ -251,17 +256,32 @@ const importSensorModules = async (extensionRoot: string, cacheBustToken?: strin
   const sensorDir = resolve(extensionRoot, "src", "sensors");
   const filenames = listTypeScriptFilenames(sensorDir);
   const candidates: SensorModuleCandidate[] = [];
+  const importBatchToken = `${String(cacheBustToken ?? "load")}-${process.pid}-${process.hrtime.bigint()}`;
   for (const filename of filenames) {
     const filePath = join(sensorDir, filename);
-    const href = pathToFileURL(filePath).href + (cacheBustToken === undefined ? "" : `?reload=${encodeURIComponent(String(cacheBustToken))}`);
+    let importTarget = filePath;
     try {
+      importTarget = createCacheBustedImportTarget(filePath, importBatchToken);
+      const href = pathToFileURL(importTarget).href + (cacheBustToken === undefined ? "" : `?reload=${encodeURIComponent(String(cacheBustToken))}`);
       const imported = (await import(href)) as Record<string, unknown>;
       candidates.push({ filePath, defaultExport: imported.default, namedExport: imported.sensorSpec });
     } catch (error) {
-      candidates.push({ filePath, defaultExport: undefined, namedExport: undefined });
+      candidates.push({
+        filePath,
+        defaultExport: undefined,
+        namedExport: undefined,
+        loadError: { file: filePath, kind: "import", message: `SensorLoadError: failed to import sensor module: ${errorMessage(error)}` },
+      });
+    } finally {
+      removeCacheBustedImportTarget(filePath, importTarget);
     }
   }
   return candidates;
+};
+
+const errorMessage = (error: unknown): string => {
+  const message = error instanceof Error ? error.message : String(error);
+  return message.split(/\r?\n/u)[0] ?? "unknown import error";
 };
 
 const isCanonicalUserSensorFile = (extensionRoot: string, filePath: string): boolean => (

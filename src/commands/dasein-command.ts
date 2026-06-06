@@ -764,6 +764,14 @@ const defaultMessageFor = (input: MakeDaseinCommandResultInput): string => {
   if (input.message !== undefined) {
     return singleLine(input.message);
   }
+  if (input.command === "reload") {
+    const data = input.data as Partial<ReloadCommandData> | undefined;
+    if (data?.reload?.ok === false) {
+      return "dasein reload: failed; kept previous state";
+    }
+    const activeCount = data?.reload?.ok === true ? data.reload.sensors.activeKeys.length : 0;
+    return `dasein reload: ok (${activeCount} sensors)`;
+  }
   if (input.ok === false) {
     return `dasein ${input.command}: failed`;
   }
@@ -782,14 +790,6 @@ const defaultMessageFor = (input: MakeDaseinCommandResultInput): string => {
   if (input.command === "sensors") {
     const data = input.data as Partial<SensorsCommandData> | undefined;
     return `dasein sensors: ${(data?.sensors?.length ?? 0)} records; user-added local .ts sensors are trusted executable code at import time and are not sandboxed`;
-  }
-  if (input.command === "reload") {
-    const data = input.data as Partial<ReloadCommandData> | undefined;
-    if (data?.reload?.ok === false) {
-      return "dasein reload: failed; kept previous state";
-    }
-    const activeCount = data?.reload?.ok === true ? data.reload.sensors.activeKeys.length : 0;
-    return `dasein reload: ok (${activeCount} sensors)`;
   }
   if (input.command === "help") {
     return "dasein help: /dasein status | reload | sensors | set <path> <value> | apply <path=value,...> | help";

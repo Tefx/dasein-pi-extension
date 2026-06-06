@@ -98,6 +98,7 @@ export interface ReloadDaseinRuntimeInput {
   launchAssignments?: readonly ReloadAssignment[];
   runtimeOverriddenPaths?: readonly string[];
   candidateSensorsOk?: boolean;
+  candidateSensorErrors?: readonly SensorLoadError[];
   attemptedFiles?: readonly string[];
   activeKeys?: readonly SensorKey[];
 }
@@ -140,13 +141,17 @@ export const reloadDaseinRuntime = async (input: ReloadDaseinRuntimeInput): Prom
   const activeKeys = [...(input.activeKeys ?? Object.keys(input.previousConfig.sensors))].sort();
   const configFailure = validateReloadDiskConfig(input.diskConfig);
   const sensorsOk = input.candidateSensorsOk !== false;
-  const sensorFailure: SensorLoadError | null = sensorsOk ? null : {
-    file: (input.attemptedFiles ?? ["<candidate-registry>"])[0] ?? "<candidate-registry>",
-    kind: "invalid-spec",
-    message: "SensorLoadError: invalid sensor candidate registry",
-  };
+  const sensorFailures: SensorLoadError[] = sensorsOk
+    ? []
+    : input.candidateSensorErrors !== undefined && input.candidateSensorErrors.length > 0
+      ? [...input.candidateSensorErrors]
+      : [{
+          file: (input.attemptedFiles ?? ["<candidate-registry>"])[0] ?? "<candidate-registry>",
+          kind: "invalid-spec",
+          message: "SensorLoadError: invalid sensor candidate registry",
+        }];
 
-  if (configFailure === null && sensorFailure === null) {
+  if (configFailure === null && sensorFailures.length === 0) {
     const reload: DaseinReloadResult = {
       ok: true,
       config: { ok: true, loadedPath: "~/.pi/dasein/config.json", updatedPaths: launchReappliedPaths },
@@ -165,15 +170,15 @@ export const reloadDaseinRuntime = async (input: ReloadDaseinRuntimeInput): Prom
 
   const errors: Array<ConfigValidationError | SensorLoadError> = [
     ...(configFailure === null ? [] : [configFailure]),
-    ...(sensorFailure === null ? [] : [sensorFailure]),
+    ...sensorFailures,
   ];
   const configMetadata: ConfigReloadFailureMetadata | ConfigReloadSuccessMetadata = configFailure === null
     ? { ok: true, loadedPath: "~/.pi/dasein/config.json", updatedPaths: [] }
     : { ok: false, loadedPath: "~/.pi/dasein/config.json", errors: [configFailure] };
-  const sensorMetadata: SensorReloadFailureMetadata | undefined = sensorFailure === null
+  const sensorMetadata: SensorReloadFailureMetadata | undefined = sensorFailures.length === 0
     ? undefined
-    : { ok: false, attemptedFiles: [...(input.attemptedFiles ?? [])], activeKeys, errors: [sensorFailure] };
-  const failureScope: "config" | "sensors" | "config-and-sensors" = configFailure !== null && sensorFailure !== null
+    : { ok: false, attemptedFiles: [...(input.attemptedFiles ?? [])], activeKeys, errors: sensorFailures };
+  const failureScope: "config" | "sensors" | "config-and-sensors" = configFailure !== null && sensorFailures.length > 0
     ? "config-and-sensors"
     : configFailure !== null
       ? "config"

@@ -40,3 +40,31 @@ test("failed reload keeps old config, registry, runtime overrides, rendered cont
   assert.deepEqual(result.data.rendered, oldRendered);
   assert.match(JSON.stringify(result.errors), /invalid-schema|invalid-spec|SensorLoadError/u);
 });
+
+test("sensor reload failure returns actual SensorLoadError records instead of a synthetic ok result", async () => {
+  const api = await loadDaseinApi();
+  const reloadDaseinRuntime = requireExportedFunction(api, "reloadDaseinRuntime", "Testing Gate Matrix row: Sensor export, install modes, provenance, and reload all-or-keep-old");
+  const oldRendered = { agent: "[ambient_ctx: dynamic=v2]", status: "dynamic v2", widgetLines: null, omittedKeys: [], truncated: false };
+  const sensorError = { file: "/extension/src/sensors/dynamic.ts", kind: "import", message: "SensorLoadError: failed to import sensor module: syntax" };
+  const result = await reloadDaseinRuntime({
+    previousConfig: baseConfig,
+    previousRendered: oldRendered,
+    diskConfig: { version: 1 },
+    candidateSensorsOk: false,
+    candidateSensorErrors: [sensorError],
+    attemptedFiles: [sensorError.file],
+    activeKeys: ["clock", "geo", "lapse"],
+  }) as {
+    ok: boolean;
+    data: { reload: { ok: boolean; failureScope: string; activeKeys: string[]; sensors: { ok: boolean; errors: unknown[] } }; rendered: unknown };
+    errors: unknown[];
+  };
+
+  assert.equal(result.ok, false);
+  assert.equal(result.data.reload.ok, false);
+  assert.equal(result.data.reload.failureScope, "sensors");
+  assert.deepEqual(result.data.reload.activeKeys, ["clock", "geo", "lapse"]);
+  assert.deepEqual(result.data.reload.sensors.errors, [sensorError]);
+  assert.deepEqual(result.errors, [sensorError]);
+  assert.deepEqual(result.data.rendered, oldRendered);
+});

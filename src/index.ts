@@ -902,25 +902,33 @@ class DaseinAmbientContextBroker {
 
   private async reloadResult(): Promise<DaseinCommandResult> {
     const manager = this.requireConfigManager();
-    const configReload = await manager.reloadDisk();
-    const registry = await loadSensorRegistry({ extensionRoot: EXTENSION_ROOT, cacheBustToken: Date.now() });
     const previousEntries = this.entries;
     const previousConfig = this.config;
+    const previousRendered = this.stateStore.getRenderedContext();
+    const registry = await loadSensorRegistry({ extensionRoot: EXTENSION_ROOT, cacheBustToken: Date.now() });
+    const configReload = registry.ok
+      ? await manager.reloadDisk()
+      : { ok: true, launchReappliedPaths: [], runtimeOverriddenPaths: manager.getRuntimeOverriddenPaths() };
     if (configReload.ok && registry.ok) {
       this.entries = registry.entries.map(coerceEntryProvenance).sort((left, right) => left.spec.key.localeCompare(right.spec.key));
-      this.loadErrors = registry.loadErrors;
+      this.loadErrors = [];
       this.attemptedFiles = registry.attemptedFiles;
       this.config = manager.getEffectiveConfig();
       this.rebuildSensorRuntimes();
+      await this.startInitialRefreshes();
       this.renderOnly();
+    } else {
+      this.loadErrors = registry.loadErrors;
+      this.attemptedFiles = registry.attemptedFiles;
     }
     const reloadCommand = await reloadDaseinRuntime({
       previousConfig,
-      previousRendered: this.stateStore.getRenderedContext(),
+      previousRendered,
       diskConfig: configReload.ok ? { version: 1 } satisfies DiskDaseinConfig : { version: 0 },
       candidateSensorsOk: registry.ok,
+      candidateSensorErrors: registry.loadErrors,
       attemptedFiles: registry.attemptedFiles,
-      activeKeys: (registry.ok ? registry.entries : previousEntries).map((entry) => entry.spec.key),
+      activeKeys: (configReload.ok && registry.ok ? registry.entries : previousEntries).map((entry) => entry.spec.key),
       runtimeOverriddenPaths: manager.getRuntimeOverriddenPaths(),
     });
     return buildReloadCommandResult({ reload: reloadCommand.data.reload as DaseinReloadResult, configPath: CONFIG_PATH });
