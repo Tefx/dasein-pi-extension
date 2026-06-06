@@ -291,7 +291,7 @@ test("[expected-red] ctx.ui.custom unavailability is separate from SettingsList 
   assert.match(JSON.stringify(statusResult), /PiMechanismError|ctx\.ui\.custom|custom unavailable/u);
 });
 
-test("[expected-red] builtin clock/geo/lapse wiring starts sensors and routes lapse Pi lifecycle observations", async () => {
+test("[expected-red] builtin clock/geo/lapse wiring starts sensors while default visible TUI stays quiet", async () => {
   const host = await registerInFakeHost();
 
   await invokeFakeLifecycle(host, "session_start");
@@ -304,9 +304,12 @@ test("[expected-red] builtin clock/geo/lapse wiring starts sensors and routes la
   const renderedWidget = host.ledger.uiWidgetCalls.map((call) => call.value).join("\n");
   const renderedTui = `${renderedStatus}\n${renderedWidget}`;
 
-  assert.match(renderedTui, /time|clock/u, "clock builtin should render local time in TUI");
-  assert.match(renderedTui, /loc=unavailable|geo|location/u, "geo builtin should expose permission/availability in UI");
-  assert.match(renderedTui, /idle|lapse|user_idle/u, "lapse builtin should render lifecycle-derived continuity");
+  assert.match(renderedStatus, /Dasein · Ready/u, "default visible TUI status should be a quiet summary");
+  assert.doesNotMatch(renderedTui, /\[ambient_ctx:|epoch_ms|clock\.iso|agent_id|manifest digest|user_idle=|loc=/u, "default visible TUI must not expose raw ambient/debug context");
+
+  const contextEvent: MutableContextEvent = { messages: [] };
+  await invokeFakeLifecycle(host, "context", contextEvent);
+  assert.match(messageContent(contextEvent.messages[0]), /^\[ambient_ctx:/u, "agent-facing hidden ambient context must remain available");
 });
 
 test("[expected-red] session_shutdown routes bounded cleanup with 1000ms per-sensor timeout", async () => {

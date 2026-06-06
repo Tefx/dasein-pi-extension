@@ -12,7 +12,7 @@ import {
   riskyWeatherManifest,
   userLocalProvenance,
 } from "../fixtures/helpers/core-fixtures.ts";
-import { buildSettingsListVisibilityModel } from "../../src/ui/settings-import-contract.ts";
+import { buildSettingsListVisibilityModel, filterDefaultSettingsListItems } from "../../src/ui/settings-import-contract.ts";
 import type { SensorInspectabilityMetadata, SensorSpec } from "../../src/index.ts";
 import type { SettingsListControlItem, SettingsListVisibilityItem } from "../../src/ui/settings-import-contract.ts";
 
@@ -134,6 +134,56 @@ test("SettingsList visibility model exposes inspectability metadata before risky
       "sensors.weather.acknowledgedManifestDigest": weatherDigest,
     },
   });
+});
+
+test("default SettingsList surface is common-first and hides diagnostic metadata", () => {
+  const config = {
+    ...baseConfig,
+    sensors: {
+      ...baseConfig.sensors,
+      weather: {
+        enabled: false,
+        ui: true,
+        agent: false,
+        intervalMs: 300000,
+        unit: "celsius",
+        nickname: "outside",
+        precision: 2,
+        notify: false,
+      },
+    },
+  };
+
+  const fullItems = buildSettingsListVisibilityModel({
+    config,
+    sensorMetadata: [clockMetadata, weatherMetadata],
+    sensorSpecs: [weatherSpec],
+    externalStates: [{ key: "calendar", ui: "meeting", agent: null, source: "test", updatedAt: 1000, expiresAt: 61000 }],
+    now: () => 2000,
+  }) as readonly SettingsListVisibilityItem[];
+  const defaultItems = filterDefaultSettingsListItems(fullItems);
+  const defaultIds = ids(defaultItems);
+
+  assert.equal(defaultItems.some((item) => item.kind === "metadata"), false, "default SettingsList must hide diagnostic metadata rows");
+  for (const expected of [
+    "core.agentInjectionEnabled",
+    "core.statusEnabled",
+    "core.widgetEnabled",
+    "sensors.clock.enabled",
+    "external.calendar.ui",
+    "external.calendar.agent",
+  ]) {
+    assert.ok(defaultIds.includes(expected), `default SettingsList should include common control ${expected}`);
+  }
+  for (const diagnosticOrAdvanced of [
+    "sensor.clock.metadata.manifestDigest",
+    "sensor.weather.metadata.backgroundWork",
+    "sensors.weather.intervalMs",
+    "sensors.weather.nickname",
+  ]) {
+    assert.equal(defaultIds.includes(diagnosticOrAdvanced), false, `default SettingsList should not show ${diagnosticOrAdvanced}`);
+  }
+  assert.equal(defaultItems.length <= 12, true, "default SettingsList should stay compact");
 });
 
 test("SettingsList visibility model exposes core, common sensor, simple sensor, and live external controls only", () => {

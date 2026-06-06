@@ -219,6 +219,27 @@ const liveExternalKeys = (
   return [...keys].sort((left, right) => left.localeCompare(right));
 };
 
+const DEFAULT_SETTINGS_LIST_CONTROL_IDS = new Set<string>([
+  "core.agentInjectionEnabled",
+  "core.statusEnabled",
+  "core.widgetEnabled",
+  "sensors.clock.enabled",
+  "sensors.lapse.enabled",
+  "sensors.geo.enabled",
+  "sensors.geo.agent",
+  "sensors.geo.precision",
+  "sensors.geo.exactAddress",
+  "sensors.geo.exactCoordinates",
+]);
+
+export const filterDefaultSettingsListItems = (
+  items: readonly SettingsListVisibilityItem[],
+): readonly SettingsListVisibilityItem[] => items.filter((item) => {
+  if (item.kind === "metadata") return false;
+  if (DEFAULT_SETTINGS_LIST_CONTROL_IDS.has(item.id)) return true;
+  return item.section === "external";
+});
+
 export const buildSettingsListVisibilityModel = (
   input: BuildSettingsListVisibilityModelInput,
 ): readonly SettingsListVisibilityItem[] => {

@@ -626,6 +626,8 @@ The default injection label must be neutral:
 [ambient_ctx: local_time=14:32; user_idle=4m]
 ```
 
+This string is hidden agent context, not default human-facing UI. Dasein must not show raw `[ambient_ctx: ...]` text in the default TUI status footer, editor-adjacent chrome, or default settings surface. The raw injected payload may appear only in explicit diagnostics/debug proof paths.
+
 The default label must not be:
 
 ```text
@@ -642,9 +644,13 @@ Dasein must expose ambient context to the human TUI through:
 - an optional widget;
 - a `SettingsList` configuration UI.
 
-The status footer must respect `core.statusEnabled`. The optional widget must respect `core.widgetEnabled`. Both surfaces must omit disabled sensors, sensors with `ui=false`, and external values whose per-key config has `ui=false`.
+The status footer must respect `core.statusEnabled`. The default footer is a quiet summary such as `Dasein · Ready` or `Dasein · Degraded (N)`, not a raw field dump. It must not show raw sensor keys, epoch/ISO timestamps, agent IDs, manifest digests, or raw `[ambient_ctx: ...]` text by default.
 
-The TUI must make privacy-sensitive state visible, especially location state, geo precision, and whether geo is available to the agent.
+The optional widget must respect `core.widgetEnabled`. Both surfaces must omit disabled sensors, sensors with `ui=false`, and external values whose per-key config has `ui=false`.
+
+The TUI must make privacy-sensitive state inspectable on demand, especially location state, geo precision, and whether geo is available to the agent. Default surfaces should stay low-noise; diagnostics remain available through `/dasein status` and `/dasein sensors`.
+
+The default SettingsList UI is common-first, not a flat diagnostic inventory. It should show a short set of common controls first and keep manifest/audit/background-work metadata in diagnostic or advanced paths.
 
 The SettingsList UI must allow users to configure at least:
 

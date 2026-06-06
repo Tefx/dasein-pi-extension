@@ -67,6 +67,7 @@ import geoSpec, { configureGeoNativeHelper, getGeoNativeHelperSupervisor } from 
 import lapseSpec from "./sensors/lapse.ts";
 import {
   buildSettingsListVisibilityModel,
+  filterDefaultSettingsListItems,
   getSettingsListTheme,
   SettingsList,
   type SettingsListControlItem,
@@ -165,6 +166,7 @@ export interface DaseinPiUiApi {
   readonly setStatus?: (slot: string, value?: string) => void;
   readonly setWidget?: (slot: string, value?: readonly string[] | string) => void;
   readonly custom?: (componentFactory: unknown, options?: Record<string, unknown>) => Promise<unknown> | unknown;
+  readonly notify?: (message: string, level?: "info" | "success" | "warning" | "error") => void;
 }
 
 export interface DaseinPiExtensionContext {
@@ -553,6 +555,13 @@ class DaseinAmbientContextBroker {
     this.renderOnly();
   }
 
+  private publishCommandResult(result: DaseinCommandResult, context: DaseinPiExtensionContext): DaseinCommandResult {
+    if (result.command !== "open-ui") {
+      context.ui?.notify?.(result.message, result.ok ? "info" : "error");
+    }
+    return result;
+  }
+
   async command(rawArgs: unknown, context: DaseinPiExtensionContext): Promise<DaseinCommandResult> {
     await this.initialize();
     const args = typeof rawArgs === "string" ? rawArgs.trim() : "";
@@ -561,18 +570,19 @@ class DaseinAmbientContextBroker {
         await this.openSettingsSurface(context);
         return makeDaseinCommandResult({ command: "open-ui", message: "dasein: open settings" });
       }
-      return makeDaseinCommandResult({ command: "help", message: "dasein: status | reload | sensors | set | apply" });
+      return this.publishCommandResult(makeDaseinCommandResult({ command: "help", message: "dasein: status | reload | sensors | set | apply" }), context);
     }
-    if (args === "status") return this.statusResult();
-    if (args === "sensors") return this.sensorsResult();
-    if (args === "reload") return this.reloadResult();
+    if (args === "status") return this.publishCommandResult(this.statusResult(), context);
+    if (args === "sensors") return this.publishCommandResult(this.sensorsResult(), context);
+    if (args === "reload") return this.publishCommandResult(await this.reloadResult(), context);
 
-    return executeDaseinCommand(`/dasein ${args}`, {
+    const result = await executeDaseinCommand(`/dasein ${args}`, {
       discoveredSensorKeys: this.sensorKeys(),
       sensorActions: this.sensorActions(),
       mutateConfig: async (command) => this.mutateFromCommand(command.assignments ?? []),
       runSensorAction: async (command) => this.runSensorAction(command.sensorKey ?? "", command.action ?? "", command.actionArgs ?? [], context),
     });
+    return this.publishCommandResult(result, context);
   }
 
   async shutdown(context: DaseinPiExtensionContext): Promise<void> {
@@ -918,10 +928,14 @@ class DaseinAmbientContextBroker {
     return rendered;
   }
 
+  private visibleStatusSummary(): string {
+    return this.statusErrors.length === 0 ? "Dasein · Ready" : `Dasein · Degraded (${this.statusErrors.length})`;
+  }
+
   private renderAndPublish(context: DaseinPiExtensionContext): void {
     const rendered = this.renderOnly();
     if (context.mode !== "tui") return;
-    if (this.config.core.statusEnabled) context.ui?.setStatus?.("dasein", rendered.status ?? undefined);
+    if (this.config.core.statusEnabled) context.ui?.setStatus?.("dasein", this.visibleStatusSummary());
     else context.ui?.setStatus?.("dasein", undefined);
     if (this.config.core.widgetEnabled) context.ui?.setWidget?.("dasein", rendered.widgetLines ?? []);
     else context.ui?.setWidget?.("dasein", undefined);
@@ -929,7 +943,7 @@ class DaseinAmbientContextBroker {
 
   private async openSettingsSurface(context: DaseinPiExtensionContext): Promise<void> {
     if (this.statusErrors.some((error) => error.kind === "pi_mechanism" && error.mechanism === "ctx.ui.custom")) return;
-    const visibilityItems = this.settingsVisibilityItems();
+    const visibilityItems = filterDefaultSettingsListItems(this.settingsVisibilityItems());
     const controlsById = new Map(
       visibilityItems
         .filter((item): item is SettingsListControlItem => item.kind === "control")

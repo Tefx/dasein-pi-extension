@@ -79,9 +79,11 @@ The default injected message is:
 [ambient_ctx: ...]
 ```
 
-Rationale: the project name `Dasein` is useful for UI and branding but too philosophically loaded for every inference payload.
+This string is agent-facing hidden context, not default human-facing chrome. In TUI mode, Dasein must not publish the raw `[ambient_ctx: ...]` string through the visible status footer or default settings surface. Human-facing status defaults to a short Dasein summary, while the raw injected payload remains inspectable only through explicit diagnostics such as `/dasein status` proof data and debug artifacts.
 
-Trade-off: the injected string is less poetic, but safer for coding agents and token economy.
+Rationale: the project name `Dasein` is useful for UI and branding but too philosophically loaded for every inference payload. The raw injected context is useful to the model but too noisy for default human UI.
+
+Trade-off: the injected string is less poetic, but safer for coding agents and token economy. The visible UI is less detailed by default, but diagnostics preserve inspectability on demand.
 
 ### Decision 3: No policy layer
 
@@ -1075,18 +1077,20 @@ Request-path no-I/O proof:
 ### Human UI Rendering
 
 1. Renderer computes a `RenderedContext` from effective config plus state.
-2. In TUI mode, when `core.statusEnabled === true`, Dasein calls `ctx.ui.setStatus("dasein", rendered.status)`.
+2. In TUI mode, when `core.statusEnabled === true`, Dasein calls `ctx.ui.setStatus("dasein", <short summary>)`. The default summary is intentionally quiet, for example `Dasein · Ready` or `Dasein · Degraded (N)`. It must not include raw sensor field names, epoch/ISO timestamps, agent IDs, manifest digests, or the raw `[ambient_ctx: ...]` injected message.
 3. In TUI mode, when `core.statusEnabled === false`, Dasein clears any prior Dasein status by calling `ctx.ui.setStatus("dasein", undefined)`.
-4. In TUI mode, when `core.widgetEnabled === true`, Dasein calls `ctx.ui.setWidget("dasein", rendered.widgetLines ?? [])`.
+4. In TUI mode, when `core.widgetEnabled === true`, Dasein calls `ctx.ui.setWidget("dasein", rendered.widgetLines ?? [])`. The widget remains opt-in and may show richer context than the status footer.
 5. In TUI mode, when `core.widgetEnabled === false`, Dasein clears any prior Dasein widget by calling `ctx.ui.setWidget("dasein", undefined)`.
-6. Settings UI uses Pi TUI `SettingsList` generated from sensor inspectability metadata, declared background work, `effectiveIntervalMs`, core toggles, common sensor fields, simple sensor-specific fields, and valid external visibility keys.
-7. Common sensor fields are `enabled`, `ui`, `agent`, `intervalMs`, `timeoutMs`, `staleAfterMs`, and `initialRefresh`.
-8. Simple sensor-specific SettingsList fields are only `SensorFieldSpec` entries of type `boolean`, `string`, `number`, or `enum`.
-9. Object, array, and map-like fields, including `geo.tags` and `lapse.agentFields`, are not SettingsList controls; they are managed by sensor commands or a future submenu design.
-10. Before showing an enable control for any sensor, SettingsList exposes read-only inspectability metadata: source/provenance, declared input classes, output fields, permissions, remote/network behavior, declared background work, and `effectiveIntervalMs`, including destinations, payload classes, transmission cadence, and disable control. User-added remote/network-capable or background-capable sensors must show this metadata while still disabled.
-11. For every valid external key matching `[A-Za-z0-9_-]{1,64}` that exists in config or has a live external state snapshot, SettingsList exposes both `external.<key>.ui` and `external.<key>.agent` controls.
-12. SettingsList must not create controls for invalid external keys, dotted external keys, expired external state, malformed external events, or object/array/map-like sensor fields.
-13. UI setting changes enter the same validated FIFO config mutation queue as slash commands and persist only canonical disk paths.
+6. Settings UI uses Pi TUI `SettingsList`, but the default `/dasein` surface is common-first: core toggles, primary builtin sensor enablement, location privacy controls, and valid external visibility controls. It must not default to a flat diagnostic list.
+7. Full inspectability metadata remains available through `/dasein status`, `/dasein sensors`, and diagnostic/debug artifacts. Metadata includes source/provenance, declared input classes, output fields, permissions, remote/network behavior, declared background work, `effectiveIntervalMs`, destinations, payload classes, transmission cadence, disable control, and manifest digest.
+8. Common sensor fields are `enabled`, `ui`, `agent`, `intervalMs`, `timeoutMs`, `staleAfterMs`, and `initialRefresh`; they remain ConfigManager-owned and may appear in diagnostics or future advanced settings.
+9. Simple sensor-specific SettingsList fields are only `SensorFieldSpec` entries of type `boolean`, `string`, `number`, or `enum` when included in the selected settings surface.
+10. Object, array, and map-like fields, including `geo.tags` and `lapse.agentFields`, are not SettingsList controls; they are managed by sensor commands or a future submenu design.
+11. Before enabling risky user-added sensors, Dasein must still expose required read-only inspectability metadata in a diagnostic/advanced path before the enabling action is accepted.
+12. For every valid external key matching `[A-Za-z0-9_-]{1,64}` that exists in config or has a live external state snapshot, the default SettingsList exposes both `external.<key>.ui` and `external.<key>.agent` controls.
+13. SettingsList must not create controls for invalid external keys, dotted external keys, expired external state, malformed external events, or object/array/map-like sensor fields.
+14. UI setting changes enter the same validated FIFO config mutation queue as slash commands and persist only canonical disk paths.
+15. Slash command results in TUI mode must provide visible feedback, such as a Pi notification, so `/dasein status` and `/dasein sensors` do not appear to do nothing when invoked from the main input.
 
 ### Shutdown
 
