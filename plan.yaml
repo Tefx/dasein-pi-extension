@@ -16634,3 +16634,10 @@ phases:
       containsRawAmbientPrefix=false, daseinCustomMessages=0, daseinUserMessages=0;
       checklist_receipt.json shows 11/11 proven, 0 blockers. Dynamic reload smoke
       was also migrated to before_agent_start systemPrompt proof and passes.'
+- id: geo_permission_helper
+  name: macOS Geo Permission Helper
+  status: pending
+  gate: Geo helper can trigger/participate in macOS Location Services permission flow
+    without exposing exact location by default.
+  depends_on:
+  - prompt_channel_hardening
