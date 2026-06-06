@@ -7647,43 +7647,43 @@ phases:
       work and aggregate cleanup errors without blocking request construction.
 
       '
-    verification: '- [ ] All Pi runtime phase steps are complete with refs confirmations
+    verification: '- [x] All Pi runtime phase steps are complete with refs confirmations
       and checklist receipts.
 
-      - [ ] Gate decision basis maps Pi mechanism, slash/flag, context/events, lifecycle,
+      - [x] Gate decision basis maps Pi mechanism, slash/flag, context/events, lifecycle,
       status/widget, ctx.ui.custom, and SettingsList requirements to positive fake-host
       proof or release_smoke ownership.
 
-      - [ ] Client runtime proof is present; build/type/source evidence alone is rejected
+      - [x] Client runtime proof is present; build/type/source evidence alone is rejected
       for user-visible surfaces.
 
-      - [ ] Final gate verdict is OPEN or BLOCKED with explicit blockers and required
+      - [x] Final gate verdict is OPEN or BLOCKED with explicit blockers and required
       actions.
 
-      - [ ] Gate decision basis reviews `minimumPiVersion: "0.78.1"`, current version
+      - [x] Gate decision basis reviews `minimumPiVersion: "0.78.1"`, current version
       capture, below-minimum/unavailable classification, and feature-probe separation.
 
-      - [ ] Gate decision basis explicitly reviews literal bare `/dasein` TUI and
+      - [x] Gate decision basis explicitly reviews literal bare `/dasein` TUI and
       non-TUI evidence; substitute evidence is rejected.
 
-      - [ ] Gate decision basis reviews exact SettingsList common sensor fields `enabled`,
+      - [x] Gate decision basis reviews exact SettingsList common sensor fields `enabled`,
       `ui`, `agent`, `intervalMs`, `timeoutMs`, `staleAfterMs`, `initialRefresh` and
       visible recurring interval mutation evidence.
 
-      - [ ] Gate decision basis reviews SettingsList negative proof for invalid external
+      - [x] Gate decision basis reviews SettingsList negative proof for invalid external
       keys, dotted keys, expired external state, and malformed external events; valid-control-only
       evidence is rejected.
 
-      - [ ] Gate decision basis reviews SettingsList/simple-field evidence for `sensors.geo.exactCoordinates`
+      - [x] Gate decision basis reviews SettingsList/simple-field evidence for `sensors.geo.exactCoordinates`
       and `sensors.geo.exactAddress`.
 
-      - [ ] Gate decision basis reviews `ctx.ui.custom` feature-probe evidence separately
+      - [x] Gate decision basis reviews `ctx.ui.custom` feature-probe evidence separately
       from SettingsList evidence.
 
-      - [ ] Gate decision basis reviews exact context injection CustomMessage fields
+      - [x] Gate decision basis reviews exact context injection CustomMessage fields
       and conversion proof; broad context-hook proof is rejected.
 
-      - [ ] Gate decision basis reviews exact `session_start`, `session_shutdown`,
+      - [x] Gate decision basis reviews exact `session_start`, `session_shutdown`,
       and `1000ms` cleanup timeout evidence.
 
       '
