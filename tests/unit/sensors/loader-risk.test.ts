@@ -51,6 +51,7 @@ type CreateSensorRuntime = (input: {
 type LoadSensorRegistry = (input: {
   extensionRoot: string;
   installMode?: "directory" | "single-file";
+  userSensorDirectory?: string | null;
   modules?: Array<{ filePath: string; defaultExport?: unknown }>;
 }) => Promise<{ ok: boolean; entries: Array<{ spec: { key: string }; provenance: unknown }>; loadErrors: Array<{ file: string; kind: string; message: string }>; attemptedFiles: string[] }>;
 
@@ -263,23 +264,25 @@ test("runtime config forces risky unacknowledged user-added sensors disabled bef
   assert.equal(acknowledgedRefreshes, 1, "acknowledged risky sensor can run through the same runtime path");
 });
 
-test("loader rejects user-added sensor candidates outside <extension_root>/src/sensors/*.ts including ~/.pi/dasein/sensors", async () => {
+test("loader admits ~/.pi/dasein/sensors/*.ts but still rejects legacy and nested sensor paths", async () => {
   const api = await loadDaseinApi();
-  const loadSensorRegistry = requireExportedFunction(api, "loadSensorRegistry", "docs/PRD.md#9-7-sensor-loading-and-reload canonical scan root") as LoadSensorRegistry;
+  const loadSensorRegistry = requireExportedFunction(api, "loadSensorRegistry", "docs/PRD.md#9-7-sensor-loading-and-reload canonical scan roots") as LoadSensorRegistry;
   const safeSpec = { key: "safe", defaults: { enabled: true, ui: true, agent: false, intervalMs: null }, manifest: builtinClockManifest };
   const result = await loadSensorRegistry({
     extensionRoot: "/extension",
     installMode: "directory",
+    userSensorDirectory: "/Users/example/.pi/dasein/sensors",
     modules: [
       { filePath: "/extension/src/sensors/safe.ts", defaultExport: safeSpec },
       { filePath: "/extension/sensors/legacy.ts", defaultExport: { ...safeSpec, key: "legacy" } },
       { filePath: "/Users/example/.pi/dasein/sensors/home.ts", defaultExport: { ...safeSpec, key: "home" } },
+      { filePath: "/Users/example/.pi/dasein/sensors/nested/bad.ts", defaultExport: { ...safeSpec, key: "nested" } },
     ],
   });
 
-  assert.deepEqual(result.entries.map((entry) => entry.spec.key), ["safe"], "only <extension_root>/src/sensors/*.ts is admitted");
+  assert.deepEqual(result.entries.map((entry) => entry.spec.key).sort(), ["home", "safe"], "extension-root and user-local top-level sensors are admitted");
   assert.deepEqual(result.loadErrors.map((error) => [error.file, error.kind]), [
     ["/extension/sensors/legacy.ts", "scan"],
-    ["/Users/example/.pi/dasein/sensors/home.ts", "scan"],
-  ], "legacy extension sensors path and ~/.pi/dasein/sensors are rejected as non-canonical");
+    ["/Users/example/.pi/dasein/sensors/nested/bad.ts", "scan"],
+  ], "legacy extension sensors path and nested user-local sensors are rejected as non-canonical");
 });

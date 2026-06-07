@@ -44,6 +44,7 @@ export const SENSOR_SPEC_EXPORT_CONTRACT = {
   namedExportAlternativeAccepted: false,
   keyPattern: "[A-Za-z0-9_-]{1,64}",
   canonicalDirectory: "<extension_root>/src/sensors/*.ts",
+  userLocalDirectory: "~/.pi/dasein/sensors/*.ts",
   singleFileInstallUserAddedSensors: false,
 } as const;
 
@@ -74,7 +75,9 @@ export interface DetectDaseinInstallModeInput {
 }
 
 export interface DaseinInstallModeMetadata {
-  userSensorScanGlob: string | null;
+  packageSensorScanGlob: string | null;
+  userLocalSensorScanGlob: string | null;
+  userSensorScanGlobs: readonly string[];
   dynamicUserSensorsSupported: boolean;
 }
 
@@ -88,6 +91,7 @@ export interface SensorModuleCandidate {
 export interface LoadSensorRegistryInput {
   extensionRoot: string;
   installMode?: DaseinInstallMode;
+  userSensorDirectory?: string | null;
   modules?: readonly SensorModuleCandidate[];
   builtinEntries?: readonly SensorRegistryEntry[];
   staticEntries?: readonly SensorRegistryEntry[];
@@ -150,8 +154,12 @@ const INTERVAL_RELATIONSHIPS = new Set(["none", "default_interval_sets_effective
 
 export const detectDaseinInstallMode = (input: DetectDaseinInstallModeInput): DaseinInstallModeMetadata => {
   const installMode: DaseinInstallMode = input.packageForm === "single-file" || input.packageForm === "bundled" ? "single-file" : "directory";
+  const packageSensorScanGlob = installMode === "directory" ? join(input.extensionRoot, "src", "sensors", "*.ts") : null;
+  const userLocalSensorScanGlob = installMode === "directory" ? "~/.pi/dasein/sensors/*.ts" : null;
   return {
-    userSensorScanGlob: installMode === "directory" ? join(input.extensionRoot, "src", "sensors", "*.ts") : null,
+    packageSensorScanGlob,
+    userLocalSensorScanGlob,
+    userSensorScanGlobs: [packageSensorScanGlob, userLocalSensorScanGlob].filter((value): value is string => value !== null),
     dynamicUserSensorsSupported: installMode === "directory",
   };
 };
@@ -169,7 +177,8 @@ export const loadSensorRegistry = async (input: LoadSensorRegistryInput): Promis
     };
   }
 
-  const modules = input.modules ?? (await importSensorModules(input.extensionRoot, input.cacheBustToken));
+  const userSensorDirectory = input.userSensorDirectory ?? null;
+  const modules = input.modules ?? (await importSensorModules(input.extensionRoot, input.cacheBustToken, userSensorDirectory));
   const loadErrors: SensorLoadError[] = [];
   const entries: SensorRegistryEntry[] = [...staticEntries];
   const staticKeys = new Set<SensorKey>(staticEntries.map((entry) => entry.spec.key));
@@ -177,8 +186,8 @@ export const loadSensorRegistry = async (input: LoadSensorRegistryInput): Promis
 
   for (const moduleCandidate of modules) {
     const file = moduleCandidate.filePath;
-    if (!isCanonicalUserSensorFile(input.extensionRoot, file)) {
-      loadErrors.push({ file, kind: "scan", message: "user-added sensors must be loaded only from <extension_root>/src/sensors/*.ts" });
+    if (!isCanonicalUserSensorFile(input.extensionRoot, file, userSensorDirectory)) {
+      loadErrors.push({ file, kind: "scan", message: "user-added sensors must be loaded only from <extension_root>/src/sensors/*.ts or ~/.pi/dasein/sensors/*.ts" });
       continue;
     }
     if (moduleCandidate.loadError !== undefined) {
@@ -274,28 +283,30 @@ export const deriveEffectiveSensorRuntimeConfig = (input: InspectSensorMetadataI
   return { rawConfig: input.effectiveConfig, config, metadata };
 };
 
-const importSensorModules = async (extensionRoot: string, cacheBustToken?: string | number): Promise<SensorModuleCandidate[]> => {
-  const sensorDir = resolve(extensionRoot, "src", "sensors");
-  const filenames = listTypeScriptFilenames(sensorDir);
+const importSensorModules = async (extensionRoot: string, cacheBustToken?: string | number, userSensorDirectory?: string | null): Promise<SensorModuleCandidate[]> => {
+  const sensorDirs = Array.from(new Set([resolve(extensionRoot, "src", "sensors"), ...(userSensorDirectory === undefined || userSensorDirectory === null ? [] : [resolve(userSensorDirectory)])]));
   const candidates: SensorModuleCandidate[] = [];
   const importBatchToken = `${String(cacheBustToken ?? "load")}-${process.pid}-${process.hrtime.bigint()}`;
-  for (const filename of filenames) {
-    const filePath = join(sensorDir, filename);
-    let importTarget = filePath;
-    try {
-      importTarget = createCacheBustedImportTarget(filePath, importBatchToken);
-      const href = pathToFileURL(importTarget).href + (cacheBustToken === undefined ? "" : `?reload=${encodeURIComponent(String(cacheBustToken))}`);
-      const imported = (await import(href)) as Record<string, unknown>;
-      candidates.push({ filePath, defaultExport: imported.default, namedExport: imported.sensorSpec });
-    } catch (error) {
-      candidates.push({
-        filePath,
-        defaultExport: undefined,
-        namedExport: undefined,
-        loadError: { file: filePath, kind: "import", message: `SensorLoadError: failed to import sensor module: ${errorMessage(error)}` },
-      });
-    } finally {
-      removeCacheBustedImportTarget(filePath, importTarget);
+  for (const sensorDir of sensorDirs) {
+    const filenames = listTypeScriptFilenames(sensorDir);
+    for (const filename of filenames) {
+      const filePath = join(sensorDir, filename);
+      let importTarget = filePath;
+      try {
+        importTarget = createCacheBustedImportTarget(filePath, importBatchToken);
+        const href = pathToFileURL(importTarget).href + (cacheBustToken === undefined ? "" : `?reload=${encodeURIComponent(String(cacheBustToken))}`);
+        const imported = (await import(href)) as Record<string, unknown>;
+        candidates.push({ filePath, defaultExport: imported.default, namedExport: imported.sensorSpec });
+      } catch (error) {
+        candidates.push({
+          filePath,
+          defaultExport: undefined,
+          namedExport: undefined,
+          loadError: { file: filePath, kind: "import", message: `SensorLoadError: failed to import sensor module: ${errorMessage(error)}` },
+        });
+      } finally {
+        removeCacheBustedImportTarget(filePath, importTarget);
+      }
     }
   }
   return candidates;
@@ -306,12 +317,14 @@ const errorMessage = (error: unknown): string => {
   return message.split(/\r?\n/u)[0] ?? "unknown import error";
 };
 
-const isCanonicalUserSensorFile = (extensionRoot: string, filePath: string): boolean => (
-  filePath.endsWith(".ts") && dirname(resolve(filePath)) === resolve(extensionRoot, "src", "sensors")
-);
+const isCanonicalUserSensorFile = (extensionRoot: string, filePath: string, userSensorDirectory?: string | null): boolean => {
+  if (!filePath.endsWith(".ts")) return false;
+  const fileDirectory = dirname(resolve(filePath));
+  return fileDirectory === resolve(extensionRoot, "src", "sensors") || (userSensorDirectory !== undefined && userSensorDirectory !== null && fileDirectory === resolve(userSensorDirectory));
+};
 
 const isSourceBuiltinMirror = (extensionRoot: string, filePath: string, key: SensorKey): boolean => (
-  isCanonicalUserSensorFile(extensionRoot, filePath) && basename(filePath) === `${key}.ts`
+  isCanonicalUserSensorFile(extensionRoot, filePath, null) && basename(filePath) === `${key}.ts`
 );
 
 const validateSensorSpec = (candidate: Record<string, unknown>): { ok: true; spec: SensorSpec } | { ok: false; kind: SensorLoadErrorKind; message: string } => {

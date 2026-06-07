@@ -4,13 +4,14 @@ This guide explains how to add a local Dasein sensor after installing Dasein as 
 
 ## Current extension model
 
-Dasein currently loads user-added sensors only from the installed package root:
+Dasein loads user-added sensors from two non-recursive scan roots:
 
 ```text
+~/.pi/dasein/sensors/*.ts
 <dasein-extension-root>/src/sensors/*.ts
 ```
 
-There is no supported `~/.pi/dasein/sensors` directory yet.
+For normal users, prefer `~/.pi/dasein/sensors/*.ts`. You do not need to fork Dasein just to add a private local sensor.
 
 If you installed Dasein from GitHub with:
 
@@ -18,32 +19,13 @@ If you installed Dasein from GitHub with:
 pi install git:github.com/Tefx/dasein-pi-extension@main
 ```
 
-Pi manages that clone. Do not edit Pi's managed clone directly unless you accept that `pi update` may reset and clean it. Use one of these safer flows instead:
+Pi manages that package clone. Do not edit Pi's managed clone directly unless you accept that `pi update` may reset and clean it. Put your own sensors in `~/.pi/dasein/sensors/` instead.
 
-1. Fork the repo, add your sensor, then install your fork/ref:
-
-   ```bash
-   pi install git:github.com/<you>/dasein-pi-extension@<branch-or-tag>
-   ```
-
-2. Or clone locally, add your sensor, then install the local checkout:
-
-   ```bash
-   git clone https://github.com/Tefx/dasein-pi-extension.git
-   cd dasein-pi-extension
-   # add src/sensors/<your-sensor>.ts
-   pi install "$PWD"
-   ```
-
-For one Pi run only, use:
-
-```bash
-pi -e "$PWD"
-```
+Use a fork or local checkout only when you want to modify Dasein itself or bundle sensors with a custom Dasein package.
 
 ## Sensor file contract
 
-A sensor is one TypeScript file under `src/sensors/` with exactly one default export: a `SensorSpec`.
+A sensor is one TypeScript file under `~/.pi/dasein/sensors/` or `<dasein-extension-root>/src/sensors/` with exactly one default export: a `SensorSpec`-shaped object. User-local sensors should not rely on relative imports into Dasein's package source; the simplest user-local sensor is a plain default-exported object that Dasein validates at load time.
 
 Required basics:
 
@@ -67,20 +49,15 @@ Dasein core owns final rendering. Sensors return typed state; they do not write 
 
 Create:
 
-```text
-src/sensors/focus.ts
+```bash
+mkdir -p ~/.pi/dasein/sensors
+$EDITOR ~/.pi/dasein/sensors/focus.ts
 ```
 
 Example:
 
 ```typescript
-import type { SensorConfig, SensorManifest, SensorSpec } from "../core/types.ts";
-
-interface FocusConfig extends SensorConfig {
-  label: string;
-}
-
-const manifest: SensorManifest = {
+const manifest = {
   description: "local manually configured focus label",
   declaredInputClasses: ["derived"],
   outputFields: [
@@ -111,7 +88,7 @@ const manifest: SensorManifest = {
   },
 };
 
-const focus: SensorSpec<string, FocusConfig> = {
+const focus = {
   key: "focus",
   defaults: {
     enabled: true,
@@ -151,7 +128,7 @@ After adding the file, run inside Pi:
 
 Expected behavior:
 
-- `/dasein reload` rescans `src/sensors/*.ts` for directory/package installs.
+- `/dasein reload` rescans `~/.pi/dasein/sensors/*.ts` and package-root `src/sensors/*.ts` for directory/package installs.
 - `/dasein sensors` should list `focus` in `data.sensors`.
 - `/dasein inspect agent` should show the current agent context block if agent injection is enabled and the sensor is agent-visible.
 
@@ -287,7 +264,14 @@ Then include `intervalMs` in defaults if you want recurring scheduling.
 
 ## Validation checklist
 
-Before pushing or installing your sensor for normal use:
+After adding a user-local sensor, the immediate runtime check is:
+
+```text
+/dasein reload
+/dasein sensors
+```
+
+When developing inside a fork or local Dasein checkout, run the repository checks before pushing or publishing:
 
 ```bash
 npm run typecheck
@@ -295,7 +279,7 @@ npm test
 npm run package:check
 ```
 
-Useful focused tests while developing sensors:
+Useful focused tests while developing package-root sensors:
 
 ```bash
 npm run test:file -- tests/unit/sensor-loader.test.ts tests/unit/sensor-runtime.test.ts tests/unit/renderer.test.ts tests/unit/sensors/loader-risk.test.ts
@@ -303,10 +287,12 @@ npm run test:file -- tests/unit/sensor-loader.test.ts tests/unit/sensor-runtime.
 
 ## Common mistakes
 
-- Putting a sensor under `~/.pi/dasein/sensors`: not supported yet.
+- Putting a sensor in a nested directory under `~/.pi/dasein/sensors`: only top-level `*.ts` files are scanned.
+- Editing Pi's managed package clone instead of using `~/.pi/dasein/sensors` for private sensors.
+- Using relative imports into Dasein source from a user-local sensor; prefer a plain default-exported object unless you are developing inside the package root.
 - Exporting `sensorSpec` as a named export: not accepted; use default export.
 - Using a reserved key such as `status` or `inspect`.
 - Declaring multiple output fields but returning a raw single value without `normalizeState` or `fields`.
 - Setting `enabled=true` for a risky sensor without `acknowledgedManifestDigest`.
 - Expecting sensor code to control final prompt text; Dasein core owns final rendering.
-- Editing Pi's managed git clone and then losing changes on `pi update`; use a fork or local checkout.
+- Editing Pi's managed git clone and then losing changes on `pi update`; use `~/.pi/dasein/sensors` for private sensors, or use a fork/local checkout for package changes.

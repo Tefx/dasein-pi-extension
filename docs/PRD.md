@@ -38,18 +38,17 @@ Dasein solves this by providing a single ambient context broker with explicit co
 - Preserve KISS: no policy engine, no automatic file watcher, manual reload only.
 
 ## 4. Non-Goals
-
 - Dasein is not a general automation engine.
 - Dasein is not a policy engine.
 - Dasein will not decide when the agent should act based on ambient context.
 - Dasein will not include a rule language or lock layer.
 - Dasein will not watch config files automatically.
+- Dasein will not watch sensor files automatically.
 - Dasein will not perform I/O or subprocess calls during LLM request-path injection.
 - Dasein will not expose precise location to the agent by default.
 - Dasein will not require every Pi extension to adopt Dasein.
 - Dasein will not be the owner of Pi's global settings system.
 - Dasein will not provide a full telemetry or analytics platform.
-- Dasein will not load sensors from `~/.pi/dasein/sensors` in this product scope.
 
 ## 5. Target Users
 
@@ -95,7 +94,6 @@ Dasein must provide a central broker that:
 - applies sensor-level and external-state visibility controls before rendering context.
 
 ### 7.2 Sensor Model
-
 Each sensor must support the following common configuration fields:
 
 ```text
@@ -128,24 +126,19 @@ User-added sensor modules must implement the `SensorSpec` contract exactly as de
 - `/dasein sensors` and/or SettingsList must expose inspectable user-added sensor metadata before enablement, including loader-owned provenance plus manifest-declared permissions, input classes, output fields, remote/network behavior, remote/network-capable status, declared recurring/background work, and effective `intervalMs` where applicable.
 - Sensor modules may declare output fields and return normalized or normalizable typed state from Technical Design-defined refresh/observe hooks. Dasein core owns final render behavior: visibility checks, ordering, sanitization, character limits, stale-reading handling, and final injection into agent context or TUI surfaces.
 
-User-added sensors are loaded from the canonical sensor directory for supported directory/package-form installs:
+User-added sensors are loaded from two non-recursive scan roots when Dasein is installed in directory/package form:
 
 ```text
 <extension_root>/src/sensors/*.ts
+~/.pi/dasein/sensors/*.ts
 ```
 
-`<extension_root>` is the Dasein project/extension root. Supported install modes are:
+`<extension_root>` is the Dasein project/extension root. `~/.pi/dasein/sensors` is the user-local sensor directory. Supported install modes are:
 
-- Directory/package-form extension installs, where the extension root is a directory containing `src/sensors/*.ts`; these installs support user-added sensors.
-- Single-file extension installs, which do not expose `<extension_root>/src/sensors/*.ts` and therefore do not support user-added sensors. A single-file packaged Dasein can still run sensors bundled into that package by the Dasein build.
+- Directory/package-form extension installs support both package-root sensors at `<extension_root>/src/sensors/*.ts` and user-local sensors at `~/.pi/dasein/sensors/*.ts`.
+- Single-file extension installs use bundled/static sensors and do not support dynamic user-added `.ts` sensor discovery.
 
-The recommended install for user-added sensors is a standalone Dasein project symlinked into Pi as:
-
-```text
-~/.pi/agent/extensions/dasein
-```
-
-Dasein must not treat `~/.pi/dasein/sensors` as a sensor directory unless a future product decision adds that path.
+Dasein scans only top-level `*.ts` files in those two directories. It does not recurse into subdirectories and does not watch files automatically. `/dasein reload` is the manual reload path.
 
 Minimal sensor refresh lifecycle:
 
@@ -599,7 +592,7 @@ Command behavior:
 
 - `/dasein` opens the configuration UI in TUI mode, and falls back to concise help/status outside TUI mode.
 - `/dasein status` shows effective config, sensor health, freshness, lapse persistence health/presence, and privacy-sensitive state summaries; the exact output data shape is deferred to Technical Design.
-- `/dasein reload` reloads `~/.pi/dasein/config.json`, reapplies launch overlays except for current-process runtime-overridden paths, stops old sensors, rescans `<extension_root>/src/sensors/*.ts` where supported, and restarts effectively enabled sensors only if the full reload candidate validates; on failure it keeps the last-known-good runtime active.
+- `/dasein reload` reloads `~/.pi/dasein/config.json`, reapplies launch overlays except for current-process runtime-overridden paths, stops old sensors, rescans `<extension_root>/src/sensors/*.ts` and `~/.pi/dasein/sensors/*.ts` where supported, and restarts effectively enabled sensors only if the full reload candidate validates; on failure it keeps the last-known-good runtime active.
 - `/dasein sensors` lists loaded sensors in `data.sensors`, load errors in `data.loadErrors`, and inspectable user-added sensor metadata required for safety inspection before enablement, including loader-owned provenance plus spec-owned manifest fields for permissions, input classes, output fields, remote/network behavior, remote/network-capable status, declared recurring/background work, and effective `intervalMs` where applicable; the exact list item data shape is deferred to Technical Design.
 - `/dasein inspect agent` shows the current pre-rendered agent injection block exactly as Dasein would append it to `before_agent_start.systemPrompt`, plus truncation and omitted-key metadata; it does not trigger refresh or add a transcript message.
 - `/dasein set <path> <value>` validates one runtime configuration path/value candidate, atomically persists only that canonical path patch to `~/.pi/dasein/config.json`, then commits runtime behavior and marks that path runtime-overridden for the current process only after persistence succeeds.
@@ -691,7 +684,6 @@ SettingsList must not be the management surface for complex sensor fields such a
 SettingsList changes must use the same validation, explicit-path persistence, and runtime-update semantics as slash command changes.
 
 ### 7.11 Sensor Reload
-
 Dasein must support manual reload:
 
 ```text
@@ -703,7 +695,7 @@ Reload must build and validate a complete candidate state before replacing the a
 - load and validate global disk config from `~/.pi/dasein/config.json`;
 - reapply launch-argument overlays except for current-process runtime-overridden paths;
 - keep current-process runtime overrides effective for runtime-overridden paths;
-- rescan `<extension_root>/src/sensors/*.ts` when the install mode supports that directory;
+- rescan `<extension_root>/src/sensors/*.ts` and `~/.pi/dasein/sensors/*.ts` when the install mode supports dynamic sensor directories;
 - load valid sensor specs;
 - report invalid specs;
 - prepare effectively enabled sensors for restart.
@@ -733,7 +725,7 @@ Refresh lifecycle constraints:
 - LLM request-path injection must not trigger refresh work.
 - Stale readings must be omitted or marked stale according to core render config and normalized typed state.
 
-Dasein must not watch the sensor directory automatically.
+Dasein must not watch sensor directories automatically.
 
 ## 8. Non-Functional Requirements
 
@@ -906,22 +898,21 @@ Current evidence note (2026-06-06): ordinary `npm test` covers all-platform unit
 - Per-key external config controls UI and agent exposure independently; unconfigured keys are UI-visible by default and agent-hidden by default.
 
 ### 9.7 Sensor Loading and Reload
-
-- User-added sensors are loaded only from `<extension_root>/src/sensors/*.ts` in this product scope.
-- Directory/package-form extension installs support user-added sensors at `<extension_root>/src/sensors/*.ts`.
-- Single-file extension installs do not support user-added sensors because there is no user-editable `<extension_root>/src/sensors/*.ts`; they can still run sensors bundled into the packaged Dasein build.
-- The recommended install for user-added sensors is a standalone Dasein project symlinked as `~/.pi/agent/extensions/dasein`.
+- User-added sensors are loaded only from top-level `*.ts` files in `<extension_root>/src/sensors/` and `~/.pi/dasein/sensors/`.
+- Directory/package-form extension installs support package-root sensors at `<extension_root>/src/sensors/*.ts` and user-local sensors at `~/.pi/dasein/sensors/*.ts`.
+- Single-file extension installs do not support dynamic user-added `.ts` sensor discovery; they can still run sensors bundled into the packaged Dasein build.
+- Nested sensor files and legacy `<extension_root>/sensors/*.ts` files fail scan validation and are reported as load errors without replacing the active runtime.
 - A user-added sensor module that does not implement `SensorSpec` exactly as defined in `docs/TECHNICAL_DESIGN.md` fails validation and is reported as a load error without replacing the active runtime.
 - A user-added sensor module that omits or malforms required `SensorSpec.manifest` fields for permissions, input classes, output fields, remote/network behavior, remote/network-capable status, or declared recurring/background-work fields where applicable fails validation and is reported as a load error without replacing the active runtime; source/provenance is loader-owned and is not required in `SensorSpec.manifest`.
 - A valid user-added `SensorSpec` may use the fields, manifest metadata, refresh hooks, lifecycle observation hooks, actions, and cleanup hooks defined by the Technical Design; Dasein core still owns loader provenance, final rendering, visibility checks, ordering, sanitization, limits, stale-reading behavior, and injection.
+- User-added sensor keys must be globally unique across builtin, package-root, and user-local sensors; duplicate keys fail validation and do not activate duplicate candidates.
 - Remote/network-capable user-added sensors are forced to effective disabled state and require explicit user enablement after `/dasein sensors` or SettingsList exposes their inspectable metadata and current manifest digest.
 - User-added sensors that declare recurring/background work, including any positive effective `intervalMs`, are forced to effective disabled state, cannot schedule recurring/background work while effectively disabled, and require explicit human enablement after `/dasein sensors` or SettingsList exposes their inspectable metadata and current manifest digest.
-- `/dasein reload` with a valid candidate stops old sensors, runs cleanup, reloads `~/.pi/dasein/config.json`, reapplies launch overlays except for current-process runtime-overridden paths, rescans `<extension_root>/src/sensors/*.ts` where supported, restarts effectively enabled sensors, and runs startup refresh for effectively enabled sensors where applicable.
+- `/dasein reload` with a valid candidate stops old sensors, runs cleanup, reloads `~/.pi/dasein/config.json`, reapplies launch overlays except for current-process runtime-overridden paths, rescans supported sensor directories, restarts effectively enabled sensors, and runs startup refresh for effectively enabled sensors where applicable.
 - `/dasein reload` with an invalid candidate keeps the last-known-good active config, sensors, runtime-overridden path set, and runtime state, reports errors, and performs no partial replacement.
 - Effectively enabled sensors may refresh on optional configured intervals from the Technical Design; sensor-owned actions may manually refresh where provided and permitted by effective runtime config.
 - LLM request-path injection never performs sensor refresh work and renders only in-memory readings.
 - Stale readings are omitted or marked stale according to core render config and normalized typed state.
-- Dasein does not load sensors from `~/.pi/dasein/sensors`.
 
 ## 10. Metrics
 
@@ -936,15 +927,14 @@ Initial success metrics are implementation-readiness metrics rather than adoptio
 - Runtime slash/UI config changes persist to `~/.pi/dasein/config.json` in the same successful operation that updates runtime behavior.
 
 ## 11. Dependencies
-
 - Pi `0.78.1` is the current minimum target until broader compatibility is tested.
 - Individual Pi mechanisms, including slash command registration, string launch flags, context-hook injection, TUI status/`SettingsList`, `pi.events`, lifecycle hooks, and dynamic `.ts` sensor reload, are governed by the evidence-status table and live smoke gates in `docs/TECHNICAL_DESIGN.md`.
 - Source/API verification alone does not equal release support; release support requires the relevant live smoke gate ledger or documented fail-closed behavior for unavailable mechanisms. Fake-host integration evidence must remain separate from release support claims.
 - macOS CoreLocation for builtin geo sensor, subject to user/system permission. Native helper tests prove helper typecheck, runtime policy, and fail-closed mapping; they do not prove that a permission-blocked host can emit coordinates.
 - Swift compiler or prebuilt app-bundled helper strategy for builtin geo sensor.
-- Local filesystem access to `~/.pi/dasein/`.
+- Local filesystem access to `~/.pi/dasein/`, including `~/.pi/dasein/config.json`, `~/.pi/dasein/state.json`, and the optional `~/.pi/dasein/sensors/*.ts` user-local sensor directory.
 - Dasein extension root access for `<extension_root>/src/sensors/*.ts` in directory/package-form installs.
-- Single-file packaged Dasein install behavior for bundled sensors when no user-editable sensor directory exists.
+- Single-file packaged Dasein install behavior for bundled sensors when no dynamic user-editable sensor directory is available.
 
 ## 12. Risks
 
@@ -958,7 +948,6 @@ Initial success metrics are implementation-readiness metrics rather than adoptio
 - Dynamic sensor reload may leak module instances if abused; it must be manual and cleanup-driven.
 
 ## 13. Out of Scope
-
 - Project-local Dasein config.
 - Automatic file watching.
 - Agent-callable configuration mutation tool.
@@ -966,16 +955,14 @@ Initial success metrics are implementation-readiness metrics rather than adoptio
 - Cloud geolocation.
 - Remote telemetry analytics.
 - Full plugin marketplace.
-- Loading sensors from `~/.pi/dasein/sensors`.
+- Recursive sensor directories or third-party sensor discovery outside the two supported scan roots.
 - Additional builtin sensors beyond clock, geo, and lapse.
 
 ## 14. Open Questions
-
 Acceptance-critical questions for the initial PRD have been closed by the normative decisions in this revision.
 
 Nonblocking future questions:
 
-- Should a future release add a separate user sensor directory under `~/.pi/dasein/` or another user-controlled path?
 - Should external state support per-key persistent visibility policy beyond the event payload's `agent` and `ui` strings?
 - Should geo support alternative tag-match policies beyond nearest matching tag within radius?
 - Which Pi versions earlier than `0.78.1`, if any, are compatible after explicit testing?

@@ -254,8 +254,10 @@ export const daseinExtensionContract: DaseinExtensionContract = {
 
 const SOURCE_FILE = fileURLToPath(import.meta.url);
 const EXTENSION_ROOT = resolve(dirname(SOURCE_FILE), "..");
-const CONFIG_PATH = join(homedir(), ".pi", "dasein", "config.json");
-const STATE_PATH = join(homedir(), ".pi", "dasein", "state.json");
+const DASEIN_HOME = join(homedir(), ".pi", "dasein");
+const CONFIG_PATH = join(DASEIN_HOME, "config.json");
+const STATE_PATH = join(DASEIN_HOME, "state.json");
+const USER_SENSOR_DIR = join(DASEIN_HOME, "sensors");
 const BUILTIN_SPECS = [clockSpec, geoSpec, lapseSpec] as const;
 const BUILTIN_ENTRIES: readonly SensorRegistryEntry[] = BUILTIN_SPECS.map((spec) => ({ spec: spec as unknown as SensorSpec, provenance: { kind: "builtin" as const } }));
 const BUILTIN_KEYS = new Set<string>(BUILTIN_SPECS.map((spec) => spec.key));
@@ -668,7 +670,7 @@ class DaseinAmbientContextBroker {
   }
 
   private async initializeOnce(): Promise<void> {
-    const registry = await loadSensorRegistry({ extensionRoot: EXTENSION_ROOT, builtinEntries: BUILTIN_ENTRIES, cacheBustToken: Date.now() });
+    const registry = await loadSensorRegistry({ extensionRoot: EXTENSION_ROOT, userSensorDirectory: USER_SENSOR_DIR, builtinEntries: BUILTIN_ENTRIES, cacheBustToken: Date.now() });
     this.entries = registry.entries.map(coerceEntryProvenance).sort((left, right) => left.spec.key.localeCompare(right.spec.key));
     this.loadErrors = registry.loadErrors;
     this.attemptedFiles = registry.attemptedFiles;
@@ -1244,7 +1246,7 @@ class DaseinAmbientContextBroker {
     const previousEntries = this.entries;
     const previousConfig = this.config;
     const previousRendered = this.stateStore.getRenderedContext();
-    const registry = await loadSensorRegistry({ extensionRoot: EXTENSION_ROOT, builtinEntries: BUILTIN_ENTRIES, cacheBustToken: Date.now() });
+    const registry = await loadSensorRegistry({ extensionRoot: EXTENSION_ROOT, userSensorDirectory: USER_SENSOR_DIR, builtinEntries: BUILTIN_ENTRIES, cacheBustToken: Date.now() });
     const candidateEntries = registry.entries.map(coerceEntryProvenance).sort((left, right) => left.spec.key.localeCompare(right.spec.key));
     const configReload = registry.ok
       ? await manager.reloadDisk({

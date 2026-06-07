@@ -108,7 +108,13 @@ The geo sensor uses a local `Dasein Location Helper` app bundle so macOS Locatio
 
 ## User-added sensors
 
-User-added sensors are loaded from this package's `src/sensors/*.ts` directory for supported directory/package installs.
+User-added sensors can be added without forking Dasein. Put top-level `*.ts` sensor files in:
+
+```text
+~/.pi/dasein/sensors/
+```
+
+Dasein also scans package-root sensors from `src/sensors/*.ts`. It does not recurse into subdirectories and does not watch files automatically; run `/dasein reload` after adding or changing a sensor.
 
 For a step-by-step tutorial, see:
 

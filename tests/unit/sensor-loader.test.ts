@@ -28,6 +28,55 @@ test("sensor loader validates default export SensorSpec, manifest metadata, dupl
   ]);
 });
 
+test("user-local sensor directory admits ~/.pi/dasein/sensors/*.ts and rejects legacy paths", async () => {
+  const api = await loadDaseinApi();
+  const loadSensorRegistry = requireExportedFunction(api, "loadSensorRegistry", "docs/TECHNICAL_DESIGN.md user-local sensor directory");
+  const safeSpec = { key: "safe", defaults: { enabled: true, ui: true, agent: false, intervalMs: null }, manifest: builtinClockManifest };
+  const result = await loadSensorRegistry({
+    extensionRoot: "/extension",
+    installMode: "directory",
+    userSensorDirectory: "/Users/example/.pi/dasein/sensors",
+    modules: [
+      { filePath: "/extension/src/sensors/pkg.ts", defaultExport: { ...safeSpec, key: "pkg" } },
+      { filePath: "/Users/example/.pi/dasein/sensors/home.ts", defaultExport: { ...safeSpec, key: "home" } },
+      { filePath: "/Users/example/.pi/dasein/sensors/nested/bad.ts", defaultExport: { ...safeSpec, key: "nested" } },
+      { filePath: "/extension/sensors/legacy.ts", defaultExport: { ...safeSpec, key: "legacy" } },
+    ],
+  }) as { ok: boolean; entries: Array<{ spec: { key: string }; provenance: { kind: string; filePath?: string } }>; loadErrors: Array<{ file: string; kind: string; key?: string; message: string }> };
+
+  assert.equal(result.ok, false);
+  assert.deepEqual(result.entries.map((entry) => [entry.spec.key, entry.provenance.kind, entry.provenance.filePath]).sort(), [
+    ["home", "user_added_local_file", "/Users/example/.pi/dasein/sensors/home.ts"],
+    ["pkg", "user_added_local_file", "/extension/src/sensors/pkg.ts"],
+  ]);
+  assert.deepEqual(result.loadErrors.map((error) => [error.file, error.kind]), [
+    ["/Users/example/.pi/dasein/sensors/nested/bad.ts", "scan"],
+    ["/extension/sensors/legacy.ts", "scan"],
+  ]);
+});
+
+test("package and user-local sensors cannot declare the same key", async () => {
+  const api = await loadDaseinApi();
+  const loadSensorRegistry = requireExportedFunction(api, "loadSensorRegistry", "docs/TECHNICAL_DESIGN.md duplicate key safe admission");
+  const safeSpec = { key: "dup", defaults: { enabled: true, ui: true, agent: false, intervalMs: null }, manifest: builtinClockManifest };
+  const result = await loadSensorRegistry({
+    extensionRoot: "/extension",
+    installMode: "directory",
+    userSensorDirectory: "/Users/example/.pi/dasein/sensors",
+    modules: [
+      { filePath: "/extension/src/sensors/dup.ts", defaultExport: safeSpec },
+      { filePath: "/Users/example/.pi/dasein/sensors/dup.ts", defaultExport: safeSpec },
+    ],
+  }) as { ok: boolean; entries: Array<{ spec: { key: string } }>; loadErrors: Array<{ file: string; kind: string; key?: string }> };
+
+  assert.equal(result.ok, false);
+  assert.deepEqual(result.entries.map((entry) => entry.spec.key), []);
+  assert.deepEqual(result.loadErrors.map((error) => [error.file, error.kind, error.key]).sort(), [
+    ["/Users/example/.pi/dasein/sensors/dup.ts", "duplicate-key", "dup"],
+    ["/extension/src/sensors/dup.ts", "duplicate-key", "dup"],
+  ]);
+});
+
 test("startup loader surfaces duplicate-key errors without activating failed duplicate candidates", async () => {
   const api = await loadDaseinApi();
   const loadSensorRegistry = requireExportedFunction(api, "loadSensorRegistry", "docs/TECHNICAL_DESIGN.md#sensor-loading-and-reload/startup-scan duplicate-key safe admission");
@@ -105,6 +154,50 @@ export default spec;
     assert.match(invalid.loadErrors[0]?.message ?? "", /SensorLoadError: failed to import sensor module/u);
   } finally {
     rmSync(extensionRoot, { recursive: true, force: true });
+  }
+});
+
+test("dynamic filesystem imports scan package and user-local sensor directories", async () => {
+  const api = await loadDaseinApi();
+  const loadSensorRegistry = requireExportedFunction(api, "loadSensorRegistry", "docs/TECHNICAL_DESIGN.md package and user-local dynamic sensor scan");
+  const extensionRoot = mkdtempSync(join(tmpdir(), "dasein-package-sensors-"));
+  const userSensorDirectory = mkdtempSync(join(tmpdir(), "dasein-user-sensors-"));
+  const packageSensorDir = join(extensionRoot, "src", "sensors");
+  mkdirSync(packageSensorDir, { recursive: true });
+
+  const sensorSource = (key: string): string => `
+const spec = {
+  key: ${JSON.stringify(key)},
+  defaults: { enabled: true, ui: true, agent: true },
+  manifest: {
+    description: ${JSON.stringify(`${key} manifest`)},
+    declaredInputClasses: ["derived"],
+    outputFields: [{ state_key: ${JSON.stringify(`${key}.value`)}, value_type: "string", description: ${JSON.stringify(`${key} value`)}, agentVisibleByDefault: true, uiVisibleByDefault: true }],
+    permissions: [{ kind: "none", required: false, reason: "none" }],
+    remote: { capable: false, contactsNetworkByDefault: false, destinations: [], payloadClasses: [], transmissionCadence: "none", disableControl: "none", description: "none" },
+    backgroundWork: { capable: false, kinds: [], defaultIntervalMs: null, intervalRelationship: "none", description: "none" },
+  },
+};
+export default spec;
+`;
+
+  try {
+    const packagePath = join(packageSensorDir, "package-sensor.ts");
+    const userPath = join(userSensorDirectory, "user-sensor.ts");
+    writeFileSync(packagePath, sensorSource("package_sensor"));
+    writeFileSync(userPath, sensorSource("user_sensor"));
+
+    const result = await loadSensorRegistry({ extensionRoot, userSensorDirectory, cacheBustToken: "both" }) as { ok: boolean; entries: Array<{ spec: { key: string }; provenance: { filePath?: string } }>; attemptedFiles: string[]; loadErrors: unknown[] };
+
+    assert.equal(result.ok, true);
+    assert.deepEqual(result.entries.map((entry) => entry.spec.key).sort(), ["package_sensor", "user_sensor"]);
+    assert.deepEqual(result.entries.map((entry) => entry.provenance.filePath).sort(), [packagePath, userPath].sort());
+    assert.deepEqual(result.attemptedFiles.sort(), [packagePath, userPath].sort());
+    assert.equal(readdirSync(packageSensorDir).some((name) => name.startsWith(".dasein-reload-")), false);
+    assert.equal(readdirSync(userSensorDirectory).some((name) => name.startsWith(".dasein-reload-")), false);
+  } finally {
+    rmSync(extensionRoot, { recursive: true, force: true });
+    rmSync(userSensorDirectory, { recursive: true, force: true });
   }
 });
 
