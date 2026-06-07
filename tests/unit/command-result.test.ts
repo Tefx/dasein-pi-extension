@@ -43,6 +43,30 @@ test("parse failures return CommandParseError and never reach mutation or sensor
   assertSingleLine(result.message, "parse failure message");
 });
 
+test("sensor action command data exposes mutation proposals without top-level mutation results", async () => {
+  const api = await loadDaseinApi();
+  const executeDaseinCommand = requireExportedFunction(api, "executeDaseinCommand", "SensorActionCommandData mutationProposal contract");
+
+  const result = await executeDaseinCommand("/dasein geo tag home", {
+    discoveredSensorKeys: ["geo"],
+    sensorActions: { geo: ["tag"] },
+    runSensorAction: () => ({
+      ok: true,
+      message: "tag proposal ready",
+      refreshScheduled: true,
+      mutation: { assignments: { "sensors.geo.tags.home": { lat: 1, lon: 2, radius_m: 50 } } },
+      data: { applied: false },
+    }),
+  }) as { ok: boolean; command: string; data: { mutation?: unknown; mutationProposal?: unknown; actionPayload?: unknown; refreshScheduled: boolean } };
+
+  assert.equal(result.ok, true);
+  assert.equal(result.command, "sensor-action");
+  assert.equal("mutation" in result.data, false);
+  assert.deepEqual(result.data.mutationProposal, { assignments: { "sensors.geo.tags.home": { lat: 1, lon: 2, radius_m: 50 } } });
+  assert.deepEqual(result.data.actionPayload, { applied: false });
+  assert.equal(result.data.refreshScheduled, true);
+});
+
 test("help command exposes deterministic command text without mutating runtime state", async () => {
   const api = await loadDaseinApi();
   const executeDaseinCommand = requireExportedFunction(api, "executeDaseinCommand", "Testing Gate Matrix row: Command parser and result typing");

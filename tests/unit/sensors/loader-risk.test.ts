@@ -18,6 +18,36 @@ type InspectMetadata = {
   effectiveEnabled: boolean;
   forcedDisabledReason?: string;
 };
+type RuntimeSensorConfig = {
+  enabled: boolean;
+  ui: boolean;
+  agent: boolean;
+  intervalMs?: number | null;
+  acknowledgedManifestDigest?: string | null;
+  [key: string]: unknown;
+};
+
+type EffectiveRuntimeConfigResult = {
+  rawConfig: Readonly<RuntimeSensorConfig>;
+  config: RuntimeSensorConfig;
+  metadata: InspectMetadata;
+};
+
+type DeriveEffectiveSensorRuntimeConfig = (input: InspectInput) => EffectiveRuntimeConfigResult;
+
+type SensorRuntimeForTest = {
+  refreshNow(options: { reason: string }): Promise<{ ok: boolean; fresh?: boolean; error?: { message: string } }>;
+};
+
+type CreateSensorRuntime = (input: {
+  sensorKey: string;
+  config: RuntimeSensorConfig;
+  source: { sensor_id: string; source_kind: "local_sensor"; local_file_path: string };
+  outputFields: ReturnType<typeof outputField>[];
+  refresh: () => string;
+  now: () => number;
+}) => SensorRuntimeForTest;
+
 type LoadSensorRegistry = (input: {
   extensionRoot: string;
   installMode?: "directory" | "single-file";
@@ -170,6 +200,67 @@ test("matching acknowledgedManifestDigest is required in the same effective conf
   assert.equal(acknowledged.acknowledgementRequired, true);
   assert.equal(acknowledged.acknowledgementSatisfied, true);
   assert.equal(acknowledged.effectiveEnabled, true);
+});
+
+test("runtime config forces risky unacknowledged user-added sensors disabled before initial refresh while acknowledged sensors can run", async () => {
+  const api = await loadDaseinApi();
+  const deriveEffectiveSensorRuntimeConfig = requireExportedFunction(api, "deriveEffectiveSensorRuntimeConfig", "docs/TECHNICAL_DESIGN.md risky user-added runtime admission") as DeriveEffectiveSensorRuntimeConfig;
+  const createSensorRuntime = requireExportedFunction(api, "createSensorRuntime", "docs/TECHNICAL_DESIGN.md Sensor Refresh runtime") as CreateSensorRuntime;
+  const spec = { key: "weather", defaults: { enabled: true, ui: true, agent: false, intervalMs: 300000 }, manifest: riskyWeatherManifest };
+  const provenance = { kind: "user_added_local_file" as const, filePath: "/extension/src/sensors/weather.ts" };
+  const source = { sensor_id: "weather", source_kind: "local_sensor" as const, local_file_path: provenance.filePath };
+  const outputFields = [outputField("weather.summary")];
+
+  let unacknowledgedRefreshes = 0;
+  const unacknowledged = deriveEffectiveSensorRuntimeConfig({
+    spec,
+    provenance,
+    effectiveConfig: { enabled: true, ui: true, agent: false, intervalMs: 300000, acknowledgedManifestDigest: null },
+  });
+  const unacknowledgedRuntime = createSensorRuntime({
+    sensorKey: "weather",
+    config: unacknowledged.config,
+    source,
+    outputFields,
+    refresh: () => {
+      unacknowledgedRefreshes += 1;
+      return "rain";
+    },
+    now: () => 10_000,
+  });
+  const unacknowledgedInitialRefresh = await unacknowledgedRuntime.refreshNow({ reason: "initial" });
+
+  assert.equal(unacknowledged.rawConfig.enabled, true, "raw config models a user/overlay trying to enable the sensor");
+  assert.equal(unacknowledged.config.enabled, false, "runtime-facing config is forced disabled until acknowledgement");
+  assert.equal(unacknowledged.metadata.effectiveEnabled, false);
+  assert.equal(unacknowledgedInitialRefresh.ok, false);
+  assert.match(unacknowledgedInitialRefresh.error?.message ?? "", /disabled/u);
+  assert.equal(unacknowledgedRefreshes, 0, "unacknowledged risky sensor refresh hook must not run during initial refresh");
+
+  let acknowledgedRefreshes = 0;
+  const acknowledged = deriveEffectiveSensorRuntimeConfig({
+    spec,
+    provenance,
+    effectiveConfig: { enabled: true, ui: true, agent: false, intervalMs: 300000, acknowledgedManifestDigest: unacknowledged.metadata.manifestDigest },
+  });
+  const acknowledgedRuntime = createSensorRuntime({
+    sensorKey: "weather",
+    config: acknowledged.config,
+    source,
+    outputFields,
+    refresh: () => {
+      acknowledgedRefreshes += 1;
+      return "rain";
+    },
+    now: () => 10_000,
+  });
+  const acknowledgedInitialRefresh = await acknowledgedRuntime.refreshNow({ reason: "initial" });
+
+  assert.equal(acknowledged.config.enabled, true);
+  assert.equal(acknowledged.metadata.effectiveEnabled, true);
+  assert.equal(acknowledgedInitialRefresh.ok, true);
+  assert.equal(acknowledgedInitialRefresh.fresh, true);
+  assert.equal(acknowledgedRefreshes, 1, "acknowledged risky sensor can run through the same runtime path");
 });
 
 test("loader rejects user-added sensor candidates outside <extension_root>/src/sensors/*.ts including ~/.pi/dasein/sensors", async () => {

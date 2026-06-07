@@ -84,7 +84,7 @@ test("ordinary npm test discovery excludes live Pi smoke while keeping fake-host
 });
 
 test("[expected-red] startup probes Pi APIs and fail-closes status for unavailable mechanisms", async () => {
-  const host = await registerInFakeHost({}, "tui", {
+  const host = await registerInFakeHost({ dasein: "core.statusDetail=quiet" }, "tui", {
     unavailableMechanisms: ["custom"],
   });
 

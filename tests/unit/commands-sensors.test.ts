@@ -3,7 +3,7 @@ import test from "node:test";
 
 import { assertSingleLine, expectedSensorsData, loadDaseinApi, lowerSha256, requireExportedFunction } from "../fixtures/helpers/core-fixtures.ts";
 
-test("/dasein sensors lists builtin, user-added, and load-failed records with deterministic command text", async () => {
+test("/dasein sensors lists loaded records and split load errors with deterministic command text", async () => {
   const api = await loadDaseinApi();
   const buildSensorsCommandResult = requireExportedFunction(api, "buildSensorsCommandResult", "Testing Gate Matrix row: Status and sensors command payloads");
   const result = buildSensorsCommandResult({ fixture: expectedSensorsData() }) as { ok: boolean; command: string; message: string; data: ReturnType<typeof expectedSensorsData> };
@@ -15,8 +15,8 @@ test("/dasein sensors lists builtin, user-added, and load-failed records with de
   assert.deepEqual(result.data.sensors.map((sensor) => [sensor.key, sensor.loaded, sensor.enabled, sensor.status]), [
     ["clock", true, true, "enabled"],
     ["weather", true, false, "disabled"],
-    ["bad_sensor_file.ts", false, false, "error"],
   ]);
+  assert.equal(result.data.sensors.some((sensor) => sensor.loaded === false), false, "load-failed files are reported in data.loadErrors, not data.sensors");
   assert.match(JSON.stringify(result.data.loadErrors), /bad_sensor_file\.ts.*invalid-spec/u);
 });
 

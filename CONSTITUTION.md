@@ -2,11 +2,11 @@
 
 ## Mission
 
-Dasein is a local Pi ambient-context broker and sensor framework for coding-agent sessions.
+Dasein is a local Pi ambient-context broker and sensor framework whose primary value is bounded, human-governed agent context for coding-agent sessions.
 
-Dasein collects typed ambient state, exposes selected state to the human, and injects selected bounded context into the agent runtime through explicit human-governed mechanisms.
+Dasein collects typed ambient state, exposes bounded status and diagnostics to the human, and injects selected context into the agent runtime through explicit human-governed mechanisms.
 
-Dasein MUST remain a broker. It MUST NOT become hidden memory, an agent policy layer, a workflow engine, a ranking system, a daemon marketplace, or an external automation platform.
+Dasein MUST remain a broker. It MUST NOT become hidden memory, an agent policy layer, a workflow engine, a ranking system, a plugin marketplace, a persistence product, or an external automation platform.
 
 ## Constitutional Scope
 
@@ -16,20 +16,21 @@ Implementation details, file paths, package names, exact schemas, command names,
 
 A constitutional amendment MUST change only durable constraints. It MUST NOT add feature roadmaps, target-user narratives, ephemeral UI copy, package checklists, or speculative implementation plans.
 
-Every constitutional MUST MUST map to executable verification where feasible. Manual review MUST be reserved for privacy judgment, semantic clarity, and support-claim judgment that automation cannot prove.
+Every constitutional invariant MUST map to executable verification where feasible. Manual review MUST be reserved for privacy judgment, semantic clarity, and support-claim judgment that automation cannot prove.
 
 ## Architectural Dogmas
 
 1. Dasein MUST remain local, minimal, dependency-light, and Pi-extension-shaped.
 2. Dasein MUST preserve a strict separation between collection, normalization, storage, rendering, UI publication, configuration mutation, and agent-context injection.
-3. Sensors and external publishers MUST publish structured typed state. They MUST NOT own final prompt text, final UI text, ordering priority, truncation policy, or configuration mutation.
-4. Core MUST own normalization, deterministic ordering, visibility filtering, budget enforcement, truncation, and final rendering for both humans and agents.
-5. Runtime agent-context injection MUST read only precomputed in-memory context. It MUST NOT perform disk I/O, network I/O, subprocess work, dynamic loading, sensor refresh, sensor discovery, cleanup, or configuration mutation.
-6. Ambient context MUST remain contextual evidence. It MUST NOT become an instruction, hidden behavioral policy, task priority, workflow decision, or inferred user intent.
-7. Configuration changes MUST require explicit human action through documented launch, command, UI, or future approved tool paths. Agents MUST NOT mutate configuration through ordinary runtime behavior.
-8. Dasein MUST NOT use implicit project-local files, repository discovery, hidden profiles, or undeclared inputs to alter collection, visibility, rendering, or injection behavior.
-9. Background work, durable persistence, remote transmission, and user-added executable code MUST be declared, inspectable, disableable, and gated by explicit human control.
-10. Packaging and release design MUST preserve the local-extension trust boundary, dependency-light runtime, reproducible install path, and verifiable compatibility with the real Pi runtime.
+3. Sensors and external publishers MUST publish structured typed state and MAY declare sensor-specific settings metadata. They MUST NOT own final rendered ambient text, final status text, agent-context text, ordering priority, truncation policy, or configuration mutation.
+4. Core MUST own normalization, deterministic ordering, visibility filtering, budget enforcement, truncation, and final rendering for human-facing status, diagnostics, and agent context.
+5. Runtime agent-context construction MUST use only precomputed in-memory context. Request-adjacent lifecycle observation hooks MAY observe lifecycle state only within the same no-I/O boundary. Injection and those observation hooks MUST NOT perform disk I/O, network I/O, subprocess work, dynamic loading, sensor refresh, sensor discovery, cleanup, or configuration mutation.
+6. Agent context MUST be delivered under runtime-owned context semantics. It MUST NOT be represented as user-authored, user-role, or human-transcript content.
+7. Ambient context MUST remain contextual evidence. It MUST NOT become an instruction, hidden behavioral policy, task priority, workflow decision, or inferred user intent.
+8. Configuration changes MUST require explicit human action through documented launch, command, UI, or future approved tool paths. Agents MUST NOT mutate configuration through ordinary runtime behavior.
+9. Dasein MUST NOT use implicit project-local files, repository discovery, hidden profiles, or undeclared inputs to alter collection, visibility, rendering, or injection behavior.
+10. Background work, durable persistence, remote transmission, and user-added executable code MUST be declared, inspectable, disableable, and gated by explicit human control.
+11. Packaging and release design MUST preserve the local-extension trust boundary, dependency-light runtime, reproducible install path, and verifiable compatibility with the real Pi runtime.
 
 ## Quality Baselines
 
@@ -39,7 +40,7 @@ Every constitutional MUST MUST map to executable verification where feasible. Ma
 4. Token and visible-surface budgets MUST be enforced by core-owned formatters, not by sensors or publishers.
 5. Failures, unavailable state, stale state, and truncation MUST fail safely by omission, explicit degraded state, or explicit inspection guidance.
 6. Static checks MUST enforce the read-only/no-I/O agent-injection boundary.
-7. Unit and golden tests MUST cover normalization, ordering, visibility, truncation, persistence safety, and compact default formatting.
+7. Executable verification MUST cover durable behavior for normalization, ordering, visibility, truncation, persistence safety, and compact default formatting without making any single test category constitutionally REQUIRED.
 8. Mock tests MUST NOT be treated as integration proof.
 9. Black-box liveness evidence against the real runtime or binary MUST take precedence over fake-host, source-only, or mock-only evidence for integration support claims.
 10. Release support claims MUST identify the mechanism, compatible runtime, and executable evidence. Unsupported or source-only mechanisms MUST remain labeled as unproven.

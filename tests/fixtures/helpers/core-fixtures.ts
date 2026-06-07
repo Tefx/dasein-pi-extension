@@ -362,21 +362,6 @@ export const expectedSensorsData = (): SensorsCommandData => ({
       acknowledgementSatisfied: false,
       forcedDisabledReason: "user-added-remote-or-network-and-recurring-work",
     },
-    {
-      key: "bad_sensor_file.ts",
-      loaded: false,
-      enabled: false,
-      status: "error",
-      collectedAt: null,
-      stale: false,
-      actions: [],
-      effectiveIntervalMs: null,
-      loadError: {
-        file: "/extension/src/sensors/bad_sensor_file.ts",
-        kind: "invalid-spec",
-        message: "missing manifest",
-      },
-    },
   ],
   loadErrors: [
     {

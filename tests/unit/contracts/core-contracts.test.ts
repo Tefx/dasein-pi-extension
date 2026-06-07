@@ -7,6 +7,7 @@ import test from "node:test";
 import {
   CORE_INJECTED_LABEL_CONSTRAINT,
   CORE_MAX_AGENT_CHARS_CONSTRAINT,
+  CORE_RESERVED_COMMAND_WORDS,
   DASEIN_CONFIG_PRECEDENCE,
   EXTERNAL_STATE_EVENT_TOPICS,
   RENDERED_CONTEXT_KEYS,
@@ -48,6 +49,7 @@ const boundedContractFiles = [
 
 test("core config schema constants pin exact validation boundaries", () => {
   assert.deepEqual(DASEIN_CONFIG_PRECEDENCE, ["defaults", "disk", "launch", "runtime"]);
+  assert.deepEqual(CORE_RESERVED_COMMAND_WORDS, ["status", "reload", "sensors", "inspect", "set", "apply", "help"]);
   assert.deepEqual(CORE_MAX_AGENT_CHARS_CONSTRAINT, {
     path: "core.maxAgentChars",
     integer: true,

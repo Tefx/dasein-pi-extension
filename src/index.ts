@@ -43,8 +43,9 @@ import { formatDaseinStatusBar } from "./ui/status-format.ts";
 import { cancelRuntimeTimer, scheduleRuntimeTimer, type RuntimeTimer } from "./core/runtime-timers.ts";
 import { createSensorRuntime, normalizeSensorRefreshResult, type SensorRuntimeHarness } from "./core/sensor-runtime.ts";
 import {
-  inspectSensorMetadata,
+  deriveEffectiveSensorRuntimeConfig,
   loadSensorRegistry,
+  type EffectiveSensorRuntimeConfig,
   type SensorInspectabilityMetadata,
 } from "./core/sensor-loader.ts";
 import type {
@@ -160,6 +161,7 @@ export {
   SENSOR_LOAD_ERROR_KINDS,
   SENSOR_REGISTRY_PROVENANCE_KINDS,
   SENSOR_SPEC_EXPORT_CONTRACT,
+  deriveEffectiveSensorRuntimeConfig,
   detectDaseinInstallMode,
   inspectSensorMetadata,
   loadSensorRegistry,
@@ -350,6 +352,12 @@ const coerceEntryProvenance = (entry: SensorRegistryEntry): SensorRegistryEntry 
   if (!BUILTIN_KEYS.has(entry.spec.key)) return entry;
   return { spec: entry.spec, provenance: { kind: "builtin" } };
 };
+
+const effectiveSensorRuntimeConfigFor = (entry: SensorRegistryEntry, config: Readonly<SensorConfig>): EffectiveSensorRuntimeConfig => deriveEffectiveSensorRuntimeConfig({
+  spec: entry.spec,
+  provenance: entry.provenance,
+  effectiveConfig: config,
+});
 
 const valueTypeForDisabled = (_declared: SensorValueType): SensorValueType => "null";
 
@@ -687,7 +695,8 @@ class DaseinAmbientContextBroker {
   private rebuildSensorRuntimes(): void {
     this.sensorRuntimes.clear();
     for (const entry of this.entries) {
-      const config = this.config.sensors[entry.spec.key] ?? entry.spec.defaults;
+      const rawConfig = this.config.sensors[entry.spec.key] ?? entry.spec.defaults;
+      const { config } = effectiveSensorRuntimeConfigFor(entry, rawConfig);
       const runtime = createSensorRuntime({
         sensorKey: entry.spec.key,
         config,
@@ -706,7 +715,8 @@ class DaseinAmbientContextBroker {
 
   private syncRuntimeConfigs(): void {
     for (const entry of this.entries) {
-      const config = this.config.sensors[entry.spec.key] ?? entry.spec.defaults;
+      const rawConfig = this.config.sensors[entry.spec.key] ?? entry.spec.defaults;
+      const { config } = effectiveSensorRuntimeConfigFor(entry, rawConfig);
       this.sensorRuntimes.get(entry.spec.key)?.setConfig(config);
     }
   }
@@ -714,7 +724,8 @@ class DaseinAmbientContextBroker {
   private async startInitialRefreshes(): Promise<void> {
     const now = Date.now();
     for (const entry of this.entries) {
-      const config = this.config.sensors[entry.spec.key] ?? entry.spec.defaults;
+      const rawConfig = this.config.sensors[entry.spec.key] ?? entry.spec.defaults;
+      const { config } = effectiveSensorRuntimeConfigFor(entry, rawConfig);
       const runtime = this.sensorRuntimes.get(entry.spec.key);
       if (config.enabled === true && config.initialRefresh !== false && entry.spec.refresh !== undefined) {
         await runtime?.refreshNow({ reason: "initial" });
@@ -930,7 +941,11 @@ class DaseinAmbientContextBroker {
     const handler = entry?.spec.actions?.[action];
     if (entry === undefined || handler === undefined) return { ok: false, message: `unknown ${sensorKey} action ${action}` };
     const runtime = this.sensorRuntimes.get(sensorKey);
-    const config = this.config.sensors[sensorKey] ?? entry.spec.defaults;
+    const rawConfig = this.config.sensors[sensorKey] ?? entry.spec.defaults;
+    const { config, metadata } = effectiveSensorRuntimeConfigFor(entry, rawConfig);
+    if (!metadata.effectiveEnabled && metadata.acknowledgementRequired) {
+      return { ok: false, message: `${sensorKey} sensor requires metadata acknowledgement before actions can run` };
+    }
     const actionContext: SensorActionContext<SensorConfig> = {
       sensorKey,
       config,
@@ -1096,17 +1111,17 @@ class DaseinAmbientContextBroker {
   }
 
   private sensorMetadata(): SensorInspectabilityMetadata[] {
-    return this.entries.map((entry) => inspectSensorMetadata({
-      spec: entry.spec,
-      provenance: entry.provenance,
-      effectiveConfig: this.config.sensors[entry.spec.key] ?? entry.spec.defaults,
-    }));
+    return this.entries.map((entry) => effectiveSensorRuntimeConfigFor(
+      entry,
+      this.config.sensors[entry.spec.key] ?? entry.spec.defaults,
+    ).metadata);
   }
 
   private hiddenContributors(sensorMetadata: readonly SensorInspectabilityMetadata[], now: number): StatusContributorData[] {
     const metadataByKey = new Map(sensorMetadata.map((item) => [item.key, item]));
     const sensorContributors = this.entries.flatMap((entry): StatusContributorData[] => {
-      const config = this.config.sensors[entry.spec.key] ?? entry.spec.defaults;
+      const rawConfig = this.config.sensors[entry.spec.key] ?? entry.spec.defaults;
+      const { config } = effectiveSensorRuntimeConfigFor(entry, rawConfig);
       const hiddenReason = hiddenReasonForSensor(config);
       if (hiddenReason === null) return [];
       const metadata = metadataByKey.get(entry.spec.key);
@@ -1159,8 +1174,8 @@ class DaseinAmbientContextBroker {
       piVersion: this.pi.version ?? null,
       configPath: CONFIG_PATH,
       statePath: STATE_PATH,
-      activeSensors: this.entries.filter((entry) => this.config.sensors[entry.spec.key]?.enabled === true).map((entry) => entry.spec.key),
-      disabledSensors: this.entries.filter((entry) => this.config.sensors[entry.spec.key]?.enabled !== true).map((entry) => entry.spec.key),
+      activeSensors: this.entries.filter((entry) => effectiveSensorRuntimeConfigFor(entry, this.config.sensors[entry.spec.key] ?? entry.spec.defaults).config.enabled === true).map((entry) => entry.spec.key),
+      disabledSensors: this.entries.filter((entry) => effectiveSensorRuntimeConfigFor(entry, this.config.sensors[entry.spec.key] ?? entry.spec.defaults).config.enabled !== true).map((entry) => entry.spec.key),
       hiddenContributors: this.hiddenContributors(sensorMetadata, now),
       effectiveLapseControls: effectiveLapseControlsFor(this.config),
       rendered: { omittedKeys: rendered.omittedKeys, truncated: rendered.truncated },
@@ -1194,7 +1209,8 @@ class DaseinAmbientContextBroker {
     const metadata = new Map(this.sensorMetadata().map((item) => [item.key, item]));
     return buildSensorsCommandResult({
       sensors: this.entries.map((entry) => {
-        const config = this.config.sensors[entry.spec.key] ?? entry.spec.defaults;
+        const rawConfig = this.config.sensors[entry.spec.key] ?? entry.spec.defaults;
+        const { config } = effectiveSensorRuntimeConfigFor(entry, rawConfig);
         const snapshot = this.stateStore.getSensorSnapshot(entry.spec.key);
         const item = metadata.get(entry.spec.key);
         return {
@@ -1276,7 +1292,7 @@ export const createDaseinExtension: DaseinPiExtensionFactory = (pi) => {
     description: "Inspect and configure Dasein ambient context",
     rawArgs: true,
     completions: true,
-    getArgumentCompletions: (prefix: string) => ["status", "reload", "sensors", "set", "apply", "help"]
+    getArgumentCompletions: (prefix: string) => ["status", "reload", "sensors", "inspect", "set", "apply", "help"]
       .filter((item) => item.startsWith(prefix.trim()))
       .map((item) => ({ value: item, label: item })),
     handler: (args: unknown, context: DaseinPiExtensionContext) => broker.command(args, context),

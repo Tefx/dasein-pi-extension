@@ -56,7 +56,7 @@ export const DASEIN_CONFIG_VERSION = 1 as const;
 export const DASEIN_GLOBAL_CONFIG_ROOT = "~/.pi/dasein/" as const;
 export const DASEIN_CONFIG_PRECEDENCE = ["defaults", "disk", "launch", "runtime"] as const;
 export const SENSOR_AND_EXTERNAL_KEY_PATTERN = "[A-Za-z0-9_-]{1,64}" as const;
-export const CORE_RESERVED_COMMAND_WORDS = ["status", "reload", "sensors", "set", "apply", "help"] as const;
+export const CORE_RESERVED_COMMAND_WORDS = ["status", "reload", "sensors", "inspect", "set", "apply", "help"] as const;
 
 export const CORE_MAX_AGENT_CHARS_CONSTRAINT = {
   path: "core.maxAgentChars",

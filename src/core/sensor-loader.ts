@@ -123,6 +123,12 @@ export interface SensorInspectabilityMetadata {
   forcedDisabledReason?: "user-added-remote-or-network" | "user-added-recurring-work" | "user-added-remote-or-network-and-recurring-work";
 }
 
+export interface EffectiveSensorRuntimeConfig {
+  rawConfig: Readonly<SensorConfig>;
+  config: SensorConfig;
+  metadata: SensorInspectabilityMetadata;
+}
+
 const SENSOR_KEY_RE = /^[A-Za-z0-9_-]{1,64}$/u;
 const SHA256_RE = /^[a-f0-9]{64}$/u;
 const OUTPUT_TYPES = new Set(["string", "number", "boolean", "enum", "object", "array", "null"]);
@@ -257,6 +263,15 @@ export const inspectSensorMetadata = (input: InspectSensorMetadataInput): Sensor
     effectiveEnabled: input.effectiveConfig.enabled === true && acknowledgementSatisfied,
     ...(forcedDisabledReason === undefined ? {} : { forcedDisabledReason }),
   };
+};
+
+export const deriveEffectiveSensorRuntimeConfig = (input: InspectSensorMetadataInput): EffectiveSensorRuntimeConfig => {
+  const metadata = inspectSensorMetadata(input);
+  const config: SensorConfig = metadata.effectiveEnabled
+    ? { ...input.effectiveConfig, enabled: true }
+    : { ...input.effectiveConfig, enabled: false };
+
+  return { rawConfig: input.effectiveConfig, config, metadata };
 };
 
 const importSensorModules = async (extensionRoot: string, cacheBustToken?: string | number): Promise<SensorModuleCandidate[]> => {

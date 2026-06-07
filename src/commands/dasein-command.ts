@@ -254,7 +254,7 @@ export interface SensorActionCommandData {
   action: string;
   actionArgs: string[];
   refreshScheduled: boolean;
-  mutation?: ConfigMutationResult;
+  mutationProposal?: ConfigMutationProposal;
   actionPayload?: unknown;
 }
 
@@ -1057,7 +1057,7 @@ export const executeDaseinCommand = async (input: string, options: ExecuteDasein
   }
 
   const mutationProposal = actionResult?.ok === true ? actionResult.mutation : undefined;
-  const data: SensorActionCommandData & { mutationProposal?: ConfigMutationProposal } = {
+  const data: SensorActionCommandData = {
     sensorKey: command.sensorKey ?? "",
     action: command.action ?? "",
     actionArgs: command.actionArgs ?? [],

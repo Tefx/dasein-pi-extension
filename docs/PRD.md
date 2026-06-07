@@ -75,7 +75,7 @@ A developer who wants to add a local sensor by adding a typed sensor module to D
 - As a Pi user, I want runtime slash/UI changes to save immediately so `/dasein reload` does not unexpectedly revert normal runtime edits.
 - As a Pi user, I want launch arguments to override disk config for a single Pi invocation or spawned subagent.
 - As a Pi extension author, I want to publish ambient state through `pi.events` so Dasein can render and optionally inject it.
-- As a sensor author, I want to define sensor defaults, fields, renderers, and sensor-specific commands without changing Dasein core injection logic.
+- As a sensor author, I want to define sensor defaults, fields, manifest metadata, refresh/observe hooks, cleanup hooks, and sensor-specific actions without changing Dasein core injection or rendering logic.
 - As the LLM agent runtime, I need a short, stable ambient context string that is served from memory and does not trigger request-path I/O.
 
 ## 7. Functional Requirements
@@ -119,14 +119,14 @@ User-added sensor modules must implement the `SensorSpec` contract exactly as de
 - The module default export must be exactly one valid `SensorSpec`; named-export-only modules are not accepted.
 - `SensorSpec.key` is required and must be the stable sensor ID/short alias matching `[A-Za-z0-9_-]{1,64}`.
 - `SensorSpec.defaults` is required and must include common config fields that let Dasein determine whether the sensor is enabled and visible to UI and/or agent surfaces; sensor-specific defaults may add declared fields.
-- The Technical Design owns the exact `SensorSpec` members, TypeScript types, manifest field names, and refresh/render/action signatures. This PRD must not define alternate function signatures.
+- The Technical Design owns the exact `SensorSpec` members, TypeScript types, manifest field names, and refresh/observe/action/cleanup signatures. This PRD must not define alternate function signatures.
 - Inspectable user-added sensor metadata must be composed of loader-owned provenance plus the spec-owned `SensorSpec.manifest`, with exact manifest field names owned by the Technical Design.
 - `SensorSpec.manifest` must declare input classes, output fields, permissions, remote/network behavior, whether the sensor is remote/network-capable, and declared recurring/background work where applicable. Source/provenance is loader-owned metadata derived during loading and is not required in the sensor manifest.
 - User-added sensors with missing or malformed required `SensorSpec.manifest` fields must fail validation and be reported as load errors without replacing the active runtime; missing loader-owned provenance must not be treated as a sensor manifest validation failure.
-- Remote/network-capable user-added sensors must default to `enabled=false` even if their module defaults request enabled behavior; the user must explicitly enable them after inspection.
-- User-added sensors that declare recurring/background work, including any positive effective `intervalMs`, must also default to `enabled=false` until explicit human enablement after metadata inspection.
+- Remote/network-capable user-added sensors must be forced to effective `enabled=false` even if their module defaults, disk config, or launch overlay request enabled behavior; the user must explicitly enable them after inspection by acknowledging the current manifest digest.
+- User-added sensors that declare recurring/background work, including any positive effective `intervalMs`, must also be forced to effective `enabled=false` until explicit human enablement after metadata inspection by acknowledging the current manifest digest.
 - `/dasein sensors` and/or SettingsList must expose inspectable user-added sensor metadata before enablement, including loader-owned provenance plus manifest-declared permissions, input classes, output fields, remote/network behavior, remote/network-capable status, declared recurring/background work, and effective `intervalMs` where applicable.
-- Sensor modules may propose rendered fragments, but Dasein core owns final visibility checks, ordering, sanitization, character limits, stale-reading behavior, and final injection into agent context or TUI surfaces.
+- Sensor modules may declare output fields and return normalized or normalizable typed state from Technical Design-defined refresh/observe hooks. Dasein core owns final render behavior: visibility checks, ordering, sanitization, character limits, stale-reading handling, and final injection into agent context or TUI surfaces.
 
 User-added sensors are loaded from the canonical sensor directory for supported directory/package-form installs:
 
@@ -149,11 +149,11 @@ Dasein must not treat `~/.pi/dasein/sensors` as a sensor directory unless a futu
 
 Minimal sensor refresh lifecycle:
 
-- At startup, Dasein must run an initial refresh for enabled sensors where the sensor has a `refresh` hook and startup refresh is applicable to that sensor.
-- If a sensor declares optional interval config from the Technical Design, Dasein may schedule refreshes on that interval while the sensor is enabled.
-- Sensor-owned actions, such as `/dasein geo refresh`, may perform manual refresh when provided by the sensor.
+- At startup, Dasein must run an initial refresh for effectively enabled sensors where the sensor has a `refresh` hook and startup refresh is applicable to that sensor.
+- If a sensor declares optional interval config from the Technical Design, Dasein may schedule refreshes on that interval while the sensor is effectively enabled.
+- Sensor-owned actions, such as `/dasein geo refresh`, may perform manual refresh when provided by the sensor and permitted by the sensor's effective runtime config.
 - The LLM agent injection path must never trigger sensor refresh, filesystem reads, network calls, location subprocesses, or other fresh computation; it may only render current in-memory readings.
-- Stale readings must be omitted or explicitly marked stale according to render config and sensor render behavior.
+- Stale readings must be omitted or explicitly marked stale according to core render config and normalized typed state.
 
 Example sensor config subset:
 
@@ -225,7 +225,6 @@ Supported precision must include:
 The clock sensor must avoid unnecessary verbosity in agent injection.
 
 #### Geo Sensor
-
 The geo sensor provides user-approved location context through a macOS CoreLocation Swift helper run as a local `Dasein Location Helper` app bundle so Location Services can present a clear permission prompt.
 
 Default configuration:
@@ -236,9 +235,13 @@ Default configuration:
   "ui": true,
   "agent": false,
   "precision": "city",
-  "tags": {}
+  "tags": {},
+  "exactAddress": false,
+  "exactCoordinates": false
 }
 ```
+
+Effective timing defaults are owned by the Technical Design. The implemented geo defaults are a visible/configurable local refresh interval of `intervalMs=60000`, `timeoutMs=3000`, `staleAfterMs=1800000`, and `initialRefresh=true`.
 
 Required behavior:
 
@@ -247,16 +250,18 @@ Required behavior:
 - The user must be able to disable geo entirely.
 - The user must be able to expose geo to UI and agent independently.
 - The user must be able to configure location precision.
+- Exact coordinates must require `geo.agent=true`, `geo.precision="exact"`, and `geo.exactCoordinates=true`.
+- Exact address text must require `geo.agent=true`, `geo.precision="exact"`, and `geo.exactAddress=true`.
 - The geo sensor must support user-defined tags, such as `home`, stored canonically as `{ lat, lon, radius_m, label? }`, where `lat`/`lon` come from a fresh geo fix, `radius_m` is meters, and `label` is optional.
 - `/dasein geo tag add <name> <radius_m>` may reuse a current fresh CoreLocation fix or request a new fix when no current fresh fix is available, then store the tag as `{ lat, lon, radius_m, label? }` and store an optional label when available; if geo is disabled, permission is denied, or no current fresh fix can be obtained, the command must fail clearly and store nothing.
-- Geo tag matching must use the nearest matching tag within `radius_m` only by default; overlapping tags must not all be emitted by default.
+- Geo tag matching must support the nearest matching tag within `radius_m` for geo tag actions and tag-aware config behavior; overlapping tags must not all be selected by default. Automatic tag suffix rendering is not current behavior.
 
 Supported geo precision levels and privacy implications:
 
-- `city`: coarse city-level description or nearest matching semantic tag; default and safest for agent use.
+- `city`: coarse city-level description; default and safest for agent use.
 - `district`: neighborhood/district-level description; more revealing than city and must still require `geo.agent=true` for agent exposure.
 - `street`: street-level description; privacy-sensitive and should be visually obvious in UI when agent-exposed.
-- `exact`: precise coordinates or equivalent exact location. Agent injection at `exact` precision requires both `geo.agent=true` and `geo.precision="exact"` explicitly.
+- `exact`: precise location mode. Coordinates still require `geo.exactCoordinates=true`; exact address text still requires `geo.exactAddress=true`.
 
 Required example subcommands:
 
@@ -267,7 +272,7 @@ Required example subcommands:
 /dasein geo refresh
 ```
 
-The geo sensor must prefer semantic labels or coarse descriptions over precise coordinates for agent injection unless the user explicitly chooses `geo.precision="exact"` and `geo.agent=true`.
+The geo sensor must prefer semantic labels or coarse descriptions over precise coordinates for agent injection unless the user explicitly chooses the exact precision mode and the matching exact-output gate.
 
 #### Lapse Sensor
 
@@ -487,6 +492,7 @@ Core defaults:
 
 - `core.agentInjectionEnabled`: `true`
 - `core.statusEnabled`: `true`
+- `core.statusDetail`: `quiet`
 - `core.maxAgentChars`: `240`
 - `core.injectedLabel`: `ambient_ctx`
 - `core.renderOrder`: `["clock", "lapse", "geo"]`
@@ -494,7 +500,7 @@ Core defaults:
 Builtin sensor defaults:
 
 - Clock: `enabled=true`, `ui=true`, `agent=true`, `precision="minute"`.
-- Geo: `enabled=false`, `ui=true`, `agent=false`, `precision="city"`, `tags={}`.
+- Geo: `enabled=false`, `ui=true`, `agent=false`, `precision="city"`, `tags={}`, `exactAddress=false`, `exactCoordinates=false`; effective timing defaults are defined by the Technical Design and currently include `intervalMs=60000`, `timeoutMs=3000`, `staleAfterMs=1800000`, and `initialRefresh=true`.
 - Lapse: `enabled=true`, `ui=true`, `agent=true`, `persist=true`, `agentFields=["user_idle"]`.
 
 External state configuration defaults:
@@ -559,7 +565,6 @@ The flag must accept comma-separated key-value assignments using the same path g
 Launch values must override defaults and global disk config as process-local overlays. They must remain runtime-only overlays unless the user explicitly changes the same path through slash command or UI. Later runtime slash/UI changes override launch values for changed paths, persist those paths to disk, and remain effective for those paths across `/dasein reload` in the current process.
 
 ### 7.8 Slash Commands
-
 Dasein must provide these core slash commands:
 
 ```text
@@ -567,8 +572,10 @@ Dasein must provide these core slash commands:
 /dasein status
 /dasein reload
 /dasein sensors
+/dasein inspect agent
 /dasein set <path> <value>
 /dasein apply <k=v,...>
+/dasein help
 ```
 
 Dasein must also allow sensor-owned subcommands, including:
@@ -592,8 +599,9 @@ Command behavior:
 
 - `/dasein` opens the configuration UI in TUI mode, and falls back to concise help/status outside TUI mode.
 - `/dasein status` shows effective config, sensor health, freshness, lapse persistence health/presence, and privacy-sensitive state summaries; the exact output data shape is deferred to Technical Design.
-- `/dasein reload` reloads `~/.pi/dasein/config.json`, reapplies launch overlays except for current-process runtime-overridden paths, stops old sensors, rescans `<extension_root>/src/sensors/*.ts` where supported, and restarts enabled sensors only if the full reload candidate validates; on failure it keeps the last-known-good runtime active.
-- `/dasein sensors` lists loaded sensors, load errors, and inspectable user-added sensor metadata required for safety inspection before enablement, including loader-owned provenance plus spec-owned manifest fields for permissions, input classes, output fields, remote/network behavior, remote/network-capable status, declared recurring/background work, and effective `intervalMs` where applicable; the exact list item data shape is deferred to Technical Design.
+- `/dasein reload` reloads `~/.pi/dasein/config.json`, reapplies launch overlays except for current-process runtime-overridden paths, stops old sensors, rescans `<extension_root>/src/sensors/*.ts` where supported, and restarts effectively enabled sensors only if the full reload candidate validates; on failure it keeps the last-known-good runtime active.
+- `/dasein sensors` lists loaded sensors in `data.sensors`, load errors in `data.loadErrors`, and inspectable user-added sensor metadata required for safety inspection before enablement, including loader-owned provenance plus spec-owned manifest fields for permissions, input classes, output fields, remote/network behavior, remote/network-capable status, declared recurring/background work, and effective `intervalMs` where applicable; the exact list item data shape is deferred to Technical Design.
+- `/dasein inspect agent` shows the current pre-rendered agent injection block exactly as Dasein would append it to `before_agent_start.systemPrompt`, plus truncation and omitted-key metadata; it does not trigger refresh or add a transcript message.
 - `/dasein set <path> <value>` validates one runtime configuration path/value candidate, atomically persists only that canonical path patch to `~/.pi/dasein/config.json`, then commits runtime behavior and marks that path runtime-overridden for the current process only after persistence succeeds.
 - `/dasein apply <k=v,...>` validates all assignments first, atomically persists only the explicitly supplied canonical path patches together, then commits runtime behavior and marks those paths runtime-overridden for the current process only after persistence succeeds. If any assignment is invalid or persistence fails, the entire apply operation aborts with no runtime or disk changes.
 - `/dasein geo tag add <name> <radius_m>` creates or updates a geo tag by reusing a current fresh geo fix when one exists, or requesting a new fix when none is currently fresh, then storing the tag canonically as `{ lat, lon, radius_m, label? }`. If geo is disabled, permission is denied, or no current fresh fix can be obtained, it returns a clear error and stores nothing.
@@ -601,6 +609,8 @@ Command behavior:
 - `/dasein geo tag remove <name>` removes the named geo tag or returns a clear no-op/not-found message without changing other tags.
 - `/dasein geo refresh` requests a fresh geo reading outside the LLM request path and reports permission/unavailability errors without enabling geo agent exposure.
 - `/dasein lapse reset` clears in-memory lapse state and persisted lapse timestamps without changing configuration.
+- `/dasein help` returns deterministic command help.
+- Slash argument completions, when available, are non-exhaustive common suggestions and must not be treated as the complete command list; valid commands such as `/dasein inspect agent` and sensor-owned subcommands remain available even if omitted from completions.
 - Invalid paths or values must produce clear errors without partially corrupting runtime config or disk config.
 
 ### 7.9 Agent Context Injection
@@ -618,7 +628,9 @@ The injected context must:
 - omit sensors with `agent=false`;
 - omit external state values with per-key `agent=false`, including the unconfigured external key default;
 - omit sensitive details unless explicitly enabled;
-- omit stale readings or mark them stale according to render config and sensor render behavior;
+- omit exact coordinates unless `geo.agent=true`, `geo.precision="exact"`, and `geo.exactCoordinates=true`;
+- omit exact address text unless `geo.agent=true`, `geo.precision="exact"`, and `geo.exactAddress=true`;
+- omit stale readings or mark them stale according to core render config and normalized typed state;
 - avoid branding-heavy labels;
 - avoid redundant time representations: do not include local time, timezone, and UTC offset together when one canonical value is enough;
 - enter the model through Pi's per-turn system/developer prompt path, not through a user-role message.
@@ -652,7 +664,7 @@ Dasein must expose ambient context to the human TUI through:
 
 The status footer must respect `core.statusEnabled`. Status is not a readiness badge: normal operation with no attention-worthy state should render no persistent Dasein footer text. `core.statusDetail` controls footer behavior:
 
-- `quiet`: silent unless there is an anomaly, degradation, truncation, privacy exposure, remote/network activity, or enabled non-default sensor behavior that merits persistent attention.
+- `quiet`: silent unless there is an anomaly, degradation, truncation, or other attention-worthy failure/degraded state. Privacy exposure, remote/network behavior, and enabled non-default sensor details belong in `summary`, `diagnostic`, or explicit diagnostic commands unless they surface as an anomaly.
 - `summary`: a compact agent/context exposure mirror for facts the agent may use and the human may need to keep in mind, such as meaningful idle duration, agent-visible coarse location, exact-location gates, or agent-visible external context. UI-only coarse location must not render as a naked `loc visible` footer item.
 - `diagnostic`: bounded debugging counters and compact useful context, such as degraded mechanisms, omitted fields, and agent-context truncation.
 
@@ -662,16 +674,16 @@ Dasein does not provide a persistent widget surface. If a fact is important enou
 
 Dasein UI surfaces should align with Larva Pi-extension styling discipline: use Pi TUI primitives and width helpers for TUI components, keep persistent footer text unboxed and terse, and ensure any custom overlay `render(width)` line stays within the supplied visible width.
 
-The TUI must make privacy-sensitive state inspectable on demand, especially location state, geo precision, and whether geo is available to the agent. Default surfaces should stay low-noise; diagnostics remain available through `/dasein status` and `/dasein sensors`.
+The TUI must make privacy-sensitive state inspectable on demand, especially location state, geo precision, and whether geo is available to the agent. Default surfaces should stay low-noise; diagnostics remain available through `/dasein status`, `/dasein sensors`, and `/dasein inspect agent`.
 
-The default SettingsList UI is common-first, not a flat diagnostic inventory. It should show a short set of common controls first and keep manifest/audit/background-work metadata in diagnostic or advanced paths.
+The default SettingsList UI is compact and common-first, not a flat diagnostic inventory. By default it should show a short allowlist of common controls: core visibility/detail controls, the main builtin sensor enable/exposure controls, geo precision, and geo exact-output gates. The full SettingsList visibility model, diagnostic commands, or future advanced SettingsList views may expose more loaded-sensor controls and inspectability metadata without making the default overlay noisy.
 
-The SettingsList UI must allow users to configure at least:
+The full SettingsList visibility model must support:
 
 - core visibility/detail controls: `core.agentInjectionEnabled`, `core.statusEnabled`, and `core.statusDetail`;
-- for every loaded sensor, the common fields `enabled`, `ui`, and `agent`;
+- for every loaded sensor, common fields such as `enabled`, `ui`, `agent`, and visible recurring timing controls where supported by the Technical Design;
 - for user-added sensors, inspectable metadata before enablement, including loader-owned provenance plus manifest-declared permissions, input classes, output fields, remote/network behavior, remote/network-capable status, declared recurring/background work, and effective `intervalMs` where applicable;
-- each sensor-declared simple config field whose type is `boolean`, `string`, `number`, or constrained string `enum`, including builtin `clock.precision` and `geo.precision`;
+- sensor-declared simple config fields whose type is `boolean`, `string`, `number`, or constrained string `enum`, using `SensorFieldSpec.label` and `SensorFieldSpec.description` for sensor-owned copy, including builtin `clock.precision` and `geo.precision` when those controls are included in the chosen surface;
 - external visibility controls: `external.<key>.ui` and `external.<key>.agent` for valid external keys, with exact SettingsList control data shapes deferred to Technical Design.
 
 SettingsList must not be the management surface for complex sensor fields such as objects, arrays, maps, or structured values. For this product scope, `geo.tags` is managed by `/dasein geo tag ...` sensor commands, not by SettingsList.
@@ -694,7 +706,7 @@ Reload must build and validate a complete candidate state before replacing the a
 - rescan `<extension_root>/src/sensors/*.ts` when the install mode supports that directory;
 - load valid sensor specs;
 - report invalid specs;
-- prepare enabled sensors for restart.
+- prepare effectively enabled sensors for restart.
 
 On successful candidate validation, reload must:
 
@@ -702,9 +714,9 @@ On successful candidate validation, reload must:
 - run old sensor cleanup;
 - replace active in-memory config with the validated effective config after disk reload, launch overlay reapplication, and current-process runtime overrides;
 - replace active sensor instances with the freshly loaded sensor state;
-- restart enabled sensors;
-- run startup refresh for enabled sensors where the sensor has a `refresh` hook and startup refresh is applicable;
-- schedule optional sensor interval refreshes only as allowed by sensor config from the Technical Design;
+- restart effectively enabled sensors;
+- run startup refresh for effectively enabled sensors where the sensor has a `refresh` hook and startup refresh is applicable;
+- schedule optional sensor interval refreshes only as allowed by effective sensor config from the Technical Design;
 - update UI and in-memory rendered agent context.
 
 On reload failure, Dasein must:
@@ -715,11 +727,11 @@ On reload failure, Dasein must:
 
 Refresh lifecycle constraints:
 
-- Startup and post-reload refresh may run only for enabled sensors where applicable.
-- Manual refresh may run only through sensor-owned actions where provided, such as `/dasein geo refresh`.
-- Optional interval refresh may run only according to sensor interval config from the Technical Design.
+- Startup and post-reload refresh may run only for effectively enabled sensors where applicable.
+- Manual refresh may run only through sensor-owned actions where provided and permitted by the sensor's effective runtime config.
+- Optional interval refresh may run only according to effective sensor interval config from the Technical Design.
 - LLM request-path injection must not trigger refresh work.
-- Stale readings must be omitted or marked stale according to render config and sensor render behavior.
+- Stale readings must be omitted or marked stale according to core render config and normalized typed state.
 
 Dasein must not watch the sensor directory automatically.
 
@@ -732,18 +744,18 @@ Dasein must not perform disk I/O, network I/O, location requests, or subprocess 
 All expensive or permissioned work must happen before injection and update in-memory state asynchronously or through explicit user action.
 
 ### 8.2 Privacy
-
 Dasein must provide strong privacy controls.
 
 Required privacy behavior:
 
 - Geo agent injection is opt-in.
-- Geo defaults to `enabled=false`, `agent=false`, and `precision="city"`.
+- Geo defaults to `enabled=false`, `agent=false`, `precision="city"`, `exactAddress=false`, and `exactCoordinates=false`.
 - Geo permission, configured precision, and exposure state must be visible in UI.
 - UI exposure and agent exposure must be independently configurable.
 - Agent injection must default to minimal, coarse context.
 - Sensitive data must not be injected unless the relevant sensor is enabled and `agent=true`.
-- Exact geo agent injection requires both `geo.agent=true` and `geo.precision="exact"` explicitly.
+- Exact geo coordinate injection requires `geo.agent=true`, `geo.precision="exact"`, and `geo.exactCoordinates=true` explicitly.
+- Exact geo address injection requires `geo.agent=true`, `geo.precision="exact"`, and `geo.exactAddress=true` explicitly.
 - Geo precision levels have increasing privacy sensitivity: `city` < `district` < `street` < `exact`.
 - External publishers must not be trusted to inject unbounded, multiline, hidden, or control-character data; invalid payloads must be rejected rather than silently normalized.
 
@@ -810,10 +822,10 @@ Current evidence note (2026-06-06): ordinary `npm test` covers all-platform unit
 - Given a changed disk config, Dasein does not reload it automatically.
 
 ### 9.2 Slash Commands
-
 - `/dasein` opens the configuration UI in TUI mode.
 - `/dasein status` returns effective config, active sensors, permission state, recent sensor health, and lapse persistence health/presence using the Technical Design-defined output data shape.
-- `/dasein sensors` lists builtin, user-added, and load-failed sensors using the Technical Design-defined list item data shape, and exposes inspectable user-added sensor metadata before enablement: loader-owned provenance plus spec-owned manifest fields for permissions, input classes, output fields, remote/network behavior, remote/network-capable status, declared recurring/background work, and effective `intervalMs` where applicable.
+- `/dasein sensors` lists builtin and user-added loaded sensors in `data.sensors`, reports load-failed files in `data.loadErrors`, and exposes inspectable user-added sensor metadata before enablement: loader-owned provenance plus spec-owned manifest fields for permissions, input classes, output fields, remote/network behavior, remote/network-capable status, declared recurring/background work, and effective `intervalMs` where applicable.
+- `/dasein inspect agent` returns the exact current pre-rendered agent system prompt block, or an explicit no-context result when no agent context is available, and includes truncation/omitted-key metadata without triggering refresh.
 - `/dasein set <path> <value>` validates one runtime path/value candidate, atomically persists only that canonical path patch to disk, then marks that path runtime-overridden for the current process and updates runtime behavior only after persistence succeeds; if persistence fails, neither runtime nor disk changes occur.
 - `/dasein apply <k=v,...>` is all-or-nothing: if every assignment is valid, only the supplied canonical path patches are atomically persisted, then applied and marked runtime-overridden for the current process after persistence succeeds; if any assignment is invalid or persistence fails, no runtime or disk change occurs.
 - Slash command paths must accept short aliases such as `geo.agent`; `sensors.` prefix is not required; canonical sensor paths are defined by Technical Design and may also be accepted.
@@ -836,6 +848,8 @@ Current evidence note (2026-06-06): ordinary `npm test` covers all-platform unit
 - Agent injection does not trigger sensor refresh work and renders only current in-memory readings.
 - Agent injection omits stale readings or marks them stale according to render config.
 - Agent injection omits sensors where `enabled=false` or `agent=false`.
+- Agent injection omits exact coordinates unless `geo.agent=true`, `geo.precision="exact"`, and `geo.exactCoordinates=true`.
+- Agent injection omits exact address text unless `geo.agent=true`, `geo.precision="exact"`, and `geo.exactAddress=true`.
 - Agent injection omits all sensor and external state when `core.agentInjectionEnabled=false`.
 - Agent injection omits external values whose per-key config has `agent=false`, including the default for unconfigured external keys.
 - Agent injection output is deterministic for identical in-memory state.
@@ -844,32 +858,35 @@ Current evidence note (2026-06-06): ordinary `npm test` covers all-platform unit
 - Default visible transcript and TUI surfaces do not show the ambient context block unless the user explicitly asks for diagnostics/status output.
 
 ### 9.4 TUI
-
 - The status footer can show Dasein state when `core.statusEnabled=true` and is hidden when `core.statusEnabled=false`.
 - `/dasein inspect agent` returns the exact current pre-rendered agent system prompt block, or an explicit no-context result when no agent context is available.
-- SettingsList allows configuration of core visibility/detail controls: `core.agentInjectionEnabled`, `core.statusEnabled`, and `core.statusDetail`.
-- SettingsList allows configuration of each loaded sensor's common `enabled`, `ui`, and `agent` fields.
-- SettingsList exposes inspectable user-added sensor metadata before enablement, including loader-owned provenance plus manifest-declared permissions, input classes, output fields, remote/network behavior, remote/network-capable status, declared recurring/background work, and effective `intervalMs` where applicable.
-- SettingsList allows configuration of sensor-declared simple fields with `boolean`, `string`, `number`, or constrained string `enum` types, including builtin `clock.precision` and `geo.precision`.
+- The default SettingsList overlay is a compact common-first allowlist, not a complete inventory of every available control.
+- The default SettingsList overlay includes core visibility/detail controls: `core.agentInjectionEnabled`, `core.statusEnabled`, and `core.statusDetail`.
+- The default SettingsList overlay includes the primary builtin controls currently exposed by implementation, including builtin enable/exposure controls for clock/lapse/geo where allowlisted, `geo.precision`, `geo.exactAddress`, and `geo.exactCoordinates`.
+- The full SettingsList visibility model supports each loaded sensor's common fields and simple sensor-declared scalar fields, but those controls may be kept out of the default overlay and exposed through diagnostics or future advanced UI.
+- SettingsList uses `SensorFieldSpec.label` and `SensorFieldSpec.description` for sensor-specific scalar control copy when those controls are shown.
+- SettingsList exposes inspectable user-added sensor metadata before enablement through the full visibility model and diagnostic/advanced paths, including loader-owned provenance plus manifest-declared permissions, input classes, output fields, remote/network behavior, remote/network-capable status, declared recurring/background work, and effective `intervalMs` where applicable.
 - SettingsList does not manage complex sensor fields such as `geo.tags`; those fields are managed by sensor commands.
 - SettingsList allows configuration of external visibility controls `external.<key>.ui` and `external.<key>.agent` for valid external keys, with exact control data shapes defined by Technical Design.
 - TUI surfaces omit sensors where `enabled=false` or `ui=false`.
 - TUI surfaces omit external values whose per-key config has `ui=false`.
-- Location opt-in state, configured geo precision, and CoreLocation permission state are visible in the UI.
+- Location opt-in state, configured geo precision, exact-output gates, and CoreLocation permission state are visible through UI or explicit diagnostics.
 - The UI clearly indicates whether geo context can be exposed to the agent.
 
 ### 9.5 Builtin Sensors
-
 - Dasein core remains a broker/framework; clock, geo, and lapse are the only builtin sensors in this product scope.
 - Continuity is a semantic property provided by the lapse sensor, not a separate builtin sensor.
 - Clock sensor can render local time at configured precision and defaults to minute precision.
 - Enabled builtin sensors run startup refresh where applicable and may run optional interval refresh only according to sensor interval config from the Technical Design.
-- Geo sensor defaults to disabled, UI-visible when available, not agent-visible, and city precision.
+- Geo sensor defaults to disabled, UI-visible when available, not agent-visible, city precision, `exactAddress=false`, and `exactCoordinates=false`.
+- Geo sensor's implemented effective timing defaults are `intervalMs=60000`, `timeoutMs=3000`, `staleAfterMs=1800000`, and `initialRefresh=true`.
 - Geo sensor supports exactly `city`, `district`, `street`, and `exact` precision values.
+- Geo exact coordinates require `geo.agent=true`, `geo.precision="exact"`, and `geo.exactCoordinates=true`.
+- Geo exact address text requires `geo.agent=true`, `geo.precision="exact"`, and `geo.exactAddress=true`.
 - Geo sensor uses the macOS CoreLocation Swift helper app bundle only outside the LLM request-path injection path.
 - Geo sensor handles denied or unavailable location permission gracefully.
 - Geo tags are stored canonically as `{ lat, lon, radius_m, label? }`.
-- Geo tag rendering uses only the nearest matching tag within `radius_m` by default.
+- Geo tag actions and tag-aware config behavior use only the nearest matching tag within `radius_m` by default; automatic tag suffix rendering is not current behavior.
 - Lapse sensor reports `user_idle` and `agent_idle`, and agent injection defaults to `agentFields=["user_idle"]`.
 - Lapse persistence, when `sensors.lapse.persist=true`, stores only the latest `previous_human_input_at` and latest `previous_agent_end_at` in `~/.pi/dasein/state.json` for Pi restart continuity; it stores no history, list, or cache.
 - On startup, Dasein reads persisted lapse timestamps only when the effective `sensors.lapse.persist === true`; when false, persisted timestamps are ignored and observation writes do not update `state.json`.
@@ -896,14 +913,14 @@ Current evidence note (2026-06-06): ordinary `npm test` covers all-platform unit
 - The recommended install for user-added sensors is a standalone Dasein project symlinked as `~/.pi/agent/extensions/dasein`.
 - A user-added sensor module that does not implement `SensorSpec` exactly as defined in `docs/TECHNICAL_DESIGN.md` fails validation and is reported as a load error without replacing the active runtime.
 - A user-added sensor module that omits or malforms required `SensorSpec.manifest` fields for permissions, input classes, output fields, remote/network behavior, remote/network-capable status, or declared recurring/background-work fields where applicable fails validation and is reported as a load error without replacing the active runtime; source/provenance is loader-owned and is not required in `SensorSpec.manifest`.
-- A valid user-added `SensorSpec` may use the fields, manifest metadata, refresh/render hooks, actions, and cleanup hooks defined by the Technical Design; Dasein core still owns loader provenance, final visibility checks, ordering, sanitization, limits, stale-reading behavior, and injection.
-- Remote/network-capable user-added sensors default to disabled and require explicit user enablement after `/dasein sensors` or SettingsList exposes their inspectable metadata.
-- User-added sensors that declare recurring/background work, including any positive effective `intervalMs`, default to disabled, cannot schedule recurring/background work while disabled, and require explicit human enablement after `/dasein sensors` or SettingsList exposes their inspectable metadata.
-- `/dasein reload` with a valid candidate stops old sensors, runs cleanup, reloads `~/.pi/dasein/config.json`, reapplies launch overlays except for current-process runtime-overridden paths, rescans `<extension_root>/src/sensors/*.ts` where supported, restarts enabled sensors, and runs startup refresh for enabled sensors where applicable.
+- A valid user-added `SensorSpec` may use the fields, manifest metadata, refresh hooks, lifecycle observation hooks, actions, and cleanup hooks defined by the Technical Design; Dasein core still owns loader provenance, final rendering, visibility checks, ordering, sanitization, limits, stale-reading behavior, and injection.
+- Remote/network-capable user-added sensors are forced to effective disabled state and require explicit user enablement after `/dasein sensors` or SettingsList exposes their inspectable metadata and current manifest digest.
+- User-added sensors that declare recurring/background work, including any positive effective `intervalMs`, are forced to effective disabled state, cannot schedule recurring/background work while effectively disabled, and require explicit human enablement after `/dasein sensors` or SettingsList exposes their inspectable metadata and current manifest digest.
+- `/dasein reload` with a valid candidate stops old sensors, runs cleanup, reloads `~/.pi/dasein/config.json`, reapplies launch overlays except for current-process runtime-overridden paths, rescans `<extension_root>/src/sensors/*.ts` where supported, restarts effectively enabled sensors, and runs startup refresh for effectively enabled sensors where applicable.
 - `/dasein reload` with an invalid candidate keeps the last-known-good active config, sensors, runtime-overridden path set, and runtime state, reports errors, and performs no partial replacement.
-- Enabled sensors may refresh on optional configured intervals from the Technical Design; sensor-owned actions may manually refresh where provided.
+- Effectively enabled sensors may refresh on optional configured intervals from the Technical Design; sensor-owned actions may manually refresh where provided and permitted by effective runtime config.
 - LLM request-path injection never performs sensor refresh work and renders only in-memory readings.
-- Stale readings are omitted or marked stale according to render config.
+- Stale readings are omitted or marked stale according to core render config and normalized typed state.
 - Dasein does not load sensors from `~/.pi/dasein/sensors`.
 
 ## 10. Metrics

@@ -92,7 +92,6 @@ The checker verifies:
 Use this before any `npm publish`, git tag, or package install smoke.
 
 ## NPM Release Procedure
-
 1. Ensure the version in `package.json` is the intended release version.
 2. Run `npm run release:check`.
 3. Inspect package contents:
@@ -107,18 +106,17 @@ Use this before any `npm publish`, git tag, or package install smoke.
    npm publish
    ```
 
-5. Verify install in a clean Pi profile or temporary environment:
+5. Verify install in a clean Pi profile or temporary environment using the documented npm install channel:
 
    ```bash
-   pi -e npm:dasein-pi-extension@<version>
-   # or
    pi install npm:dasein-pi-extension@<version>
    ```
+
+   Then start Pi normally for that profile and run `/dasein status` or the release smoke procedure needed for the support claim. Do not cite undocumented npm execute specs unless Pi documentation adds support and live evidence is captured.
 
 6. Retain the release-candidate smoke artifacts for the release note.
 
 ## Git Release Procedure
-
 1. Run `npm run release:check`.
 2. Create a signed or annotated tag if available:
 
@@ -127,11 +125,13 @@ Use this before any `npm publish`, git tag, or package install smoke.
    git push origin v<version>
    ```
 
-3. Verify the pinned ref through Pi:
+3. Verify the pinned ref through the documented git install channel:
 
    ```bash
-   pi -e git:<repo-url>@v<version>
+   pi install git:<repo-url>@v<version>
    ```
+
+   Then start Pi normally for that profile and run `/dasein status` or the release smoke procedure needed for the support claim. Do not cite undocumented git execute specs unless Pi documentation adds support and live evidence is captured.
 
 Git installs run `npm install` when `package.json` exists. Dasein still depends only on Pi-owned peers and development tooling is not required at runtime.
 
@@ -147,9 +147,8 @@ pi install /absolute/path/to/dasein-pi-extension
 Local path installs point directly to the directory. They are not immutable release artifacts and MUST NOT be cited as npm release proof.
 
 ## Rollback
-
 - For npm installs, install a previous versioned spec.
 - For git installs, install a previous tag or commit ref.
-- For local installs, switch the local checkout and run `/reload` or restart Pi.
+- For local installs, switch the local checkout and restart Pi when extension package code changed. Use Dasein's `/dasein reload` only for Dasein disk config and supported sensor reload behavior; it is not a Pi package-code reload command.
 
 Runtime config is separate from package installation and remains under Dasein configuration management.

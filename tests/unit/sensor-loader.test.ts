@@ -15,6 +15,7 @@ test("sensor loader validates default export SensorSpec, manifest metadata, dupl
     modules: [
       { filePath: "/extension/src/sensors/clock.ts", defaultExport: { key: "clock", defaults: { enabled: true, ui: true, agent: true }, manifest: builtinClockManifest } },
       { filePath: "/extension/src/sensors/status.ts", defaultExport: { key: "status", defaults: { enabled: true, ui: true, agent: true }, manifest: builtinClockManifest } },
+      { filePath: "/extension/src/sensors/inspect.ts", defaultExport: { key: "inspect", defaults: { enabled: true, ui: true, agent: true }, manifest: builtinClockManifest } },
       { filePath: "/extension/src/sensors/named.ts", namedExport: { key: "named", defaults: { enabled: true, ui: true, agent: true }, manifest: builtinClockManifest } },
     ],
   }) as { entries: unknown[]; loadErrors: Array<{ file: string; kind: string; key?: string; message: string }> };
@@ -22,6 +23,7 @@ test("sensor loader validates default export SensorSpec, manifest metadata, dupl
   assert.match(JSON.stringify(result.entries), /user_added_local_file|clock/u);
   assert.deepEqual(result.loadErrors.map((error) => [error.file, error.kind, error.key]), [
     ["/extension/src/sensors/status.ts", "reserved-key", "status"],
+    ["/extension/src/sensors/inspect.ts", "reserved-key", "inspect"],
     ["/extension/src/sensors/named.ts", "invalid-spec", undefined],
   ]);
 });
