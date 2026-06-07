@@ -21,7 +21,14 @@ test("focus example sensor is loadable as a user-local sensor and example config
     cacheBustToken: "example-focus",
   }) as {
     ok: boolean;
-    entries: Array<{ spec: { key: string; defaults: Record<string, unknown>; actions?: Record<string, unknown> } }>;
+    entries: Array<{
+      spec: {
+        key: string;
+        defaults: Record<string, unknown>;
+        validateConfig?: (config: Record<string, unknown>) => Array<{ kind: string; path: string; message: string }>;
+        actions?: Record<string, unknown>;
+      };
+    }>;
     loadErrors: unknown[];
   };
 
@@ -29,6 +36,17 @@ test("focus example sensor is loadable as a user-local sensor and example config
   assert.deepEqual(registry.loadErrors, []);
   assert.deepEqual(registry.entries.map((entry) => entry.spec.key), ["focus"]);
   assert.equal(typeof registry.entries[0]?.spec.actions?.set, "function");
+
+  const focusSpec = registry.entries[0]?.spec;
+  const validateFocusConfig = focusSpec?.validateConfig;
+  if (focusSpec === undefined || typeof validateFocusConfig !== "function") throw new Error("focus example must expose validateConfig");
+  assert.deepEqual(validateFocusConfig({ ...focusSpec.defaults, label: "reviewing docs" }), []);
+  for (const label of [123, true, {}]) {
+    const nonStringLabelErrors = validateFocusConfig({ ...focusSpec.defaults, label });
+    assert.equal(nonStringLabelErrors[0]?.kind, "invalid-value");
+    assert.equal(nonStringLabelErrors[0]?.path, "sensors.focus.label");
+    assert.match(nonStringLabelErrors[0]?.message ?? "", /must be a string/);
+  }
 
   const exampleConfig = JSON.parse(readFileSync(examplesConfigPath, "utf8")) as { version: 1; sensors: { focus: { label: string } } };
   assert.equal(exampleConfig.version, 1);

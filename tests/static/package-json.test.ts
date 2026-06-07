@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { execFileSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -87,8 +88,18 @@ test("package dry-run checker enforces publishable Pi package contents", () => {
   assert.match(checker, /docs\/RELEASE\.md/u);
   assert.match(checker, /docs\/SENSOR_AUTHORING\.md/u);
   assert.match(checker, /docs\/config\.sample\.json/u);
+  assert.match(checker, /examples\/README\.md/u);
   assert.match(checker, /examples\/sensors\/focus\.ts/u);
   assert.match(checker, /examples\/config\/focus\.config\.json/u);
+});
+
+test("package dry-run checker succeeds with example docs included", () => {
+  const output = execFileSync("npm", ["run", "package:check"], {
+    cwd: repoRoot,
+    encoding: "utf8",
+    stdio: ["ignore", "pipe", "pipe"],
+  });
+  assert.match(output, /dasein package check passed/u);
 });
 
 test("root index.ts is a symlink-load Pi auto-discovery shim delegating to ./src/index.ts", () => {

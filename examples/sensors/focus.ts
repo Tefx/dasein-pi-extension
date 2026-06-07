@@ -6,6 +6,14 @@ const focusLabelError = (message) => ({
 
 const normalizeFocusLabel = (value) => String(value ?? "").trim();
 
+const validateFocusLabel = (value) => {
+  if (typeof value !== "string") return [focusLabelError("focus.label must be a string")];
+  const label = normalizeFocusLabel(value);
+  if (label.length === 0) return [focusLabelError("focus.label must not be empty")];
+  if (label.length > 80) return [focusLabelError("focus.label must be at most 80 characters")];
+  return [];
+};
+
 const manifest = {
   description: "local manually configured focus label",
   declaredInputClasses: ["derived"],
@@ -56,15 +64,11 @@ const focus = {
       type: "string",
     },
   },
-  validateConfig: (config) => {
-    const label = normalizeFocusLabel(config.label);
-    if (label.length === 0) return [focusLabelError("focus.label must not be empty")];
-    if (label.length > 80) return [focusLabelError("focus.label must be at most 80 characters")];
-    return [];
-  },
+  validateConfig: (config) => validateFocusLabel(config.label),
   refresh: (context) => normalizeFocusLabel(context.config.label),
   actions: {
     set: (args) => {
+      // args are string[] command-tail tokens; join them so `/dasein focus set reviewing docs` becomes one label.
       const label = normalizeFocusLabel(args.join(" "));
       if (label.length === 0) return { ok: false, message: "usage: /dasein focus set <label>" };
       if (label.length > 80) return { ok: false, message: "focus label must be at most 80 characters" };

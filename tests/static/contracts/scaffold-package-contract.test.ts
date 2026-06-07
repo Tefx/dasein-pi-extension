@@ -104,6 +104,7 @@ test("package dry-run checker pins runtime tarball contents", () => {
   assert.match(checker, /docs\/RELEASE\.md/u);
   assert.match(checker, /docs\/SENSOR_AUTHORING\.md/u);
   assert.match(checker, /docs\/config\.sample\.json/u);
+  assert.match(checker, /examples\/README\.md/u);
   assert.match(checker, /examples\/sensors\/focus\.ts/u);
   assert.match(checker, /examples\/config\/focus\.config\.json/u);
   assert.match(checker, /packed tarball contains non-runtime\/development path/u);

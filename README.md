@@ -14,16 +14,24 @@ It collects local sensor state, keeps privacy-sensitive fields gated by config, 
 
 ## Install from GitHub
 
-Dasein is a Pi package. Until an npm release exists, install it from GitHub using Pi's `git:` package source, not GitHub Packages and not `npm:`.
+Dasein is a Pi coding-agent extension installed with `pi install`. Until an npm release exists, install it from GitHub using Pi's `git:` package source, not GitHub Packages and not `npm:`.
+
+Prerequisites/checks:
+
+- Pi coding-agent is installed and `pi` is on your PATH.
+- Node.js 20 or newer is available to Pi.
+- `git` is available for `git:` installs.
+- Minimum supported Pi coding-agent version is `0.78.1` or later. This checkout's current live-smoke evidence is against Pi `0.78.1`; do not treat that as evidence that every later Pi version has been live-tested. `/dasein status` surfaces known Pi support and mechanism evidence when available, including negative runtime probe results when Pi exposes them.
 
 ```bash
 pi install git:github.com/Tefx/dasein-pi-extension@main
 ```
 
-For a reproducible install, pin a tag or commit instead of `main`:
+`@main` is convenient for the latest repository state, but it is mutable. For a reproducible install, and for raw example downloads that keep matching the installed package, pin a tag or commit instead:
 
 ```bash
-pi install git:github.com/Tefx/dasein-pi-extension@<tag-or-commit>
+DASEIN_REF="replace-with-tag-or-commit"
+pi install "git:github.com/Tefx/dasein-pi-extension@${DASEIN_REF}"
 ```
 
 Then restart Pi and check:
@@ -32,11 +40,15 @@ Then restart Pi and check:
 /dasein status
 ```
 
+Expected result: the command should start with `dasein status: ok` when no `statusErrors` are present, or `dasein status: degraded` when Dasein has recorded `statusErrors`, such as unavailable feature errors. Support/version fields such as `piVersion`, `minimumPiVersion`, and `piSupportClassification` are data fields to inspect separately; they do not by themselves determine the compact `ok`/`degraded` wording. Do not depend on exact formatting, but stable result fragments/keys include `data`, `statusErrors`, `piVersion`, `minimumPiVersion`, `piSupportClassification`, `piMechanisms`, `evidenceStatuses`, `effectiveConfigVersion`, `activeSensors`, `disabledSensors`, `hiddenContributors`, `permissions`, `sensorMetadata`, `loadErrors`, `rendered.omittedKeys`, and `rendered.truncated`.
+
 To try it for one Pi run without installing it into your Pi settings:
 
 ```bash
 pi -e git:github.com/Tefx/dasein-pi-extension@main
 ```
+
+Compatibility note: Dasein is a Pi package, not a standalone daemon. The minimum supported Pi coding-agent version is `0.78.1` or later until compatibility testing expands. The current repository support evidence is recorded in `docs/TECHNICAL_DESIGN.md`; this checkout has live-smoke evidence against Pi `0.78.1` only. Mechanism evidence in `/dasein status` may come from the release ledger, source/API support evidence, negative runtime probes when Pi exposes them, or errors observed while using a mechanism. It is not a guarantee that every missing host mechanism is detected before use.
 
 ## Local development install
 
@@ -72,6 +84,8 @@ Useful checks:
 - `/dasein status` shows effective config, sensor health, hidden/degraded contributors, and Pi support evidence.
 - `/dasein sensors` shows loaded sensors, load errors, permissions, background/remote declarations, and user-added sensor acknowledgement state.
 - `/dasein inspect agent` shows the exact ambient context block Dasein would append to the next agent request.
+
+Agent injection mechanism: Dasein appends that block to Pi's per-turn `before_agent_start` `systemPrompt` (`event.systemPrompt`). It does not inject user-role content and does not use Pi `CustomMessage` entries for ambient context.
 
 ## Privacy defaults
 
@@ -114,7 +128,9 @@ User-added sensors can be added without forking Dasein. Put top-level `*.ts` sen
 ~/.pi/dasein/sensors/
 ```
 
-Dasein also scans package-root sensors from `src/sensors/*.ts`. It does not recurse into subdirectories and does not watch files automatically; run `/dasein reload` after adding or changing a sensor.
+Dasein also scans package-root sensors from `src/sensors/*.ts`. Startup and `/dasein reload` use the same top-level-only scan: no recursion and no file watcher.
+
+Important trust boundary: user-added `.ts` sensor modules are trusted local executable code at import/reload time. Dasein does not sandbox them. The risky-sensor acknowledgement mechanism runs after the module has loaded; it controls post-load runtime enablement, scheduling, actions, and visibility only.
 
 For copyable examples and the step-by-step tutorial, see:
 
@@ -129,7 +145,7 @@ Risky user-added sensors, such as sensors that declare network/remote behavior o
 /dasein sensors
 ```
 
-SettingsList or explicit config can then enable the sensor with the matching current digest.
+SettingsList or explicit config can then enable the sensor by setting both `sensors.<key>.enabled=true` and `sensors.<key>.acknowledgedManifestDigest` to the matching current digest. `enabled=true` alone is ineffective until that digest is acknowledged.
 
 ## Release and verification
 
@@ -140,6 +156,15 @@ npm run release:check
 ```
 
 This runs typecheck, ordinary non-live tests, native tests, package checks, and live Pi smoke tests. Ordinary `npm test` intentionally excludes live smoke.
+
+Focused maintainer checks for docs/examples/package inclusion:
+
+```bash
+npm run test:file -- tests/unit/example-sensors.test.ts tests/static/package-json.test.ts tests/static/contracts/scaffold-package-contract.test.ts tests/static/contracts/package-json-suite.test.ts
+npm run package:check
+```
+
+`npm run package:check` runs `npm pack --dry-run --json` and verifies that runtime package artifacts include the sensor authoring guide, sample config, and example sensor/config/docs while excluding tests, scripts, local state, and lock/plan files.
 
 Package/release details are in:
 
@@ -155,4 +180,4 @@ Dasein ships as a source Pi package. Pi loads:
 ./index.ts
 ```
 
-Runtime dependencies are intentionally empty. Pi-owned imports are peer dependencies.
+Runtime dependencies are intentionally empty. Pi-owned imports are peer dependencies. Published package contents intentionally include `docs/SENSOR_AUTHORING.md`, `docs/config.sample.json`, and `examples/` so installed-package users can inspect authoring/config examples.
