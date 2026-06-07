@@ -110,6 +110,12 @@ The geo sensor uses a local `Dasein Location Helper` app bundle so macOS Locatio
 
 User-added sensors are loaded from this package's `src/sensors/*.ts` directory for supported directory/package installs.
 
+For a step-by-step tutorial, see:
+
+```text
+docs/SENSOR_AUTHORING.md
+```
+
 Risky user-added sensors, such as sensors that declare network/remote behavior or recurring background work, are forced effectively disabled until you inspect and acknowledge their current manifest digest. Use:
 
 ```text

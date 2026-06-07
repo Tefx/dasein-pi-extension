@@ -49,6 +49,7 @@ test("package scaffold keeps zero runtime dependencies and approved Pi peers onl
     "docs/PRD.md",
     "docs/TECHNICAL_DESIGN.md",
     "docs/RELEASE.md",
+    "docs/SENSOR_AUTHORING.md",
     "docs/config.sample.json",
     "CONSTITUTION.md",
   ]);
@@ -100,6 +101,7 @@ test("package dry-run checker pins runtime tarball contents", () => {
   assert.match(checker, /package\.json keywords must include pi-package/u);
   assert.match(checker, /src\/native\/macos-location-helper\.swift/u);
   assert.match(checker, /docs\/RELEASE\.md/u);
+  assert.match(checker, /docs\/SENSOR_AUTHORING\.md/u);
   assert.match(checker, /docs\/config\.sample\.json/u);
   assert.match(checker, /packed tarball contains non-runtime\/development path/u);
 });

@@ -31,6 +31,7 @@ test("package.json pins the scaffold package and dependency contract", () => {
     "docs/PRD.md",
     "docs/TECHNICAL_DESIGN.md",
     "docs/RELEASE.md",
+    "docs/SENSOR_AUTHORING.md",
     "docs/config.sample.json",
     "CONSTITUTION.md",
   ]);
@@ -83,6 +84,7 @@ test("package dry-run checker enforces publishable Pi package contents", () => {
   assert.match(checker, /packed tarball contains non-runtime\/development path/u);
   assert.match(checker, /src\/native\/macos-location-helper\.swift/u);
   assert.match(checker, /docs\/RELEASE\.md/u);
+  assert.match(checker, /docs\/SENSOR_AUTHORING\.md/u);
   assert.match(checker, /docs\/config\.sample\.json/u);
 });
 

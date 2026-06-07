@@ -26,6 +26,7 @@ const requiredFileWhitelist = [
   "docs/PRD.md",
   "docs/TECHNICAL_DESIGN.md",
   "docs/RELEASE.md",
+  "docs/SENSOR_AUTHORING.md",
   "docs/config.sample.json",
   "CONSTITUTION.md",
 ];
@@ -63,6 +64,7 @@ const requiredPackedPaths = [
   "docs/PRD.md",
   "docs/TECHNICAL_DESIGN.md",
   "docs/RELEASE.md",
+  "docs/SENSOR_AUTHORING.md",
   "docs/config.sample.json",
   "CONSTITUTION.md",
 ];
