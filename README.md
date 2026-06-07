@@ -116,9 +116,10 @@ User-added sensors can be added without forking Dasein. Put top-level `*.ts` sen
 
 Dasein also scans package-root sensors from `src/sensors/*.ts`. It does not recurse into subdirectories and does not watch files automatically; run `/dasein reload` after adding or changing a sensor.
 
-For a step-by-step tutorial, see:
+For copyable examples and the step-by-step tutorial, see:
 
 ```text
+examples/README.md
 docs/SENSOR_AUTHORING.md
 ```
 

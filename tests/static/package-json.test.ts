@@ -33,6 +33,7 @@ test("package.json pins the scaffold package and dependency contract", () => {
     "docs/RELEASE.md",
     "docs/SENSOR_AUTHORING.md",
     "docs/config.sample.json",
+    "examples/",
     "CONSTITUTION.md",
   ]);
   assert.deepEqual(packageJson.dependencies, {});
@@ -86,6 +87,8 @@ test("package dry-run checker enforces publishable Pi package contents", () => {
   assert.match(checker, /docs\/RELEASE\.md/u);
   assert.match(checker, /docs\/SENSOR_AUTHORING\.md/u);
   assert.match(checker, /docs\/config\.sample\.json/u);
+  assert.match(checker, /examples\/sensors\/focus\.ts/u);
+  assert.match(checker, /examples\/config\/focus\.config\.json/u);
 });
 
 test("root index.ts is a symlink-load Pi auto-discovery shim delegating to ./src/index.ts", () => {

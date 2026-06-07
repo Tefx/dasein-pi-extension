@@ -28,6 +28,7 @@ const requiredFileWhitelist = [
   "docs/RELEASE.md",
   "docs/SENSOR_AUTHORING.md",
   "docs/config.sample.json",
+  "examples/",
   "CONSTITUTION.md",
 ];
 for (const entry of requiredFileWhitelist) {
@@ -66,6 +67,9 @@ const requiredPackedPaths = [
   "docs/RELEASE.md",
   "docs/SENSOR_AUTHORING.md",
   "docs/config.sample.json",
+  "examples/README.md",
+  "examples/sensors/focus.ts",
+  "examples/config/focus.config.json",
   "CONSTITUTION.md",
 ];
 for (const path of requiredPackedPaths) {

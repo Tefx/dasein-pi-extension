@@ -18,6 +18,7 @@
     "docs/RELEASE.md",
     "docs/SENSOR_AUTHORING.md",
     "docs/config.sample.json",
+    "examples/",
     "CONSTITUTION.md"
   ],
   "engines": {

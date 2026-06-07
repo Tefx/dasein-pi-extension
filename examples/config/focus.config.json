@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "sensors": {
+    "focus": {
+      "enabled": true,
+      "ui": true,
+      "agent": true,
+      "label": "debugging"
+    }
+  }
+}

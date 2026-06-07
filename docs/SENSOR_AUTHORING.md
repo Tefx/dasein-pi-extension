@@ -47,6 +47,13 @@ Dasein core owns final rendering. Sensors return typed state; they do not write 
 
 ## Minimal safe local sensor
 
+A copyable version of this example is also available at:
+
+```text
+examples/sensors/focus.ts
+examples/config/focus.config.json
+```
+
 Create:
 
 ```bash
@@ -114,6 +121,8 @@ export default focus;
 ```
 
 This is safe because it has no filesystem, subprocess, network, remote behavior, or recurring interval.
+
+For a more complete version with `validateConfig` and `/dasein focus set <label>`, copy `examples/sensors/focus.ts`.
 
 ## Load the sensor
 
