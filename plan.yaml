@@ -16768,3 +16768,10 @@ phases:
       3 passed/1 skipped; npm run package:check passed with 34 packed files; npm run
       test:smoke 3/3 passed and regenerated .dasein/live-pi-smoke/latest/checklist_receipt.json
       with total=11 proven=11 blocked=0; git diff --check produced no output.'
+- id: geo_locationheader_fix
+  name: Geo LocationHeader Permission Fix
+  status: pending
+  gate: macOS helper rebuilds stale unsigned app bundles and avoids LocationHeader
+    permission attribution regressions.
+  depends_on:
+  - minimal_ui
