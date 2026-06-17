@@ -16832,7 +16832,7 @@ phases:
       `/dasein set sensors.geo.enabled false` and `/dasein reload`.'
 - id: geo_prompt_suppression
   name: Geo Permission Prompt Suppression
-  status: in_progress
+  status: done
   gate: Background geo refreshes never trigger macOS location authorization prompts;
     only explicit manual geo actions may request authorization.
   depends_on:
@@ -16840,7 +16840,7 @@ phases:
   steps:
   - id: geo-background-no-auth-prompt
     name: Prevent background geo authorization prompts
-    status: claimed
+    status: done
     description: 'Bugfix: automatic initial/interval geo refresh must not call requestWhenInUseAuthorization
       when CoreLocation status is notDetermined. Preserve manual `/dasein geo refresh`
       and user-invoked geo tag add as explicit authorization-triggering actions. Surface
@@ -16853,3 +16853,44 @@ phases:
     agent: general
     claimed_by: general
     claimed_at: '2026-06-17T17:15:40.469884+00:00'
+    done_at: '2026-06-17T17:23:08.545283+00:00'
+    evidence: 'Files changed: src/core/types.ts and src/core/sensor-runtime.ts extend
+      SensorContext with `reason` and `manual`, propagating `bypassBackoff` user intent;
+      src/sensors/geo.ts passes those fields to the native helper supervisor and preserves
+      `geo.permission=not_determined` from helper errors; src/native/macos-location-helper.ts
+      adds no-prompt spawn mode, maps `permission_not_determined` to permission state,
+      and uses prompt only for explicit manual refreshes; src/native/macos-location-helper.swift
+      adds `--no-prompt`, avoids `requestWhenInUseAuthorization` when not determined
+      in background mode, and avoids entering the run loop after synchronous no-prompt
+      failures; tests cover runtime manual context, geo mapping/supervisor intent,
+      native no-prompt source behavior, and updated lapse test contexts; README.md
+      and docs/TECHNICAL_DESIGN.md document the background no-prompt policy.
+
+
+      Commands run:
+
+      - `npm run typecheck` => passed.
+
+      - `npm run test:file -- tests/unit/sensor-runtime.test.ts tests/unit/sensors/geo.test.ts
+      tests/unit/sensors/lapse.test.ts` => passed, 16/16.
+
+      - `npm run test:native -- tests/native/macos-location-helper.test.ts` => passed,
+      3/3.
+
+      - `npm run package:check` => passed, 42 packed files.
+
+      - `npm test` => passed, 184/184.
+
+      - Manual probe: `node --import tsx -e ... runMacOSLocationHelperOnce({ prompt:false
+      })` returned status=error, error.kind=permission, state.permission=not_determined
+      without a macOS prompt; direct generated helper `--once --no-prompt` emitted
+      permission_not_determined and exited without timeout.
+
+
+      Commit/push: `ae28d7a fix geo background permission prompts` pushed to origin/main.
+
+
+      User-facing stopgap/recovery: until updated and Pi restarted, disable prompts
+      with `/dasein set sensors.geo.enabled false` then `/dasein reload`; after updating
+      to ae28d7a and restarting Pi, background refreshes should not prompt, and `/dasein
+      geo refresh` is the explicit authorization action.'
