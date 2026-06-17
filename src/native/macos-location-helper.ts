@@ -1,5 +1,5 @@
 import { spawn, spawnSync } from "node:child_process";
-import { existsSync, mkdirSync, statSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 
 import type { SensorError } from "../core/types.ts";
@@ -191,10 +191,21 @@ export const mapMacOSLocationHelperOutput = (input: unknown): MacOSLocationHelpe
 const directoryInstallHelperNeedsBuild = (policy: MacOSLocationHelperRuntimePolicy): boolean => {
   if (!existsSync(policy.helperAppExecutableForDirectoryInstall) || !existsSync(policy.helperInfoPlistForDirectoryInstall)) return true;
   try {
-    return statSync(policy.helperPathForDirectoryInstall).mtimeMs > statSync(policy.helperAppExecutableForDirectoryInstall).mtimeMs;
+    if (readFileSync(policy.helperInfoPlistForDirectoryInstall, "utf8") !== helperInfoPlist(policy)) return true;
+    if (statSync(policy.helperPathForDirectoryInstall).mtimeMs > statSync(policy.helperAppExecutableForDirectoryInstall).mtimeMs) return true;
+    return !helperAppSignatureIsCurrent(policy);
   } catch {
     return true;
   }
+};
+
+const helperAppSignatureIsCurrent = (policy: MacOSLocationHelperRuntimePolicy): boolean => {
+  const verify = spawnSync("codesign", ["--verify", "--deep", "--strict", policy.helperAppPathForDirectoryInstall], { encoding: "utf8", maxBuffer: STREAM_LIMIT_BYTES });
+  if (verify.status !== 0) return false;
+
+  const describe = spawnSync("codesign", ["-dv", "--verbose=4", policy.helperAppPathForDirectoryInstall], { encoding: "utf8", maxBuffer: STREAM_LIMIT_BYTES });
+  const output = `${describe.stderr ?? ""}${describe.stdout ?? ""}`;
+  return describe.status === 0 && output.includes(`Identifier=${policy.helperBundleIdentifier}`) && /Info\.plist entries=\d+/u.test(output);
 };
 
 const helperInfoPlist = (policy: MacOSLocationHelperRuntimePolicy): string => `<?xml version="1.0" encoding="UTF-8"?>
@@ -206,6 +217,7 @@ const helperInfoPlist = (policy: MacOSLocationHelperRuntimePolicy): string => `<
   <key>CFBundleIdentifier</key><string>${policy.helperBundleIdentifier}</string>
   <key>CFBundleInfoDictionaryVersion</key><string>6.0</string>
   <key>CFBundleName</key><string>Dasein Location Helper</string>
+  <key>CFBundleDisplayName</key><string>Dasein Location Helper</string>
   <key>CFBundlePackageType</key><string>APPL</string>
   <key>CFBundleShortVersionString</key><string>0.0.0</string>
   <key>CFBundleVersion</key><string>1</string>

@@ -23,6 +23,7 @@ type HelperPolicy = {
 
 const skipReason = "macOS native helper gate requires process.platform === 'darwin' because it typechecks CoreLocation Swift helper behavior; non-macOS runs must skip explicitly.";
 const helperPath = new URL("../../src/native/macos-location-helper.swift", import.meta.url).pathname;
+const helperRuntimePath = new URL("../../src/native/macos-location-helper.ts", import.meta.url).pathname;
 
 if (process.platform !== "darwin") {
   test("macOS native helper contract is skipped on non-macOS", { skip: skipReason }, () => undefined);
@@ -37,9 +38,14 @@ if (process.platform !== "darwin") {
 
   test("macOS helper source is app-bundle permission aware", () => {
     const source = readFileSync(helperPath, "utf8");
+    const runtimeSource = readFileSync(helperRuntimePath, "utf8");
 
     assert.match(source, /import AppKit/u, "helper must initialize as an app-bundled process for Location Services attribution");
     assert.match(source, /NSApplication\.shared/u, "helper must initialize NSApplication before requesting CoreLocation authorization");
+    assert.match(runtimeSource, /CFBundleDisplayName/u, "helper app bundle must provide a display name for macOS Location Services UI");
+    assert.match(runtimeSource, /codesign", \["--verify", "--deep", "--strict"/u, "runtime must reject stale helper app signatures");
+    assert.match(runtimeSource, /Identifier=\$\{policy\.helperBundleIdentifier\}/u, "runtime must require the signed helper bundle id");
+    assert.equal(runtimeSource.includes("/Info\\.plist entries=\\d+/u"), true, "runtime must require the signed helper to bind Info.plist entries");
     assert.doesNotMatch(
       source,
       /case \.notDetermined:\s*manager\.requestWhenInUseAuthorization\(\)\s*manager\.requestLocation\(\)/u,
