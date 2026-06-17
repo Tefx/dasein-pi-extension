@@ -16830,3 +16830,10 @@ phases:
       Dasein or remove/resign the existing generated helper app so the patched runtime
       can rebuild it; if immediate prompt suppression is needed, disable geo with
       `/dasein set sensors.geo.enabled false` and `/dasein reload`.'
+- id: geo_prompt_suppression
+  name: Geo Permission Prompt Suppression
+  status: pending
+  gate: Background geo refreshes never trigger macOS location authorization prompts;
+    only explicit manual geo actions may request authorization.
+  depends_on:
+  - geo_locationheader_fix
