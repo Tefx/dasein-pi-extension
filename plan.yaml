@@ -16832,7 +16832,7 @@ phases:
       `/dasein set sensors.geo.enabled false` and `/dasein reload`.'
 - id: geo_prompt_suppression
   name: Geo Permission Prompt Suppression
-  status: pending
+  status: in_progress
   gate: Background geo refreshes never trigger macOS location authorization prompts;
     only explicit manual geo actions may request authorization.
   depends_on:
@@ -16840,7 +16840,7 @@ phases:
   steps:
   - id: geo-background-no-auth-prompt
     name: Prevent background geo authorization prompts
-    status: pending
+    status: claimed
     description: 'Bugfix: automatic initial/interval geo refresh must not call requestWhenInUseAuthorization
       when CoreLocation status is notDetermined. Preserve manual `/dasein geo refresh`
       and user-invoked geo tag add as explicit authorization-triggering actions. Surface
@@ -16851,3 +16851,5 @@ phases:
     evidence_template: Files changed, commands run with outcomes, and user-facing
       stopgap/recovery steps.
     agent: general
+    claimed_by: general
+    claimed_at: '2026-06-17T17:15:40.469884+00:00'
