@@ -16775,3 +16775,17 @@ phases:
     permission attribution regressions.
   depends_on:
   - minimal_ui
+  steps:
+  - id: geo-helper-signature-refresh
+    name: Refresh stale macOS location helper signatures
+    status: pending
+    description: 'Bugfix: detect and rebuild/resign stale DaseinLocationHelper.app
+      bundles whose code signature is not bound to works.earendil.dasein.location-helper,
+      because those stale helpers can appear as LocationHeader in macOS Location Services
+      and repeatedly ask for authorization.'
+    verification: Run typecheck and targeted macOS native helper test. Confirm installed
+      stale helper diagnosis and add regression coverage for signature/Info.plist
+      refresh conditions.
+    evidence_template: Files changed, commands run with outcomes, and remaining manual
+      user action for already-installed stale helpers.
+    agent: general
