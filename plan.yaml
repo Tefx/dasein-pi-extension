@@ -16770,7 +16770,7 @@ phases:
       with total=11 proven=11 blocked=0; git diff --check produced no output.'
 - id: geo_locationheader_fix
   name: Geo LocationHeader Permission Fix
-  status: in_progress
+  status: done
   gate: macOS helper rebuilds stale unsigned app bundles and avoids LocationHeader
     permission attribution regressions.
   depends_on:
@@ -16778,7 +16778,7 @@ phases:
   steps:
   - id: geo-helper-signature-refresh
     name: Refresh stale macOS location helper signatures
-    status: claimed
+    status: done
     description: 'Bugfix: detect and rebuild/resign stale DaseinLocationHelper.app
       bundles whose code signature is not bound to works.earendil.dasein.location-helper,
       because those stale helpers can appear as LocationHeader in macOS Location Services
@@ -16791,3 +16791,42 @@ phases:
     agent: general
     claimed_by: general
     claimed_at: '2026-06-17T16:23:11.701974+00:00'
+    done_at: '2026-06-17T16:27:04.689726+00:00'
+    evidence: 'Files changed: src/native/macos-location-helper.ts now compares generated
+      Info.plist content, verifies helper app signature with `codesign --verify --deep
+      --strict`, checks signed identifier `works.earendil.dasein.location-helper`,
+      requires bound Info.plist entries, and adds CFBundleDisplayName before deciding
+      to reuse DaseinLocationHelper.app. tests/native/macos-location-helper.test.ts
+      adds regression assertions for display name and stale signature checks. README.md
+      and docs/TECHNICAL_DESIGN.md document LocationHeader stale-helper behavior and
+      rebuild/resign policy.
+
+
+      Diagnosis evidence: installed helper at /Users/tefx/.pi/agent/git/github.com/Tefx/dasein-pi-extension/.dasein/native/DaseinLocationHelper.app
+      currently reports `Identifier=DaseinLocationHelper`, `Info.plist=not bound`,
+      and `codesign --verify --deep --strict` fails with `code has no resources but
+      signature indicates they must be present`; local correctly signed copy reports
+      `Identifier=works.earendil.dasein.location-helper` and `Info.plist entries=12`.
+
+
+      Commands run:
+
+      - `npm run typecheck` => passed.
+
+      - `npm run test:native -- tests/native/macos-location-helper.test.ts` => passed,
+      3/3 tests.
+
+      - `npm run package:check` => passed, 42 packed files.
+
+      - `npm run test:file -- tests/static/package-json.test.ts` => passed, 8/8 tests.
+
+      - `npm test` => 182/183 passed; one package dry-run checker failed while concurrent
+      reload tests had a transient `.dasein-reload-*.ts` path vanish during `npm pack`,
+      then the same package/static checks passed standalone. This appears unrelated
+      to the helper change.
+
+
+      Remaining manual action for already-installed stale helpers: restart/update
+      Dasein or remove/resign the existing generated helper app so the patched runtime
+      can rebuild it; if immediate prompt suppression is needed, disable geo with
+      `/dasein set sensors.geo.enabled false` and `/dasein reload`.'
