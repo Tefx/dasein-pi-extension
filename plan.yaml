@@ -16770,7 +16770,7 @@ phases:
       with total=11 proven=11 blocked=0; git diff --check produced no output.'
 - id: geo_locationheader_fix
   name: Geo LocationHeader Permission Fix
-  status: pending
+  status: in_progress
   gate: macOS helper rebuilds stale unsigned app bundles and avoids LocationHeader
     permission attribution regressions.
   depends_on:
@@ -16778,7 +16778,7 @@ phases:
   steps:
   - id: geo-helper-signature-refresh
     name: Refresh stale macOS location helper signatures
-    status: pending
+    status: claimed
     description: 'Bugfix: detect and rebuild/resign stale DaseinLocationHelper.app
       bundles whose code signature is not bound to works.earendil.dasein.location-helper,
       because those stale helpers can appear as LocationHeader in macOS Location Services
@@ -16789,3 +16789,5 @@ phases:
     evidence_template: Files changed, commands run with outcomes, and remaining manual
       user action for already-installed stale helpers.
     agent: general
+    claimed_by: general
+    claimed_at: '2026-06-17T16:23:11.701974+00:00'
