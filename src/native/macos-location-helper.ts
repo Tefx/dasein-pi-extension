@@ -41,7 +41,7 @@ export type MacOSLocationHelperOutput =
     }
   | {
       ok: false;
-      error: "permission_denied" | "permission_restricted" | "timeout" | "unavailable" | "unknown";
+      error: "permission_denied" | "permission_restricted" | "permission_not_determined" | "timeout" | "unavailable" | "unknown";
       message: string;
       permission?: Exclude<MacOSLocationPermission, "authorized">;
       timestamp?: number;
@@ -55,7 +55,11 @@ export interface MacOSLocationHelperRuntimePolicyInput {
   packagedHelperPath?: string | null;
 }
 
-export type MacOSLocationHelperSpawnCommand = readonly [string, "--once"] | readonly ["swift", string, "--once"];
+export type MacOSLocationHelperSpawnCommand =
+  | readonly [string, "--once"]
+  | readonly [string, "--once", "--no-prompt"]
+  | readonly ["swift", string, "--once"]
+  | readonly ["swift", string, "--once", "--no-prompt"];
 
 export interface MacOSLocationHelperRuntimePolicy {
   helperPathForDirectoryInstall: string;
@@ -86,6 +90,7 @@ export interface RunMacOSLocationHelperOnceInput extends MacOSLocationHelperRunt
   now?: () => number;
   helperExists?: (path: string) => boolean;
   reason?: string;
+  prompt?: boolean;
   signal?: AbortSignal;
   onProcessControls?: (controls: MacOSLocationHelperProcessControls | null) => void;
 }
@@ -175,8 +180,11 @@ export const mapMacOSLocationHelperOutput = (input: unknown): MacOSLocationHelpe
   const message = typeof input.message === "string" && input.message.length > 0 ? input.message : input.error;
   switch (input.error) {
     case "permission_denied":
+      return permissionMapping("denied", message);
     case "permission_restricted":
-      return errorMapping("permission", message);
+      return permissionMapping("restricted", message);
+    case "permission_not_determined":
+      return permissionMapping("not_determined", message);
     case "timeout":
       return errorMapping("timeout", message);
     case "unavailable":
@@ -229,6 +237,9 @@ const helperInfoPlist = (policy: MacOSLocationHelperRuntimePolicy): string => `<
 </plist>
 `;
 
+const noPromptSpawnCommand = (command: MacOSLocationHelperSpawnCommand): MacOSLocationHelperSpawnCommand =>
+  command.includes("--no-prompt") ? command : [...command, "--no-prompt"] as MacOSLocationHelperSpawnCommand;
+
 const spawnFailureMessage = (label: string, result: ReturnType<typeof spawnSync>): string => {
   if (result.error !== undefined) return `${label}: ${result.error.message}`;
   const output = `${result.stderr?.toString() ?? ""}${result.stdout?.toString() ?? ""}`.trim();
@@ -269,7 +280,8 @@ export const runMacOSLocationHelperOnce = async (input: RunMacOSLocationHelperOn
   if (executablePath === null || !helperExists(executablePath)) {
     return errorMapping("helper-unavailable", "macOS location helper executable is unavailable; failing closed without spawn");
   }
-  const result = await runBoundedProcess(policy.spawnCommand, policy, {
+  const spawnCommand = input.prompt === false ? noPromptSpawnCommand(policy.spawnCommand) : policy.spawnCommand;
+  const result = await runBoundedProcess(spawnCommand, policy, {
     signal: input.signal,
     onProcessControls: input.onProcessControls,
   });
@@ -295,6 +307,7 @@ export const createMacOSLocationHelperSupervisor = (input: MacOSLocationHelperSu
     const result = await runMacOSLocationHelperOnce({
       ...input,
       reason: refreshInput.reason,
+      prompt: refreshInput.manual === true,
       signal: refreshInput.signal,
       onProcessControls: (controls) => {
         activeControls = controls;
@@ -427,7 +440,18 @@ const runBoundedProcess = async (
     });
   });
 
-const errorMapping = (kind: SensorError["kind"], message: string): MacOSLocationHelperMapping => ({ status: "error", error: { kind, message } });
+const errorMapping = (kind: SensorError["kind"], message: string, state?: GeoState): MacOSLocationHelperMapping => ({ status: "error", error: { kind, message }, ...(state === undefined ? {} : { state }) });
+
+const permissionMapping = (permission: Exclude<MacOSLocationPermission, "authorized">, message: string): MacOSLocationHelperMapping => errorMapping("permission", message, {
+  lat: null,
+  lon: null,
+  accuracy_m: null,
+  permission,
+  timestamp: null,
+  placemark: null,
+  nearestTag: null,
+  helperBackoffUntil: null,
+});
 
 const shouldIncrementBackoff = (error: SensorError | undefined): boolean => error?.kind === "timeout" || error?.kind === "process" || error?.kind === "permission";
 

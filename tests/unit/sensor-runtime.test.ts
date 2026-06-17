@@ -40,6 +40,28 @@ test("runtime allows one active refresh, prevents obsolete commits, and derives 
   assert.deepEqual(runtime.read(5000), { status: "stale", mutatedStore: false });
 });
 
+test("sensor runtime passes refresh reason and manual intent into SensorContext", async () => {
+  const api = await loadDaseinApi();
+  const createSensorRuntime = requireExportedFunction(api, "createSensorRuntime", "Testing Gate Matrix row: Sensor runtime typed state, observe hook, stale, refresh, and cleanup");
+  const seenContexts: Array<{ reason: string; manual: boolean }> = [];
+  const runtime = createSensorRuntime({
+    sensorKey: "probe",
+    config: { enabled: true, ui: true, agent: true, intervalMs: null, staleAfterMs: 1000 },
+    refresh: (context: { reason: string; manual: boolean }) => {
+      seenContexts.push({ reason: context.reason, manual: context.manual });
+      return { value: "ok" };
+    },
+  }) as { refreshNow(options: { reason: string; bypassBackoff?: boolean }): Promise<{ ok: boolean }> };
+
+  await runtime.refreshNow({ reason: "interval" });
+  await runtime.refreshNow({ reason: "geo_manual_refresh", bypassBackoff: true });
+
+  assert.deepEqual(seenContexts, [
+    { reason: "interval", manual: false },
+    { reason: "geo_manual_refresh", manual: true },
+  ]);
+});
+
 test("sensor runtime timeoutMs aborts slow refreshes and commits a timeout error envelope only", async () => {
   const api = await loadDaseinApi();
   const createSensorRuntime = requireExportedFunction(api, "createSensorRuntime", "Testing Gate Matrix row: Sensor runtime typed state, observe hook, stale, refresh, and cleanup");

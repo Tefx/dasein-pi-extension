@@ -37,12 +37,15 @@ private struct PlacemarkOutput: Encodable {
 private final class LocationOnceDelegate: NSObject, CLLocationManagerDelegate {
     private let manager: CLLocationManager
     private let geocoder: CLGeocoder
+    private let allowPrompt: Bool
     private var didFinish = false
     private var timeout: Timer?
+    var isFinished: Bool { didFinish }
 
-    init(manager: CLLocationManager = CLLocationManager(), geocoder: CLGeocoder = CLGeocoder()) {
+    init(manager: CLLocationManager = CLLocationManager(), geocoder: CLGeocoder = CLGeocoder(), allowPrompt: Bool = true) {
         self.manager = manager
         self.geocoder = geocoder
+        self.allowPrompt = allowPrompt
         super.init()
         self.manager.delegate = self
         self.manager.desiredAccuracy = kCLLocationAccuracyHundredMeters
@@ -61,7 +64,11 @@ private final class LocationOnceDelegate: NSObject, CLLocationManagerDelegate {
         case .restricted:
             finishFailure(error: "permission_restricted", message: "CoreLocation permission restricted", permission: "restricted")
         case .notDetermined:
-            manager.requestWhenInUseAuthorization()
+            if allowPrompt {
+                manager.requestWhenInUseAuthorization()
+            } else {
+                finishFailure(error: "permission_not_determined", message: "CoreLocation permission not determined; run a manual geo refresh to authorize Dasein Location Helper", permission: "not_determined")
+            }
         @unknown default:
             finishFailure(error: "unavailable", message: "Unknown CoreLocation authorization status", permission: "unknown")
         }
@@ -197,13 +204,16 @@ private func emit<T: Encodable>(_ value: T) {
     }
 }
 
-if CommandLine.arguments.dropFirst() == ["--once"] {
+let arguments = Array(CommandLine.arguments.dropFirst())
+if arguments == ["--once"] || arguments == ["--once", "--no-prompt"] {
     _ = NSApplication.shared
     NSApp.setActivationPolicy(.accessory)
-    let delegate = LocationOnceDelegate()
+    let delegate = LocationOnceDelegate(allowPrompt: !arguments.contains("--no-prompt"))
     delegate.start()
-    CFRunLoopRun()
+    if !delegate.isFinished {
+        CFRunLoopRun()
+    }
 } else {
-    emit(HelperFailure(ok: false, error: "unavailable", message: "usage: swift macos-location-helper.swift --once", permission: nil, timestamp: Date().timeIntervalSince1970))
+    emit(HelperFailure(ok: false, error: "unavailable", message: "usage: swift macos-location-helper.swift --once [--no-prompt]", permission: nil, timestamp: Date().timeIntervalSince1970))
     exit(64)
 }

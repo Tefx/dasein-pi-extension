@@ -253,13 +253,14 @@ const geoSpec: SensorSpec<GeoState, GeoConfig> = {
   normalizeState: (value, context) => normalizeGeoState(value, context),
   refresh: async (context) => {
     const supervisor = getSupervisor();
-    const result = await supervisor.refresh({ reason: "geo_refresh", manual: false, signal: context.signal });
+    const result = await supervisor.refresh({ reason: context.reason, manual: context.manual, signal: context.signal });
     if (result.status === "enabled" && result.state !== undefined) {
       const state = withCurrentTag({ ...result.state, helperBackoffUntil: supervisor.getBackoffUntil() }, context.config.tags);
       return { value: state, metadata: { status: "enabled", collectedAt: state.timestamp === null ? context.now() : state.timestamp * 1000, staleAfterMs: STALE_AFTER_MS } };
     }
     const error = result.error ?? { kind: "unknown" as const, message: "macOS location helper failed" };
-    return { value: { ...errorGeoState(error.kind), helperBackoffUntil: supervisor.getBackoffUntil() }, metadata: { status: "error", error, collectedAt: context.now(), staleAfterMs: STALE_AFTER_MS } };
+    const state = result.state ?? errorGeoState(error.kind);
+    return { value: { ...state, helperBackoffUntil: supervisor.getBackoffUntil() }, metadata: { status: "error", error, collectedAt: context.now(), staleAfterMs: STALE_AFTER_MS } };
   },
   actions: { tag: tagAction, refresh: refreshAction },
 };

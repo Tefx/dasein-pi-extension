@@ -76,12 +76,20 @@ test("lapse SensorSpec defaults, manifest, and agentFields enum match continuity
   assert.equal("renderUI" in lapse, false, "lapse SensorSpec publishes typed state only; core owns UI rendering");
 });
 
+const testSensorContext = <TConfig>(config: TConfig, now: () => number) => ({
+  config,
+  signal: new AbortController().signal,
+  reason: "test",
+  manual: false,
+  now,
+});
+
 test("lapse refresh recomputes durations from previous timestamps without erasing continuity", async () => {
   const lapse = await loadLapseSpec();
   if (typeof lapse.refresh !== "function") assert.fail("lapse must implement SensorSpec.refresh");
 
   const refreshed = await lapse.refresh(
-    { config: lapse.defaults, signal: new AbortController().signal, now: () => 70_000 },
+    testSensorContext(lapse.defaults, () => 70_000),
     previousLapseSnapshot(),
   );
   const text = JSON.stringify(refreshed);
@@ -100,17 +108,17 @@ test("lapse observe samples input, suppresses duplicate before_agent_start for t
 
   const inputResult = await lapse.observe(
     { kind: "input", observedAt: 20_000, turnId: "turn-1" },
-    { config: lapse.defaults, signal: new AbortController().signal, now: () => 20_000 },
+    testSensorContext(lapse.defaults, () => 20_000),
     previousLapseSnapshot(),
   );
   const beforeAgentResult = await lapse.observe(
     { kind: "before_agent_start", observedAt: 20_001, turnId: "turn-1" },
-    { config: lapse.defaults, signal: new AbortController().signal, now: () => 20_001 },
+    testSensorContext(lapse.defaults, () => 20_001),
     previousLapseSnapshot(),
   );
   const agentEndResult = await lapse.observe(
     { kind: "agent_end", observedAt: 25_000, turnId: "turn-1" },
-    { config: lapse.defaults, signal: new AbortController().signal, now: () => 25_000 },
+    testSensorContext(lapse.defaults, () => 25_000),
     previousLapseSnapshot(),
   );
 

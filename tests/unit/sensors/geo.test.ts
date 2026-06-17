@@ -236,7 +236,7 @@ test("geo tag list returns GeoTagListPayload, sorts names, avoids refresh/helper
 test("geo native helper runtime is configured from extension root instead of process cwd and receives refresh abort signal", async () => {
   const source = readFileSync(expectedGeoFile, "utf8");
   assert.doesNotMatch(source, /process\.cwd\s*\(/u, "geo helper path must not depend on the launch cwd");
-  assert.match(source, /supervisor\.refresh\(\{\s*reason:\s*"geo_refresh",\s*manual:\s*false,\s*signal:\s*context\.signal\s*\}\)/su, "geo refresh must pass SensorContext.signal into the native helper supervisor");
+  assert.match(source, /supervisor\.refresh\(\{\s*reason:\s*context\.reason,\s*manual:\s*context\.manual,\s*signal:\s*context\.signal\s*\}\)/su, "geo refresh must pass SensorContext reason/manual/signal into the native helper supervisor");
   const moduleValue = (await import(`${expectedGeoFile.href}?configured-root=${Date.now()}`)) as {
     configureGeoNativeHelper?: (input: { extensionRoot: string; installMode?: "directory" }) => void;
     getGeoNativeHelperRuntimePolicy?: () => { helperPathForDirectoryInstall: string; helperAppExecutableForDirectoryInstall: string; spawnCommand: readonly [string, string] };
@@ -274,8 +274,9 @@ test("geo native helper stdout/error mapping preserves permission, timeout, pars
       helperBackoffUntil: null,
     },
   });
-  assert.equal(mapMacOSLocationHelperOutput({ ok: false, error: "permission_denied", message: "denied", permission: "denied" }).error?.kind, "permission");
-  assert.equal(mapMacOSLocationHelperOutput({ ok: false, error: "permission_restricted", message: "restricted", permission: "restricted" }).error?.kind, "permission");
+  assert.deepEqual(mapMacOSLocationHelperOutput({ ok: false, error: "permission_denied", message: "denied", permission: "denied" }).state?.permission, "denied");
+  assert.deepEqual(mapMacOSLocationHelperOutput({ ok: false, error: "permission_restricted", message: "restricted", permission: "restricted" }).state?.permission, "restricted");
+  assert.deepEqual(mapMacOSLocationHelperOutput({ ok: false, error: "permission_not_determined", message: "not determined", permission: "not_determined" }).state?.permission, "not_determined");
   assert.equal(mapMacOSLocationHelperOutput({ ok: false, error: "timeout", message: "timeout" }).error?.kind, "timeout");
   assert.equal(mapMacOSLocationHelperOutput({ ok: false, error: "unavailable", message: "unavailable" }).error?.kind, "unavailable");
   assert.equal(mapMacOSLocationHelperOutput("not-json").error?.kind, "parse");

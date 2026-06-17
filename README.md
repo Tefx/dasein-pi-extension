@@ -118,7 +118,7 @@ Then run:
 
 ## macOS location note
 
-The geo sensor uses a local `Dasein Location Helper` app bundle so macOS Location Services can show a clear permission prompt. If location remains unavailable, open macOS Location Services settings and approve Dasein Location Helper, then run `/dasein geo refresh` or restart Pi. If macOS shows `LocationHeader` instead of `Dasein Location Helper`, update/restart Dasein so it can rebuild and resign the stale helper bundle; as an immediate stopgap, disable geo with `/dasein set sensors.geo.enabled false` and `/dasein reload`.
+The geo sensor uses a local `Dasein Location Helper` app bundle so macOS Location Services can show a clear permission prompt. Background initial/interval refreshes check existing permission without opening the macOS authorization prompt; use `/dasein geo refresh` when you explicitly want to authorize or refresh location. If location remains unavailable, open macOS Location Services settings and approve Dasein Location Helper, then run `/dasein geo refresh` or restart Pi. If macOS shows `LocationHeader` instead of `Dasein Location Helper`, update/restart Dasein so it can rebuild and resign the stale helper bundle; as an immediate stopgap, disable geo with `/dasein set sensors.geo.enabled false` and `/dasein reload`.
 
 ## User-added sensors
 

@@ -280,7 +280,7 @@ export const createSensorRuntime = (input: CreateSensorRuntimeInput): SensorRunt
         }
         const refreshReturn = input.refresh === undefined
           ? { value: "Fri_14:32+08" }
-          : await input.refresh({ config, signal: controller.signal, now }, snapshot);
+          : await input.refresh({ config, signal: controller.signal, reason: options.reason, manual: options.bypassBackoff === true, now }, snapshot);
         const finishedAt = now();
         if (controller.signal.aborted || refreshGeneration !== generation) {
           return { ok: false, snapshot, error: { kind: "unknown", message: "refresh aborted before commit" } };
@@ -325,7 +325,7 @@ export const createSensorRuntime = (input: CreateSensorRuntimeInput): SensorRunt
     if (input.observe === undefined) return null;
     const controller = new AbortController();
     const startedAt = now();
-    const observed = await input.observe(event, { config, signal: controller.signal, now }, snapshot);
+    const observed = await input.observe(event, { config, signal: controller.signal, reason: `observe:${event.kind}`, manual: false, now }, snapshot);
     if (observed === null) return null;
     const finishedAt = now();
     generation += 1;

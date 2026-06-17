@@ -293,6 +293,8 @@ export type SensorConfigValidator<TConfig extends SensorConfig = SensorConfig> =
 export interface SensorContext<TConfig extends SensorConfig = SensorConfig> {
   config: Readonly<TConfig>;
   signal: AbortSignal;
+  reason: string;
+  manual: boolean;
   now(): number;
 }
 
