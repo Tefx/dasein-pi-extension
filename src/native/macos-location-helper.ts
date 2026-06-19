@@ -57,9 +57,7 @@ export interface MacOSLocationHelperRuntimePolicyInput {
 
 export type MacOSLocationHelperSpawnCommand =
   | readonly [string, "--once"]
-  | readonly [string, "--once", "--no-prompt"]
-  | readonly ["swift", string, "--once"]
-  | readonly ["swift", string, "--once", "--no-prompt"];
+  | readonly ["swift", string, "--once"];
 
 export interface MacOSLocationHelperRuntimePolicy {
   helperPathForDirectoryInstall: string;
@@ -90,7 +88,6 @@ export interface RunMacOSLocationHelperOnceInput extends MacOSLocationHelperRunt
   now?: () => number;
   helperExists?: (path: string) => boolean;
   reason?: string;
-  prompt?: boolean;
   signal?: AbortSignal;
   onProcessControls?: (controls: MacOSLocationHelperProcessControls | null) => void;
 }
@@ -237,9 +234,6 @@ const helperInfoPlist = (policy: MacOSLocationHelperRuntimePolicy): string => `<
 </plist>
 `;
 
-const noPromptSpawnCommand = (command: MacOSLocationHelperSpawnCommand): MacOSLocationHelperSpawnCommand =>
-  command.includes("--no-prompt") ? command : [...command, "--no-prompt"] as MacOSLocationHelperSpawnCommand;
-
 const spawnFailureMessage = (label: string, result: ReturnType<typeof spawnSync>): string => {
   if (result.error !== undefined) return `${label}: ${result.error.message}`;
   const output = `${result.stderr?.toString() ?? ""}${result.stdout?.toString() ?? ""}`.trim();
@@ -280,8 +274,7 @@ export const runMacOSLocationHelperOnce = async (input: RunMacOSLocationHelperOn
   if (executablePath === null || !helperExists(executablePath)) {
     return errorMapping("helper-unavailable", "macOS location helper executable is unavailable; failing closed without spawn");
   }
-  const spawnCommand = input.prompt === false ? noPromptSpawnCommand(policy.spawnCommand) : policy.spawnCommand;
-  const result = await runBoundedProcess(spawnCommand, policy, {
+  const result = await runBoundedProcess(policy.spawnCommand, policy, {
     signal: input.signal,
     onProcessControls: input.onProcessControls,
   });
@@ -307,7 +300,6 @@ export const createMacOSLocationHelperSupervisor = (input: MacOSLocationHelperSu
     const result = await runMacOSLocationHelperOnce({
       ...input,
       reason: refreshInput.reason,
-      prompt: refreshInput.manual === true,
       signal: refreshInput.signal,
       onProcessControls: (controls) => {
         activeControls = controls;

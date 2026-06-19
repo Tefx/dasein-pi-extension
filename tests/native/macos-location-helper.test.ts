@@ -42,11 +42,11 @@ if (process.platform !== "darwin") {
 
     assert.match(source, /import AppKit/u, "helper must initialize as an app-bundled process for Location Services attribution");
     assert.match(source, /NSApplication\.shared/u, "helper must initialize NSApplication before requesting CoreLocation authorization");
-    assert.match(source, /permission_not_determined/u, "helper must support no-prompt permission status checks for background refreshes");
-    assert.match(source, /--no-prompt/u, "helper must accept a no-prompt mode for background refreshes");
+    assert.match(source, /permission_not_determined/u, "helper may still report no-prompt permission status for diagnostic invocations");
+    assert.match(source, /--no-prompt/u, "helper may accept a no-prompt diagnostic mode for compatibility");
     assert.match(source, /if !delegate\.isFinished/u, "helper must not enter the run loop after synchronous no-prompt permission failure");
     assert.match(runtimeSource, /CFBundleDisplayName/u, "helper app bundle must provide a display name for macOS Location Services UI");
-    assert.match(runtimeSource, /--no-prompt/u, "runtime must pass no-prompt mode for automatic helper refreshes");
+    assert.doesNotMatch(runtimeSource, /--no-prompt/u, "runtime must not use no-prompt mode for enabled geo automatic refreshes");
     assert.match(runtimeSource, /codesign", \["--verify", "--deep", "--strict"/u, "runtime must reject stale helper app signatures");
     assert.match(runtimeSource, /Identifier=\$\{policy\.helperBundleIdentifier\}/u, "runtime must require the signed helper bundle id");
     assert.equal(runtimeSource.includes("/Info\\.plist entries=\\d+/u"), true, "runtime must require the signed helper to bind Info.plist entries");

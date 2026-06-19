@@ -47,6 +47,7 @@ type GeoState = {
 type HelperMapping = { status: "enabled" | "error"; error?: { kind: string }; state?: GeoState };
 
 const expectedGeoFile = new URL("../../../src/sensors/geo.ts", import.meta.url);
+const expectedNativeRuntimeFile = new URL("../../../src/native/macos-location-helper.ts", import.meta.url);
 const expectedPrecisions = ["city", "district", "street", "exact"] as const;
 
 const loadGeoSpec = async (): Promise<SensorSpec<GeoState, GeoConfig>> => {
@@ -235,8 +236,10 @@ test("geo tag list returns GeoTagListPayload, sorts names, avoids refresh/helper
 
 test("geo native helper runtime is configured from extension root instead of process cwd and receives refresh abort signal", async () => {
   const source = readFileSync(expectedGeoFile, "utf8");
+  const runtimeSource = readFileSync(expectedNativeRuntimeFile, "utf8");
   assert.doesNotMatch(source, /process\.cwd\s*\(/u, "geo helper path must not depend on the launch cwd");
   assert.match(source, /supervisor\.refresh\(\{\s*reason:\s*context\.reason,\s*manual:\s*context\.manual,\s*signal:\s*context\.signal\s*\}\)/su, "geo refresh must pass SensorContext reason/manual/signal into the native helper supervisor");
+  assert.doesNotMatch(runtimeSource, /--no-prompt/u, "enabled geo automatic refreshes must use the same prompt-capable helper path as manual refresh");
   const moduleValue = (await import(`${expectedGeoFile.href}?configured-root=${Date.now()}`)) as {
     configureGeoNativeHelper?: (input: { extensionRoot: string; installMode?: "directory" }) => void;
     getGeoNativeHelperRuntimePolicy?: () => { helperPathForDirectoryInstall: string; helperAppExecutableForDirectoryInstall: string; spawnCommand: readonly [string, string] };
