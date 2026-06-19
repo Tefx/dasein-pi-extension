@@ -157,6 +157,40 @@ export default spec;
   }
 });
 
+test("ordinary startup import avoids reload cache-bust temp files", async () => {
+  const api = await loadDaseinApi();
+  const loadSensorRegistry = requireExportedFunction(api, "loadSensorRegistry", "startup must avoid explicit reload cache-busting");
+  const extensionRoot = mkdtempSync(join(tmpdir(), "dasein-startup-sensors-"));
+  const sensorDir = join(extensionRoot, "src", "sensors");
+  const sensorPath = join(sensorDir, "startup.ts");
+  mkdirSync(sensorDir, { recursive: true });
+  writeFileSync(sensorPath, `
+const spec = {
+  key: "startup_probe",
+  defaults: { enabled: true, ui: true, agent: true },
+  manifest: {
+    description: "startup import probe",
+    declaredInputClasses: ["derived"],
+    outputFields: [{ state_key: "startup_probe.value", value_type: "string", description: "startup value", agentVisibleByDefault: true, uiVisibleByDefault: true }],
+    permissions: [{ kind: "none", required: false, reason: "none" }],
+    remote: { capable: false, contactsNetworkByDefault: false, destinations: [], payloadClasses: [], transmissionCadence: "none", disableControl: "none", description: "none" },
+    backgroundWork: { capable: false, kinds: [], defaultIntervalMs: null, intervalRelationship: "none", description: "none" },
+  },
+};
+export default spec;
+`);
+
+  try {
+    const result = await loadSensorRegistry({ extensionRoot }) as { ok: boolean; entries: Array<{ spec: { key: string } }>; loadErrors: unknown[] };
+
+    assert.equal(result.ok, true);
+    assert.deepEqual(result.entries.map((entry) => entry.spec.key), ["startup_probe"]);
+    assert.equal(readdirSync(sensorDir).some((name) => name.startsWith(".dasein-reload-")), false, "ordinary startup must not create reload cache-bust import copies");
+  } finally {
+    rmSync(extensionRoot, { recursive: true, force: true });
+  }
+});
+
 test("dynamic filesystem imports scan package and user-local sensor directories", async () => {
   const api = await loadDaseinApi();
   const loadSensorRegistry = requireExportedFunction(api, "loadSensorRegistry", "docs/TECHNICAL_DESIGN.md package and user-local dynamic sensor scan");

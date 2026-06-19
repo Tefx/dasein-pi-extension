@@ -61,6 +61,7 @@ import type {
   SensorActionContext,
   SensorActionResult,
   SensorConfig,
+  SensorError,
   SensorKey,
   SensorLoadError,
   SensorObservationEvent,
@@ -215,6 +216,12 @@ type DaseinPiMechanism =
 
 type MutableBeforeAgentStartEvent = { systemPrompt?: unknown };
 type LightweightMutationResult = { ok: true; updatedPaths: string[]; deletedPaths: string[] } | { ok: false; errors: ConfigValidationError[] };
+type InitialRefreshStatus = "pending" | "succeeded" | "failed";
+
+interface InitialRefreshFailure {
+  readonly sensorKey: SensorKey;
+  readonly error: SensorError;
+}
 
 type ConfigManagerInstance = ReturnType<typeof createConfigManager>;
 
@@ -528,6 +535,9 @@ class DaseinAmbientContextBroker {
   private diskConfigLoaded = false;
   private durableStateFileLoaded = false;
   private durableLapse: LapsePersistedState | null = null;
+  private initialRefreshStatus: InitialRefreshStatus = "pending";
+  private initialRefreshInFlight: Promise<void> | null = null;
+  private shuttingDown = false;
   private pendingLapsePersist: LapsePersistedState | null = null;
   private lapsePersistTimer: RuntimeTimer | null = null;
   private lapsePersistInFlight: Promise<void> | null = null;
@@ -535,15 +545,19 @@ class DaseinAmbientContextBroker {
   constructor(private readonly pi: DaseinPiExtensionApi) {}
 
   async startup(context: DaseinPiExtensionContext): Promise<void> {
+    this.shuttingDown = false;
     this.probeStartupFeatures();
     await this.initialize();
     await this.loadDurableLapseState();
-    await this.startInitialRefreshes();
+    this.initialRefreshStatus = "pending";
+    this.commitDurableLapseSnapshot(Date.now());
     this.renderAndPublish(context);
+    this.startInitialRefreshesInBackground(context);
   }
 
   async beforeAgentStart(event: unknown, context: DaseinPiExtensionContext): Promise<{ systemPrompt: string } | undefined> {
     await this.observePiLifecycle("before_agent_start", event, context);
+    if (!this.canInjectAgentContext()) return undefined;
     const mutable = event as MutableBeforeAgentStartEvent;
     const systemPrompt = typeof mutable.systemPrompt === "string" ? mutable.systemPrompt : "";
     const result = injectAmbientSystemPrompt({ stateStore: this.stateStore, systemPrompt });
@@ -645,6 +659,7 @@ class DaseinAmbientContextBroker {
   }
 
   async shutdown(context: DaseinPiExtensionContext): Promise<void> {
+    this.shuttingDown = true;
     await this.initialize();
     for (const entry of this.entries) {
       this.pi.recordCleanup?.(entry.spec.key, 1000);
@@ -670,7 +685,7 @@ class DaseinAmbientContextBroker {
   }
 
   private async initializeOnce(): Promise<void> {
-    const registry = await loadSensorRegistry({ extensionRoot: EXTENSION_ROOT, userSensorDirectory: USER_SENSOR_DIR, builtinEntries: BUILTIN_ENTRIES, cacheBustToken: Date.now() });
+    const registry = await loadSensorRegistry({ extensionRoot: EXTENSION_ROOT, userSensorDirectory: USER_SENSOR_DIR, builtinEntries: BUILTIN_ENTRIES });
     this.entries = registry.entries.map(coerceEntryProvenance).sort((left, right) => left.spec.key.localeCompare(right.spec.key));
     this.loadErrors = registry.loadErrors;
     this.attemptedFiles = registry.attemptedFiles;
@@ -723,19 +738,57 @@ class DaseinAmbientContextBroker {
     }
   }
 
-  private async startInitialRefreshes(): Promise<void> {
+  private async startInitialRefreshes(): Promise<InitialRefreshFailure[]> {
     const now = Date.now();
+    const failures: InitialRefreshFailure[] = [];
     for (const entry of this.entries) {
       const rawConfig = this.config.sensors[entry.spec.key] ?? entry.spec.defaults;
       const { config } = effectiveSensorRuntimeConfigFor(entry, rawConfig);
       const runtime = this.sensorRuntimes.get(entry.spec.key);
       if (config.enabled === true && config.initialRefresh !== false && entry.spec.refresh !== undefined) {
-        await runtime?.refreshNow({ reason: "initial" });
+        const result = await runtime?.refreshNow({ reason: "initial" }) ?? { ok: false as const, snapshot: null, error: { kind: "unknown" as const, message: `${entry.spec.key} sensor runtime unavailable` } };
+        if (!result.ok) failures.push({ sensorKey: entry.spec.key, error: result.error });
       } else {
         runtime?.commitSnapshot(disabledSnapshotFor(entry, now));
       }
     }
     this.commitDurableLapseSnapshot(now);
+    return failures;
+  }
+
+  private startInitialRefreshesInBackground(context: DaseinPiExtensionContext): void {
+    if (this.initialRefreshInFlight !== null) return;
+    const refresh = this.finishInitialRefreshes(context);
+    this.initialRefreshInFlight = refresh;
+    void refresh;
+  }
+
+  private async finishInitialRefreshes(context: DaseinPiExtensionContext): Promise<void> {
+    try {
+      const failures = await this.startInitialRefreshes();
+      this.recordInitialRefreshFailures(failures);
+      this.initialRefreshStatus = failures.length === 0 ? "succeeded" : "failed";
+    } catch (caught) {
+      const message = caught instanceof Error ? caught.message : String(caught);
+      this.statusErrors.push({ kind: "unknown", message: `initial refresh failed: ${message}` });
+      this.initialRefreshStatus = "failed";
+    } finally {
+      this.initialRefreshInFlight = null;
+      if (!this.shuttingDown) this.renderAndPublish(context);
+    }
+  }
+
+  private recordInitialRefreshFailures(failures: readonly InitialRefreshFailure[]): void {
+    for (const failure of failures) {
+      this.statusErrors.push({
+        kind: failure.error.kind,
+        message: `${failure.sensorKey} initial refresh failed: ${failure.error.message}`,
+      });
+    }
+  }
+
+  private canInjectAgentContext(): boolean {
+    return this.initialRefreshStatus === "succeeded";
   }
 
   private async loadDurableLapseState(): Promise<void> {
@@ -994,6 +1047,7 @@ class DaseinAmbientContextBroker {
   }
 
   private visibleStatusSummary(rendered: RenderedContext): string | undefined {
+    if (this.initialRefreshStatus === "pending" && this.statusErrors.length === 0) return "Dasein sync…";
     return formatDaseinStatusBar({
       statusDetail: this.config.core.statusDetail,
       rendered,
@@ -1156,7 +1210,7 @@ class DaseinAmbientContextBroker {
   private inspectAgentOptions(): Parameters<typeof buildAgentInspectCommandResult>[0] {
     const rendered = this.stateStore.getRenderedContext();
     return {
-      rendered: { agent: rendered.agent, omittedKeys: rendered.omittedKeys, truncated: rendered.truncated },
+      rendered: { agent: this.canInjectAgentContext() ? rendered.agent : null, omittedKeys: rendered.omittedKeys, truncated: rendered.truncated },
       agentInjectionEnabled: this.config.core.agentInjectionEnabled,
       injectedLabel: this.config.core.injectedLabel,
       source: "pre-rendered-memory",
@@ -1265,7 +1319,9 @@ class DaseinAmbientContextBroker {
       this.attemptedFiles = registry.attemptedFiles;
       this.config = manager.getEffectiveConfig();
       this.rebuildSensorRuntimes();
-      await this.startInitialRefreshes();
+      const failures = await this.startInitialRefreshes();
+      this.recordInitialRefreshFailures(failures);
+      this.initialRefreshStatus = failures.length === 0 ? "succeeded" : "failed";
       this.renderOnly();
     } else {
       this.loadErrors = registry.loadErrors;

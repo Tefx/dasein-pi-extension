@@ -293,8 +293,12 @@ const importSensorModules = async (extensionRoot: string, cacheBustToken?: strin
       const filePath = join(sensorDir, filename);
       let importTarget = filePath;
       try {
-        importTarget = createCacheBustedImportTarget(filePath, importBatchToken);
-        const href = pathToFileURL(importTarget).href + (cacheBustToken === undefined ? "" : `?reload=${encodeURIComponent(String(cacheBustToken))}`);
+        const href = cacheBustToken === undefined
+          ? pathToFileURL(filePath).href
+          : (() => {
+              importTarget = createCacheBustedImportTarget(filePath, importBatchToken);
+              return `${pathToFileURL(importTarget).href}?reload=${encodeURIComponent(String(cacheBustToken))}`;
+            })();
         const imported = (await import(href)) as Record<string, unknown>;
         candidates.push({ filePath, defaultExport: imported.default, namedExport: imported.sensorSpec });
       } catch (error) {
@@ -305,7 +309,7 @@ const importSensorModules = async (extensionRoot: string, cacheBustToken?: strin
           loadError: { file: filePath, kind: "import", message: `SensorLoadError: failed to import sensor module: ${errorMessage(error)}` },
         });
       } finally {
-        removeCacheBustedImportTarget(filePath, importTarget);
+        if (cacheBustToken !== undefined) removeCacheBustedImportTarget(filePath, importTarget);
       }
     }
   }

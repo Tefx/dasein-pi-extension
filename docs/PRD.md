@@ -142,10 +142,12 @@ Dasein scans only top-level `*.ts` files in those two directories. It does not r
 
 Minimal sensor refresh lifecycle:
 
-- At startup, Dasein must run an initial refresh for effectively enabled sensors where the sensor has a `refresh` hook and startup refresh is applicable to that sensor.
+- At startup, Dasein must render/publish a baseline state without waiting for initial sensor refreshes.
+- Startup initial refresh for effectively enabled sensors with an applicable `refresh` hook runs in the background after first render; this work must not block Pi session startup.
+- Manual `/dasein reload` remains the explicit reload path and may wait for candidate startup refresh before reporting success/failure.
 - If a sensor declares optional interval config from the Technical Design, Dasein may schedule refreshes on that interval while the sensor is effectively enabled.
 - Sensor-owned actions, such as `/dasein geo refresh`, may perform manual refresh when provided by the sensor and permitted by the sensor's effective runtime config.
-- The LLM agent injection path must never trigger sensor refresh, filesystem reads, network calls, location subprocesses, or other fresh computation; it may only render current in-memory readings.
+- The LLM agent injection path must never trigger sensor refresh, filesystem reads, network calls, location subprocesses, or other fresh computation; it may only render current in-memory readings after startup initial refresh has succeeded.
 - Stale readings must be omitted or explicitly marked stale according to core render config and normalized typed state.
 
 Example sensor config subset:
@@ -628,9 +630,9 @@ The injected context must:
 - avoid redundant time representations: do not include local time, timezone, and UTC offset together when one canonical value is enough;
 - enter the model through Pi's per-turn system/developer prompt path, not through a user-role message.
 
-The injection path must not perform sensor refresh work, filesystem reads, network calls, CoreLocation/helper subprocess calls, or other fresh computation. It must render only the current in-memory readings and external state.
+The injection path must not perform sensor refresh work, filesystem reads, network calls, CoreLocation/helper subprocess calls, or other fresh computation. It must render only the current in-memory readings and external state after startup initial refresh has succeeded. While startup refresh is pending or failed, Dasein must leave the agent system prompt unchanged; pending/loading placeholders are UI-only.
 
-Dasein must append ambient context during `before_agent_start` by returning an updated `systemPrompt`. Pi may serialize that system prompt to provider-native `developer` or `system` messages according to provider compatibility, but Dasein must not inject ambient context as a `CustomMessage` or other message that Pi `convertToLlm()` serializes as `role:"user"`.
+Dasein must append ambient context during `before_agent_start` by returning an updated `systemPrompt` only when a successful startup refresh has made context safe for agent use. Pi may serialize that system prompt to provider-native `developer` or `system` messages according to provider compatibility, but Dasein must not inject ambient context as a `CustomMessage` or other message that Pi `convertToLlm()` serializes as `role:"user"`.
 
 The renderer's canonical diagnostic label remains neutral:
 
@@ -837,7 +839,8 @@ Current evidence note (2026-06-06): ordinary `npm test` covers all-platform unit
 - Agent injection does not use `[Dasein: ...]` by default.
 - Agent injection does not include default priority semantics.
 - Agent injection performs no disk I/O, network I/O, location lookup, or subprocess execution during request construction.
-- Agent injection does not trigger sensor refresh work and renders only current in-memory readings.
+- Agent injection does not trigger sensor refresh work and renders only current in-memory readings after startup initial refresh has succeeded.
+- Before startup initial refresh succeeds, pending/loading state is UI-only and agent injection leaves `before_agent_start.systemPrompt` unchanged.
 - Agent injection omits stale readings or marks them stale according to render config.
 - Agent injection omits sensors where `enabled=false` or `agent=false`.
 - Agent injection omits exact coordinates unless `geo.agent=true`, `geo.precision="exact"`, and `geo.exactCoordinates=true`.
@@ -851,6 +854,7 @@ Current evidence note (2026-06-06): ordinary `npm test` covers all-platform unit
 
 ### 9.4 TUI
 - The status footer can show Dasein state when `core.statusEnabled=true` and is hidden when `core.statusEnabled=false`.
+- During startup initial refresh, the status footer may show a low-noise UI-only sync indicator; it must not inject that pending state into the agent prompt.
 - `/dasein inspect agent` returns the exact current pre-rendered agent system prompt block, or an explicit no-context result when no agent context is available.
 - The default SettingsList overlay is a compact common-first allowlist, not a complete inventory of every available control.
 - The default SettingsList overlay includes core visibility/detail controls: `core.agentInjectionEnabled`, `core.statusEnabled`, and `core.statusDetail`.
@@ -869,7 +873,7 @@ Current evidence note (2026-06-06): ordinary `npm test` covers all-platform unit
 - Dasein core remains a broker/framework; clock, geo, and lapse are the only builtin sensors in this product scope.
 - Continuity is a semantic property provided by the lapse sensor, not a separate builtin sensor.
 - Clock sensor can render local time at configured precision and defaults to minute precision.
-- Enabled builtin sensors run startup refresh where applicable and may run optional interval refresh only according to sensor interval config from the Technical Design.
+- Enabled builtin sensors run non-blocking startup refresh where applicable and may run optional interval refresh only according to sensor interval config from the Technical Design.
 - Geo sensor defaults to disabled, UI-visible when available, not agent-visible, city precision, `exactAddress=false`, and `exactCoordinates=false`.
 - Geo sensor's implemented effective timing defaults are `intervalMs=60000`, `timeoutMs=3000`, `staleAfterMs=1800000`, and `initialRefresh=true`.
 - Geo sensor supports exactly `city`, `district`, `street`, and `exact` precision values.

@@ -162,7 +162,7 @@ const focus = {
 export default focus;
 ```
 
-This declares low-risk runtime behavior under Dasein's acknowledgement model because it has no filesystem, subprocess, network, remote behavior, recurring interval, or lifecycle observer. Its `initialRefresh: true` may cause a one-shot startup/reload refresh from runtime config, but that is not itself a remote, recurring, or lifecycle background-risk declaration. It is still trusted executable `.ts` code at import/reload time; Dasein does not sandbox sensor modules.
+This declares low-risk runtime behavior under Dasein's acknowledgement model because it has no filesystem, subprocess, network, remote behavior, recurring interval, or lifecycle observer. Its `initialRefresh: true` may cause a one-shot startup refresh after Dasein's first UI/status render and a one-shot refresh during explicit `/dasein reload`, but that is not itself a remote, recurring, or lifecycle background-risk declaration. Startup pending state is UI-only and is not injected into the agent prompt until startup refresh succeeds. It is still trusted executable `.ts` code at import/reload time; Dasein does not sandbox sensor modules.
 
 For the copyable complete version with `validateConfig` and `/dasein focus set <label>`, copy `examples/sensors/focus.ts`.
 
@@ -326,7 +326,7 @@ backgroundWork: {
 }
 ```
 
-`defaults.initialRefresh: true` by itself is not a reason to set `backgroundWork.capable=true`; it only asks Dasein to run a one-shot refresh at startup/reload for effectively enabled sensors. Declare background work when the sensor itself has recurring intervals, or when the manifest intentionally treats startup refresh as background work that should require acknowledgement. Do not declare lifecycle observer background work for package or user-local sensors until runtime dispatch supports it as a stable extension point.
+`defaults.initialRefresh: true` by itself is not a reason to set `backgroundWork.capable=true`; it only asks Dasein to run a one-shot refresh after first startup render and during explicit `/dasein reload` for effectively enabled sensors. Declare background work when the sensor itself has recurring intervals, or when the manifest intentionally treats startup refresh as background work that should require acknowledgement. Do not declare lifecycle observer background work for package or user-local sensors until runtime dispatch supports it as a stable extension point.
 
 If it refreshes on an interval, declare that and expect acknowledgement:
 

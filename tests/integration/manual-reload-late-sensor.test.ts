@@ -88,9 +88,11 @@ export default spec;
 const contextContent = async (host: FakePiHostFixture): Promise<string> => {
   const event: MutableBeforeAgentStartEvent = { systemPrompt: "BASE SYSTEM", messages: [] };
   const result = await invokeFakeLifecycle(host, "before_agent_start", event);
-  const returned = objectRecord(result[0]);
   assert.equal(event.messages.length, 0, "Dasein must not append CustomMessage/user messages for agent context");
-  assert.equal(returned.systemPrompt, event.systemPrompt);
+  if (result[0] !== undefined) {
+    const returned = objectRecord(result[0]);
+    assert.equal(returned.systemPrompt, event.systemPrompt);
+  }
   assert.equal(typeof event.systemPrompt, "string");
   return event.systemPrompt;
 };

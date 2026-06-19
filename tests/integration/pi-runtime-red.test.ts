@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
+import { setTimeout as wait } from "node:timers/promises";
 import test from "node:test";
 
 import { visibleWidth } from "@earendil-works/pi-tui";
@@ -42,12 +43,16 @@ const objectRecord = (value: unknown): Record<string, unknown> => {
 };
 
 const ambientSystemPromptContent = async (host: FakePiHostFixture, event: MutableBeforeAgentStartEvent = {}): Promise<string> => {
-  event.systemPrompt ??= "BASE SYSTEM";
-  event.messages ??= [];
-  await invokeFakeLifecycle(host, "before_agent_start", event);
-  assert.equal(event.messages.length, 0, "Dasein ambient context must not append user/custom messages");
-  assert.equal(typeof event.systemPrompt, "string");
-  return event.systemPrompt;
+  for (let attempt = 0; attempt < 50; attempt += 1) {
+    event.systemPrompt = "BASE SYSTEM";
+    event.messages = [];
+    await invokeFakeLifecycle(host, "before_agent_start", event);
+    assert.equal(event.messages.length, 0, "Dasein ambient context must not append user/custom messages");
+    assert.equal(typeof event.systemPrompt, "string");
+    if (event.systemPrompt.includes("<DaseinAmbientContext>")) return event.systemPrompt;
+    await wait(10);
+  }
+  return event.systemPrompt ?? "";
 };
 
 test("[expected-red] fake-host evidence remains fake and never records a live Pi support claim", async () => {
@@ -180,18 +185,17 @@ test("[expected-red] /dasein slash command and --dasein flag drive runtime behav
   assert.equal(host.ledger.uiWidgetCalls.some((call) => call.slot === "dasein"), false);
 });
 
-test("[expected-red] before_agent_start appends Dasein ambient context to system prompt only", async () => {
+test("[expected-red] before_agent_start appends Dasein ambient context to system prompt only after startup refresh succeeds", async () => {
   const host = await registerInFakeHost();
   await invokeFakeLifecycle(host, "session_start");
 
   const event: MutableBeforeAgentStartEvent = { systemPrompt: "BASE SYSTEM", messages: [], timestamp: 1_001, turnId: "turn-1" };
-  const results = await invokeFakeLifecycle(host, "before_agent_start", event);
+  const content = await ambientSystemPromptContent(host, event);
 
   assert.equal(event.messages?.length, 0);
-  assert.equal(objectRecord(results[0]).systemPrompt, event.systemPrompt);
-  assert.match(event.systemPrompt ?? "", /^BASE SYSTEM\n\n<DaseinAmbientContext>/u);
-  assert.match(event.systemPrompt ?? "", /local=/u);
-  assert.doesNotMatch(event.systemPrompt ?? "", /^\[ambient_ctx:/u);
+  assert.match(content, /^BASE SYSTEM\n\n<DaseinAmbientContext>/u);
+  assert.match(content, /local=/u);
+  assert.doesNotMatch(content, /^\[ambient_ctx:/u);
 });
 
 test("pi.events external state keeps unconfigured agent payload hidden until ConfigManager-owned visibility enables it", async () => {
@@ -228,6 +232,7 @@ test("pi.events external state keeps unconfigured agent payload hidden until Con
 test("summary statusbar shows agent-visible external context after a lifecycle publish", async () => {
   const host = await registerInFakeHost({ dasein: "core.statusDetail=summary,external.weather.agent=true" });
   await invokeFakeLifecycle(host, "session_start");
+  await ambientSystemPromptContent(host);
 
   host.pi.events.emit("dasein:state:set", {
     key: "weather",
@@ -346,7 +351,7 @@ test("[expected-red] builtin clock/geo/lapse wiring starts sensors while default
   await invokeFakeLifecycle(host, "session_start");
   await invokeFakeLifecycle(host, "input", { text: "hello", timestamp: 1_000, turnId: "turn-1" });
   const beforeAgentEvent: MutableBeforeAgentStartEvent = { systemPrompt: "BASE SYSTEM", messages: [], timestamp: 1_001, turnId: "turn-1" };
-  await invokeFakeLifecycle(host, "before_agent_start", beforeAgentEvent);
+  await ambientSystemPromptContent(host, beforeAgentEvent);
   await invokeFakeLifecycle(host, "agent_end", { timestamp: 4_000, turnId: "turn-1" });
   await invokeFakeLifecycle(host, "input", { text: "again", timestamp: 10_000, turnId: "turn-2" });
 

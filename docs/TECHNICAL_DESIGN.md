@@ -108,6 +108,8 @@ Directory/package installs scan two non-recursive sensor directories on startup 
 ~/.pi/dasein/sensors/*.ts
 ```
 
+Ordinary startup imports discovered sensor modules without reload cache-bust copies so startup avoids unnecessary module churn. Manual `/dasein reload` is the explicit path that uses cache-busted import targets to observe changed local sensor files in the current Pi process.
+
 Single-file packaged installs use only the bundled static sensor registry. They do not support dynamic user-added `.ts` sensor discovery.
 
 Rationale: users should not need to fork Dasein just to add private local sensors. Keeping user-local sensors under `~/.pi/dasein/sensors` separates package updates from user extensions while preserving the same SensorSpec, manifest, digest, and acknowledgement controls.
@@ -120,7 +122,17 @@ The LLM injection path reads only a pre-rendered in-memory string through an inj
 
 Rationale: no `fs`, `child_process`, `http`, `https`, `net`, `tls`, `dns`, `fetch`, `XMLHttpRequest`, `WebSocket`, dynamic `import`, sensor refresh/action/cleanup/discovery, config mutation, native helper import, or helper module import may delay or change prompt construction.
 
-Trade-off: injected ambient state can be stale until sensors refresh.
+Trade-off: injected ambient state can be absent until sensors refresh.
+
+### Decision 5a: Startup initial refresh is UI-only until it succeeds
+
+`session_start` renders/publishes a baseline Dasein status immediately after registry/config/durable-state setup. It must not wait for initial sensor refreshes. Startup refresh runs as background work, then republishes status when it succeeds or fails.
+
+Until that background startup refresh succeeds, `before_agent_start` leaves the system prompt unchanged. Pending/loading placeholders such as `Dasein sync…` are TUI/status-only. If startup refresh fails, Dasein surfaces the failure through status diagnostics and `/dasein status`/`/dasein sensors`, but still does not inject failed or loading context into the agent prompt.
+
+Rationale: no ambient data is safer than stale, wrong, or loading-state data in the agent context. The UI may be honest about synchronization, but the model should not reason from startup placeholders.
+
+Trade-off: the first agent turn after Pi launch may have no Dasein ambient context if sensors have not completed initial refresh yet.
 
 ### Decision 6: All-or-keep-old reload
 
@@ -305,7 +317,7 @@ Validation rules:
 - `SensorConfig.intervalMs`, when omitted or `null`, means no recurring interval scheduler. A recurring scheduler exists only when the effective config contains a positive integer `intervalMs` from an explicit sensor default, disk config, launch overlay, or runtime change.
 - `SensorConfig.timeoutMs`, when omitted, defaults to `2000`.
 - `SensorConfig.staleAfterMs`, when omitted, defaults to `intervalMs * 2` when `intervalMs` is a positive integer, otherwise `120000`.
-- `SensorConfig.initialRefresh`, when omitted, defaults to `true`; it is a one-shot startup/reload refresh, not recurring background work.
+- `SensorConfig.initialRefresh`, when omitted, defaults to `true`; on Pi startup it is a one-shot background refresh after first render, and on explicit `/dasein reload` it is part of the reload candidate refresh path. It is not recurring background work.
 - `SensorConfig.acknowledgedManifestDigest`, when present, must be `null` or the lower-case SHA-256 hex digest exposed for that sensor by `/dasein sensors`; it has no effect for builtin sensors.
 - An unconfigured external key defaults to `{ "ui": true, "agent": false }` when a valid external event for that key arrives.
 - `SensorFieldSpec.type === "enum"` requires a non-empty unique `values` list.
