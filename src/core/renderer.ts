@@ -579,7 +579,7 @@ const defaultConfigFor = (sensorSnapshots: readonly SensorSnapshot[]): DaseinCon
   version: 1,
   core: {
     agentInjectionEnabled: true,
-    agentInjectionTransport: "providerPayload",
+    agentInjectionTransport: "auto",
     statusEnabled: true,
     statusDetail: "quiet",
     maxAgentChars: 240,

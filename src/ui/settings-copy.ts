@@ -31,7 +31,7 @@ const explicitLabels: Readonly<Record<string, string>> = {
 
 const explicitDescriptions: Readonly<Record<string, string>> = {
   "core.agentInjectionEnabled": "Allows enabled ambient context to enter the agent request.",
-  "core.agentInjectionTransport": "Chooses default OpenAI provider-payload late injection, legacy system prompt injection, auto, or off.",
+  "core.agentInjectionTransport": "Chooses default auto transport, explicit provider-payload late injection, legacy system prompt injection, or off.",
   "core.statusEnabled": "Shows bounded Dasein status in the footer.",
   "core.statusDetail": "Status verbosity: quiet, summary, or diagnostic.",
   "sensors.clock.enabled": "Collect local time context.",

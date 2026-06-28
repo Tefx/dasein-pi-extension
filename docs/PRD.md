@@ -438,7 +438,7 @@ The core configuration schema must include:
   "version": 1,
   "core": {
     "agentInjectionEnabled": true,
-    "agentInjectionTransport": "providerPayload",
+    "agentInjectionTransport": "auto",
     "statusEnabled": true,
     "statusDetail": "quiet",
     "maxAgentChars": 240,
@@ -487,7 +487,7 @@ Config version default:
 Core defaults:
 
 - `core.agentInjectionEnabled`: `true`
-- `core.agentInjectionTransport`: `providerPayload`
+- `core.agentInjectionTransport`: `auto`
 - `core.statusEnabled`: `true`
 - `core.statusDetail`: `quiet`
 - `core.maxAgentChars`: `240`
@@ -637,8 +637,8 @@ The injection path must not perform sensor refresh work, filesystem reads, netwo
 `core.agentInjectionTransport` controls how the already-rendered ambient block enters the request:
 
 - `systemPrompt` is the legacy mode. Dasein appends the full dynamic ambient block during `before_agent_start` by returning an updated `systemPrompt`. Pi may serialize that prompt as provider-native `developer` or `system` according to provider compatibility.
-- `providerPayload` is the safer default. It keeps `before_agent_start` limited to a stable Dasein policy and injects the dynamic ambient block in `before_provider_request` only for supported OpenAI Responses and OpenAI-compatible Chat Completions payload shapes. The block is appended after the real user prompt content to preserve the stable prefix before Dasein's dynamic context.
-- `auto` currently uses the same OpenAI-only provider-payload path when a supported payload shape is detected and otherwise leaves the request unchanged rather than guessing.
+- `providerPayload` is the explicit provider-payload mode. It keeps `before_agent_start` limited to a stable Dasein policy and injects the dynamic ambient block in `before_provider_request` only for supported OpenAI Responses and OpenAI-compatible Chat Completions payload shapes. The block is appended after the real user prompt content to preserve the stable prefix before Dasein's dynamic context.
+- `auto` is the safer default. It currently uses the same OpenAI-only provider-payload path when a supported payload shape is detected and otherwise leaves the request unchanged rather than guessing.
 - `off` disables agent request injection.
 
 Dasein must not inject ambient context as a `CustomMessage`; Pi `convertToLlm()` serializes custom messages as `role:"user"` and would make Dasein context a persisted transcript message. The OpenAI provider-payload mode is a bounded provider payload rewrite, not a Pi `CustomMessage` or session-history mutation.
@@ -843,7 +843,7 @@ Current evidence note (2026-06-06): ordinary `npm test` covers all-platform unit
 
 ### 9.3 Agent Injection
 - Agent injection remains enabled by default because agent spacetime awareness is Dasein's primary purpose.
-- Agent injection uses `core.agentInjectionTransport`: default OpenAI `providerPayload` appends dynamic context to supported OpenAI provider payloads after the real user prompt content, while legacy `systemPrompt` appends dynamic context to Pi's per-turn `before_agent_start.systemPrompt`.
+- Agent injection uses `core.agentInjectionTransport`: default `auto` currently appends dynamic context to supported OpenAI provider payloads after the real user prompt content and leaves unsupported payloads unchanged, while legacy `systemPrompt` appends dynamic context to Pi's per-turn `before_agent_start.systemPrompt`.
 - Agent injection must not use `CustomMessage`, hidden `display:false` messages, or any path that persists Dasein context as a transcript message through Pi `convertToLlm()`.
 - Agent injection does not use `[Dasein: ...]` by default.
 - Agent injection does not include default priority semantics.

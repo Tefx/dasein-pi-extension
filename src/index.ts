@@ -341,7 +341,7 @@ const defaultCoreConfig = (entries: readonly SensorRegistryEntry[]): DaseinConfi
   const availableKeys = new Set(entries.map((entry) => entry.spec.key));
   return {
     agentInjectionEnabled: true,
-    agentInjectionTransport: "providerPayload",
+    agentInjectionTransport: "auto",
     statusEnabled: true,
     statusDetail: "quiet",
     maxAgentChars: 240,

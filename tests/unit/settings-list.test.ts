@@ -194,7 +194,7 @@ test("default SettingsList surface is common-first and hides diagnostic metadata
   }
   assert.equal(daseinSettingDisplayLabel(controlById(defaultItems, "core.agentInjectionEnabled")), "Agent context");
   assert.equal(daseinSettingDisplayDescription(controlById(defaultItems, "core.agentInjectionEnabled")), "Allows enabled ambient context to enter the agent request.");
-  assert.equal(daseinSettingDisplayDescription(controlById(defaultItems, "core.agentInjectionTransport")), "Chooses default OpenAI provider-payload late injection, legacy system prompt injection, auto, or off.");
+  assert.equal(daseinSettingDisplayDescription(controlById(defaultItems, "core.agentInjectionTransport")), "Chooses default auto transport, explicit provider-payload late injection, legacy system prompt injection, or off.");
   assert.equal(stripSettingsListPeerHintLines(["row", "", "  Type to search · Enter/Space to change · Esc to cancel"]).join("\n"), "row");
   assert.equal(defaultItems.length <= 14, true, "default SettingsList should stay compact");
 });

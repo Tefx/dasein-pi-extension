@@ -58,7 +58,7 @@ Support claims must not ship on `SOURCE_VERIFIED` or `API_VERIFIED` evidence alo
 
 ### Decision 1: Configurable agent ambient transport
 
-Dasein injects agent ambient context through `core.agentInjectionTransport`. The safer default is `providerPayload`, which keeps `before_agent_start` limited to a stable Dasein policy and appends the dynamic ambient block in `before_provider_request` for supported OpenAI Responses and OpenAI-compatible Chat Completions payload shapes. The legacy `systemPrompt` mode remains available and appends a bounded dynamic block to Pi's per-turn `before_agent_start` `systemPrompt`.
+Dasein injects agent ambient context through `core.agentInjectionTransport`. The safer default is `auto`, which currently keeps `before_agent_start` limited to a stable Dasein policy and appends the dynamic ambient block in `before_provider_request` for supported OpenAI Responses and OpenAI-compatible Chat Completions payload shapes. The explicit `providerPayload` mode uses the same provider-payload path. The legacy `systemPrompt` mode remains available and appends a bounded dynamic block to Pi's per-turn `before_agent_start` `systemPrompt`.
 
 Rationale: Dasein's primary purpose is agent spacetime awareness, so agent injection remains enabled by default. The provider-payload path preserves the stable system/user prefix better for provider prompt caches by moving only the dynamic ambient block after the real user prompt content, and avoids putting per-turn local facts in the higher-priority system prompt by default. The legacy system-prompt path preserves runtime/developer semantics for providers that do not expose a supported payload shape. Pi `CustomMessage` entries, including `display:false` entries, participate in LLM context and `convertToLlm()` serializes them as `role:"user"`; therefore Dasein must still not use `CustomMessage` for hidden ambient context.
 
@@ -261,7 +261,7 @@ Full effective defaults after builtin sensor defaults and shared non-recurring t
   "version": 1,
   "core": {
     "agentInjectionEnabled": true,
-    "agentInjectionTransport": "providerPayload",
+    "agentInjectionTransport": "auto",
     "statusEnabled": true,
     "statusDetail": "quiet",
     "maxAgentChars": 240,
