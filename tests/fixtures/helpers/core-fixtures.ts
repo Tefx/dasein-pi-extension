@@ -138,7 +138,7 @@ export const baseConfig: DaseinConfig = {
   version: 1,
   core: {
     agentInjectionEnabled: true,
-    agentInjectionTransport: "systemPrompt",
+    agentInjectionTransport: "providerPayload",
     statusEnabled: true,
     statusDetail: "quiet",
     maxAgentChars: 240,
@@ -219,7 +219,7 @@ export const externalWeather: ExternalStateSetEvent = {
 };
 
 export const renderedContext: RenderedContext = {
-  agent: "[ambient_ctx: local=14:32]",
+  agent: "[ambient_ctx: time=14:32]",
   status: "time Fri 14:32 +08",
   omittedKeys: [],
   truncated: false,

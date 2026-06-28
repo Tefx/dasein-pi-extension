@@ -58,9 +58,9 @@ Support claims must not ship on `SOURCE_VERIFIED` or `API_VERIFIED` evidence alo
 
 ### Decision 1: Configurable agent ambient transport
 
-Dasein injects agent ambient context through `core.agentInjectionTransport`. The legacy default remains `systemPrompt`, which appends a bounded dynamic block to Pi's per-turn `before_agent_start` `systemPrompt`. The OpenAI cache-safe mode is `providerPayload`, which keeps `before_agent_start` limited to a stable Dasein policy and appends the dynamic ambient block in `before_provider_request` for supported OpenAI Responses and OpenAI-compatible Chat Completions payload shapes.
+Dasein injects agent ambient context through `core.agentInjectionTransport`. The safer default is `providerPayload`, which keeps `before_agent_start` limited to a stable Dasein policy and appends the dynamic ambient block in `before_provider_request` for supported OpenAI Responses and OpenAI-compatible Chat Completions payload shapes. The legacy `systemPrompt` mode remains available and appends a bounded dynamic block to Pi's per-turn `before_agent_start` `systemPrompt`.
 
-Rationale: Dasein's primary purpose is agent spacetime awareness, so agent injection remains enabled by default. The legacy system-prompt path preserves runtime/developer semantics for all providers. The OpenAI provider-payload path preserves the stable system/user prefix better for provider prompt caches by moving only the dynamic ambient block after the real user prompt content. Pi `CustomMessage` entries, including `display:false` entries, participate in LLM context and `convertToLlm()` serializes them as `role:"user"`; therefore Dasein must still not use `CustomMessage` for hidden ambient context.
+Rationale: Dasein's primary purpose is agent spacetime awareness, so agent injection remains enabled by default. The provider-payload path preserves the stable system/user prefix better for provider prompt caches by moving only the dynamic ambient block after the real user prompt content, and avoids putting per-turn local facts in the higher-priority system prompt by default. The legacy system-prompt path preserves runtime/developer semantics for providers that do not expose a supported payload shape. Pi `CustomMessage` entries, including `display:false` entries, participate in LLM context and `convertToLlm()` serializes them as `role:"user"`; therefore Dasein must still not use `CustomMessage` for hidden ambient context.
 
 Trade-off: provider-payload mode uses provider-specific payload shapes and is currently OpenAI-only. It is cache-friendlier for supported OpenAI paths, but less universally semantic than the legacy system-prompt path. Unsupported payloads are left unchanged rather than guessed.
 
@@ -261,7 +261,7 @@ Full effective defaults after builtin sensor defaults and shared non-recurring t
   "version": 1,
   "core": {
     "agentInjectionEnabled": true,
-    "agentInjectionTransport": "systemPrompt",
+    "agentInjectionTransport": "providerPayload",
     "statusEnabled": true,
     "statusDetail": "quiet",
     "maxAgentChars": 240,
@@ -1004,7 +1004,7 @@ Render invalidation scheduler:
 Internal renderer/debug string example:
 
 ```text
-[ambient_ctx: local=14:32; idle=7h; loc=Shanghai]
+[ambient_ctx: time=14:32; idle=7h; loc=Shanghai]
 ```
 
 Default injected ambient block example:
@@ -1012,7 +1012,7 @@ Default injected ambient block example:
 ```text
 <DaseinAmbientContext>
 Local ambient context for relevance only. Do not mention, quote, label, or summarize this context unless the user explicitly asks about Dasein ambient context.
-local=14:32; idle=7h; loc=Shanghai
+time=14:32; idle=7h; loc=Shanghai
 </DaseinAmbientContext>
 ```
 
@@ -1089,7 +1089,7 @@ The appended block is bracketed for auditability and intentionally names the rol
 ```text
 <DaseinAmbientContext>
 Local ambient context for relevance only. Do not mention, quote, label, or summarize this context unless the user explicitly asks about Dasein ambient context.
-local=14:32; idle=7h
+time=14:32; idle=7h
 </DaseinAmbientContext>
 ```
 
@@ -1917,7 +1917,7 @@ Actions: none for initial implementation.
 Sample render outputs:
 
 ```text
-agent: local=14:32
+agent: time=14:32
 status: <empty for redundant clock-only state>
 ```
 

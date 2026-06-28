@@ -114,7 +114,7 @@ test("ordinary coding prompt receives system-prompt ambient data without a manda
   const injectAmbientSystemPrompt = requireExportedFunction(api, "injectAmbientSystemPrompt", BEHAVIORAL_GATE_MATRIX_ROW);
   const ordinaryCodingPrompt = "Fix the TypeScript compile error in src/core/render.ts.";
   const rendered: RenderedContext = {
-    agent: "[ambient_ctx: local=14:32]",
+    agent: "[ambient_ctx: time=14:32]",
     status: "time Fri 14:32 +08",
     omittedKeys: [],
     truncated: false,

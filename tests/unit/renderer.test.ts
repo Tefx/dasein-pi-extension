@@ -21,7 +21,7 @@ test("renderer deterministically orders renderOrder sensors, remaining sensors, 
   }) as { agent: string | null; status: string | null; omittedKeys: string[]; truncated: boolean };
 
   assert.deepEqual(rendered, {
-    agent: "[ambient_ctx: weather=dry; local=14:32]",
+    agent: "[ambient_ctx: weather=dry; time=14:32]",
     status: "weather dry; time Fri 14:32 +08",
     omittedKeys: [],
     truncated: false,
@@ -38,7 +38,7 @@ test("status bar formatter stays silent for normal quiet state and shows only us
   }) => string | undefined;
 
   const normalClockOnly = {
-    agent: "[ambient_ctx: local=14:32]",
+    agent: "[ambient_ctx: time=14:32]",
     status: "time Fri 14:32 +08; utc_offset_minutes 480",
     omittedKeys: [],
     truncated: false,
@@ -145,7 +145,7 @@ test("default render order is clock, lapse, geo and renderer appends remaining s
     now: 1000,
   }) as { agent: string | null };
 
-  assert.equal(rendered.agent, "[ambient_ctx: local=14:32; idle=7h; loc=Shanghai; value=alpha-after-builtins]");
+  assert.equal(rendered.agent, "[ambient_ctx: time=14:32; idle=7h; loc=Shanghai; value=alpha-after-builtins]");
 });
 
 test("unconfigured external keys stay UI-visible but hidden from the agent string", async () => {
@@ -158,7 +158,7 @@ test("unconfigured external keys stay UI-visible but hidden from the agent strin
     now: 1000,
   }) as { agent: string | null; status: string | null; omittedKeys: string[]; truncated: boolean };
 
-  assert.equal(rendered.agent, "[ambient_ctx: local=14:32]");
+  assert.equal(rendered.agent, "[ambient_ctx: time=14:32]");
   assert.doesNotMatch(rendered.agent ?? "", /weather|secret-agent-value/u);
   assert.match(rendered.status ?? "", /weather human weather \(agent hidden\)/u);
   assert.deepEqual(rendered.omittedKeys.includes("external:weather"), true);

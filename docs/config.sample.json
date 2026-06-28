@@ -2,7 +2,7 @@
   "version": 1,
   "core": {
     "agentInjectionEnabled": true,
-    "agentInjectionTransport": "systemPrompt",
+    "agentInjectionTransport": "providerPayload",
     "statusEnabled": true,
     "statusDetail": "quiet",
     "maxAgentChars": 240,

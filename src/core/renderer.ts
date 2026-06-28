@@ -260,11 +260,11 @@ const formatClockAgentPart = (value: unknown, sensorConfig: Readonly<SensorConfi
   const period = clockPeriodForHour(Number.parseInt(parts.hour, 10));
   switch (clockPrecisionFor(sensorConfig)) {
     case "exact":
-      return parts.minute === null || parts.second === null ? `local=${parts.hour}` : `local=${parts.hour}:${parts.minute}:${parts.second}`;
+      return parts.minute === null || parts.second === null ? `time=${parts.hour}` : `time=${parts.hour}:${parts.minute}:${parts.second}`;
     case "minute":
-      return parts.minute === null ? `local=${parts.hour}` : `local=${parts.hour}:${parts.minute}`;
+      return parts.minute === null ? `time=${parts.hour}` : `time=${parts.hour}:${parts.minute}`;
     case "hour":
-      return `local=${parts.hour}`;
+      return `time=${parts.hour}`;
     case "period":
       return `tod=${period}`;
     case "date":
@@ -579,7 +579,7 @@ const defaultConfigFor = (sensorSnapshots: readonly SensorSnapshot[]): DaseinCon
   version: 1,
   core: {
     agentInjectionEnabled: true,
-    agentInjectionTransport: "systemPrompt",
+    agentInjectionTransport: "providerPayload",
     statusEnabled: true,
     statusDetail: "quiet",
     maxAgentChars: 240,

@@ -26,10 +26,10 @@ test("injector appends ambient context to system prompt without creating user/cu
 test("injector formats renderer ambient envelope as bounded system prompt context", async () => {
   const api = await loadDaseinApi();
   const formatAmbientSystemPromptBlock = requireExportedFunction(api, "formatAmbientSystemPromptBlock", "Testing Gate Matrix row: Request-path no I/O");
-  const content = formatAmbientSystemPromptBlock("[ambient_ctx: local=14:32]") as string;
+  const content = formatAmbientSystemPromptBlock("[ambient_ctx: time=14:32]") as string;
 
   assert.match(content, /^<DaseinAmbientContext>\n/u);
-  assert.match(content, /local=14:32/u);
+  assert.match(content, /time=14:32/u);
   assert.doesNotMatch(content, /\[ambient_ctx:/u);
   assert.match(content, /<\/DaseinAmbientContext>$/u);
 });
@@ -40,7 +40,7 @@ test("injector appends stable Dasein policy without dynamic ambient values for p
   const result = injectStableDaseinSystemPromptPolicy("BASE SYSTEM") as string;
 
   assert.match(result, /^BASE SYSTEM\n\nDasein may provide per-request ambient runtime context/u);
-  assert.doesNotMatch(result, /<DaseinAmbientContext>|local=14:32|clock=|idle=|location=/u);
+  assert.doesNotMatch(result, /<DaseinAmbientContext>|time=14:32|clock=|idle=|location=/u);
 });
 
 test("injector returns no change when rendered agent is null and never consults config", async () => {

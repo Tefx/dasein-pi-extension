@@ -196,6 +196,8 @@ test("live Pi dynamic sensor reload cache-busts and keeps old state on invalid r
       "--offline",
       "-e",
       probePath,
+      "--dasein",
+      "core.agentInjectionTransport=systemPrompt",
       "-p",
       "/dasein-dynamic-smoke-exit",
     ], {

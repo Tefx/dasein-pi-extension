@@ -85,7 +85,7 @@ Useful checks:
 - `/dasein sensors` shows loaded sensors, load errors, permissions, background/remote declarations, and user-added sensor acknowledgement state.
 - `/dasein inspect agent` shows the exact ambient context block Dasein would append to the next agent request.
 
-Agent injection mechanism: Dasein appends that block to Pi's per-turn `before_agent_start` `systemPrompt` (`event.systemPrompt`). It does not inject user-role content and does not use Pi `CustomMessage` entries for ambient context.
+Agent injection mechanism: by default Dasein keeps the dynamic ambient block out of the system prompt and appends it through the OpenAI-compatible provider payload path (`before_provider_request`) when the payload shape is supported. `before_agent_start` only adds a stable Dasein policy in that mode. You can switch `core.agentInjectionTransport` to `systemPrompt` for the legacy system-prompt path, `auto` for provider-payload when supported, or `off` to disable agent injection. Dasein does not use Pi `CustomMessage` entries for ambient context.
 
 ## Privacy defaults
 

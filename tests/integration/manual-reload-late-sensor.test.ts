@@ -62,7 +62,7 @@ const importIsolatedExtensionFactory = async (fixture: IsolatedExtensionFixture)
 };
 
 const registerIsolatedDasein = async (fixture: IsolatedExtensionFixture): Promise<FakePiHostFixture> => {
-  const host = createFakePiHost("tui");
+  const host = createFakePiHost("tui", { dasein: "core.agentInjectionTransport=systemPrompt" });
   const createDaseinExtension = await importIsolatedExtensionFactory(fixture);
   await createDaseinExtension(host.pi);
   return host;

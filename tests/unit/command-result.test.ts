@@ -85,7 +85,7 @@ test("inspect agent command returns the exact pre-rendered system prompt block",
   const formatAgentInspectCommandLines = requireExportedFunction(api, "formatAgentInspectCommandLines", "explicit /dasein inspect agent diagnostics");
   const result = await executeDaseinCommand("/dasein inspect agent", {
     inspectAgent: {
-      rendered: { agent: "[ambient_ctx: local=14:32; idle=7h]", omittedKeys: ["geo.lat"], truncated: true },
+      rendered: { agent: "[ambient_ctx: time=14:32; idle=7h]", omittedKeys: ["geo.lat"], truncated: true },
       agentInjectionEnabled: true,
       injectedLabel: "ambient_ctx",
     },
@@ -94,16 +94,16 @@ test("inspect agent command returns the exact pre-rendered system prompt block",
   assert.equal(result.ok, true);
   assert.equal(result.command, "inspect");
   assert.equal(result.data.source, "pre-rendered-memory");
-  assert.equal(result.data.renderedAgent, "[ambient_ctx: local=14:32; idle=7h]");
-  assert.match(result.data.systemPromptBlock ?? "", /<DaseinAmbientContext>\n[\s\S]*local=14:32; idle=7h\n<\/DaseinAmbientContext>/u);
+  assert.equal(result.data.renderedAgent, "[ambient_ctx: time=14:32; idle=7h]");
+  assert.match(result.data.systemPromptBlock ?? "", /<DaseinAmbientContext>\n[\s\S]*time=14:32; idle=7h\n<\/DaseinAmbientContext>/u);
   assert.deepEqual(result.data.omittedKeys, ["geo.lat"]);
   assert.equal(result.data.truncated, true);
   assertSingleLine(result.message, "inspect message");
   assert.notEqual(result.message, "dasein inspect agent: ok", "visible inspect message must not collapse to a useless ok toast");
-  assert.match(result.message, /<DaseinAmbientContext>.*local=14:32; idle=7h/u);
+  assert.match(result.message, /<DaseinAmbientContext>.*time=14:32; idle=7h/u);
   const lines = formatAgentInspectCommandLines(result.data) as string[];
   const text = lines.join("\n");
-  assert.match(text, /systemPromptBlock:\n<DaseinAmbientContext>\n[\s\S]*local=14:32; idle=7h/u);
+  assert.match(text, /systemPromptBlock:\n<DaseinAmbientContext>\n[\s\S]*time=14:32; idle=7h/u);
   assert.doesNotMatch(text, /renderedAgent:/u, "human-facing inspect lines must not duplicate the same payload twice");
 });
 
@@ -118,7 +118,7 @@ test("agent inspect overlay hides duplicate renderer payload and supports close/
       source: "pre-rendered-memory",
       agentInjectionEnabled: true,
       injectedLabel: "ambient_ctx",
-      renderedAgent: "[ambient_ctx: local=14:32; weather=rain]",
+      renderedAgent: "[ambient_ctx: time=14:32; weather=rain]",
       systemPromptBlock: [
         "<DaseinAmbientContext>",
         "Local ambient context for relevance only.",

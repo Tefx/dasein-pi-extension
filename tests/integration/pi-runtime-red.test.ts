@@ -186,8 +186,8 @@ test("[expected-red] /dasein slash command and --dasein flag drive runtime behav
   assert.equal(host.ledger.uiWidgetCalls.some((call) => call.slot === "dasein"), false);
 });
 
-test("[expected-red] before_agent_start appends Dasein ambient context to system prompt only after startup refresh succeeds", async () => {
-  const host = await registerInFakeHost();
+test("legacy systemPrompt transport appends Dasein ambient context to system prompt only after startup refresh succeeds", async () => {
+  const host = await registerInFakeHost({ dasein: "core.agentInjectionTransport=systemPrompt" });
   await invokeFakeLifecycle(host, "session_start");
 
   const event: MutableBeforeAgentStartEvent = { systemPrompt: "BASE SYSTEM", messages: [], timestamp: 1_001, turnId: "turn-1" };
@@ -195,7 +195,7 @@ test("[expected-red] before_agent_start appends Dasein ambient context to system
 
   assert.equal(event.messages?.length, 0);
   assert.match(content, /^BASE SYSTEM\n\n<DaseinAmbientContext>/u);
-  assert.match(content, /local=/u);
+  assert.match(content, /time=/u);
   assert.doesNotMatch(content, /^\[ambient_ctx:/u);
 });
 
@@ -258,7 +258,7 @@ test("pi.events external state keeps unconfigured agent payload hidden until Con
 
   assert.doesNotMatch(hiddenContext, /weather|rain/u);
 
-  const launchVisibleHost = await registerInFakeHost({ dasein: "external.weather.agent=true" });
+  const launchVisibleHost = await registerInFakeHost({ dasein: "core.agentInjectionTransport=systemPrompt,external.weather.agent=true" });
   await invokeFakeLifecycle(launchVisibleHost, "session_start");
   launchVisibleHost.pi.events.emit("dasein:state:set", {
     key: "weather",
@@ -293,7 +293,7 @@ test("summary statusbar shows agent-visible external context after a lifecycle p
 });
 
 test("pi.events malformed Unicode-separator external updates preserve previous state without mutation", async () => {
-  const host = await registerInFakeHost({ dasein: "external.weather.agent=true" });
+  const host = await registerInFakeHost({ dasein: "core.agentInjectionTransport=systemPrompt,external.weather.agent=true" });
   await invokeFakeLifecycle(host, "session_start");
 
   host.pi.events.emit("dasein:state:set", {
@@ -389,8 +389,8 @@ test("[expected-red] ctx.ui.custom unavailability is separate from SettingsList 
   assert.match(JSON.stringify(statusResult), /PiMechanismError|ctx\.ui\.custom|custom unavailable/u);
 });
 
-test("[expected-red] builtin clock/geo/lapse wiring starts sensors while default visible TUI stays quiet", async () => {
-  const host = await registerInFakeHost();
+test("legacy systemPrompt clock/geo/lapse wiring starts sensors while default visible TUI stays quiet", async () => {
+  const host = await registerInFakeHost({ dasein: "core.agentInjectionTransport=systemPrompt" });
 
   await invokeFakeLifecycle(host, "session_start");
   await invokeFakeLifecycle(host, "input", { text: "hello", timestamp: 1_000, turnId: "turn-1" });

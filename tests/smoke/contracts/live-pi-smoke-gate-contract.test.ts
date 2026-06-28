@@ -696,7 +696,7 @@ export default function(pi) {
   const process = spawnPi({
     piBinary,
     home,
-    args: [...basePiArgs(extensionPath), "--model", "dasein-live-context-faux/dasein-live-context-faux-model", "-p", "trigger context injection proof"],
+    args: [...basePiArgs(extensionPath), "--dasein", "core.agentInjectionTransport=systemPrompt", "--model", "dasein-live-context-faux/dasein-live-context-faux-model", "-p", "trigger context injection proof"],
     timeoutMs: 45_000,
     artifactName: "context-injection-proof.log",
   });
@@ -713,7 +713,7 @@ export default function(pi) {
   assert.equal(proof.returnedSystemPromptMatchesEvent, true);
   const promptTail = String(proof.systemPromptTail);
   assert.match(promptTail, /<DaseinAmbientContext>\nLocal ambient context for relevance only\./u);
-  assert.match(promptTail, /local=/u);
+  assert.match(promptTail, /time=/u);
   assert.doesNotMatch(promptTail, /\[ambient_ctx:/u);
   writeJson(join(latestArtifactDir, "context-injection-proof.json"), proof);
   return proof;
@@ -818,7 +818,7 @@ export default function(pi) {
   const process = spawnPi({
     piBinary,
     home,
-    args: [...basePiArgs(extensionPath), "--model", "dasein-live-events-faux/dasein-live-events-faux-model", "-p", "trigger event proof"],
+    args: [...basePiArgs(extensionPath), "--dasein", "core.agentInjectionTransport=systemPrompt", "--model", "dasein-live-events-faux/dasein-live-events-faux-model", "-p", "trigger event proof"],
     timeoutMs: 45_000,
     artifactName: "event-bus-proof.log",
   });

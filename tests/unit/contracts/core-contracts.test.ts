@@ -93,7 +93,7 @@ test("required contract surfaces are typed at module boundaries", () => {
     version: 1,
     core: {
       agentInjectionEnabled: true,
-      agentInjectionTransport: "systemPrompt",
+      agentInjectionTransport: "providerPayload",
       statusEnabled: true,
       statusDetail: "quiet",
       maxAgentChars: 240,
@@ -133,7 +133,7 @@ test("required contract surfaces are typed at module boundaries", () => {
   };
 
   const rendered = {
-    agent: "[ambient_ctx: local=14:32]",
+    agent: "[ambient_ctx: time=14:32]",
     status: "dasein: ok",
     omittedKeys: [],
     truncated: false,
@@ -196,7 +196,7 @@ test("required contract surfaces are typed at module boundaries", () => {
   const injectorContract: DaseinContextInjectorContract = {
     readSurface: "pre-rendered-in-memory-agent-string",
     inputStore: store,
-    appendedSystemPromptBlock: "<DaseinAmbientContext>\nlocal=14:32\n</DaseinAmbientContext>",
+    appendedSystemPromptBlock: "<DaseinAmbientContext>\ntime=14:32\n</DaseinAmbientContext>",
     mutatesConfig: false,
     triggersSensorWork: false,
     appendsUserMessage: false,
