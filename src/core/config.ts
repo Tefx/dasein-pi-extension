@@ -118,6 +118,7 @@ const INJECTED_LABEL_RE = /^[A-Za-z0-9_.:-]{1,32}$/u;
 const LOWER_SHA256_RE = /^[a-f0-9]{64}$/u;
 const CORE_FIELDS = new Set([
   "agentInjectionEnabled",
+  "agentInjectionTransport",
   "statusEnabled",
   "statusDetail",
   "maxAgentChars",
@@ -144,6 +145,7 @@ const CLOCK_PRECISIONS = new Set(["exact", "minute", "hour", "period", "date"]);
 const GEO_PRECISIONS = new Set(["city", "district", "street", "exact"]);
 const LAPSE_AGENT_FIELDS = new Set(["user_idle", "agent_idle"]);
 const STATUS_DETAIL_LEVELS = new Set(["quiet", "summary", "diagnostic"]);
+const AGENT_INJECTION_TRANSPORTS = new Set(["systemPrompt", "providerPayload", "auto", "off"]);
 
 const clone = <T>(value: T): T => structuredClone(value);
 
@@ -380,6 +382,11 @@ const validateCoreValue = (canonicalPath: string, field: string, value: unknown,
       ? null
       : error("invalid-value", canonicalPath, "core.statusDetail must be quiet, summary, or diagnostic");
   }
+  if (field === "agentInjectionTransport") {
+    return typeof value === "string" && AGENT_INJECTION_TRANSPORTS.has(value)
+      ? null
+      : error("invalid-value", canonicalPath, "core.agentInjectionTransport must be systemPrompt, providerPayload, auto, or off");
+  }
   if (field === "renderOrder") {
     if (!Array.isArray(value)) return error("invalid-value", canonicalPath, "core.renderOrder must be an array");
     const seen = new Set<string>();
@@ -501,7 +508,7 @@ const pathKind = (canonicalPath: string, context: ValidationContext): "boolean" 
   if (parts[0] === "external") return "boolean";
   if (parts[0] === "core" && ["agentInjectionEnabled", "statusEnabled"].includes(parts[1] ?? "")) return "boolean";
   if (parts[0] === "core" && parts[1] === "maxAgentChars") return "number";
-  if (parts[0] === "core" && parts[1] === "statusDetail") return "string";
+  if (parts[0] === "core" && ["statusDetail", "agentInjectionTransport"].includes(parts[1] ?? "")) return "string";
   if (parts[0] === "sensors") {
     const field = parts[2] ?? "";
     if (["enabled", "ui", "agent", "initialRefresh", "persist", "exactCoordinates", "exactAddress"].includes(field)) return "boolean";

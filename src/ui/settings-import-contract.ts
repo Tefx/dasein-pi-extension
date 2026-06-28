@@ -94,6 +94,7 @@ const EXTERNAL_TEXT_REJECT_RE = /[\u0000-\u001F\u007F\u2028\u2029]/u;
 const SIMPLE_SENSOR_FIELD_TYPES = new Set<SettingsListValueType>(["boolean", "string", "number", "enum"]);
 const CORE_TOGGLE_PATHS = ["core.agentInjectionEnabled", "core.statusEnabled"] as const;
 const STATUS_DETAIL_OPTIONS = ["quiet", "summary", "diagnostic"] as const;
+const AGENT_INJECTION_TRANSPORT_OPTIONS = ["systemPrompt", "providerPayload", "auto", "off"] as const;
 const COMMON_SENSOR_FIELDS = ["enabled", "ui", "agent", "intervalMs", "timeoutMs", "staleAfterMs", "initialRefresh"] as const;
 
 const pathValue = (source: unknown, path: string): SettingsListValue => {
@@ -231,6 +232,7 @@ const DEFAULT_SETTINGS_LIST_CONTROL_IDS = new Set<string>([
   "core.agentInjectionEnabled",
   "core.statusEnabled",
   "core.statusDetail",
+  "core.agentInjectionTransport",
   "sensors.clock.enabled",
   "sensors.lapse.enabled",
   "sensors.geo.enabled",
@@ -275,6 +277,17 @@ export const buildSettingsListVisibilityModel = (
     options: STATUS_DETAIL_OPTIONS,
     mutationBackend: "ConfigManager",
     mutationForValue: (value) => configManagerAssignment("core.statusDetail", value),
+  }));
+  items.push(control({
+    id: "core.agentInjectionTransport",
+    section: "core",
+    label: "core.agentInjectionTransport",
+    path: "core.agentInjectionTransport",
+    valueType: "enum",
+    value: pathValue(input.config, "core.agentInjectionTransport"),
+    options: AGENT_INJECTION_TRANSPORT_OPTIONS,
+    mutationBackend: "ConfigManager",
+    mutationForValue: (value) => configManagerAssignment("core.agentInjectionTransport", value),
   }));
   for (const entry of [...input.sensorMetadata].sort((left, right) => left.key.localeCompare(right.key))) {
     const sensorConfig = input.config.sensors[entry.key] ?? {

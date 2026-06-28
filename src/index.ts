@@ -32,7 +32,8 @@ import {
 import { createConfigManager } from "./core/config.ts";
 import { createDurableStateStore, createStateStore } from "./core/state.ts";
 import { createExternalStateBridge } from "./core/external-events.ts";
-import { injectAmbientSystemPrompt } from "./core/injector.ts";
+import { formatAmbientSystemPromptBlock, injectAmbientSystemPrompt, injectStableDaseinSystemPromptPolicy } from "./core/injector.ts";
+import { injectAmbientProviderPayload } from "./core/provider-payload-injector.ts";
 import { createDaseinLifecycle, reloadDaseinRuntime, type DaseinReloadResult } from "./core/lifecycle.ts";
 import { renderDaseinContext } from "./core/renderer.ts";
 import { createAgentInspectOverlayComponent } from "./ui/agent-inspect-overlay.ts";
@@ -148,10 +149,14 @@ export { renderDaseinOverlayFrame } from "./ui/overlay-frame.ts";
 export { daseinSettingDisplayDescription, daseinSettingDisplayLabel, stripSettingsListPeerHintLines } from "./ui/settings-copy.ts";
 export { DASEIN_STATUS_BAR_DEFAULT_MAX_WIDTH, formatDaseinStatusBar } from "./ui/status-format.ts";
 export {
+  DASEIN_STABLE_SYSTEM_PROMPT_POLICY,
   formatAmbientSystemPromptBlock,
+  formatStableDaseinSystemPromptPolicy,
   injectAmbientSystemPrompt,
+  injectStableDaseinSystemPromptPolicy,
   proveInjectorNoIo,
 } from "./core/injector.ts";
+export * from "./core/provider-payload-injector.ts";
 export {
   EXTERNAL_STATE_SNAPSHOT_KEYS,
   RENDERED_CONTEXT_KEYS,
@@ -336,6 +341,7 @@ const defaultCoreConfig = (entries: readonly SensorRegistryEntry[]): DaseinConfi
   const availableKeys = new Set(entries.map((entry) => entry.spec.key));
   return {
     agentInjectionEnabled: true,
+    agentInjectionTransport: "systemPrompt",
     statusEnabled: true,
     statusDetail: "quiet",
     maxAgentChars: 240,
@@ -560,10 +566,33 @@ class DaseinAmbientContextBroker {
     if (!this.canInjectAgentContext()) return undefined;
     const mutable = event as MutableBeforeAgentStartEvent;
     const systemPrompt = typeof mutable.systemPrompt === "string" ? mutable.systemPrompt : "";
+    const transport = this.config.core.agentInjectionTransport;
+    if (transport === "off") return undefined;
+
+    if (transport === "providerPayload" || transport === "auto") {
+      const agent = this.stateStore.getRenderedAgentString();
+      if (agent === null || agent.trim().length === 0) return undefined;
+      const nextSystemPrompt = injectStableDaseinSystemPromptPolicy(systemPrompt);
+      mutable.systemPrompt = nextSystemPrompt;
+      return { systemPrompt: nextSystemPrompt };
+    }
+
     const result = injectAmbientSystemPrompt({ stateStore: this.stateStore, systemPrompt });
     if (!result.changed) return undefined;
     mutable.systemPrompt = result.systemPrompt;
     return { systemPrompt: result.systemPrompt };
+  }
+
+  async beforeProviderRequest(event: unknown): Promise<unknown | undefined> {
+    await this.initialize();
+    if (!this.canInjectAgentContext()) return undefined;
+    const transport = this.config.core.agentInjectionTransport;
+    if (transport !== "providerPayload" && transport !== "auto") return undefined;
+    const agent = this.stateStore.getRenderedAgentString();
+    if (agent === null || agent.trim().length === 0) return undefined;
+    const mutable = event as { payload?: unknown };
+    const result = injectAmbientProviderPayload({ payload: mutable.payload, content: formatAmbientSystemPromptBlock(agent) });
+    return result.changed ? result.payload : undefined;
   }
 
   async observePiLifecycle(kind: "input" | "before_agent_start" | "agent_end", event: unknown, context: DaseinPiExtensionContext): Promise<void> {
@@ -1360,6 +1389,7 @@ export const createDaseinExtension: DaseinPiExtensionFactory = (pi) => {
   pi.on("session_shutdown", (_event, context) => broker.shutdown(context));
   pi.on("input", (event, context) => broker.observePiLifecycle("input", event, context));
   pi.on("before_agent_start", (event, context) => broker.beforeAgentStart(event, context));
+  pi.on("before_provider_request", (event) => broker.beforeProviderRequest(event));
   pi.on("agent_end", (event, context) => broker.observePiLifecycle("agent_end", event, context));
 
   pi.events?.on?.("dasein:state:set", (payload) => broker.setExternal(payload));

@@ -468,7 +468,7 @@ const fieldKindForPath = (canonicalPath: string): FieldKind => {
   if (["intervalMs", "timeoutMs", "staleAfterMs"].includes(last)) {
     return "number";
   }
-  if (canonicalPath === "core.injectedLabel" || canonicalPath === "core.statusDetail" || last === "acknowledgedManifestDigest" || last === "precision") {
+  if (canonicalPath === "core.injectedLabel" || canonicalPath === "core.statusDetail" || canonicalPath === "core.agentInjectionTransport" || last === "acknowledgedManifestDigest" || last === "precision") {
     return "string";
   }
   return "unknown";
@@ -1102,6 +1102,9 @@ export const validateConfigAssignment = (path: string, value: unknown, options: 
   }
   if (canonicalPath === "core.statusDetail") {
     return typeof value === "string" && ["quiet", "summary", "diagnostic"].includes(value);
+  }
+  if (canonicalPath === "core.agentInjectionTransport") {
+    return typeof value === "string" && ["systemPrompt", "providerPayload", "auto", "off"].includes(value);
   }
   if (canonicalPath.endsWith(".acknowledgedManifestDigest")) {
     return value === null || (typeof value === "string" && /^[a-f0-9]{64}$/u.test(value));

@@ -138,6 +138,7 @@ export const baseConfig: DaseinConfig = {
   version: 1,
   core: {
     agentInjectionEnabled: true,
+    agentInjectionTransport: "systemPrompt",
     statusEnabled: true,
     statusDetail: "quiet",
     maxAgentChars: 240,

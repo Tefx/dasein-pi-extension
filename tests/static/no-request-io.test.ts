@@ -17,7 +17,7 @@ test("src/core/injector.ts import surface is limited to in-memory state/rendered
 });
 
 test("request-path dependencies reject disk, subprocess, network, dynamic import, sensor work, config mutation, durable state, and native/helper tokens", () => {
-  const requestPathFiles = ["src/core/injector.ts"];
+  const requestPathFiles = ["src/core/injector.ts", "src/core/provider-payload-injector.ts"];
   const forbidden = /\b(?:readFile|writeFile|fsync|rename|mkdir|rm|unlink|child_process|spawn|exec|http|https|net|tls|dns|fetch|XMLHttpRequest|WebSocket|import\s*\(|refreshNow|scheduleRefresh|cleanup|discover|loadSensor|setRuntime|applyRuntime|reloadDisk|state\.json|config\.json|native|helper)\b/u;
 
   for (const file of requestPathFiles) {

@@ -130,13 +130,14 @@ test("[expected-red] Pi version status captures minimum/current/classification i
   assert.equal(host.ledger.featureProbes.length, 0, "version capture must not be collapsed into API probe evidence");
 });
 
-test("[expected-red] Pi lifecycle wiring registers startup, shutdown, input, before-agent-start, and agent-end hooks", async () => {
+test("[expected-red] Pi lifecycle wiring registers startup, shutdown, input, before-provider-request, before-agent-start, and agent-end hooks", async () => {
   const host = await registerInFakeHost();
   const eventNames = host.ledger.lifecycleHandlers.map((handler) => handler.eventName).sort();
 
   assert.deepEqual(eventNames, [
     "agent_end",
     "before_agent_start",
+    "before_provider_request",
     "input",
     "session_shutdown",
     "session_start",
@@ -196,6 +197,49 @@ test("[expected-red] before_agent_start appends Dasein ambient context to system
   assert.match(content, /^BASE SYSTEM\n\n<DaseinAmbientContext>/u);
   assert.match(content, /local=/u);
   assert.doesNotMatch(content, /^\[ambient_ctx:/u);
+});
+
+test("providerPayload transport adds stable policy at before_agent_start and injects OpenAI Responses payload tail", async () => {
+  const host = await registerInFakeHost({ dasein: "core.agentInjectionTransport=providerPayload,external.weather.agent=true" });
+  await invokeFakeLifecycle(host, "session_start");
+  host.pi.events.emit("dasein:state:set", {
+    key: "weather",
+    agent: "weather=clear",
+    ttlMs: 60_000,
+  });
+  await invokeFakeLifecycle(host, "input", { text: "hello", timestamp: 10_000, turnId: "turn-weather" });
+
+  const event: MutableBeforeAgentStartEvent = { systemPrompt: "BASE SYSTEM", messages: [], timestamp: 10_001, turnId: "turn-weather" };
+  for (let attempt = 0; attempt < 50 && !event.systemPrompt?.includes("Dasein may provide per-request ambient runtime context"); attempt += 1) {
+    event.systemPrompt = "BASE SYSTEM";
+    event.messages = [];
+    await invokeFakeLifecycle(host, "before_agent_start", event);
+    await wait(10);
+  }
+
+  assert.match(event.systemPrompt ?? "", /Dasein may provide per-request ambient runtime context/u);
+  assert.doesNotMatch(event.systemPrompt ?? "", /<DaseinAmbientContext>/u, "providerPayload mode keeps dynamic ambient out of system prompt");
+  assert.equal(event.messages?.length, 0, "Dasein must not append custom/user messages");
+
+  const payload = {
+    model: "probe",
+    input: [
+      { role: "system", content: event.systemPrompt },
+      { role: "user", content: [{ type: "input_text", text: "real prompt" }] },
+    ],
+    stream: true,
+    prompt_cache_key: "stable-session",
+  };
+  const [rewritten] = await invokeFakeLifecycle(host, "before_provider_request", { payload });
+  const rewrittenRecord = objectRecord(rewritten);
+  const input = rewrittenRecord.input as Array<Record<string, unknown>>;
+  const lastUser = input.at(-1) as { content: Array<Record<string, unknown>> };
+
+  assert.deepEqual(lastUser.content.map((part) => part.type), ["input_text", "input_text"]);
+  assert.equal(lastUser.content.at(0)?.text, "real prompt");
+  assert.match(String(lastUser.content.at(-1)?.text), /<DaseinAmbientContext>[\s\S]*weather=clear[\s\S]*<\/DaseinAmbientContext>/u);
+  const originalLastUser = payload.input[payload.input.length - 1] as { content: unknown[] };
+  assert.equal(originalLastUser.content.length, 1, "original payload object must not be mutated");
 });
 
 test("pi.events external state keeps unconfigured agent payload hidden until ConfigManager-owned visibility enables it", async () => {

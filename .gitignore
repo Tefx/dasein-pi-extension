@@ -14,8 +14,9 @@ coverage/
 .cache-*/
 *.log
 
-# Dasein local runtime state (if running from repo during development)
+# Dasein/Pi local runtime state (if running from repo during development)
 .dasein/
+.pi/
 
 # macOS / editors
 .DS_Store

@@ -175,6 +175,7 @@ test("default SettingsList surface is common-first and hides diagnostic metadata
   assert.equal(defaultItems.some((item) => item.kind === "metadata"), false, "default SettingsList must hide diagnostic metadata rows");
   for (const expected of [
     "core.agentInjectionEnabled",
+    "core.agentInjectionTransport",
     "core.statusEnabled",
     "core.statusDetail",
     "sensors.clock.enabled",
@@ -192,9 +193,10 @@ test("default SettingsList surface is common-first and hides diagnostic metadata
     assert.equal(defaultIds.includes(diagnosticOrAdvanced), false, `default SettingsList should not show ${diagnosticOrAdvanced}`);
   }
   assert.equal(daseinSettingDisplayLabel(controlById(defaultItems, "core.agentInjectionEnabled")), "Agent context");
-  assert.equal(daseinSettingDisplayDescription(controlById(defaultItems, "core.agentInjectionEnabled")), "Adds enabled ambient context to the agent system prompt.");
+  assert.equal(daseinSettingDisplayDescription(controlById(defaultItems, "core.agentInjectionEnabled")), "Allows enabled ambient context to enter the agent request.");
+  assert.equal(daseinSettingDisplayDescription(controlById(defaultItems, "core.agentInjectionTransport")), "Chooses legacy system prompt injection or OpenAI provider-payload late injection.");
   assert.equal(stripSettingsListPeerHintLines(["row", "", "  Type to search · Enter/Space to change · Esc to cancel"]).join("\n"), "row");
-  assert.equal(defaultItems.length <= 13, true, "default SettingsList should stay compact");
+  assert.equal(defaultItems.length <= 14, true, "default SettingsList should stay compact");
 });
 
 test("sensor-specific SettingsList copy can come from SensorSpec labels and descriptions", () => {

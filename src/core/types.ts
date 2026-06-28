@@ -12,6 +12,7 @@ export type ExternalStateKey = string;
 export type CommandPath = string;
 export type RenderOrderKey = SensorKey | `external:${ExternalStateKey}`;
 export type StatusDetailLevel = "quiet" | "summary" | "diagnostic";
+export type AgentInjectionTransport = "systemPrompt" | "providerPayload" | "auto" | "off";
 
 export interface DaseinConfig {
   version: 1;
@@ -22,6 +23,7 @@ export interface DaseinConfig {
 
 export interface CoreConfig {
   agentInjectionEnabled: boolean;
+  agentInjectionTransport: AgentInjectionTransport;
   statusEnabled: boolean;
   statusDetail: StatusDetailLevel;
   maxAgentChars: number;

@@ -438,6 +438,7 @@ The core configuration schema must include:
   "version": 1,
   "core": {
     "agentInjectionEnabled": true,
+    "agentInjectionTransport": "systemPrompt",
     "statusEnabled": true,
     "statusDetail": "quiet",
     "maxAgentChars": 240,
@@ -486,6 +487,7 @@ Config version default:
 Core defaults:
 
 - `core.agentInjectionEnabled`: `true`
+- `core.agentInjectionTransport`: `systemPrompt`
 - `core.statusEnabled`: `true`
 - `core.statusDetail`: `quiet`
 - `core.maxAgentChars`: `240`
@@ -585,7 +587,7 @@ Dasein must also allow sensor-owned subcommands, including:
 
 Command path grammar:
 
-- Core paths use `core.<field>`, such as `core.agentInjectionEnabled`, `core.statusEnabled`, `core.statusDetail`, and `core.maxAgentChars`.
+- Core paths use `core.<field>`, such as `core.agentInjectionEnabled`, `core.agentInjectionTransport`, `core.statusEnabled`, `core.statusDetail`, and `core.maxAgentChars`.
 - Slash command paths must accept short sensor aliases directly, such as `geo.agent`, `geo.ui`, `geo.enabled`, `clock.precision`, and `lapse.agentFields`; the `sensors.` prefix is not required. Canonical sensor paths are defined by Technical Design and may also be accepted.
 - External visibility paths use `external.<key>.agent` and `external.<key>.ui`, such as `external.weather.agent`.
 - Sensor aliases and external keys in command paths must match `[A-Za-z0-9_-]{1,64}` and therefore cannot contain dots.
@@ -596,7 +598,7 @@ Command behavior:
 - `/dasein status` shows effective config, sensor health, freshness, lapse persistence health/presence, and privacy-sensitive state summaries; the exact output data shape is deferred to Technical Design.
 - `/dasein reload` reloads `~/.pi/dasein/config.json`, reapplies launch overlays except for current-process runtime-overridden paths, stops old sensors, rescans `<extension_root>/src/sensors/*.ts` and `~/.pi/dasein/sensors/*.ts` where supported, and restarts effectively enabled sensors only if the full reload candidate validates; on failure it keeps the last-known-good runtime active.
 - `/dasein sensors` lists loaded sensors in `data.sensors`, load errors in `data.loadErrors`, and inspectable user-added sensor metadata required for safety inspection before enablement, including loader-owned provenance plus spec-owned manifest fields for permissions, input classes, output fields, remote/network behavior, remote/network-capable status, declared recurring/background work, and effective `intervalMs` where applicable; the exact list item data shape is deferred to Technical Design.
-- `/dasein inspect agent` shows the current pre-rendered agent injection block exactly as Dasein would append it to `before_agent_start.systemPrompt`, plus truncation and omitted-key metadata; it does not trigger refresh or add a transcript message.
+- `/dasein inspect agent` shows the current pre-rendered agent injection block exactly as Dasein would inject it through the configured transport, plus truncation and omitted-key metadata; it does not trigger refresh or add a transcript message.
 - `/dasein set <path> <value>` validates one runtime configuration path/value candidate, atomically persists only that canonical path patch to `~/.pi/dasein/config.json`, then commits runtime behavior and marks that path runtime-overridden for the current process only after persistence succeeds.
 - `/dasein apply <k=v,...>` validates all assignments first, atomically persists only the explicitly supplied canonical path patches together, then commits runtime behavior and marks those paths runtime-overridden for the current process only after persistence succeeds. If any assignment is invalid or persistence fails, the entire apply operation aborts with no runtime or disk changes.
 - `/dasein geo tag add <name> <radius_m>` creates or updates a geo tag by reusing a current fresh geo fix when one exists, or requesting a new fix when none is currently fresh, then storing the tag canonically as `{ lat, lon, radius_m, label? }`. If geo is disabled, permission is denied, or no current fresh fix can be obtained, it returns a clear error and stores nothing.
@@ -628,11 +630,18 @@ The injected context must:
 - omit stale readings or mark them stale according to core render config and normalized typed state;
 - avoid branding-heavy labels;
 - avoid redundant time representations: do not include local time, timezone, and UTC offset together when one canonical value is enough;
-- enter the model through Pi's per-turn system/developer prompt path, not through a user-role message.
+- enter the model through the configured `core.agentInjectionTransport` and never through a persisted transcript message or Pi `CustomMessage`.
 
-The injection path must not perform sensor refresh work, filesystem reads, network calls, CoreLocation/helper subprocess calls, or other fresh computation. It must render only the current in-memory readings and external state after startup initial refresh has succeeded. While startup refresh is pending or failed, Dasein must leave the agent system prompt unchanged; pending/loading placeholders are UI-only.
+The injection path must not perform sensor refresh work, filesystem reads, network calls, CoreLocation/helper subprocess calls, or other fresh computation. It must render only the current in-memory readings and external state after startup initial refresh has succeeded. While startup refresh is pending or failed, Dasein must leave the agent request unchanged; pending/loading placeholders are UI-only.
 
-Dasein must append ambient context during `before_agent_start` by returning an updated `systemPrompt` only when a successful startup refresh has made context safe for agent use. Pi may serialize that system prompt to provider-native `developer` or `system` messages according to provider compatibility, but Dasein must not inject ambient context as a `CustomMessage` or other message that Pi `convertToLlm()` serializes as `role:"user"`.
+`core.agentInjectionTransport` controls how the already-rendered ambient block enters the request:
+
+- `systemPrompt` is the legacy default. Dasein appends the full dynamic ambient block during `before_agent_start` by returning an updated `systemPrompt`. Pi may serialize that prompt as provider-native `developer` or `system` according to provider compatibility.
+- `providerPayload` keeps `before_agent_start` limited to a stable Dasein policy and injects the dynamic ambient block in `before_provider_request` only for supported OpenAI Responses and OpenAI-compatible Chat Completions payload shapes. The block is appended after the real user prompt content to preserve the stable prefix before Dasein's dynamic context.
+- `auto` currently uses the same OpenAI-only provider-payload path when a supported payload shape is detected and otherwise leaves the request unchanged rather than guessing.
+- `off` disables agent request injection.
+
+Dasein must not inject ambient context as a `CustomMessage`; Pi `convertToLlm()` serializes custom messages as `role:"user"` and would make Dasein context a persisted transcript message. The OpenAI provider-payload mode is a bounded provider payload rewrite, not a Pi `CustomMessage` or session-history mutation.
 
 The renderer's canonical diagnostic label remains neutral:
 
@@ -665,7 +674,7 @@ The status footer must respect `core.statusEnabled`. Status is not a readiness b
 
 The status footer must not show raw sensor keys, epoch/ISO timestamps, duplicated timezone/UTC-offset representations, agent IDs, manifest digests, raw `[ambient_ctx: ...]` text, or redundant clock-only state by default.
 
-Dasein does not provide a persistent widget surface. If a fact is important enough for always-visible UI, it belongs in the bounded status footer; otherwise it belongs in an explicit diagnostic command. `/dasein inspect agent` is the authoritative agent-injection inspector and must show the exact pre-rendered system prompt block that would be appended for the agent, plus truncation and omitted-key metadata.
+Dasein does not provide a persistent widget surface. If a fact is important enough for always-visible UI, it belongs in the bounded status footer; otherwise it belongs in an explicit diagnostic command. `/dasein inspect agent` is the authoritative agent-injection inspector and must show the exact pre-rendered ambient block that would be injected for the agent, plus truncation and omitted-key metadata.
 
 Dasein UI surfaces should align with Larva Pi-extension styling discipline: use Pi TUI primitives and width helpers for TUI components, keep persistent footer text unboxed and terse, and ensure any custom overlay `render(width)` line stays within the supplied visible width.
 
@@ -819,7 +828,7 @@ Current evidence note (2026-06-06): ordinary `npm test` covers all-platform unit
 - `/dasein` opens the configuration UI in TUI mode.
 - `/dasein status` returns effective config, active sensors, permission state, recent sensor health, and lapse persistence health/presence using the Technical Design-defined output data shape.
 - `/dasein sensors` lists builtin and user-added loaded sensors in `data.sensors`, reports load-failed files in `data.loadErrors`, and exposes inspectable user-added sensor metadata before enablement: loader-owned provenance plus spec-owned manifest fields for permissions, input classes, output fields, remote/network behavior, remote/network-capable status, declared recurring/background work, and effective `intervalMs` where applicable.
-- `/dasein inspect agent` returns the exact current pre-rendered agent system prompt block, or an explicit no-context result when no agent context is available, and includes truncation/omitted-key metadata without triggering refresh.
+- `/dasein inspect agent` returns the exact current pre-rendered agent ambient block, or an explicit no-context result when no agent context is available, and includes truncation/omitted-key metadata without triggering refresh.
 - `/dasein set <path> <value>` validates one runtime path/value candidate, atomically persists only that canonical path patch to disk, then marks that path runtime-overridden for the current process and updates runtime behavior only after persistence succeeds; if persistence fails, neither runtime nor disk changes occur.
 - `/dasein apply <k=v,...>` is all-or-nothing: if every assignment is valid, only the supplied canonical path patches are atomically persisted, then applied and marked runtime-overridden for the current process after persistence succeeds; if any assignment is invalid or persistence fails, no runtime or disk change occurs.
 - Slash command paths must accept short aliases such as `geo.agent`; `sensors.` prefix is not required; canonical sensor paths are defined by Technical Design and may also be accepted.
@@ -834,13 +843,13 @@ Current evidence note (2026-06-06): ordinary `npm test` covers all-platform unit
 
 ### 9.3 Agent Injection
 - Agent injection remains enabled by default because agent spacetime awareness is Dasein's primary purpose.
-- Agent injection uses Pi's per-turn system prompt path (`before_agent_start.systemPrompt`) so providers receive the context as system/developer instructions according to Pi provider compatibility.
-- Agent injection must not use `CustomMessage`, hidden `display:false` messages, or any other default path that Pi `convertToLlm()` serializes as `role:"user"`.
+- Agent injection uses `core.agentInjectionTransport`: legacy `systemPrompt` appends dynamic context to Pi's per-turn `before_agent_start.systemPrompt`, while OpenAI `providerPayload` appends dynamic context to supported OpenAI provider payloads after the real user prompt content.
+- Agent injection must not use `CustomMessage`, hidden `display:false` messages, or any path that persists Dasein context as a transcript message through Pi `convertToLlm()`.
 - Agent injection does not use `[Dasein: ...]` by default.
 - Agent injection does not include default priority semantics.
 - Agent injection performs no disk I/O, network I/O, location lookup, or subprocess execution during request construction.
 - Agent injection does not trigger sensor refresh work and renders only current in-memory readings after startup initial refresh has succeeded.
-- Before startup initial refresh succeeds, pending/loading state is UI-only and agent injection leaves `before_agent_start.systemPrompt` unchanged.
+- Before startup initial refresh succeeds, pending/loading state is UI-only and agent injection leaves the agent request unchanged.
 - Agent injection omits stale readings or marks them stale according to render config.
 - Agent injection omits sensors where `enabled=false` or `agent=false`.
 - Agent injection omits exact coordinates unless `geo.agent=true`, `geo.precision="exact"`, and `geo.exactCoordinates=true`.
@@ -855,9 +864,9 @@ Current evidence note (2026-06-06): ordinary `npm test` covers all-platform unit
 ### 9.4 TUI
 - The status footer can show Dasein state when `core.statusEnabled=true` and is hidden when `core.statusEnabled=false`.
 - During startup initial refresh, the status footer may show a low-noise UI-only sync indicator; it must not inject that pending state into the agent prompt.
-- `/dasein inspect agent` returns the exact current pre-rendered agent system prompt block, or an explicit no-context result when no agent context is available.
+- `/dasein inspect agent` returns the exact current pre-rendered agent ambient block, or an explicit no-context result when no agent context is available.
 - The default SettingsList overlay is a compact common-first allowlist, not a complete inventory of every available control.
-- The default SettingsList overlay includes core visibility/detail controls: `core.agentInjectionEnabled`, `core.statusEnabled`, and `core.statusDetail`.
+- The default SettingsList overlay includes core visibility/detail controls: `core.agentInjectionEnabled`, `core.agentInjectionTransport`, `core.statusEnabled`, and `core.statusDetail`.
 - The default SettingsList overlay includes the primary builtin controls currently exposed by implementation, including builtin enable/exposure controls for clock/lapse/geo where allowlisted, `geo.precision`, `geo.exactAddress`, and `geo.exactCoordinates`.
 - The full SettingsList visibility model supports each loaded sensor's common fields and simple sensor-declared scalar fields, but those controls may be kept out of the default overlay and exposed through diagnostics or future advanced UI.
 - SettingsList uses `SensorFieldSpec.label` and `SensorFieldSpec.description` for sensor-specific scalar control copy when those controls are shown.

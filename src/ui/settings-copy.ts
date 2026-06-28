@@ -19,6 +19,7 @@ const explicitLabels: Readonly<Record<string, string>> = {
   "core.agentInjectionEnabled": "Agent context",
   "core.statusEnabled": "Status bar",
   "core.statusDetail": "Status detail",
+  "core.agentInjectionTransport": "Agent injection transport",
   "sensors.clock.enabled": "Clock sensor",
   "sensors.geo.enabled": "Location sensor",
   "sensors.geo.agent": "Location to agent",
@@ -29,7 +30,8 @@ const explicitLabels: Readonly<Record<string, string>> = {
 };
 
 const explicitDescriptions: Readonly<Record<string, string>> = {
-  "core.agentInjectionEnabled": "Adds enabled ambient context to the agent system prompt.",
+  "core.agentInjectionEnabled": "Allows enabled ambient context to enter the agent request.",
+  "core.agentInjectionTransport": "Chooses legacy system prompt injection or OpenAI provider-payload late injection.",
   "core.statusEnabled": "Shows bounded Dasein status in the footer.",
   "core.statusDetail": "Status verbosity: quiet, summary, or diagnostic.",
   "sensors.clock.enabled": "Collect local time context.",

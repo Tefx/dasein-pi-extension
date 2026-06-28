@@ -34,6 +34,15 @@ test("injector formats renderer ambient envelope as bounded system prompt contex
   assert.match(content, /<\/DaseinAmbientContext>$/u);
 });
 
+test("injector appends stable Dasein policy without dynamic ambient values for provider payload mode", async () => {
+  const api = await loadDaseinApi();
+  const injectStableDaseinSystemPromptPolicy = requireExportedFunction(api, "injectStableDaseinSystemPromptPolicy", "OpenAI provider-payload stable policy");
+  const result = injectStableDaseinSystemPromptPolicy("BASE SYSTEM") as string;
+
+  assert.match(result, /^BASE SYSTEM\n\nDasein may provide per-request ambient runtime context/u);
+  assert.doesNotMatch(result, /<DaseinAmbientContext>|local=14:32|clock=|idle=|location=/u);
+});
+
 test("injector returns no change when rendered agent is null and never consults config", async () => {
   const api = await loadDaseinApi();
   const injectAmbientSystemPrompt = requireExportedFunction(api, "injectAmbientSystemPrompt", "Testing Gate Matrix row: Request-path no I/O");
