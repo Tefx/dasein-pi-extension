@@ -139,6 +139,7 @@ test("[expected-red] Pi lifecycle wiring registers startup, shutdown, input, bef
     "before_agent_start",
     "before_provider_request",
     "input",
+    "model_select",
     "session_shutdown",
     "session_start",
   ]);
@@ -197,6 +198,68 @@ test("legacy systemPrompt transport appends Dasein ambient context to system pro
   assert.match(content, /^BASE SYSTEM\n\n<DaseinAmbientContext>/u);
   assert.match(content, /time=/u);
   assert.doesNotMatch(content, /^\[ambient_ctx:/u);
+});
+
+test("auto transport uses providerPayload for cache-capable selected models", async () => {
+  const host = await registerInFakeHost({ dasein: "external.weather.agent=true" });
+  await invokeFakeLifecycle(host, "model_select", {
+    model: { provider: "custom-cache", id: "cache-model", cost: { cacheRead: 0.1, cacheWrite: 0 } },
+  });
+  await invokeFakeLifecycle(host, "session_start");
+  host.pi.events.emit("dasein:state:set", {
+    key: "weather",
+    agent: "weather=clear",
+    ttlMs: 60_000,
+  });
+  await invokeFakeLifecycle(host, "input", { text: "hello", timestamp: 10_000, turnId: "turn-auto-cache" });
+
+  const event: MutableBeforeAgentStartEvent = { systemPrompt: "BASE SYSTEM", messages: [], timestamp: 10_001, turnId: "turn-auto-cache" };
+  for (let attempt = 0; attempt < 50 && !event.systemPrompt?.includes("Dasein may provide per-request ambient runtime context"); attempt += 1) {
+    event.systemPrompt = "BASE SYSTEM";
+    event.messages = [];
+    await invokeFakeLifecycle(host, "before_agent_start", event);
+    await wait(10);
+  }
+
+  assert.match(event.systemPrompt ?? "", /Dasein may provide per-request ambient runtime context/u);
+  assert.doesNotMatch(event.systemPrompt ?? "", /<DaseinAmbientContext>/u);
+  assert.equal(event.messages?.length, 0);
+
+  const payload = {
+    model: "probe",
+    messages: [
+      { role: "system", content: event.systemPrompt },
+      { role: "user", content: [{ type: "text", text: "real prompt" }] },
+    ],
+  };
+  const [rewritten] = await invokeFakeLifecycle(host, "before_provider_request", { payload });
+  const rewrittenRecord = objectRecord(rewritten);
+  const messages = rewrittenRecord.messages as Array<Record<string, unknown>>;
+  const lastUser = messages.at(-1) as { content: Array<Record<string, unknown>> };
+  const ambientText = String(lastUser.content.at(-1)?.text ?? "");
+  assert.match(ambientText, /DaseinAmbientContext/u);
+  assert.match(ambientText, /weather=clear/u);
+});
+
+test("auto transport falls back to systemPrompt for unknown selected models", async () => {
+  const host = await registerInFakeHost({ dasein: "external.weather.agent=true" });
+  await invokeFakeLifecycle(host, "model_select", { model: { provider: "no-cache-provider", id: "plain-model" } });
+  await invokeFakeLifecycle(host, "session_start");
+  host.pi.events.emit("dasein:state:set", {
+    key: "weather",
+    agent: "rain soon",
+    ttlMs: 60_000,
+  });
+
+  const event: MutableBeforeAgentStartEvent = { systemPrompt: "BASE SYSTEM", messages: [], timestamp: 11_001, turnId: "turn-auto-fallback" };
+  const content = await ambientSystemPromptContent(host, event);
+  assert.match(content, /^BASE SYSTEM\n\n<DaseinAmbientContext>/u);
+  assert.match(content, /weather=rain soon/u);
+
+  const [rewritten] = await invokeFakeLifecycle(host, "before_provider_request", {
+    payload: { messages: [{ role: "user", content: [{ type: "text", text: "real prompt" }] }] },
+  });
+  assert.equal(rewritten, undefined, "auto systemPrompt fallback must not duplicate dynamic context in provider payload");
 });
 
 test("providerPayload transport adds stable policy at before_agent_start and injects OpenAI Responses payload tail", async () => {

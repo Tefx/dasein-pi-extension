@@ -638,7 +638,7 @@ The injection path must not perform sensor refresh work, filesystem reads, netwo
 
 - `systemPrompt` is the legacy mode. Dasein appends the full dynamic ambient block during `before_agent_start` by returning an updated `systemPrompt`. Pi may serialize that prompt as provider-native `developer` or `system` according to provider compatibility.
 - `providerPayload` is the explicit provider-payload mode. It keeps `before_agent_start` limited to a stable Dasein policy and injects the dynamic ambient block in `before_provider_request` only for supported OpenAI Responses and OpenAI-compatible Chat Completions payload shapes. The block is appended after the real user prompt content to preserve the stable prefix before Dasein's dynamic context.
-- `auto` is the safer default. It currently uses the same OpenAI-only provider-payload path when a supported payload shape is detected and otherwise leaves the request unchanged rather than guessing.
+- `auto` is the safer default. It observes the selected model, uses local model metadata and the checked-in generated cache-capability table to choose `providerPayload` for cache-capable/cache-signalled models, and falls back to `systemPrompt` for unknown or non-cache models.
 - `off` disables agent request injection.
 
 Dasein must not inject ambient context as a `CustomMessage`; Pi `convertToLlm()` serializes custom messages as `role:"user"` and would make Dasein context a persisted transcript message. The OpenAI provider-payload mode is a bounded provider payload rewrite, not a Pi `CustomMessage` or session-history mutation.
@@ -845,7 +845,7 @@ Current evidence note (2026-06-06): ordinary `npm test` covers all-platform unit
 
 ### 9.3 Agent Injection
 - Agent injection remains enabled by default because agent spacetime awareness is Dasein's primary purpose.
-- Agent injection uses `core.agentInjectionTransport`: default `auto` currently appends dynamic context to supported OpenAI provider payloads after the real user prompt content and leaves unsupported payloads unchanged, while legacy `systemPrompt` appends dynamic context to Pi's per-turn `before_agent_start.systemPrompt`.
+- Agent injection uses `core.agentInjectionTransport`: default `auto` chooses provider-payload injection for cache-capable/cache-signalled selected models and otherwise falls back to the legacy `systemPrompt` path; explicit `providerPayload` and `systemPrompt` modes remain available.
 - Agent injection must not use `CustomMessage`, hidden `display:false` messages, or any path that persists Dasein context as a transcript message through Pi `convertToLlm()`.
 - Agent injection does not use `[Dasein: ...]` by default.
 - Agent injection does not include default priority semantics.

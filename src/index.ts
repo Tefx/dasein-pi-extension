@@ -35,6 +35,7 @@ import { createExternalStateBridge } from "./core/external-events.ts";
 import { formatAmbientSystemPromptBlock, injectAmbientSystemPrompt, injectStableDaseinSystemPromptPolicy } from "./core/injector.ts";
 import { injectAmbientProviderPayload } from "./core/provider-payload-injector.ts";
 import { createDaseinLifecycle, reloadDaseinRuntime, type DaseinReloadResult } from "./core/lifecycle.ts";
+import { modelDescriptorFromModelSelectEvent, resolveAutoAgentInjectionTransport, type DaseinModelDescriptor } from "./core/model-capabilities.ts";
 import { renderDaseinContext } from "./core/renderer.ts";
 import { createAgentInspectOverlayComponent } from "./ui/agent-inspect-overlay.ts";
 import { DASEIN_SETTINGS_OVERLAY_HINT } from "./ui/overlay-hints.ts";
@@ -53,6 +54,7 @@ import type {
   ConfigMutationProposal,
   ConfigMutationResult,
   ConfigValidationError,
+  AgentInjectionTransport,
   DaseinConfig,
   DaseinStateStore,
   DiskDaseinConfig,
@@ -118,6 +120,7 @@ export type * from "./core/renderer.ts";
 export type * from "./core/injector.ts";
 export type * from "./core/external-events.ts";
 export type * from "./core/lifecycle.ts";
+export type * from "./core/model-capabilities.ts";
 export * from "./commands/dasein-command.ts";
 export {
   CORE_INJECTED_LABEL_CONSTRAINT,
@@ -173,6 +176,7 @@ export {
   loadSensorRegistry,
 } from "./core/sensor-loader.ts";
 export { SENSOR_REFRESH_CONTRACT, createSensorRuntime, normalizeSensorRefreshResult, observeLapseLifecycle } from "./core/sensor-runtime.ts";
+export { modelCapabilityCacheSummary, modelDescriptorFromModelSelectEvent, resolveAutoAgentInjectionTransport } from "./core/model-capabilities.ts";
 export { createDaseinLifecycle, reloadDaseinRuntime } from "./core/lifecycle.ts";
 export type * from "./native/macos-location-helper.ts";
 export {
@@ -541,6 +545,7 @@ class DaseinAmbientContextBroker {
   private diskConfigLoaded = false;
   private durableStateFileLoaded = false;
   private durableLapse: LapsePersistedState | null = null;
+  private selectedModel: DaseinModelDescriptor | null = null;
   private initialRefreshStatus: InitialRefreshStatus = "pending";
   private initialRefreshInFlight: Promise<void> | null = null;
   private shuttingDown = false;
@@ -566,10 +571,10 @@ class DaseinAmbientContextBroker {
     if (!this.canInjectAgentContext()) return undefined;
     const mutable = event as MutableBeforeAgentStartEvent;
     const systemPrompt = typeof mutable.systemPrompt === "string" ? mutable.systemPrompt : "";
-    const transport = this.config.core.agentInjectionTransport;
+    const transport = this.effectiveAgentInjectionTransport();
     if (transport === "off") return undefined;
 
-    if (transport === "providerPayload" || transport === "auto") {
+    if (transport === "providerPayload") {
       const agent = this.stateStore.getRenderedAgentString();
       if (agent === null || agent.trim().length === 0) return undefined;
       const nextSystemPrompt = injectStableDaseinSystemPromptPolicy(systemPrompt);
@@ -586,13 +591,17 @@ class DaseinAmbientContextBroker {
   async beforeProviderRequest(event: unknown): Promise<unknown | undefined> {
     await this.initialize();
     if (!this.canInjectAgentContext()) return undefined;
-    const transport = this.config.core.agentInjectionTransport;
-    if (transport !== "providerPayload" && transport !== "auto") return undefined;
+    const transport = this.effectiveAgentInjectionTransport();
+    if (transport !== "providerPayload") return undefined;
     const agent = this.stateStore.getRenderedAgentString();
     if (agent === null || agent.trim().length === 0) return undefined;
     const mutable = event as { payload?: unknown };
     const result = injectAmbientProviderPayload({ payload: mutable.payload, content: formatAmbientSystemPromptBlock(agent) });
     return result.changed ? result.payload : undefined;
+  }
+
+  modelSelect(event: unknown): void {
+    this.selectedModel = modelDescriptorFromModelSelectEvent(event);
   }
 
   async observePiLifecycle(kind: "input" | "before_agent_start" | "agent_end", event: unknown, context: DaseinPiExtensionContext): Promise<void> {
@@ -818,6 +827,11 @@ class DaseinAmbientContextBroker {
 
   private canInjectAgentContext(): boolean {
     return this.initialRefreshStatus === "succeeded";
+  }
+
+  private effectiveAgentInjectionTransport(): AgentInjectionTransport {
+    const transport = this.config.core.agentInjectionTransport;
+    return transport === "auto" ? resolveAutoAgentInjectionTransport(this.selectedModel).transport : transport;
   }
 
   private async loadDurableLapseState(): Promise<void> {
@@ -1388,6 +1402,7 @@ export const createDaseinExtension: DaseinPiExtensionFactory = (pi) => {
   pi.on("session_start", (_event, context) => broker.startup(context));
   pi.on("session_shutdown", (_event, context) => broker.shutdown(context));
   pi.on("input", (event, context) => broker.observePiLifecycle("input", event, context));
+  pi.on("model_select", (event) => broker.modelSelect(event));
   pi.on("before_agent_start", (event, context) => broker.beforeAgentStart(event, context));
   pi.on("before_provider_request", (event) => broker.beforeProviderRequest(event));
   pi.on("agent_end", (event, context) => broker.observePiLifecycle("agent_end", event, context));
