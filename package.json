@@ -1,6 +1,6 @@
 {
   "name": "dasein-pi-extension",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "private": false,
   "type": "module",
   "description": "Dasein Pi ambient context broker extension.",
