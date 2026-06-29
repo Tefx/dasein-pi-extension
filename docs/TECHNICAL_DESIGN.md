@@ -64,6 +64,8 @@ Rationale: Dasein's primary purpose is agent spacetime awareness, so agent injec
 
 Trade-off: provider-payload mode uses provider-specific payload shapes and is currently OpenAI-only. It is cache-friendlier for supported OpenAI paths, but less universally semantic than the legacy system-prompt path. Unsupported payloads are left unchanged rather than guessed.
 
+Offline capability workflow: Dasein must not fetch online model lists on the request path. Maintainers refresh `src/generated/model-capabilities.json` with `npm run models:update`; `.github/workflows/update-model-capabilities.yml` runs the same command on a fixed weekly schedule and opens a PR if upstream sources such as models.dev, OpenRouter, or LiteLLM change cache capability signals. Runtime auto-routing may consume this generated artifact, but request-path network I/O remains forbidden.
+
 ### Decision 2: Neutral diagnostic label
 
 Dasein's renderer keeps a neutral canonical diagnostic label:

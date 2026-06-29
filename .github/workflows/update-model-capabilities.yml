@@ -1,0 +1,52 @@
+name: Update model capabilities
+
+on:
+  schedule:
+    # Weekly Monday 03:17 UTC. Runtime never fetches these sources.
+    - cron: "17 3 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Refresh generated model capability cache
+        run: npm run models:update
+
+      - name: Verify generated cache and package shape
+        run: |
+          npm run typecheck
+          npm run package:check
+          npm run test:file -- tests/unit/model-capabilities-update.test.ts tests/static/model-capabilities-workflow.test.ts
+
+      - name: Create pull request if cache changed
+        uses: peter-evans/create-pull-request@v6
+        with:
+          branch: chore/update-model-capabilities
+          commit-message: Update generated model capabilities
+          title: Update generated model capabilities
+          body: |
+            Scheduled refresh of Dasein's offline model capability cache.
+
+            Runtime code must continue to use the generated JSON only and must not fetch model capability sources on the agent request path.
+          add-paths: |
+            src/generated/model-capabilities.json
+          labels: |
+            automated
+            model-capabilities

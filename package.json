@@ -42,6 +42,7 @@
     "test:native": "node scripts/run-native-tests.mjs",
     "test:smoke": "node --import tsx --test tests/smoke/**/*.test.ts",
     "package:check": "node scripts/check-package-manifest.mjs",
+    "models:update": "node scripts/update-model-capabilities.mjs",
     "release:check": "npm run typecheck && npm test && npm run test:native && npm run package:check && npm run test:smoke"
   },
   "devDependencies": {

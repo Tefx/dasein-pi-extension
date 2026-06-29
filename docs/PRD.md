@@ -643,6 +643,8 @@ The injection path must not perform sensor refresh work, filesystem reads, netwo
 
 Dasein must not inject ambient context as a `CustomMessage`; Pi `convertToLlm()` serializes custom messages as `role:"user"` and would make Dasein context a persisted transcript message. The OpenAI provider-payload mode is a bounded provider payload rewrite, not a Pi `CustomMessage` or session-history mutation.
 
+Model cache capability lookup must be offline at runtime. A fixed maintainer workflow refreshes the generated cache capability table from online sources on a schedule; agent request hooks may read only the generated local artifact and must not call models.dev, OpenRouter, LiteLLM, or any other online source.
+
 The renderer's canonical diagnostic label remains neutral:
 
 ```text

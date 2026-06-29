@@ -87,6 +87,8 @@ Useful checks:
 
 Agent injection mechanism: by default Dasein uses `core.agentInjectionTransport=auto`, which currently keeps the dynamic ambient block out of the system prompt and appends it through the OpenAI-compatible provider payload path (`before_provider_request`) when the payload shape is supported. `before_agent_start` only adds a stable Dasein policy in that mode. You can switch `core.agentInjectionTransport` to `providerPayload` for explicit provider-payload-only behavior, `systemPrompt` for the legacy system-prompt path, or `off` to disable agent injection. Dasein does not use Pi `CustomMessage` entries for ambient context.
 
+Model cache capability data is not fetched on the agent request path. Maintainers refresh the offline generated table with `npm run models:update`; the scheduled GitHub workflow `.github/workflows/update-model-capabilities.yml` opens a PR when upstream capability sources change.
+
 ## Privacy defaults
 
 Dasein defaults are intentionally conservative:
